@@ -1,0 +1,11 @@
+{
+  "name": "@world-vitality/config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "exports": {
+    "./eslint": "./eslint.config.js",
+    "./prettier": "./prettier.config.js",
+    "./tsconfig-base": "./tsconfig.base.json"
+  }
+}
