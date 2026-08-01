@@ -7,7 +7,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/.turbo/**", "**/node_modules/**"]
+    ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/.turbo/**", "**/node_modules/**"],
   },
   {
     rules: {
@@ -21,11 +21,11 @@ export default tseslint.config(
             {
               group: ["**/services/*/src/internal/**", "**/services/*/internal/**"],
               message:
-                "Do not import another service's internals directly — use its published API or public package interface (Engineering Blueprint 4.4)."
-            }
-          ]
-        }
-      ]
-    }
-  }
+                "Do not import another service's internals directly — use its published API or public package interface (Engineering Blueprint 4.4).",
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
