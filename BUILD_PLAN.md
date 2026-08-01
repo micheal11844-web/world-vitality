@@ -90,7 +90,7 @@ Each ticket below is scoped to be independently completable and reviewable. Work
 
 ## CHANGE LOG
 
-*(Add an entry each time this plan is meaningfully revised, so progress and re-scoping are traceable — this is the one piece of "process overhead" worth keeping even in execution mode.)*
+_(Add an entry each time this plan is meaningfully revised, so progress and re-scoping are traceable — this is the one piece of "process overhead" worth keeping even in execution mode.)_
 
 - **v1** — Initial plan derived from Engineering Blueprint Section 18 and PRD Amendments 1–3.
 - **v2** — Stage 0 executed: folder skeleton, folder READMEs, foundational docs + ADRs filed into `docs/`, CODEOWNERS, PR template, CI workflow, and `packages/config` lint/TypeScript presets all committed. 0.1, 0.4, 0.5 remain partially open pending GitHub/Vercel account-level actions documented in `docs/onboarding/repository-setup.md`.
