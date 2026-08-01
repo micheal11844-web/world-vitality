@@ -4,15 +4,15 @@ Monorepo for the World Vitality platform. See `docs/` for the foundational docum
 
 ## Repo layout
 
-| Folder | Contents |
-|---|---|
-| `apps/` | Deployable, user-facing surfaces (web, mobile, admin) |
-| `services/` | Independently deployable backend services |
-| `packages/` | Shared code with no independent deployment lifecycle |
-| `infra/` | Infrastructure as code |
-| `docs/` | Source of truth: constitution, blueprints, ADRs, runbooks, data provenance |
-| `tools/` | Internal developer productivity tooling |
-| `tests/` | Cross-cutting, cross-application test suites (e2e) |
+| Folder      | Contents                                                                   |
+| ----------- | -------------------------------------------------------------------------- |
+| `apps/`     | Deployable, user-facing surfaces (web, mobile, admin)                      |
+| `services/` | Independently deployable backend services                                  |
+| `packages/` | Shared code with no independent deployment lifecycle                       |
+| `infra/`    | Infrastructure as code                                                     |
+| `docs/`     | Source of truth: constitution, blueprints, ADRs, runbooks, data provenance |
+| `tools/`    | Internal developer productivity tooling                                    |
+| `tests/`    | Cross-cutting, cross-application test suites (e2e)                         |
 
 Each folder above has its own `README.md` with folder-specific rationale.
 
