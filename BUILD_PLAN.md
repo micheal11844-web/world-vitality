@@ -24,9 +24,9 @@ Each ticket below is scoped to be independently completable and reviewable. Work
 
 ## STAGE 1 — CORE ABSTRACTIONS (before any feature work)
 
-- [ ] **1.1** Define the internal data-ingestion interface (`services/data-ingestion/`) — the contract any provider connector must implement. No provider wired in yet.
-- [ ] **1.2** Define the internal AI/interpretation-provider interface (`services/interpretation-engine/`) — the contract any AI model adapter must implement.
-- [ ] **1.3** Define the shared data schema (`packages/data-schemas/`) that ingestion normalizes into and interpretation consumes from.
+- [x] **1.1** Define the internal data-ingestion interface (`services/data-ingestion/`) — the contract any provider connector must implement. No provider wired in yet.
+- [x] **1.2** Define the internal AI/interpretation-provider interface (`services/interpretation-engine/`) — the contract any AI model adapter must implement.
+- [x] **1.3** Define the shared data schema (`packages/data-schemas/`) that ingestion normalizes into and interpretation consumes from.
 - [ ] **1.4** Write ADR-0003 documenting both interfaces and why they exist (protects provider-agnosticism per Constitution Section 4).
 
 ## STAGE 2 — FIRST DATA PROVIDER + DATA PROVENANCE
@@ -94,3 +94,4 @@ _(Add an entry each time this plan is meaningfully revised, so progress and re-s
 
 - **v1** — Initial plan derived from Engineering Blueprint Section 18 and PRD Amendments 1–3.
 - **v2** — Stage 0 executed: folder skeleton, folder READMEs, foundational docs + ADRs filed into `docs/`, CODEOWNERS, PR template, CI workflow, and `packages/config` lint/TypeScript presets all committed. 0.1, 0.4, 0.5 remain partially open pending GitHub/Vercel account-level actions documented in `docs/onboarding/repository-setup.md`.
+- **v3** — Stage 1 executed: `packages/data-schemas` (shared normalized record + provenance + gap-reporting schema), `services/data-ingestion` (connector interface), and `services/interpretation-engine` (AI provider interface) all committed, per ADR-0003. Also fixed Stage 0's incomplete pnpm setup — added the missing `pnpm-workspace.yaml` (required for pnpm to resolve workspace packages; `package.json`'s `"workspaces"` field alone is npm/Yarn syntax and pnpm ignores it) and a real `pnpm-lock.yaml`, which is what was causing CI's `--frozen-lockfile` step to fail. No provider or model is implemented against the Stage 1 interfaces yet — that's Stage 2 and Stage 4.
