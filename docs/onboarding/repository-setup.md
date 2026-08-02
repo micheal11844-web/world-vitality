@@ -47,3 +47,27 @@ against them.
    as a replaceable implementation detail behind internal abstractions,
    per `infra/README.md` and the Experience/Engineering Blueprint
    recommendation — not a permanent architectural dependency.
+
+## Stage 3 — Provision Supabase (identity-service)
+
+`services/identity-service/` is written against Supabase but no project
+has been provisioned yet. Someone with account access needs to:
+
+1. Create a new Supabase project (https://supabase.com/dashboard).
+2. In the SQL Editor, run
+   `services/identity-service/supabase/migrations/0001_identity_foundation.sql`.
+3. Under Authentication → Providers, confirm Email (magic link/OTP) is
+   enabled — it is by default.
+4. Under Authentication → URL Configuration, set the Site URL and add a
+   Redirect URL matching whatever `SUPABASE_AUTH_REDIRECT_URL` will be
+   (e.g. `https://<your-domain>/auth/callback`).
+5. Copy the values from Project Settings → API into environment variables
+   — do **not** commit these. Set them in Vercel (Project Settings →
+   Environment Variables) for deployed environments, and in a local
+   `.env.local` (already gitignored) for local development. See
+   `services/identity-service/.env.example` for the exact variable names.
+6. Once done, check off Stage 3 in `BUILD_PLAN.md` and update
+   `services/identity-service/README.md`'s "Status" section — the
+   `SupabaseAuthService`/`SupabaseAccountService` code has not been
+   exercised against a real project yet; this is the step that would
+   change that.
