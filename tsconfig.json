@@ -1,11 +1,8 @@
 {
-  "extends": "./packages/config/tsconfig.base.json",
+  "extends": "../../packages/config/tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "outDir": "dist",
+    "rootDir": "src"
   },
-  "references": [
-    { "path": "./packages/data-schemas" },
-    { "path": "./services/data-ingestion" },
-    { "path": "./services/interpretation-engine" }
-  ]
+  "include": ["src"]
 }
