@@ -1,32 +1,35 @@
-# packages/data-schemas
+# services/data-ingestion
 
-The shared contract between the data-ingestion layer and the interpretation
-layer (ADR-0002, ADR-0003 — BUILD_PLAN Stage 1, ticket 1.3).
-
-Every ingestion connector (`services/data-ingestion/`) normalizes provider
-data into `NormalizedDataRecordSchema`. Every interpretation provider
-(`services/interpretation-engine/`) accepts that same shape as input. Neither
-side should ever need to know the other's implementation details — only this
-schema.
+The data-ingestion interface (ADR-0003, BUILD_PLAN Stage 1 ticket 1.1) —
+the contract any provider connector must implement — plus the first
+concrete connector built against it (BUILD_PLAN Stage 2).
 
 ## What's here
 
-- **`provenance.ts`** — required source/license/attribution/limitations
-  metadata on every record (Constitution Section 24: Data Ethics).
-- **`ingestion-gap.ts`** — explicit representation of a missing or failed
-  data point. ADR-0003 requires gaps to be reported, never silently omitted
-  or fabricated.
-- **`record.ts`** — `NormalizedDataRecordSchema`, the core shared record
-  type, plus `GeoLocationSchema` for spatial data.
+- **`DataIngestionConnector.ts`** — the interface itself: `ingest()`
+  (retrieve + normalize + report gaps) and `checkHealth()`.
+- **`connectors/nasa-power-connector.ts`** — `NasaPowerConnector`, pulling
+  daily point data from NASA's POWER API. See
+  `docs/data-provenance/nasa-power.md` for licensing, attribution, and
+  known limitations.
+- **`connectors/__tests__/nasa-power-connector.test.ts`** — validates the
+  parsing/normalization pipeline against a realistic captured POWER API
+  response shape, including fill-value gap detection. Run via `pnpm run
+test` from the repo root.
 
 ## Status
 
-Deliberately generic — no provider is wired in yet (that's Stage 2). Per
-ADR-0003's Standing Action Item, treat this schema as provisional until the
-first real connector and a second, deliberately different connector have
-both been built against it. If either reveals gaps, revise via a new ADR
-rather than quietly patching around it in application code.
+- **1.1** — interface: done.
+- **2.1** — first connector (NASA POWER): implemented.
+- **2.3** — end-to-end pipeline validation: the parsing/normalization
+  logic is validated by the test above against a response fixture built
+  from NASA's published API documentation. The connector has **not** been
+  exercised against the live `power.larc.nasa.gov` endpoint from this
+  environment — that host isn't reachable from the sandbox this was built
+  in. Running `NasaPowerConnector.ingest()` for real (e.g. via Claude Code,
+  or any environment with outbound network access) is the remaining step
+  to fully close out 2.3.
 
-Built with [Zod](https://zod.dev) for runtime validation plus inferred
-TypeScript types — not specified in the source docs, easy to swap if the
-team prefers a different validation library.
+No second, deliberately different connector has been built yet — per
+ADR-0003's Standing Action Item, the interface should still be treated as
+provisional until one is.
