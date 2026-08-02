@@ -1,0 +1,12 @@
+{
+  "extends": "./packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "references": [
+    { "path": "./packages/data-schemas" },
+    { "path": "./services/data-ingestion" },
+    { "path": "./services/interpretation-engine" },
+    { "path": "./services/identity-service" }
+  ]
+}
