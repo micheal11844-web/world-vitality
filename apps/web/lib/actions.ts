@@ -21,11 +21,15 @@ export async function requestMagicLinkAction(email: string): Promise<RequestMagi
     const auth = getAuthService();
     await auth.requestMagicLink(email);
     return { ok: true };
-  } catch {
-    // Deliberately generic — per requestMagicLink's contract, don't leak
-    // whether the failure was "bad email" vs. "no account" vs. a real
-    // provider error. Server-side logs (not built yet — Stage 7) are
-    // where the real error detail belongs.
+  } catch (err) {
+    // User-facing message stays deliberately generic — per
+    // requestMagicLink's contract, don't leak whether the failure was
+    // "bad email" vs. "no account" vs. a real provider error. But the
+    // real cause must still be logged server-side, or this is
+    // undebuggable — which is exactly what happened the first time this
+    // ran in production: three failed attempts, zero information about
+    // why, because this catch block used to swallow the error entirely.
+    console.error("requestMagicLinkAction failed:", err);
     return { ok: false, error: "Something went wrong sending the link. Please try again." };
   }
 }
