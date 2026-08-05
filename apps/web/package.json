@@ -1,0 +1,23 @@
+{
+  "name": "@world-vitality/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "cd ../.. && pnpm run build && cd apps/web && next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@world-vitality/ui-components": "workspace:*",
+    "@world-vitality/design-tokens": "workspace:*",
+    "@world-vitality/identity-service": "workspace:*",
+    "@world-vitality/interpretation-engine": "workspace:*",
+    "@world-vitality/data-ingestion": "workspace:*",
+    "@world-vitality/data-schemas": "workspace:*",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "maplibre-gl": "^4.7.0"
+  }
+}
