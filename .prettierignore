@@ -1,0 +1,15 @@
+# Locked foundational docs — content is authoritative, not to be
+# auto-reformatted by tooling. Edit these deliberately, not via `format:write`.
+docs/constitution/
+docs/engineering-blueprint/
+docs/prd/
+docs/experience-blueprint/
+docs/adr/
+
+pnpm-lock.yaml
+
+# Build/generated output — never hand-formatted, never worth linting.
+**/.next/
+**/dist/
+**/build/
+**/node_modules/
