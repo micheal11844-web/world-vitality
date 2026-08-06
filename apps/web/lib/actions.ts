@@ -22,14 +22,14 @@ export async function requestMagicLinkAction(email: string): Promise<RequestMagi
     await auth.requestMagicLink(email);
     return { ok: true };
   } catch (err) {
-    // User-facing message stays deliberately generic — per
-    // requestMagicLink's contract, don't leak whether the failure was
-    // "bad email" vs. "no account" vs. a real provider error. But the
-    // real cause must still be logged server-side, or this is
-    // undebuggable — which is exactly what happened the first time this
-    // ran in production: three failed attempts, zero information about
-    // why, because this catch block used to swallow the error entirely.
     console.error("requestMagicLinkAction failed:", err);
-    return { ok: false, error: "Something went wrong sending the link. Please try again." };
+    // TEMPORARY: surfacing the real error message directly to the UI
+    // for debugging, since there are no real users yet and this is
+    // faster than round-tripping through Vercel's log tooling. Revert
+    // to the generic message below once the underlying cause is fixed —
+    // leaking real error detail is not acceptable once real users exist.
+    const detail = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: `[debug] ${detail}` };
+    // return { ok: false, error: "Something went wrong sending the link. Please try again." };
   }
 }
