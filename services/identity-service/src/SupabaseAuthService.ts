@@ -35,13 +35,15 @@ export interface SupabaseAuthServiceConfig {
  * - `SUPABASE_SERVICE_ROLE_KEY`
  * - `SUPABASE_AUTH_REDIRECT_URL`
  *
- * **Not exercised against a live Supabase project from this build** —
- * no project has been provisioned yet (that's an account-level step, not
- * a code change — see `docs/onboarding/repository-setup.md`, which this
- * adds a Supabase section to). This implementation is written directly
- * against Supabase's documented `signInWithOtp` / `verifyOtp` /
- * `getUser` API contract, not guessed, but treat it as unverified until
- * run against a real project.
+ * **Exercised against a live Supabase project (Stage 6)** — the initial
+ * version of this file used `exchangeCodeForSession`/PKCE, which turned
+ * out not to work at all for this stateless-server architecture (see
+ * `verifyMagicLinkCallback`'s doc comment on `AuthService` for why) and
+ * was replaced with `verifyOtp`/`token_hash` verification after a real
+ * failed sign-in surfaced the problem. The Supabase Magic Link email
+ * template must be customized to link with `token_hash`/`type=email`
+ * query params rather than the default `{{ .ConfirmationURL }}` — see
+ * `docs/onboarding/repository-setup.md`, Stage 6 section.
  */
 export class SupabaseAuthService implements AuthService {
   private readonly client: SupabaseClient;
@@ -67,11 +69,14 @@ export class SupabaseAuthService implements AuthService {
     }
   }
 
-  async exchangeCodeForSession(code: string): Promise<Session> {
-    const { data, error } = await this.client.auth.exchangeCodeForSession(code);
+  async verifyMagicLinkCallback(tokenHash: string): Promise<Session> {
+    const { data, error } = await this.client.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "email",
+    });
     if (error || !data.session || !data.user?.email) {
       throw new Error(
-        `Failed to exchange magic-link code: ${error?.message ?? "no session returned"}`,
+        `Failed to verify magic-link token: ${error?.message ?? "no session returned"}`,
       );
     }
     return {
@@ -95,8 +100,8 @@ export class SupabaseAuthService implements AuthService {
       email: data.user.email,
       issuedAt: data.user.created_at,
       // Supabase's getUser doesn't return the token's own expiry; callers
-      // needing exact expiry should track it from exchangeCodeForSession's
-      // result instead of re-deriving it here.
+      // needing exact expiry should track it from
+      // verifyMagicLinkCallback's result instead of re-deriving it here.
       expiresAt: "",
       accessToken: sessionToken,
     };
