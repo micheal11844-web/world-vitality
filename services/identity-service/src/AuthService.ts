@@ -6,7 +6,7 @@
  * a session across requests (e.g. in a cookie) and had no token value
  * to store. `getSession()`/`signOut()` both take a `sessionToken`
  * string; without exposing it here, a caller had no way to obtain one
- * from `exchangeCodeForSession()` in the first place.
+ * from `verifyMagicLinkCallback()` in the first place.
  */
 export interface Session {
   userId: string;
@@ -41,10 +41,24 @@ export interface AuthService {
   requestMagicLink(email: string): Promise<void>;
 
   /**
-   * Exchange a magic-link callback code (from the URL the user clicked)
-   * for an authenticated session.
+   * Verify a magic-link callback using Supabase's `token_hash` flow.
+   *
+   * **Not `exchangeCodeForSession`/PKCE, deliberately.** PKCE's `code`
+   * exchange requires the same client that *initiated* `signInWithOtp`
+   * to also complete the exchange, because it needs a `code_verifier`
+   * persisted between those two calls (browser storage, normally).
+   * `requestMagicLink` above runs in a stateless Server Action — a fresh
+   * client per request, nothing persisted — so no `code_verifier` is
+   * ever available to complete a PKCE exchange with. This was a real
+   * bug found in production (Stage 6): the email link's session data
+   * arrived in the URL fragment (`#access_token=...`), which browsers
+   * never send to a server at all, so the callback route always saw no
+   * `code`. `token_hash` verification is self-contained — no client
+   * state required — which is what Supabase's own SSR docs recommend
+   * for exactly this "stateless server initiates and completes auth"
+   * shape.
    */
-  exchangeCodeForSession(code: string): Promise<Session>;
+  verifyMagicLinkCallback(tokenHash: string): Promise<Session>;
 
   /** Validate an existing session token, returning null if it's invalid
    *  or expired rather than throwing — an expired session is an expected
