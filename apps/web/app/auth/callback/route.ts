@@ -28,7 +28,13 @@ export async function GET(request: NextRequest) {
       expires: new Date(session.expiresAt),
     });
     return response;
-  } catch {
-    return NextResponse.redirect(new URL("/login?error=exchange_failed", request.url));
+  } catch (err) {
+    console.error("auth callback exchange failed:", err);
+    // TEMPORARY debug surfacing — same as requestMagicLinkAction; revert
+    // once the real cause is found.
+    const detail = err instanceof Error ? err.message : String(err);
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(`[debug] ${detail}`)}`, request.url),
+    );
   }
 }
