@@ -100,3 +100,21 @@ or serve `apps/web` until its Root Directory setting is changed:**
    `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_AUTH_REDIRECT_URL`), since
    `apps/web/lib/auth.ts` reads them at request time to construct the
    identity-service client for the login/callback flow.
+7. **Also required, easy to miss:** Supabase → Authentication → Emails →
+   Templates → **Magic Link**. Replace the default template's link
+   (which uses `{{ .ConfirmationURL }}`, Supabase's own hosted-redirect
+   flow) with one that links directly to this app's callback route
+   using `{{ .TokenHash }}`:
+
+   ```html
+   <h2>Sign in to World Vitality</h2>
+   <p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Sign in</a></p>
+   ```
+
+   Without this, the email link never reaches `/auth/callback` with a
+   `token_hash` it can verify — this app does not use Supabase's default
+   PKCE `code` exchange at all (see `AuthService.verifyMagicLinkCallback`'s
+   doc comment for the full reason: it structurally cannot work with a
+   stateless Server Action that has no persisted `code_verifier`).
+   `apps/web/lib/auth.ts` reads them at request time to construct the
+   identity-service client for the login/callback flow.
