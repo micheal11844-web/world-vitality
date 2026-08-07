@@ -1,0 +1,16 @@
+{
+  "extends": "./packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "files": [],
+  "references": [
+    { "path": "./packages/data-schemas" },
+    { "path": "./services/data-ingestion" },
+    { "path": "./services/interpretation-engine" },
+    { "path": "./services/identity-service" },
+    { "path": "./packages/ai-evaluation" },
+    { "path": "./packages/ui-components" },
+    { "path": "./packages/design-tokens" }
+  ]
+}
