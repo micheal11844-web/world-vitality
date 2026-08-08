@@ -67,6 +67,7 @@ Each ticket below is scoped to be independently completable and reviewable. Work
 - [x] **7.1** Implement logging/monitoring/alerting basics (Engineering Blueprint Section 12) alongside Stage 6 — not after.
 - [x] **7.2** Run a security review pass on the full pipeline built so far (Engineering Blueprint Section 14).
 - [x] **7.3** Run an accessibility pass against Stage 5/6 components (Experience Blueprint Section 15) before any public exposure.
+  - **Follow-up gap, now closed:** `apps/web` had no Next.js-specific ESLint rules (image/font/script/head misuse, etc.) — the shared repo-wide config in `packages/config/eslint.config.js` only covered generic JS/TS/React-hooks/a11y rules, not anything Next-specific. Closed by adding `@next/eslint-plugin-next`'s native flat-config `core-web-vitals` rule set, scoped to `apps/web/**` in the root `eslint.config.js`. Deliberate substitution, flagged: did not use the `eslint-config-next` package itself, since as of Next 15.5 it still only ships legacy `.eslintrc`-format config and would need the `@eslint/eslintrc` `FlatCompat` shim as an extra dependency to bridge into this repo's flat-config setup — `@next/eslint-plugin-next`'s own flat export gives the identical rule set with one less moving part. Verified with a full repo-wide `eslint .` run (exit 0, no errors).
 
 ## STAGE 8 — CONTROLLED RELEASE
 
@@ -96,3 +97,4 @@ Each ticket below is scoped to be independently completable and reviewable. Work
 
 - **v1** — Initial plan derived from Engineering Blueprint Section 18 and PRD Amendments 1–3.
 - **v2** — Stage 8.1 marked complete via versioned GitHub Release on `main` (not a separate internal-only channel — see note above). Stage 8.2 marked in-progress, blocked on identifying beta testers.
+- **v3** — Closed the flagged Stage 7 follow-up gap: added Next.js-specific ESLint rules (`core-web-vitals`) scoped to `apps/web`, via `@next/eslint-plugin-next`'s flat-config export rather than the legacy-format `eslint-config-next` package. See note under 7.3.
