@@ -138,3 +138,57 @@ scoped pass against real, existing surface area.
   scaling options, children's/Education-workspace safeguards, and the
   entire Disaster Monitoring emergency-usability requirement. None of
   these have a surface to audit yet.
+  ## Post-Stage-7 Follow-Up (Stage 8)
+
+Recorded as an addendum rather than editing the audit above — the
+original review stays an accurate record of what Stage 7 itself found,
+per this project's own norm of not silently rewriting past findings.
+
+- **eslint-config-next gap — closed.** `@next/eslint-plugin-next`'s
+  flat-config `core-web-vitals` export wired into root
+  `eslint.config.js`, scoped to `apps/web/**`. Verified with a clean
+  repo-wide `pnpm run lint`.
+- **No Content-Security-Policy — partially closed.** Added a
+  `script-src 'self'`-focused CSP (see `apps/web/next.config.mjs`),
+  which meaningfully blocks arbitrary injected-script execution — the
+  primary XSS vector. `style-src` still includes `'unsafe-inline'`
+  because of the inline-style pattern noted in the original review;
+  the fully nonce/hash-based policy remains real, undone future work.
+  Also flagged: the CSP's `connect-src` allowlist references a
+  `<SUPABASE_PROJECT_REF>` placeholder that needs replacing with the
+  real project ref before deploy, and the whole policy was written
+  from static code inspection — verify against real browser CSP
+  violation reports before trusting it fully in production.
+- **No dependency-scanning in CI — closed, informationally.** Added a
+  `dependency-audit` job to `.github/workflows/ci.yml` running `pnpm
+  audit --audit-level=high` on every push/PR. Set to
+  `continue-on-error: true` for now because 3 known high-severity
+  findings are currently pinned inside `next@15.5.22`'s own dependency
+  tree with no available fix from this repo's side — see
+  `docs/security/known-vulnerabilities.md` for the full record and why
+  a `pnpm.overrides` force-fix was attempted and reverted (it destabilized
+  ~300 unrelated lockfile lines). The job still surfaces every run, so a
+  *new* finding from a direct dependency won't be silently missed.
+- **No incident-response runbook — closed.** Added
+  `docs/runbooks/incident-response.md`, scoped honestly to what this
+  project actually is right now (solo-maintained, no paging/on-call) —
+  includes specific playbooks for the sign-in failure modes that have
+  already happened for real on this project, not generic boilerplate.
+- **No formal threat model for auth — closed.** Added
+  `docs/security/auth-threat-model.md`, walking the actual magic-link
+  flow's real threats (token replay, service-role-key exposure, the
+  PKCE/token_hash confusion that already caused a real incident, the
+  `scoped_field_user` data-scoping gap, and the no-re-auth deletion
+  tradeoff). Explicitly not a scored STRIDE/DREAD exercise, and
+  explicitly done retroactively rather than at design time — flagged
+  as such rather than presented as if it happened earlier.
+- **`scoped_field_user` resource-level scoping — still open, and
+  correctly so.** Investigated rather than papered over: real
+  resource-level (e.g., per-field) access control needs an actual
+  sub-workspace resource to scope against, and none exists yet — the
+  Agriculture workspace has no per-field data model, only
+  workspace-wide data. Building scoping infrastructure with nothing
+  real to scope to would be premature engineering, not a fix. This
+  stays open until a second workspace or per-resource data model
+  exists (both already on BUILD_PLAN's explicitly-deferred list) — see
+  the threat model's threat #4 for why this matters once that happens.
