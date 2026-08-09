@@ -181,6 +181,37 @@
   }
 }
 
+/* Guide Character (Stage 9) motion — same "purposeful, calm motion
+   only" principle as wv-spin/wv-shimmer above, applied to a character
+   rather than a loading state. A slow, gentle float reads as "alive"
+   without being bouncy or attention-grabbing; a soft wave is a single
+   deliberate gesture, not a looping distraction. */
+@keyframes wv-guide-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes wv-guide-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
