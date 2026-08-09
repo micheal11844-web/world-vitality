@@ -44,6 +44,52 @@ test("only admin_owner can delete a workspace or manage billing", () => {
   }
 });
 
+test("can() with no scope argument is unchanged from before scoping existed", () => {
+  for (const role of ALL_ROLES) {
+    for (const permission of new Set(Object.values(ROLE_PERMISSIONS).flat())) {
+      // Calling with vs. without the new third argument must agree —
+      // this is the additive-not-breaking guarantee for every existing
+      // caller that doesn't know about resource scoping.
+      assert.equal(can(role, permission), can(role, permission, undefined));
+    }
+  }
+});
+
+test("undefined or empty scopedResourceIds means workspace-wide access, not deny-all", () => {
+  assert.equal(
+    can("scoped_field_user", "data:view", {
+      resourceId: "field-1",
+      scopedResourceIds: undefined,
+    }),
+    true,
+  );
+  assert.equal(
+    can("scoped_field_user", "data:view", {
+      resourceId: "field-1",
+      scopedResourceIds: [],
+    }),
+    true,
+  );
+});
+
+test("a configured scope restricts access to only the listed resource IDs", () => {
+  const scope = { resourceId: "field-1", scopedResourceIds: ["field-1", "field-2"] };
+  assert.equal(can("scoped_field_user", "data:view", scope), true);
+  assert.equal(can("scoped_field_user", "data:view", { ...scope, resourceId: "field-99" }), false);
+});
+
+test("resource scoping never grants a permission the role doesn't hold", () => {
+  // scoped_field_user has no reports:create permission at all — being
+  // "in scope" for a resource must not bypass the base permission check.
+  assert.equal(
+    can("scoped_field_user", "reports:create", {
+      resourceId: "field-1",
+      scopedResourceIds: ["field-1"],
+    }),
+    false,
+  );
+});
+
 test("permissionsFor matches can() for every role/permission pair", () => {
   const allPermissions = new Set(Object.values(ROLE_PERMISSIONS).flat());
   for (const role of ALL_ROLES) {
