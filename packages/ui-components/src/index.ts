@@ -22,6 +22,11 @@ export {
   type StateDisplayProps,
   type StateDisplayStatus,
 } from "./components/StateDisplay.js";
+export {
+  GuideCharacter,
+  type GuideCharacterProps,
+  type GuideCharacterMood,
+} from "./components/GuideCharacter.js";
 
 export { Header, type HeaderProps } from "./layout/Header.js";
 export { Sidebar, type SidebarProps, type SidebarItem } from "./layout/Sidebar.js";
