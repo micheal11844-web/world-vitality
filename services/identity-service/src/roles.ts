@@ -14,6 +14,25 @@
  * against actual product intent before relying on it for anything
  * beyond scaffolding, and reconcile the BUILD_PLAN section reference
  * when the PRD is next revised.
+ *
+ * **Resource-level scoping mechanism (added post-Stage-7):** `can()`
+ * below follows the standard "actor → action → resource" pattern for
+ * layering resource-level access on top of RBAC (rather than a role per
+ * resource, which explodes combinatorially) — an authenticated user in
+ * a workspace, taking an action, against an optional specific resource.
+ * This closes the *mechanism* gap `scoped_field_user` previously had no
+ * answer for. It does NOT yet close the *product* gap: no sub-workspace
+ * resource type (a "field," a "site") exists anywhere in
+ * `packages/data-schemas` or the Agriculture workspace's data model, so
+ * nothing in this codebase actually calls `can()` with a `resourceId`
+ * yet — there is nothing real to scope to. Building a resource type
+ * with no product surface behind it would be premature (see
+ * BUILD_PLAN's explicitly-deferred "any workspace beyond Agriculture").
+ * What's real here: the interface is ready, tested, and standards-
+ * aligned (WorkOS/Aserto-style tenant-scoped RBAC+ABAC hybrid) for the
+ * day a scoped resource type exists — consistent with ADR-0003's
+ * "interfaces before implementations" principle, applied one level
+ * deeper than ADR-0003 itself covers.
  */
 export type Role = "admin_owner" | "operational_user" | "scoped_field_user" | "viewer_external";
 
@@ -44,12 +63,15 @@ export type Permission =
  * - `operational_user` — day-to-day platform use: views and edits data,
  *   creates reports, manages alerts. Cannot change who's on the team,
  *   billing, or workspace-level settings.
- * - `scoped_field_user` — same shape as `operational_user` today, minus
- *   report creation. "Scoped" implies a narrower slice of *data* (e.g. one
- *   field, one site) rather than fewer permission types — that data-level
- *   scoping isn't modeled by this role system yet (permissions here are
- *   workspace-wide, not resource-scoped) and needs its own design pass
- *   before this role is trustworthy for real access control.
+ * - `scoped_field_user` — same permission *types* as `operational_user`
+ *   minus report creation, PLUS resource-level scoping: when a
+ *   membership carries `scopedResourceIds` (see `WorkspaceMembership`
+ *   in `account.ts`), this role's access narrows to just those resource
+ *   IDs rather than the whole workspace. No membership can populate
+ *   `scopedResourceIds` with anything meaningful yet — see the module
+ *   doc comment above for why. Until then this role behaves exactly
+ *   like before (workspace-wide), which is the correct, honest default
+ *   for "no scope constraint configured," not a bug.
  * - `viewer_external` — strictly read-only.
  */
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
@@ -79,9 +101,52 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   viewer_external: ["data:view", "reports:view", "alerts:view"],
 } as const;
 
-/** Whether the given role holds the given permission. */
-export function can(role: Role, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role].includes(permission);
+/**
+ * Resource-scoping context for a `can()` check — the "resource" leg of
+ * the actor → action → resource pattern. Omit entirely for a
+ * workspace-wide check (the only kind that currently means anything,
+ * since no membership has a populated `scopedResourceIds` — see the
+ * module doc comment).
+ */
+export interface ResourceScopeContext {
+  /** The specific resource being acted on, e.g. a future field/site ID. */
+  resourceId: string;
+  /**
+   * The acting membership's configured scope, from
+   * `WorkspaceMembership.scopedResourceIds`. `undefined`/empty means
+   * "not resource-scoped" — workspace-wide access, same as today.
+   */
+  scopedResourceIds: readonly string[] | undefined;
+}
+
+/**
+ * Whether the given role holds the given permission.
+ *
+ * Pass `scope` to additionally check resource-level access (see
+ * `ResourceScopeContext`). Omitting it — the common case today, since
+ * nothing yet has a resource to check — is exactly equivalent to the
+ * pre-existing workspace-wide behavior; this parameter is additive, not
+ * a breaking change to any existing caller.
+ */
+export function can(role: Role, permission: Permission, scope?: ResourceScopeContext): boolean {
+  if (!ROLE_PERMISSIONS[role].includes(permission)) {
+    return false;
+  }
+  if (!scope) {
+    return true;
+  }
+  const { resourceId, scopedResourceIds } = scope;
+  // No configured scope on the membership = not resource-restricted =
+  // workspace-wide access, regardless of role. This is the "boring,
+  // consistent" default the resource-scoping literature recommends:
+  // absence of a constraint means the broader (existing) behavior, not
+  // an implicit deny — an implicit-deny-by-default here would silently
+  // break every role for every workspace the moment this field was
+  // added to the schema, before any UI exists to populate it.
+  if (!scopedResourceIds || scopedResourceIds.length === 0) {
+    return true;
+  }
+  return scopedResourceIds.includes(resourceId);
 }
 
 /** All permissions held by a role — useful for rendering UI affordances
