@@ -13,6 +13,16 @@ export interface Profile {
 export interface WorkspaceMembership {
   workspaceId: string;
   role: Role;
+  /**
+   * Optional resource-level restriction, consumed by `can()`'s `scope`
+   * parameter (see roles.ts). `undefined` (the only value any real
+   * membership has today) means workspace-wide access — no product
+   * surface yet writes a non-empty value here. See roles.ts's module
+   * doc comment for why this exists ahead of anything that populates
+   * it: the interface is ready before the resource type it will
+   * eventually constrain, per ADR-0003's ordering principle.
+   */
+  scopedResourceIds?: string[];
 }
 
 /**
@@ -112,7 +122,7 @@ export class SupabaseAccountService implements AccountService {
   async getWorkspaceMemberships(userId: string): Promise<WorkspaceMembership[]> {
     const { data, error } = await this.client
       .from("workspace_members")
-      .select("workspace_id, role")
+      .select("workspace_id, role, scoped_resource_ids")
       .eq("user_id", userId);
     if (error) {
       throw new Error(`Failed to load workspace memberships for ${userId}: ${error.message}`);
@@ -120,6 +130,11 @@ export class SupabaseAccountService implements AccountService {
     return (data ?? []).map((row) => ({
       workspaceId: row.workspace_id,
       role: row.role as Role,
+      // Column is nullable; null/absent means "not resource-scoped" —
+      // mapped to `undefined`, not `[]`, so it matches can()'s
+      // "no scope configured" branch rather than an empty-array edge
+      // case with different (accidentally deny-all) semantics.
+      scopedResourceIds: row.scoped_resource_ids ?? undefined,
     }));
   }
 
