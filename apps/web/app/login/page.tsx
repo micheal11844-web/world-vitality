@@ -2,8 +2,34 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button, Card, Input, Text } from "@world-vitality/ui-components";
+import {
+  Button,
+  Card,
+  Input,
+  Text,
+  GuideCharacter,
+  type GuideCharacterMood,
+} from "@world-vitality/ui-components";
 import { requestMagicLinkAction } from "../../lib/actions";
+
+/**
+ * Maps the form's real states onto the Guide Character's moods (Stage
+ * 9, ticket 9.3 — first page). Deliberate 1:1 mapping to state that
+ * already exists, not new state invented just for the character.
+ */
+function moodFor(status: "idle" | "sending" | "sent" | "error"): GuideCharacterMood {
+  switch (status) {
+    case "sending":
+      return "thinking";
+    case "sent":
+      return "happy";
+    case "error":
+      return "concerned";
+    case "idle":
+    default:
+      return "idle";
+  }
+}
 
 /**
  * `useSearchParams()` opts a component out of static rendering and
@@ -54,6 +80,11 @@ function LoginForm() {
 
   return (
     <Card style={{ maxWidth: "24rem", width: "100%" }}>
+      <div
+        style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
+      >
+        <GuideCharacter mood={moodFor(status)} wave={status === "idle"} />
+      </div>
       <Text variant="sectionTitle" as="h1" style={{ marginBottom: "var(--wv-space-sm)" }}>
         Sign in to World Vitality
       </Text>
