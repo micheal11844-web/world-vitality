@@ -23,3 +23,38 @@ jobs:
       - run: pnpm run format
       - run: pnpm run typecheck
       - run: pnpm run test
+
+  # Closes the Stage 7 gap flagged in
+  # docs/reviews/stage-7-observability-security-accessibility.md:
+  # "no dependency-scanning in CI".
+  #
+  # `continue-on-error: true`, deliberately, for now: as of this change
+  # `pnpm audit --audit-level=high` reports 3 high-severity findings
+  # (postcss <8.5.18, sharp <0.35.0, both CVEs listed in
+  # docs/security/known-vulnerabilities.md) that are pinned *inside*
+  # next@15.5.22's own dependency tree, not our direct dependencies. A
+  # `pnpm.overrides` attempt to force-patch them was tried and reverted —
+  # it re-resolved ~300 unrelated lockfile lines (including bumping
+  # eslint across a major version with unmet peer ranges), which is a
+  # materially riskier change than the vulnerabilities it would fix for
+  # a solo-maintained project with no test coverage of that blast
+  # radius. The real fix is a next.js patch release; until then, this
+  # job stays informational (visible in every CI run, never silently
+  # hidden) rather than blocking every PR on an upstream issue outside
+  # this repo's control. Flip `continue-on-error` to `false` once
+  # `pnpm audit --audit-level=high` is verified clean after the next
+  # Next.js upgrade.
+  dependency-audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level=high
