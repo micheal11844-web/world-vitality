@@ -11,29 +11,47 @@ const nextConfig = {
   // Security headers (BUILD_PLAN ticket 7.2 + Stage-8 gap closure),
   // applied to every route.
   //
-  // Content-Security-Policy, interim version: `style-src` includes
-  // 'unsafe-inline' because components use inline `style={{...}}`
-  // throughout (see ui-components/README.md) — a nonce/hash-based
-  // style-src would require threading a per-request nonce through every
-  // inline style, which is real future work, not done here. What this
-  // CSP *does* meaningfully add: `script-src 'self'` blocks arbitrary
-  // injected <script> execution (the primary XSS payload vector), and
-  // `object-src`/`base-uri`/`frame-ancestors` close off several other
-  // classes of injection and clickjacking. This is a genuine, real
-  // improvement over no CSP at all — not a token gesture — but it is
-  // NOT the fully-hardened nonce-based policy the original Stage 7 note
-  // deferred; that remains open work.
+  // INCIDENT RECORD (see docs/runbooks/incident-response.md and
+  // BUILD_PLAN changelog for the full account): an earlier version of
+  // this CSP used `script-src 'self'` with no `'unsafe-inline'` or
+  // nonce. That blocks Next.js App Router's OWN inline hydration/RSC
+  // scripts, not just injected ones — it produced a fully blank page
+  // in production for every user. Root-caused and fixed by reverting
+  // script-src to the 'unsafe-inline' fallback below.
   //
-  // connect-src/img-src allowlist reflects the actual external hosts
-  // this app talks to as of this change: Supabase (auth + data),
-  // NASA POWER (soil-moisture connector), OpenStreetMap tile server
-  // (MapLibre base map). The Supabase project URL below is a
-  // placeholder — replace `<SUPABASE_PROJECT_REF>` with the real
-  // project ref (from NEXT_PUBLIC_SUPABASE_URL) before deploying, and
-  // verify in a browser console against the deployed app for any CSP
-  // violation reports before treating this as final — it was written
-  // from static code inspection, not a live network trace.
+  // Why not a nonce-based CSP (the fully strict option): verified
+  // against Next.js's own docs before touching this a second time —
+  // nonces require EVERY page in the app to be dynamically rendered
+  // (no static generation, no ISR, higher hosting cost, slower loads
+  // on Vercel's serverless model), because a statically-generated page
+  // has no request to derive a per-request nonce from. That's a real,
+  // consequential, hard-to-reverse architectural tradeoff — not
+  // something to decide unilaterally while fixing an outage. Left as
+  // deliberate future work if strict CSP is ever prioritized; the
+  // Content-Security-Policy Level 3 `'strict-dynamic'` + nonce pattern
+  // is the documented path if/when that tradeoff is chosen (Next 15.x
+  // convention: `middleware.ts` exporting `middleware`, NOT `proxy.ts`
+  // — that's Next 16's renamed convention, confirmed against this
+  // project's actual pinned Next version, 15.5.22, before writing
+  // anything, since a `proxy.ts` file is silently ignored on Next 15).
+  //
+  // This version — 'unsafe-inline' for script-src — still keeps
+  // object-src/base-uri/frame-ancestors closed, and style-src was
+  // already 'unsafe-inline' from the start (inline `style={{...}}`
+  // throughout this codebase's components). It's a real reduction in
+  // XSS defense-in-depth versus a strict nonce policy, honestly
+  // acknowledged rather than glossed over — but it's what Next's own
+  // docs recommend as the supported "Without Nonces" fallback, and,
+  // critically, it actually works.
+  //
+  // connect-src's Supabase host is now derived from the real
+  // SUPABASE_URL server env var at build/server-start time (Node.js
+  // context, not the browser) rather than a manually-edited
+  // placeholder — one less thing to remember to update by hand.
   async headers() {
+    const supabaseHost = process.env.SUPABASE_URL
+      ? new URL(process.env.SUPABASE_URL).host
+      : "*.supabase.co"; // fallback only if the env var is somehow unset
     return [
       {
         source: "/:path*",
@@ -49,10 +67,10 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https://tile.openstreetmap.org",
-              "connect-src 'self' https://power.larc.nasa.gov https://<SUPABASE_PROJECT_REF>.supabase.co",
+              `connect-src 'self' https://power.larc.nasa.gov https://${supabaseHost}`,
               "font-src 'self'",
               "object-src 'none'",
               "base-uri 'self'",
