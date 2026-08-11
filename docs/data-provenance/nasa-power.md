@@ -18,7 +18,12 @@ not direct ground sensors.
 This connector uses the **Daily API**, **Point** endpoint, **AG**
 (Agroclimatology) community by default — chosen to feed BUILD_PLAN Stage
 4's recommended first interpretation capability (agriculture soil-moisture
-status).
+status). The same connector, same community, is now also used unchanged
+for the Weather & Climate workspace's temperature status (BUILD_PLAN
+Stage 10) — only the `parameters` config differs (`T2M` instead of
+`GWETROOT`). No connector code changes were needed for this second real
+usage, which is the actual evidence (not just the design intent) that
+the ingestion/interpretation boundary from ADR-0002/0003 holds.
 
 ## Access
 
