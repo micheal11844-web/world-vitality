@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Header, type HeaderProps } from "./Header.js";
 import { Sidebar, type SidebarItem } from "./Sidebar.js";
 import { AIPanel } from "./AIPanel.js";
+import { GuideCharacter } from "../components/GuideCharacter.js";
 
 export interface AppShellProps {
   brand: HeaderProps["brand"];
@@ -12,6 +13,16 @@ export interface AppShellProps {
   onToggleAiPanel: () => void;
   aiPanelContent?: ReactNode;
   children: ReactNode;
+  /**
+   * Whether the Guide Character (Stage 9) appears, docked in the
+   * bottom-right corner. Defaults to true — the whole point of putting
+   * it in AppShell rather than each page (ticket 9.5) is that it
+   * follows the user across every screen that uses this shell without
+   * each page needing to remember to render it. `false` is an escape
+   * hatch for a future page where it would genuinely be inappropriate
+   * (none exist yet), not a default anyone should reach for.
+   */
+  showGuide?: boolean;
 }
 
 /**
@@ -43,6 +54,7 @@ export function AppShell({
   onToggleAiPanel,
   aiPanelContent,
   children,
+  showGuide = true,
 }: AppShellProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -64,6 +76,19 @@ export function AppShell({
           {aiPanelContent}
         </AIPanel>
       </div>
+      {showGuide && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "var(--wv-space-md)",
+            right: "var(--wv-space-md)",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        >
+          <GuideCharacter mood="idle" size={64} />
+        </div>
+      )}
     </div>
   );
 }

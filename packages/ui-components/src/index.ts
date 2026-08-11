@@ -27,6 +27,16 @@ export {
   type GuideCharacterProps,
   type GuideCharacterMood,
 } from "./components/GuideCharacter.js";
+export {
+  GuideTutorial,
+  type GuideTutorialProps,
+  type GuideTutorialStep,
+} from "./components/GuideTutorial.js";
+export {
+  PasswordStrengthMeter,
+  type PasswordStrengthMeterProps,
+} from "./components/PasswordStrengthMeter.js";
+export { AuthIllustration, type AuthIllustrationProps } from "./components/AuthIllustration.js";
 
 export { Header, type HeaderProps } from "./layout/Header.js";
 export { Sidebar, type SidebarProps, type SidebarItem } from "./layout/Sidebar.js";

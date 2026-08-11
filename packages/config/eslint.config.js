@@ -25,6 +25,20 @@ export default tseslint.config(
     },
   },
   {
+    // Node.js-executed config files (next.config.mjs, etc.) run in the
+    // build/server process, not the browser — they need Node globals,
+    // not the browser/React globals the rest of the app code gets.
+    // Added after a real lint failure surfaced on next.config.mjs's CSP
+    // fix (process/URL flagged as undefined) that had gone unnoticed
+    // because this file glob wasn't covered by any existing override —
+    // same class of gap as the tools/**/*.mjs override above, just not
+    // yet extended to cover config files at the time that was written.
+    files: ["**/*.config.{js,mjs,cjs,ts}"],
+    languageOptions: {
+      globals: { process: "readonly", URL: "readonly", module: "writable", require: "readonly" },
+    },
+  },
+  {
     files: ["**/*.tsx"],
     plugins: {
       "react-hooks": reactHooks,

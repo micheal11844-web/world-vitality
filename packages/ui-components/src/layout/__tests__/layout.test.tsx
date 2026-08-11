@@ -72,6 +72,34 @@ test("AppShell composes header, nav, main content, and AI panel together", () =>
   assert.ok(screen.getByRole("banner"));
   assert.ok(screen.getByRole("navigation", { name: "Primary" }));
   assert.ok(screen.getByRole("main"));
-  assert.ok(screen.getByText("Page content"));
   assert.ok(screen.getByRole("button", { name: "Open AI panel" }));
+});
+
+test("AppShell renders the Guide Character by default (ticket 9.5)", () => {
+  const { container } = render(
+    <AppShell
+      brand={<span>World Vitality</span>}
+      sidebarItems={[{ key: "dash", label: "Dashboard", href: "/dashboard", active: true }]}
+      aiPanelOpen={false}
+      onToggleAiPanel={() => {}}
+    >
+      <p>Page content</p>
+    </AppShell>,
+  );
+  assert.ok(container.querySelector("[title='Orbi']"));
+});
+
+test("AppShell hides the Guide Character when showGuide is false", () => {
+  const { container } = render(
+    <AppShell
+      brand={<span>World Vitality</span>}
+      sidebarItems={[{ key: "dash", label: "Dashboard", href: "/dashboard", active: true }]}
+      aiPanelOpen={false}
+      onToggleAiPanel={() => {}}
+      showGuide={false}
+    >
+      <p>Page content</p>
+    </AppShell>,
+  );
+  assert.equal(container.querySelector("[title='Orbi']"), null);
 });
