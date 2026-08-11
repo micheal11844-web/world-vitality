@@ -71,6 +71,7 @@ never a Client Component, and never committed (`.env*` gitignored
 except `.env.example`).
 
 **Threats not fully closed:**
+
 - **Vercel dashboard access** — anyone with access to the Vercel
   project's environment-variable settings can read this key in
   plaintext. Currently: solo owner only, so this reduces to "protect
@@ -84,7 +85,8 @@ except `.env.example`).
   lint rule or code-review checklist item, not yet built.
 
 ### 3. PKCE-vs-token_hash confusion (a real, previously-exploited-by-
-   accident failure mode, not hypothetical)
+
+accident failure mode, not hypothetical)
 
 This isn't an attacker threat so much as a self-inflicted
 availability threat, but it's worth threat-modeling because it
@@ -100,8 +102,8 @@ system will have.
 ### 4. Role/permission model — data-level scoping gap
 
 `scoped_field_user` is documented (in `roles.ts`'s own comment) as
-intending narrower *data* access but currently only having a narrower
-*permission-type* set — real resource-level (e.g., per-field) access
+intending narrower _data_ access but currently only having a narrower
+_permission-type_ set — real resource-level (e.g., per-field) access
 control isn't modeled. Today this is low real-world risk because the
 only workspace (Agriculture) has no sub-workspace resources to
 under-scope access to in the first place — there's nothing more
@@ -124,15 +126,98 @@ defense-in-depth for this specific action) rather than an oversight —
 if this project's risk tolerance changes (e.g., once there are real
 users with real data), revisit whether a re-auth step belongs here.
 
+### 6. Password auth — credential stuffing / brute force (new attack surface)
+
+Added alongside magic link, not replacing it. This is a genuinely
+different threat class from anything above: magic link and OAuth both
+delegate "does this person control this identity" to a third party
+(the email inbox, or Google) with no secret for an attacker to guess.
+A password is a secret the _user_ chooses, and password-guessing
+attacks are automatable at scale — the specific thing NIST SP
+800-63B's current guidance (researched before building this) is
+designed around.
+
+**What's real here:** `signInWithPasswordAction` returns a
+deliberately generic "Invalid email or password" error (doesn't
+distinguish wrong-password from no-such-account, matching magic
+link's own account-existence-shouldn't-leak principle) and requires an
+8-character minimum, and `PasswordStrengthMeter` gives real,
+pattern-aware (not naive character-class) feedback beyond that floor.
+
+**What's honestly NOT built:** rate limiting on sign-in attempts
+beyond whatever Supabase's platform applies by default (not
+independently verified here — flagged, not assumed sufficient); no
+check against known-breached-password lists (OWASP's Authentication
+Cheat Sheet recommends this, e.g. Have I Been Pwned's Pwned Passwords
+API) — a structurally-strong-looking password can still be one that's
+already in a real breach corpus; no account lockout or progressive
+delay after repeated failures. All real, open follow-up work.
+
+### 7. Google OAuth — new PKCE-based flow, new client, new credential class
+
+Adding OAuth required introducing `@supabase/ssr` and a cookie-based
+client (`lib/supabase-ssr.ts`) specifically for the PKCE handshake —
+see that file's own doc comment for why the existing service-role
+client architecture can't complete this exchange (the same class of
+failure that already broke magic link once, deliberately avoided
+here rather than repeated).
+
+**New credential in play:** `SUPABASE_ANON_KEY` — weaker privileges
+than `SUPABASE_SERVICE_ROLE_KEY`, but still a distinct real credential.
+Mixing the two up (e.g. a future edit accidentally using the anon key
+where the service-role key belongs, or vice versa) would be a real,
+easy-to-make mistake worth watching for in review — the anon key is
+_meant_ to be public-safe in typical Supabase apps, but this app's
+existing threat model assumed only one server-side credential class
+existed; that assumption is no longer quite true.
+
+**What's real here:** the PKCE `code_verifier` cookie is genuinely
+transient (only exists between initiating sign-in and completing the
+callback), and the callback converts the result into this app's own
+`Session`/cookie shape immediately — no ongoing parallel session store
+exists.
+
+**What's honestly NOT verified:** this flow has not been exercised
+against a live Google Cloud OAuth app or a live Supabase project from
+this environment — it's correct against Supabase's and Next.js's
+documented behavior (verified this time, unlike the CSP incident) and
+builds/typechecks cleanly, but "typechecks" and "actually completes a
+real OAuth round-trip in a browser" are different claims. Treat the
+first real sign-in attempt as the actual test, and watch server logs
+(`oauth_initiation_failed`, `oauth_callback_verification_failed`)
+closely when it happens.
+
+### 8. "Remember Me" — new refresh-token cookie, new persistent-access window
+
+Before this, no session-refresh mechanism existed in this codebase at
+all — sessions simply expired with the short-lived Supabase access
+token. `REFRESH_COOKIE` is new: a long-lived (30-day), httpOnly cookie
+holding a real refresh token, set only when the user opts in.
+
+**Real consequence worth naming plainly:** a stolen `REFRESH_COOKIE`
+(e.g. via a device left logged in and physically accessed, or a
+successful XSS despite the CSP's defenses) grants an attacker up to 30
+days of silent re-access, not just the original short-lived token's
+window. This is the standard, accepted tradeoff "remember me" features
+make everywhere — convenience for a longer persistent-access window —
+but it's a real tradeoff, not a free feature, and is being named as
+one rather than left implicit.
+
+**What's real here:** explicitly cleared (not just left unset) when a
+user signs in again without Remember Me checked, so a stale long-lived
+cookie from an earlier choice can't silently persist past a later,
+different choice.
+
 ## What this threat model does NOT cover
 
 Per this project's honest-flagging pattern: no formal STRIDE/DREAD
 scoring was applied (this is a plain-language walkthrough, not a
 scored framework exercise); no penetration testing has been performed
-against the live deployment; SSO/OAuth groundwork mentioned in
-BUILD_PLAN ticket 3.1 doesn't exist yet so isn't modeled here; the
-NASA connector and interpretation engine have their own threat surface
-(data integrity/provenance, not identity) not covered by this document.
+against the live deployment; the NASA connector and interpretation
+engine have their own threat surface (data integrity/provenance, not
+identity) not covered by this document. (Threats #6–#8 above replace
+what this section previously said about SSO/OAuth "not existing yet"
+— it now does, and is modeled above.)
 
 ## Revisit triggers
 
@@ -140,5 +225,8 @@ Per Engineering Blueprint Section 3 (docs reviewed at fixed intervals,
 not only on change): revisit this document when any of the following
 happen, whichever comes first — a second workspace is added (directly
 activates threat #4), real users beyond the owner exist (changes the
-stakes on #2 and #5), or SSO/ticket 3.1's "optional SSO groundwork" is
-actually built (new flow, new threats).
+stakes on #2, #5, #6, #7, and #8 substantially), rate limiting or
+breached-password screening is added for password auth (closes part of
+#6), or the OAuth flow (#7) is actually exercised against a live
+Google/Supabase setup for the first time — its "not verified" status
+above should be updated to a real result, not left stale.

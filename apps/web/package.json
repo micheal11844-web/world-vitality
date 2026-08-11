@@ -9,15 +9,17 @@
     "start": "next start"
   },
   "dependencies": {
-    "@world-vitality/ui-components": "workspace:*",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.45.0",
+    "@world-vitality/data-ingestion": "workspace:*",
+    "@world-vitality/data-schemas": "workspace:*",
     "@world-vitality/design-tokens": "workspace:*",
     "@world-vitality/identity-service": "workspace:*",
     "@world-vitality/interpretation-engine": "workspace:*",
-    "@world-vitality/data-ingestion": "workspace:*",
-    "@world-vitality/data-schemas": "workspace:*",
+    "@world-vitality/ui-components": "workspace:*",
+    "maplibre-gl": "^4.7.0",
     "next": "^15.5.21",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "maplibre-gl": "^4.7.0"
+    "react-dom": "^18.3.0"
   }
 }

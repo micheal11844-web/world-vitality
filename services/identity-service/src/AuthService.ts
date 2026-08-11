@@ -17,6 +17,24 @@ export interface Session {
    *  server-side only (e.g. an httpOnly cookie), never in client-
    *  readable storage. */
   accessToken: string;
+  /**
+   * Opaque refresh token, used by `refreshSession()` to mint a new
+   * `accessToken` once the current one expires, without requiring the
+   * user to sign in again. Added alongside "Remember Me" — before this,
+   * this codebase had no session-refresh mechanism at all, so a
+   * persistent cookie with no way to refresh what it held would have
+   * been cosmetic, not functional. Store server-side only, same rule as
+   * `accessToken`; only worth persisting long-term when the user opted
+   * into "Remember Me" (see `apps/web/app/auth/callback/route.ts` and
+   * the password sign-in Server Action).
+   *
+   * Optional, not always present: `getSession()` validates an existing
+   * access token and structurally has no way to produce a refresh token
+   * from that alone — only the methods that establish a session fresh
+   * (magic link, password sign-in/up, and `refreshSession()` itself)
+   * return one.
+   */
+  refreshToken?: string;
 }
 
 /**
@@ -64,6 +82,39 @@ export interface AuthService {
    *  or expired rather than throwing — an expired session is an expected
    *  state, not an error condition. */
   getSession(sessionToken: string): Promise<Session | null>;
+
+  /**
+   * Mint a fresh `Session` (new access + refresh token) from a
+   * previously-issued refresh token, without requiring the user to sign
+   * in again. Backs "Remember Me" — a caller only reaches for this once
+   * the access-token cookie has expired but a refresh-token cookie is
+   * still present. Throws if the refresh token itself is invalid/
+   * revoked (a real, expected outcome — e.g. the user signed out
+   * elsewhere, or it's simply too old), which the caller should treat
+   * as "not signed in," not as a server error.
+   */
+  refreshSession(refreshToken: string): Promise<Session>;
+
+  /**
+   * Create a new account with an email + password. Same
+   * doesn't-reveal-account-existence property as `requestMagicLink` is
+   * NOT guaranteed here by Supabase's default `signUp` behavior (it
+   * does return an identifiable "already registered" error in some
+   * configurations) — see `SupabaseAuthService`'s doc comment for the
+   * real, current behavior rather than an assumed one.
+   */
+  signUpWithPassword(email: string, password: string): Promise<Session>;
+
+  /**
+   * Sign in with an existing email + password. This is genuinely a
+   * different attack surface than magic-link/OTP (credential stuffing,
+   * brute force, password reuse across breached sites) — see
+   * `docs/security/auth-threat-model.md`'s updated threat list. Rate
+   * limiting is Supabase's responsibility at the platform level; this
+   * method doesn't add its own on top, which is recorded there as real,
+   * open follow-up rather than assumed handled.
+   */
+  signInWithPassword(email: string, password: string): Promise<Session>;
 
   /** Invalidate a session (sign out). */
   signOut(sessionToken: string): Promise<void>;

@@ -79,14 +79,83 @@ export class SupabaseAuthService implements AuthService {
         `Failed to verify magic-link token: ${error?.message ?? "no session returned"}`,
       );
     }
+    return this.toSession(data.session, data.user.email, data.user.id);
+  }
+
+  async refreshSession(refreshToken: string): Promise<Session> {
+    const { data, error } = await this.client.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+    if (error || !data.session || !data.user?.email) {
+      throw new Error(`Failed to refresh session: ${error?.message ?? "no session returned"}`);
+    }
+    return this.toSession(data.session, data.user.email, data.user.id);
+  }
+
+  /**
+   * **Real, current Supabase behavior, verified rather than assumed**
+   * (see this class's other doc comments for why that verification
+   * habit matters after the CSP incident): unlike `requestMagicLink`,
+   * default-configuration `signUp` DOES return a distinguishable
+   * response for an already-registered email in some Supabase project
+   * configurations (an identity with no `identities` array entries, or
+   * an explicit error depending on "Confirm email" settings) — this
+   * method does not attempt to paper over that distinction, since doing
+   * so incorrectly would be worse than being silent about it. The
+   * caller (the sign-up Server Action) should show a generic
+   * "check your email to confirm" message regardless, but this
+   * document flags that the underlying guarantee is weaker than
+   * `requestMagicLink`'s, not silently assumed equivalent.
+   */
+  async signUpWithPassword(email: string, password: string): Promise<Session> {
+    const { data, error } = await this.client.auth.signUp({ email, password });
+    if (error || !data.session || !data.user?.email) {
+      // No confirmed session yet is a real, expected outcome when the
+      // Supabase project requires email confirmation before password
+      // sign-in works — not necessarily a failure. Surfaced as a
+      // distinct error so the caller can show "check your email"
+      // rather than a generic failure.
+      throw new Error(
+        `Sign-up did not return an active session (may require email confirmation): ${error?.message ?? "no session returned"}`,
+      );
+    }
+    return this.toSession(data.session, data.user.email, data.user.id);
+  }
+
+  async signInWithPassword(email: string, password: string): Promise<Session> {
+    const { data, error } = await this.client.auth.signInWithPassword({ email, password });
+    if (error || !data.session || !data.user?.email) {
+      // Deliberately generic message — does not distinguish "wrong
+      // password" from "no such account," per the same
+      // account-existence-shouldn't-leak principle as requestMagicLink.
+      throw new Error("Invalid email or password.");
+    }
+    return this.toSession(data.session, data.user.email, data.user.id);
+  }
+
+  /** Shared mapping from a Supabase session/user pair to this service's
+   *  own `Session` shape — extracted once real password/refresh methods
+   *  needed the exact same mapping `verifyMagicLinkCallback` already
+   *  had, rather than copy-pasting it a third and fourth time. */
+  private toSession(
+    supabaseSession: {
+      access_token: string;
+      refresh_token: string;
+      expires_at?: number;
+      expires_in: number;
+    },
+    email: string,
+    userId: string,
+  ): Session {
     return {
-      userId: data.user.id,
-      email: data.user.email,
+      userId,
+      email,
       issuedAt: new Date(
-        (data.session.expires_at ?? 0) * 1000 - data.session.expires_in * 1000,
+        (supabaseSession.expires_at ?? 0) * 1000 - supabaseSession.expires_in * 1000,
       ).toISOString(),
-      expiresAt: new Date((data.session.expires_at ?? 0) * 1000).toISOString(),
-      accessToken: data.session.access_token,
+      expiresAt: new Date((supabaseSession.expires_at ?? 0) * 1000).toISOString(),
+      accessToken: supabaseSession.access_token,
+      refreshToken: supabaseSession.refresh_token,
     };
   }
 
