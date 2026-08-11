@@ -7,16 +7,16 @@ whenever `next` is upgraded.
 
 ## Currently accepted (as of this entry)
 
-All three are pinned *inside* `next@15.5.22`'s own dependency tree
+All three are pinned _inside_ `next@15.5.22`'s own dependency tree
 (`next > postcss`, `next > sharp`), not direct dependencies of this
 repo — we cannot bump them independently without either an upstream
 Next.js patch release or a `pnpm.overrides` force-resolution.
 
-| Package | Installed | Patched | Severity | Advisory |
-|---|---|---|---|---|
-| postcss | 8.4.31 | >=8.5.12 | High | [GHSA-6g55-p6wh-862q](https://github.com/advisories/GHSA-6g55-p6wh-862q) |
-| postcss | 8.4.31 | >=8.5.18 | High | [GHSA-r28c-9q8g-f849](https://github.com/advisories/GHSA-r28c-9q8g-f849) |
-| sharp (libvips) | 0.34.5 | >=0.35.0 | High | [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) |
+| Package         | Installed | Patched  | Severity | Advisory                                                                 |
+| --------------- | --------- | -------- | -------- | ------------------------------------------------------------------------ |
+| postcss         | 8.4.31    | >=8.5.12 | High     | [GHSA-6g55-p6wh-862q](https://github.com/advisories/GHSA-6g55-p6wh-862q) |
+| postcss         | 8.4.31    | >=8.5.18 | High     | [GHSA-r28c-9q8g-f849](https://github.com/advisories/GHSA-r28c-9q8g-f849) |
+| sharp (libvips) | 0.34.5    | >=0.35.0 | High     | [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) |
 
 **Why not force-patched via `pnpm.overrides`:** attempted and reverted.
 Overriding `postcss`/`sharp` to patched versions triggered a much wider
@@ -41,7 +41,7 @@ automatically. Re-run `pnpm audit --audit-level=high` after every
 **Do not** treat `dependency-audit`'s `continue-on-error: true` in CI
 as "vulnerabilities don't matter" — it exists specifically so real,
 currently-unfixable findings don't get lost in a wall of expected
-noise, and so a *new, actually-fixable* finding introduced by a direct
+noise, and so a _new, actually-fixable_ finding introduced by a direct
 dependency is still visible in every CI run even though it won't
 block the merge. Revisit whether it should block merges once this
 list is empty.

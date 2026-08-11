@@ -161,14 +161,14 @@ per this project's own norm of not silently rewriting past findings.
   violation reports before trusting it fully in production.
 - **No dependency-scanning in CI — closed, informationally.** Added a
   `dependency-audit` job to `.github/workflows/ci.yml` running `pnpm
-  audit --audit-level=high` on every push/PR. Set to
+audit --audit-level=high` on every push/PR. Set to
   `continue-on-error: true` for now because 3 known high-severity
   findings are currently pinned inside `next@15.5.22`'s own dependency
   tree with no available fix from this repo's side — see
   `docs/security/known-vulnerabilities.md` for the full record and why
   a `pnpm.overrides` force-fix was attempted and reverted (it destabilized
   ~300 unrelated lockfile lines). The job still surfaces every run, so a
-  *new* finding from a direct dependency won't be silently missed.
+  _new_ finding from a direct dependency won't be silently missed.
 - **No incident-response runbook — closed.** Added
   `docs/runbooks/incident-response.md`, scoped honestly to what this
   project actually is right now (solo-maintained, no paging/on-call) —

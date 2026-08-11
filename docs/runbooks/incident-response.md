@@ -93,6 +93,7 @@ imported by exactly two server-only files
 Client Component.
 
 If leak is suspected:
+
 1. Rotate the key immediately in Supabase (Project Settings → API →
    generate new service role key).
 2. Update `SUPABASE_SERVICE_ROLE_KEY` in Vercel's environment
@@ -100,7 +101,7 @@ If leak is suspected:
 3. Check Supabase's auth logs for any suspicious admin-level activity
    in the window the key may have been exposed.
 4. Grep the git history for the key value (`git log -p -S <partial
-   key>`) to confirm whether it was ever actually committed, versus
+key>`) to confirm whether it was ever actually committed, versus
    exposed some other way (e.g., pasted somewhere outside the repo).
 
 ### Data-provider failure / bad data shown (SEV-2)
