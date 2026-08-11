@@ -120,27 +120,57 @@ export async function signInWithPasswordAction(
  * `lib/supabase-ssr.ts` for why this needs a different client than
  * every other auth method in this file.
  *
+ * **Bug fixed here, found in real production use:** the previous
+ * version called `getOAuthClient()` (which throws if `SUPABASE_URL`/
+ * `SUPABASE_ANON_KEY` aren't set) outside any try/catch. With
+ * `SUPABASE_ANON_KEY` not yet configured in Vercel, that throw was
+ * never caught — the Server Action rejected with an unhandled error,
+ * the client's `handleGoogleClick` never caught it either, and
+ * `googleLoading` never got reset: the button spun forever with no
+ * feedback. Now the entire body runs inside try/catch, with `redirect()`
+ * called from the `catch` block on failure (never from inside `try` —
+ * `redirect()` itself throws a special signal internally, so calling
+ * it inside `try` would let this function's own `catch` swallow that
+ * signal and break the redirect; verified against Next.js's own docs
+ * on this exact gotcha before writing this, given the CSP incident's
+ * lesson about not guessing at framework internals a second time).
+ *
  * `rememberMe` is threaded through as a query param on the callback URL
  * (not a cookie set here) since no session/cookie exists yet at this
  * point — there's nothing to attach a preference to until the callback
  * actually completes the exchange.
  */
 export async function signInWithGoogleAction(rememberMe: boolean): Promise<void> {
-  const redirectBase = process.env.SUPABASE_AUTH_REDIRECT_URL;
-  if (!redirectBase) {
-    throw new Error("Missing SUPABASE_AUTH_REDIRECT_URL — cannot build an OAuth callback URL.");
-  }
-  const callbackUrl = new URL(redirectBase);
-  callbackUrl.searchParams.set("remember", rememberMe ? "1" : "0");
+  let providerUrl: string;
+  try {
+    const redirectBase = process.env.SUPABASE_AUTH_REDIRECT_URL;
+    if (!redirectBase) {
+      throw new Error("Missing SUPABASE_AUTH_REDIRECT_URL env var.");
+    }
+    const callbackUrl = new URL(redirectBase);
+    callbackUrl.searchParams.set("remember", rememberMe ? "1" : "0");
 
-  const supabase = await getOAuthClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: callbackUrl.toString() },
-  });
-  if (error || !data.url) {
-    logSecurity.error("oauth_initiation_failed", error);
-    redirect("/login?error=oauth_failed");
+    const supabase = await getOAuthClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callbackUrl.toString() },
+    });
+    if (error || !data.url) {
+      throw new Error(error?.message ?? "Supabase returned no OAuth URL.");
+    }
+    providerUrl = data.url;
+  } catch (err) {
+    logSecurity.error("oauth_initiation_failed", err);
+    // A missing env var is a real, distinct, actionable case (the
+    // owner hasn't finished Google/Supabase console setup yet) — surfaced
+    // with its own error code so the login page can say so plainly,
+    // rather than a generic "try again" that would be actively
+    // misleading (retrying changes nothing until the env var is set).
+    const code =
+      err instanceof Error && err.message.includes("env var")
+        ? "oauth_not_configured"
+        : "oauth_failed";
+    redirect(`/login?error=${code}`);
   }
-  redirect(data.url);
+  redirect(providerUrl);
 }

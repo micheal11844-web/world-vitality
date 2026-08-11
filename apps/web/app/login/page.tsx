@@ -7,6 +7,7 @@ import {
   Card,
   Input,
   Text,
+  Checkbox,
   GuideCharacter,
   AuthIllustration,
   PasswordStrengthMeter,
@@ -43,6 +44,8 @@ const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
   verification_failed:
     "That sign-in link has expired or already been used. Please request a new one.",
   oauth_failed: "Google sign-in didn't go through. Please try again.",
+  oauth_not_configured:
+    "Google sign-in isn't set up yet on this deployment. Use email sign-in for now.",
 };
 
 type AuthMode = "link" | "password";
@@ -132,14 +135,40 @@ function LoginForm() {
 
   async function handleGoogleClick() {
     setGoogleLoading(true);
-    await signInWithGoogleAction(rememberMe);
-    // signInWithGoogleAction redirects server-side on success; if we
-    // ever reach here, it didn't, and the page will show the
-    // oauth_failed error from the redirected URL on next load instead.
+    try {
+      await signInWithGoogleAction(rememberMe);
+      // signInWithGoogleAction always redirects (to Google on success,
+      // or back to /login?error=... on failure) — it never returns
+      // normally. This line is effectively unreachable, but the
+      // try/finally below is real defense-in-depth: a same-route,
+      // query-param-only navigation (the error path lands back on
+      // /login) isn't guaranteed to remount this component and reset
+      // its local state, so googleLoading is reset explicitly rather
+      // than assumed to clear itself.
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   return (
     <Card style={{ maxWidth: "26rem", width: "100%" }}>
+      {/* Real brand mark — research on login-page polish specifically
+          calls out brand identity (logo/wordmark) reinforcing trust;
+          previously this page had no branding beyond the page title
+          text, one of the concrete things that made it feel unfinished. */}
+      <Text
+        variant="caption"
+        style={{
+          display: "block",
+          textAlign: "center",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--wv-text-secondary)",
+          marginBottom: "var(--wv-space-md)",
+        }}
+      >
+        World Vitality
+      </Text>
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
       >
@@ -148,13 +177,13 @@ function LoginForm() {
       <Text
         variant="sectionTitle"
         as="h1"
-        style={{ marginBottom: "var(--wv-space-sm)", textAlign: "center" }}
+        style={{ marginBottom: "var(--wv-space-lg)", textAlign: "center" }}
       >
         {mode === "link"
-          ? "Sign in to World Vitality"
+          ? "Sign in"
           : passwordSubMode === "signup"
             ? "Create your account"
-            : "Sign in to World Vitality"}
+            : "Sign in"}
       </Text>
 
       {status === "sent" && mode === "link" ? (
@@ -191,48 +220,25 @@ function LoginForm() {
           >
             <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              or continue with email
+              or
             </Text>
             <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
           </div>
 
-          <div
-            role="tablist"
-            aria-label="Sign-in method"
-            style={{
-              display: "flex",
-              gap: "var(--wv-space-xs)",
-              marginBottom: "var(--wv-space-md)",
-              borderBottom: "1px solid var(--wv-border)",
-            }}
-          >
-            {(["link", "password"] as const).map((m) => (
-              <button
-                key={m}
-                role="tab"
-                type="button"
-                aria-selected={mode === m}
-                onClick={() => {
-                  setMode(m);
-                  setStatus("idle");
-                  setError(undefined);
-                }}
-                style={{
-                  flex: 1,
-                  padding: "var(--wv-space-sm)",
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  fontWeight: mode === m ? 600 : 400,
-                  color: mode === m ? "var(--wv-text-primary)" : "var(--wv-text-secondary)",
-                  borderBottom: mode === m ? "2px solid var(--wv-accent)" : "2px solid transparent",
-                }}
-              >
-                {m === "link" ? "Email link" : "Password"}
-              </button>
-            ))}
-          </div>
-
+          {/*
+            Single primary flow + a plain secondary link to switch
+            methods — NOT a tab strip. Real login-page UX research is
+            explicit that tabbed/modal-switching login UIs are an
+            anti-pattern: they add an extra decision/click before the
+            actual task, and can make people unsure where to find the
+            method they actually want (real, cited finding, not a
+            stylistic guess — see this file's git history for the
+            source). Magic link stays the default/primary path, matching
+            this app's own founding security choice (see
+            docs/security/auth-threat-model.md) — password is a
+            same-weight but secondary option, one link away, not an
+            equally-prominent competing tab.
+          */}
           {mode === "link" ? (
             <form
               onSubmit={handleMagicLinkSubmit}
@@ -249,6 +255,27 @@ function LoginForm() {
               <Button type="submit" loading={status === "sending"}>
                 Send sign-in link
               </Button>
+              <Text variant="caption" style={{ textAlign: "center" }}>
+                Prefer a password?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("password");
+                    setStatus("idle");
+                    setError(undefined);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--wv-accent)",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    padding: 0,
+                  }}
+                >
+                  Sign in with a password instead
+                </button>
+              </Text>
             </form>
           ) : (
             <form
@@ -277,23 +304,11 @@ function LoginForm() {
                 )}
               </div>
 
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "var(--wv-space-xs)",
-                  fontSize: "0.875rem",
-                  color: "var(--wv-text-secondary)",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                Remember me on this device
-              </label>
+              <Checkbox
+                label="Remember me on this device"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
 
               <Button type="submit" loading={status === "sending"}>
                 {passwordSubMode === "signup" ? "Create account" : "Sign in"}
@@ -338,6 +353,26 @@ function LoginForm() {
                   </>
                 )}
               </Text>
+              <Text variant="caption" style={{ textAlign: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("link");
+                    setStatus("idle");
+                    setError(undefined);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--wv-text-secondary)",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    padding: 0,
+                  }}
+                >
+                  Use an email link instead
+                </button>
+              </Text>
             </form>
           )}
         </>
@@ -352,10 +387,22 @@ function LoginForm() {
  * collapses to a single column below the medium breakpoint via CSS
  * `@media`, not a JS-measured layout, since this is a one-time static
  * layout decision, not something that needs to react to runtime state.
+ *
+ * **Fixed here, found in real use:** the outer container previously
+ * used `minHeight: "100vh"`, which lets the *whole page* — illustration
+ * panel included — grow taller than the viewport and scroll once the
+ * form's content (tabs, password fields, strength meter, Remember Me,
+ * "New here?" link) exceeds one screen's height, which looks broken for
+ * an auth page. Fixed to `height: "100vh"` with `overflow: "hidden"` on
+ * the page itself, so it never scrolls — but the form column alone gets
+ * `overflow-y: "auto"` as a real safety net, not just a cosmetic fix: on
+ * a genuinely short viewport, content still needs somewhere to go
+ * rather than being silently clipped and unreachable (e.g. the submit
+ * button). The illustration panel never scrolls either way.
  */
 export default function LoginPage() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex" }}>
+    <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <div className="wv-auth-illustration-panel" style={{ flex: 1, display: "none" }}>
         <AuthIllustration />
       </div>
@@ -368,6 +415,8 @@ export default function LoginPage() {
           backgroundColor: "var(--wv-bg)",
           padding: "var(--wv-space-lg)",
           minWidth: 0,
+          height: "100%",
+          overflowY: "auto",
         }}
       >
         <Suspense fallback={null}>

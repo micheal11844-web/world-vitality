@@ -32,6 +32,7 @@ export {
   type GuideTutorialProps,
   type GuideTutorialStep,
 } from "./components/GuideTutorial.js";
+export { Checkbox, type CheckboxProps } from "./components/Checkbox.js";
 export {
   PasswordStrengthMeter,
   type PasswordStrengthMeterProps,
