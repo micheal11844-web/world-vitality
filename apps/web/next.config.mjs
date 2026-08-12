@@ -70,7 +70,17 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https://tile.openstreetmap.org",
-              `connect-src 'self' https://power.larc.nasa.gov https://${supabaseHost}`,
+              // tile.openstreetmap.org needs to be in BOTH img-src and
+              // connect-src: MapLibre GL (apps/web's map view) fetches
+              // raster tiles via fetch()/XHR internally for canvas
+              // rendering, not plain <img> tags — a real bug found in
+              // production (map tiles silently failing with a CSP
+              // "Refused to connect" console error, not a MapLibre bug)
+              // after only adding this host to img-src. connect-src is
+              // what actually gates fetch()/XHR destinations; img-src
+              // only covers direct <img src="...">/CSS background-image
+              // loads, which isn't how MapLibre loads tile data.
+              `connect-src 'self' https://power.larc.nasa.gov https://tile.openstreetmap.org https://${supabaseHost}`,
               "font-src 'self'",
               "object-src 'none'",
               "base-uri 'self'",
