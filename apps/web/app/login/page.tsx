@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   Button,
   Card,
@@ -19,6 +20,44 @@ import {
   signUpWithPasswordAction,
   signInWithGoogleAction,
 } from "../../lib/actions";
+
+/**
+ * GuideCharacter3D touches browser globals (document, canvas) during
+ * module import — it must never be server-rendered, even though it's
+ * a "use client" component (that alone doesn't prevent Next's initial
+ * server-side pass from evaluating its module). `ssr: false` is
+ * required, not optional — see the component's own doc comment for
+ * the full reasoning.
+ *
+ * **Imports from `@world-vitality/ui-components/GuideCharacter3D`, a
+ * dedicated subpath — NOT the package's main barrel export.** Found
+ * this the hard way: importing via the shared barrel
+ * (`@world-vitality/ui-components`, the same module every other page
+ * also statically imports for Button/Card/etc.) caused webpack to
+ * bundle Three.js/@react-three/fiber into the SHARED chunk used by
+ * every route, not just this dynamically-loaded one — every
+ * page's First Load JS jumped by ~230kB, not just `/login`'s,
+ * completely defeating the point of `ssr:false`/code-splitting this in
+ * the first place. Caught by actually inspecting `next build`'s
+ * real per-route bundle sizes before considering this done, not
+ * assuming the dynamic import "just worked" because the build
+ * succeeded. The package.json `exports` map has a matching
+ * `"./GuideCharacter3D"` entry pointing directly at the compiled
+ * component file, isolated from the barrel's module graph.
+ *
+ * The `loading` fallback is deliberately static (idle mood, no wave)
+ * rather than wired to live `mood`/`wave` state: `next/dynamic`'s
+ * `loading` render function's exact prop-passthrough behavior wasn't
+ * something to guess at a second time after the CSP incident, and the
+ * loading window here is a small bundle's worth of JS — typically well
+ * under a second — so a static fallback during that brief window is
+ * low-stakes, not a real UX gap.
+ */
+const GuideCharacter3D = dynamic(
+  () =>
+    import("@world-vitality/ui-components/GuideCharacter3D").then((mod) => mod.GuideCharacter3D),
+  { ssr: false, loading: () => <GuideCharacter mood="idle" /> },
+);
 
 /**
  * Maps the form's real states onto the Guide Character's moods (Stage
@@ -172,7 +211,7 @@ function LoginForm() {
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
       >
-        <GuideCharacter mood={moodFor(status)} wave={status === "idle"} />
+        <GuideCharacter3D mood={moodFor(status)} wave={status === "idle"} />
       </div>
       <Text
         variant="sectionTitle"

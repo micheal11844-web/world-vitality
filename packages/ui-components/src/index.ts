@@ -27,6 +27,17 @@ export {
   type GuideCharacterProps,
   type GuideCharacterMood,
 } from "./components/GuideCharacter.js";
+// NOTE: GuideCharacter3D is deliberately NOT re-exported here. It's
+// only reachable via the dedicated subpath
+// "@world-vitality/ui-components/GuideCharacter3D" (see package.json's
+// exports map and the component's own doc comment). Re-exporting it
+// from this barrel — which every page in apps/web statically imports,
+// including ones that never use the 3D character — was tried, found
+// (by directly inspecting `next build`'s real per-route bundle sizes,
+// not assumed correct) to feed Three.js into Next's automatic shared-
+// chunk heuristic for several unrelated routes, inflating their First
+// Load JS by ~230kB each. Removing it from the barrel, keeping only the
+// isolated subpath, fixed it — verified again after this change.
 export {
   GuideTutorial,
   type GuideTutorialProps,
