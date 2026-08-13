@@ -1,5 +1,33 @@
 "use client";
 
+/**
+ * **STATUS: built, verified in isolation, but currently NOT wired into
+ * the app — a real production crash was found after deploying this,
+ * and reverted rather than left broken while investigated further.**
+ * See the login page's git history for the revert commit. Symptom:
+ * "Cannot read properties of undefined (reading 'ReactCurrentBatchConfig')"
+ * thrown from inside react-reconciler (a @react-three/fiber dependency)
+ * — a well-documented class of bug (multiple GitHub issues on
+ * vercel/next.js and pnpm/pnpm) where react-reconciler ends up with a
+ * different physical React module instance than the rest of the app,
+ * even when `pnpm why react` shows a single logical version — pnpm's
+ * non-hoisted node_modules structure is a known trigger for this
+ * specific failure mode with React Three Fiber. Not yet root-caused or
+ * fixed with real confidence — the honest, safety-first call was to
+ * restore working production first (revert to the flat-SVG
+ * `GuideCharacter` on the login page) rather than attempt a third
+ * live-fire fix without a real browser available to verify it. The
+ * component itself, its bundle-isolation setup (dedicated package
+ * subpath export), and its dependency versions are believed correct;
+ * the remaining problem is specifically this React-instance-identity
+ * issue, which needs either a webpack `resolve.alias` forcing a single
+ * physical react/react-dom path, or a different linking approach,
+ * verified in a real browser before being wired back in.
+ *
+ * The reasoning below (deployment strategy, colors-from-theme, model
+ * design) all remains accurate for whenever this is picked back up.
+ */
+
 import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
