@@ -135,6 +135,19 @@ export default function DashboardPage() {
             </Text>
           </Card>
         </Link>
+        <Link href="/workspaces/construction" style={{ textDecoration: "none", color: "inherit" }}>
+          <Card>
+            <Text variant="sectionTitle" as="h2">
+              Construction
+            </Text>
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              Site risk status for weather-sensitive activities.
+            </Text>
+          </Card>
+        </Link>
       </div>
     </AppShell>
   );
