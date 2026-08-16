@@ -1,7 +1,9 @@
-import { NasaPowerConnector } from "@world-vitality/data-ingestion";
+import { NasaPowerConnector, OpenMeteoConnector } from "@world-vitality/data-ingestion";
 import {
   ConstructionRiskStatusProvider,
   CONSTRUCTION_RISK_CAPABILITY_ID,
+  ConstructionSiteRiskTimelineProvider,
+  CONSTRUCTION_TIMELINE_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
@@ -47,6 +49,33 @@ async function getSiteRiskStatus() {
 }
 
 /**
+ * Real forecast data (BUILD_PLAN Stage 12 follow-up), from
+ * `OpenMeteoConnector` — same second data provider Weather & Climate
+ * already validated (Stage 10.6), extended to also fetch daily max
+ * wind speed so this provider can assess crane/roofing risk, not just
+ * concrete pour, over the forecast window.
+ */
+async function getSiteRiskTimeline() {
+  const connector = new OpenMeteoConnector({
+    locations: [DEMO_LOCATION],
+    forecastDays: 7,
+  });
+
+  const { records, gaps } = await connector.ingest({
+    type: "manual",
+    requestedBy: "construction-workspace-home-page",
+  });
+
+  const provider = new ConstructionSiteRiskTimelineProvider();
+  const result = await provider.interpret({
+    capability: CONSTRUCTION_TIMELINE_CAPABILITY_ID,
+    records,
+  });
+
+  return { result, ingestionGaps: gaps };
+}
+
+/**
  * Construction Workspace Home (BUILD_PLAN Stage 12) — the third
  * workspace, reusing `NasaPowerConnector` unchanged (`T2M` + `WS2M`
  * parameters, same connector Agriculture and Weather & Climate already
@@ -56,14 +85,13 @@ async function getSiteRiskStatus() {
  * - **Today's activity status widget**: real — live NASA POWER T2M/WS2M
  *   data, real per-activity go/caution/no-go classification via
  *   `ConstructionRiskStatusProvider`, real confidence.
- * - **Site Risk Timeline (forward-looking, multi-day)**: NOT built yet.
- *   The PRD's first-run experience calls for "a forward-looking calendar
- *   of weather-sensitive risk windows" — this page shows *today's*
- *   status only, matching what `ConstructionRiskStatusProvider` can
- *   honestly produce right now (see that provider's doc comment for
- *   why: it needs forecast wind data `OpenMeteoConnector` doesn't fetch
- *   yet). An honest empty state stands in for the timeline rather than
- *   a fabricated one.
+ * - **Site Risk Timeline (forward-looking, multi-day)**: real, as of the
+ *   Stage 12 follow-up — live Open-Meteo forecast data (temperature and,
+ *   newly, daily max wind speed) via `ConstructionSiteRiskTimelineProvider`,
+ *   which reuses the exact same per-activity threshold functions as the
+ *   Today's status widget so the two can never silently disagree on what
+ *   counts as risky. Real lead-time-based confidence gradient, same
+ *   reasoning as Weather & Climate's forecast trend widget.
  * - **Alerts, delay-logging, historical comparison**: still honest empty
  *   states — no alerts/delay-event data model exists yet (same gap as
  *   Agriculture and Weather & Climate's own pages).
@@ -78,7 +106,8 @@ async function getSiteRiskStatus() {
  * real request yet.
  */
 export default async function ConstructionWorkspaceHome() {
-  const { result, ingestionGaps } = await getSiteRiskStatus();
+  const [{ result, ingestionGaps }, { result: timelineResult, ingestionGaps: timelineGaps }] =
+    await Promise.all([getSiteRiskStatus(), getSiteRiskTimeline()]);
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
@@ -162,11 +191,29 @@ export default async function ConstructionWorkspaceHome() {
       >
         <Card>
           <Text variant="caption">SITE RISK TIMELINE</Text>
-          <StateDisplay
-            status="empty"
-            title="Multi-day timeline not built yet"
-            description="Today's status above is real. A forward-looking risk calendar needs forecast wind data this workspace doesn't fetch yet."
-          />
+          {timelineResult.unableToAnswer ? (
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              {timelineResult.summary}
+            </Text>
+          ) : (
+            <>
+              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                {timelineResult.summary}
+              </Text>
+              <ConfidenceBadge level={timelineResult.confidence} showDescription />
+              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                {timelineResult.explanation}
+              </Text>
+            </>
+          )}
+          {timelineGaps.length > 0 && (
+            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+              {timelineGaps.length} forecast day(s) had no data available.
+            </Text>
+          )}
         </Card>
         <Card>
           <Text variant="caption">ALERTS</Text>

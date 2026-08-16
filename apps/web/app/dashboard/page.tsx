@@ -10,6 +10,7 @@ import {
   GuideTutorial,
   type GuideTutorialStep,
 } from "@world-vitality/ui-components";
+import { WORKSPACE_LINKS } from "../workspaces/workspace-nav";
 
 const TUTORIAL_SEEN_KEY = "wv_guide_tutorial_seen";
 
@@ -87,7 +88,10 @@ export default function DashboardPage() {
   return (
     <AppShell
       brand={<Text variant="sectionTitle">World Vitality</Text>}
-      sidebarItems={[{ key: "home", label: "Home", href: "/dashboard", active: true }]}
+      sidebarItems={[
+        { key: "home", label: "Home", href: "/dashboard", active: true },
+        ...WORKSPACE_LINKS.map((w) => ({ key: `switch-${w.key}`, label: w.label, href: w.href })),
+      ]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

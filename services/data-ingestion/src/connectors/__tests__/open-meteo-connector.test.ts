@@ -19,8 +19,9 @@ const SAMPLE_RESPONSE = {
     time: ["2026-08-16", "2026-08-17", "2026-08-18"],
     temperature_2m_max: [28.4, 29.1, 27.0],
     temperature_2m_min: [18.2, 19.0, 17.5],
+    wind_speed_10m_max: [4.2, 9.5, 14.1],
   },
-  daily_units: { temperature_2m_max: "°C" },
+  daily_units: { temperature_2m_max: "°C", wind_speed_10m_max: "m/s" },
 };
 
 const LOCATION = { id: "test-location", latitude: 7.3775, longitude: 3.947 };
@@ -28,11 +29,38 @@ const LOCATION = { id: "test-location", latitude: 7.3775, longitude: 3.947 };
 test("normalizes daily high/low into a single averaged forecast record per day", () => {
   const { records } = parseOpenMeteoResponse("open-meteo", "Open-Meteo", LOCATION, SAMPLE_RESPONSE);
 
-  assert.equal(records.length, 3);
-  const day1 = records.find((r) => r.timestamp.startsWith("2026-08-16"));
+  const tempRecords = records.filter((r) => r.metric === "T2M");
+  assert.equal(tempRecords.length, 3);
+  const day1 = tempRecords.find((r) => r.timestamp.startsWith("2026-08-16"));
   assert.ok(day1);
   assert.equal(day1?.value, (28.4 + 18.2) / 2);
   assert.equal(day1?.unit, "°C");
+});
+
+test("also normalizes daily max wind speed into a WS2M forecast record per day, in m/s", () => {
+  const { records } = parseOpenMeteoResponse("open-meteo", "Open-Meteo", LOCATION, SAMPLE_RESPONSE);
+
+  const windRecords = records.filter((r) => r.metric === "WS2M");
+  assert.equal(windRecords.length, 3);
+  const day2 = windRecords.find((r) => r.timestamp.startsWith("2026-08-17"));
+  assert.ok(day2);
+  assert.equal(day2?.value, 9.5);
+  assert.equal(day2?.unit, "m/s");
+  assert.equal(day2?.recordType, "forecast");
+});
+
+test("does not produce a wind record, and does not report a gap, when wind data is absent", () => {
+  const { records, gaps } = parseOpenMeteoResponse("open-meteo", "Open-Meteo", LOCATION, {
+    daily: {
+      time: ["2026-08-16"],
+      temperature_2m_max: [28.4],
+      temperature_2m_min: [18.2],
+      // no wind_speed_10m_max at all — a temperature-only caller's shape
+    },
+    daily_units: { temperature_2m_max: "°C" },
+  });
+  assert.equal(records.filter((r) => r.metric === "WS2M").length, 0);
+  assert.equal(gaps.length, 0);
 });
 
 test("every record is tagged recordType: forecast with a forecastIssuedAt", () => {

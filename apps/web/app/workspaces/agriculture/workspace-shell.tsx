@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { AppShell, Text, ConfidenceBadge, StateDisplay } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
+import { WORKSPACE_LINKS } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -39,6 +40,13 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
     <AppShell
       brand={<Text variant="sectionTitle">Agriculture</Text>}
       sidebarItems={[
+        { key: "dashboard-home", label: "Home", href: "/dashboard" },
+        ...WORKSPACE_LINKS.map((w) => ({
+          key: `switch-${w.key}`,
+          label: w.label,
+          href: w.href,
+          active: w.key === "agriculture",
+        })),
         {
           key: "home",
           label: "Field Overview",

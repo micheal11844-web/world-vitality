@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { AppShell, Text, ConfidenceBadge, StateDisplay } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
+import { WORKSPACE_LINKS } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -16,14 +17,13 @@ export interface WorkspaceShellProps {
  * Weather & Climate's `workspace-shell.tsx` on purpose — same
  * validation of PRD Section C's Modular Workspace Framework claim that
  * adding a workspace is "fundamentally a configuration and content
- * exercise," now run a third time. Kept as its own small file rather
- * than extracted into `packages/`, same reasoning as Weather's own
- * comment: Engineering Blueprint 4.5 promotes to shared only once a
- * genuine consumer beyond copy-paste reveals what's actually common —
- * three near-identical files is closer to that signal than two was,
- * but not yet acted on here since that's a real refactor decision
- * worth its own deliberate ticket, not a drive-by change bundled into
- * this one.
+ * exercise," now run a third time. The AppShell/sidebar wiring itself
+ * stays copy-pasted per-shell (each still needs its own `brand` and
+ * its own Home/Map labels), but the cross-workspace switcher links are
+ * shared via `../workspace-nav` — three shells needing the identical
+ * switcher list was the concrete "genuine third consumer" signal
+ * Engineering Blueprint 4.5 calls for before extracting shared
+ * content, and this ticket is that extraction.
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
@@ -32,6 +32,13 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
     <AppShell
       brand={<Text variant="sectionTitle">Construction</Text>}
       sidebarItems={[
+        { key: "dashboard-home", label: "Home", href: "/dashboard" },
+        ...WORKSPACE_LINKS.map((w) => ({
+          key: `switch-${w.key}`,
+          label: w.label,
+          href: w.href,
+          active: w.key === "construction",
+        })),
         {
           key: "home",
           label: "Site Risk",

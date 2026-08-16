@@ -68,7 +68,10 @@ const CRANE_NO_GO_MIN_MS = 13;
 const ROOFING_CAUTION_MIN_MS = 8;
 const ROOFING_NO_GO_MIN_MS = 12;
 
-function assessConcretePour(tempC: number): ActivityAssessment {
+/** Exported so `ConstructionSiteRiskTimelineProvider` can reuse the
+ *  exact same per-activity logic against forecast data, rather than a
+ *  second, easy-to-drift copy of the same thresholds. */
+export function assessConcretePour(tempC: number): ActivityAssessment {
   if (tempC < CONCRETE_POUR_MIN_C) {
     return {
       activity: "concretePour",
@@ -93,7 +96,7 @@ function assessConcretePour(tempC: number): ActivityAssessment {
   };
 }
 
-function assessCraneOperation(windMs: number): ActivityAssessment {
+export function assessCraneOperation(windMs: number): ActivityAssessment {
   if (windMs >= CRANE_NO_GO_MIN_MS) {
     return {
       activity: "craneOperation",
@@ -118,7 +121,7 @@ function assessCraneOperation(windMs: number): ActivityAssessment {
   };
 }
 
-function assessRoofingWork(windMs: number): ActivityAssessment {
+export function assessRoofingWork(windMs: number): ActivityAssessment {
   if (windMs >= ROOFING_NO_GO_MIN_MS) {
     return {
       activity: "roofingWork",
@@ -158,14 +161,13 @@ function assessRoofingWork(windMs: number): ActivityAssessment {
  * band sets" — a real but modest extension of the existing pattern, not
  * a new architecture.
  *
- * **Honest scope:** current conditions only, like `WeatherStatusProvider`
- * before its Stage 10 forecast work — this does not yet produce the PRD's
- * "forward-looking calendar of weather-sensitive risk windows" (the Site
- * Risk *Timeline*). That needs multi-day forecast data cross-referenced
- * against these same thresholds, which is real, scoped follow-up work
- * (`OpenMeteoConnector` would need wind-speed forecast fields added — it
- * currently only fetches temperature — a deliberate architecture decision
- * left for that ticket rather than rushed in here).
+ * **Current conditions only** — this provider itself does not produce
+ * the PRD's "forward-looking calendar of weather-sensitive risk windows."
+ * That's `ConstructionSiteRiskTimelineProvider`, a separate provider
+ * (Stage 12 follow-up) that reuses this file's exported per-activity
+ * threshold functions against `OpenMeteoConnector`'s forecast data —
+ * see that provider's own doc comment for why it's a separate class
+ * rather than a mode flag here.
  */
 export class ConstructionRiskStatusProvider implements InterpretationProvider {
   readonly id = "construction-risk-status-v1";

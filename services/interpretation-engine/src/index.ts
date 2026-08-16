@@ -26,3 +26,8 @@ export type {
   ActivityStatus as ConstructionActivityStatus,
   ActivityAssessment as ConstructionActivityAssessment,
 } from "./providers/construction-risk-status-provider.js";
+export {
+  ConstructionSiteRiskTimelineProvider,
+  CAPABILITY_ID as CONSTRUCTION_TIMELINE_CAPABILITY_ID,
+} from "./providers/construction-site-risk-timeline-provider.js";
+export type { DayRiskEntry as ConstructionDayRiskEntry } from "./providers/construction-site-risk-timeline-provider.js";

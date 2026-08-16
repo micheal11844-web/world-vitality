@@ -7,6 +7,13 @@ import type {
 
 const FORECAST_API_BASE = "https://api.open-meteo.com/v1/forecast";
 const METRIC = "T2M";
+/** Same metric code NASA POWER uses for wind speed at 2 meters, so any
+ *  consumer (e.g. `ConstructionRiskStatusProvider`) can treat wind
+ *  records the same way regardless of which connector produced them —
+ *  requested explicitly in m/s (`wind_speed_unit=ms`) below, since
+ *  Open-Meteo's own default is km/h, which would silently mismatch
+ *  NASA POWER's WS2M unit otherwise. */
+const WIND_METRIC = "WS2M";
 
 export interface OpenMeteoLocation {
   id: string;
@@ -29,6 +36,11 @@ interface OpenMeteoApiResponse {
     time: string[];
     temperature_2m_max?: number[];
     temperature_2m_min?: number[];
+    /** Daily maximum wind speed, m/s (see `WIND_METRIC` above for why
+     *  the unit is requested explicitly). Optional in the type since
+     *  older/other callers of this parser (existing tests) don't
+     *  include it — additive, not a breaking change. */
+    wind_speed_10m_max?: number[];
   };
   daily_units?: Record<string, string>;
   error?: boolean;
@@ -65,12 +77,34 @@ export function parseOpenMeteoResponse(
     return { records, gaps };
   }
 
-  const { time, temperature_2m_max: highs, temperature_2m_min: lows } = response.daily;
+  const {
+    time,
+    temperature_2m_max: highs,
+    temperature_2m_min: lows,
+    wind_speed_10m_max: winds,
+  } = response.daily;
   const unit = response.daily_units?.temperature_2m_max ?? "°C";
+  const windUnit = response.daily_units?.wind_speed_10m_max ?? "m/s";
+
+  const knownLimitations = [
+    "Free-tier, non-commercial-use license (Open-Meteo Terms of Use) — revisit before any commercial launch; see docs/data-provenance/open-meteo.md.",
+    "Model-predicted, not observed — accuracy decreases with lead time (see forecastIssuedAt on this record).",
+  ];
+
+  const provenanceFor = (extra: string): Provenance => ({
+    source: connectorId,
+    sourceName: connectorDisplayName,
+    license: "CC-BY-4.0",
+    attributionUrl: "https://open-meteo.com/en/docs",
+    retrievedAt,
+    knownLimitations: [...knownLimitations, extra],
+  });
 
   time.forEach((dateStr, i) => {
     const high = highs?.[i];
     const low = lows?.[i];
+    const timestamp = new Date(`${dateStr}T12:00:00Z`).toISOString();
+
     if (high === undefined || low === undefined) {
       gaps.push({
         description: `Missing high/low temperature for "${location.id}" on ${dateStr}`,
@@ -78,36 +112,43 @@ export function parseOpenMeteoResponse(
         occurredAt: retrievedAt,
         transient: false,
       });
-      return;
+    } else {
+      records.push({
+        id: `${connectorId}:${location.id}:${METRIC}:${dateStr}`,
+        metric: METRIC,
+        value: (high + low) / 2,
+        unit,
+        location: { latitude: location.latitude, longitude: location.longitude },
+        timestamp,
+        recordType: "forecast",
+        forecastIssuedAt: retrievedAt,
+        provenance: provenanceFor(
+          "Daily value is the average of the model's forecast high/low, not an hourly-resolution or single authoritative figure.",
+        ),
+      });
     }
 
-    const value = (high + low) / 2;
-    const timestamp = new Date(`${dateStr}T12:00:00Z`).toISOString();
-
-    const provenance: Provenance = {
-      source: connectorId,
-      sourceName: connectorDisplayName,
-      license: "CC-BY-4.0",
-      attributionUrl: "https://open-meteo.com/en/docs",
-      retrievedAt,
-      knownLimitations: [
-        "Free-tier, non-commercial-use license (Open-Meteo Terms of Use) — revisit before any commercial launch; see docs/data-provenance/open-meteo.md.",
-        "Daily value is the average of the model's forecast high/low, not an hourly-resolution or single authoritative figure.",
-        "Model-predicted, not observed — accuracy decreases with lead time (see forecastIssuedAt on this record).",
-      ],
-    };
-
-    records.push({
-      id: `${connectorId}:${location.id}:${METRIC}:${dateStr}`,
-      metric: METRIC,
-      value,
-      unit,
-      location: { latitude: location.latitude, longitude: location.longitude },
-      timestamp,
-      recordType: "forecast",
-      forecastIssuedAt: retrievedAt,
-      provenance,
-    });
+    // Wind is additive, requested for Construction's Site Risk Timeline
+    // (BUILD_PLAN Stage 12 follow-up). Deliberately no gap when it's
+    // absent — unlike temperature, not every caller of this connector
+    // needs wind, and a request that only asked for temperature would
+    // otherwise report a confusing gap for data it never wanted.
+    const wind = winds?.[i];
+    if (wind !== undefined) {
+      records.push({
+        id: `${connectorId}:${location.id}:${WIND_METRIC}:${dateStr}`,
+        metric: WIND_METRIC,
+        value: wind,
+        unit: windUnit,
+        location: { latitude: location.latitude, longitude: location.longitude },
+        timestamp,
+        recordType: "forecast",
+        forecastIssuedAt: retrievedAt,
+        provenance: provenanceFor(
+          "Daily value is the model's forecast maximum wind speed for the day, not an hourly-resolution figure.",
+        ),
+      });
+    }
   });
 
   return { records, gaps };
@@ -193,7 +234,8 @@ export class OpenMeteoConnector implements DataIngestionConnector {
     const url = new URL(FORECAST_API_BASE);
     url.searchParams.set("latitude", String(location.latitude));
     url.searchParams.set("longitude", String(location.longitude));
-    url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min");
+    url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,wind_speed_10m_max");
+    url.searchParams.set("wind_speed_unit", "ms");
     url.searchParams.set("forecast_days", String(this.config.forecastDays));
     url.searchParams.set("timezone", "UTC");
 
