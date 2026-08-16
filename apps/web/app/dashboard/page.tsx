@@ -152,6 +152,22 @@ export default function DashboardPage() {
             </Text>
           </Card>
         </Link>
+        <Link
+          href="/workspaces/renewable-energy"
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          <Card>
+            <Text variant="sectionTitle" as="h2">
+              Renewable Energy
+            </Text>
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              Wind generation outlook for your assets.
+            </Text>
+          </Card>
+        </Link>
       </div>
     </AppShell>
   );

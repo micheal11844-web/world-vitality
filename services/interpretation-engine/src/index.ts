@@ -31,3 +31,14 @@ export {
   CAPABILITY_ID as CONSTRUCTION_TIMELINE_CAPABILITY_ID,
 } from "./providers/construction-site-risk-timeline-provider.js";
 export type { DayRiskEntry as ConstructionDayRiskEntry } from "./providers/construction-site-risk-timeline-provider.js";
+export {
+  WindGenerationStatusProvider,
+  CAPABILITY_ID as WIND_GENERATION_STATUS_CAPABILITY_ID,
+  classifyWindSpeed,
+} from "./providers/wind-generation-status-provider.js";
+export type { GenerationBand as WindGenerationBand } from "./providers/wind-generation-status-provider.js";
+export {
+  WindGenerationOutlookProvider,
+  CAPABILITY_ID as WIND_GENERATION_OUTLOOK_CAPABILITY_ID,
+} from "./providers/wind-generation-outlook-provider.js";
+export type { OutlookDayEntry as WindOutlookDayEntry } from "./providers/wind-generation-outlook-provider.js";
