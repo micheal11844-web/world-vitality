@@ -5,7 +5,7 @@ import { AppShell, Text, ConfidenceBadge, StateDisplay } from "@world-vitality/u
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 
 export interface WorkspaceShellProps {
-  activeKey: "home";
+  activeKey: "home" | "map";
   children: ReactNode;
   aiInterpretation?: InterpretationResult;
 }
@@ -36,6 +36,12 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
           label: "Current Conditions",
           href: "/workspaces/weather",
           active: activeKey === "home",
+        },
+        {
+          key: "map",
+          label: "Map",
+          href: "/workspaces/weather/map",
+          active: activeKey === "map",
         },
       ]}
       aiPanelOpen={aiPanelOpen}
