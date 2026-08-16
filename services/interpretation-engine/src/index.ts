@@ -13,3 +13,7 @@ export {
   WeatherStatusProvider,
   CAPABILITY_ID as WEATHER_TEMPERATURE_CAPABILITY_ID,
 } from "./providers/weather-status-provider.js";
+export {
+  WeatherForecastProvider,
+  CAPABILITY_ID as WEATHER_FORECAST_CAPABILITY_ID,
+} from "./providers/weather-forecast-provider.js";

@@ -30,29 +30,62 @@ export type GeoLocation = z.infer<typeof GeoLocationSchema>;
  * first real connector (Stage 2, NASA) shows what's actually needed —
  * per ADR-0003's Standing Action Item, this is provisional until then.
  */
-export const NormalizedDataRecordSchema = z.object({
-  /** Stable identifier for this record, unique within its source. */
-  id: z.string().min(1),
+export const NormalizedDataRecordSchema = z
+  .object({
+    /** Stable identifier for this record, unique within its source. */
+    id: z.string().min(1),
 
-  /** What this record measures (e.g. "soil-moisture", "sea-surface-temp").
-   *  A free-form string at Stage 1, deliberately — see note above. */
-  metric: z.string().min(1),
+    /** What this record measures (e.g. "soil-moisture", "sea-surface-temp").
+     *  A free-form string at Stage 1, deliberately — see note above. */
+    metric: z.string().min(1),
 
-  /** The measured value. */
-  value: z.number(),
+    /** The measured value. */
+    value: z.number(),
 
-  /** Unit the value is expressed in (e.g. "percent", "celsius", "mm"). */
-  unit: z.string().min(1),
+    /** Unit the value is expressed in (e.g. "percent", "celsius", "mm"). */
+    unit: z.string().min(1),
 
-  /** Where this record applies. Optional: some metrics are non-spatial. */
-  location: GeoLocationSchema.optional(),
+    /** Where this record applies. Optional: some metrics are non-spatial. */
+    location: GeoLocationSchema.optional(),
 
-  /** When the measurement is valid for (distinct from provenance.retrievedAt,
-   *  which is when *we* fetched it). */
-  timestamp: z.string().datetime(),
+    /** When the measurement is valid for (distinct from provenance.retrievedAt,
+     *  which is when *we* fetched it). */
+    timestamp: z.string().datetime(),
 
-  /** Required on every record — never optional. See provenance.ts. */
-  provenance: ProvenanceSchema,
-});
+    /**
+     * Whether this is a directly observed/measured value, or a model-
+     * predicted forecast for a future `timestamp`. Added for the Weather
+     * & Climate workspace's forecast capability (BUILD_PLAN Stage 10
+     * ticket 10.6) — every record before this had an implicit "observed"
+     * nature that was never worth naming until a genuinely different kind
+     * of record (a forecast) needed distinguishing from it. Omitted/
+     * undefined means "observed" — the default every existing record
+     * (NASA POWER) already satisfies, so this is purely additive, not a
+     * breaking change to any existing connector, provider, or test.
+     */
+    recordType: z.enum(["observed", "forecast"]).optional(),
+
+    /**
+     * Required when `recordType` is `"forecast"`: when the forecast was
+     * generated/issued, distinct from `timestamp` (the future moment it
+     * predicts) and `provenance.retrievedAt` (when we fetched it — often
+     * the same instant for a live forecast, but conceptually different,
+     * since a cached or replayed forecast could have a `retrievedAt` far
+     * from its original `forecastIssuedAt`). This is what makes an
+     * honest lead-time-based confidence gradient possible at all:
+     * `timestamp` minus `forecastIssuedAt` is how far ahead a given
+     * forecast value is predicting, and confidence should genuinely
+     * decrease as that gap grows — a real meteorological principle, not
+     * a stylistic choice (see `WeatherForecastProvider`).
+     */
+    forecastIssuedAt: z.string().datetime().optional(),
+
+    /** Required on every record — never optional. See provenance.ts. */
+    provenance: ProvenanceSchema,
+  })
+  .refine((record) => record.recordType !== "forecast" || record.forecastIssuedAt !== undefined, {
+    message: 'forecastIssuedAt is required when recordType is "forecast"',
+    path: ["forecastIssuedAt"],
+  });
 
 export type NormalizedDataRecord = z.infer<typeof NormalizedDataRecordSchema>;
