@@ -1,14 +1,20 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
 import { Header, type HeaderProps } from "./Header.js";
-import { Sidebar, type SidebarItem } from "./Sidebar.js";
+import { Sidebar, type SidebarSection } from "./Sidebar.js";
 import { AIPanel } from "./AIPanel.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
 
 export interface AppShellProps {
   brand: HeaderProps["brand"];
   headerActions?: HeaderProps["actions"];
-  sidebarItems: SidebarItem[];
-  sidebarCollapsed?: boolean;
+  /**
+   * Grouped sidebar navigation — see `SidebarSection`. Typically one
+   * section for the cross-workspace switcher and a second section for
+   * pages within whichever workspace is currently open.
+   */
+  sidebarSections: SidebarSection[];
   aiPanelOpen: boolean;
   onToggleAiPanel: () => void;
   aiPanelContent?: ReactNode;
@@ -24,6 +30,8 @@ export interface AppShellProps {
    */
   showGuide?: boolean;
 }
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
 
 /**
  * The full app shell (ticket 5.4), composing Header + Sidebar + Main
@@ -44,23 +52,77 @@ export interface AppShellProps {
  * the same position and order. AI Panel is optional/collapsible."
  * (Section 4, "Relationships"). This component enforces exactly that
  * structure — a consuming page provides content, not layout.
+ *
+ * **Sidebar collapse (BUILD_PLAN Stage 13 follow-up)** — "Ctrl+B
+ * should be able to wrap and unwrap the dashboard from the left, just
+ * use same mechanism Claude has." Owned entirely by this component
+ * (not threaded through every page as a prop) since it's chrome
+ * behavior, not page content — every page that renders `AppShell` gets
+ * it automatically. Ctrl+B or Cmd+B toggles it (`preventDefault`'d so
+ * it doesn't hit the browser's own bindings), and the sidebar's own
+ * rail also has a click toggle for discoverability, since a
+ * keyboard-only affordance isn't something a first-time user would
+ * find on their own. Persisted to `localStorage` so it survives
+ * navigating between pages — each page in this app mounts its own
+ * `AppShell` instance (no shared persistent layout wrapping them),
+ * so without persistence the collapse state would silently reset on
+ * every navigation, which would be a worse experience than not having
+ * the feature at all.
  */
 export function AppShell({
   brand,
   headerActions,
-  sidebarItems,
-  sidebarCollapsed = false,
+  sidebarSections,
   aiPanelOpen,
   onToggleAiPanel,
   aiPanelContent,
   children,
   showGuide = true,
 }: AppShellProps) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+      if (stored === "true") setSidebarCollapsed(true);
+    } catch {
+      // localStorage unavailable (private browsing, etc.) — fall back
+      // to the in-memory default rather than erroring.
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next));
+      } catch {
+        // Same fallback as above.
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const isToggleCombo = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b";
+      if (!isToggleCombo) return;
+      event.preventDefault();
+      toggleSidebar();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Header brand={brand} actions={headerActions} />
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <Sidebar items={sidebarItems} collapsed={sidebarCollapsed} />
+        <Sidebar
+          sections={sidebarSections}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
+        />
         <main
           style={{
             flex: 1,

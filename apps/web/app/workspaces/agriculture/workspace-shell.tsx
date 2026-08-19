@@ -1,63 +1,71 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { AppShell, Text, ConfidenceBadge, StateDisplay } from "@world-vitality/ui-components";
+import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
+import { AppBrand } from "../../app-brand";
 import { WORKSPACE_LINKS } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
   children: ReactNode;
-  /** The soil-moisture interpretation result to surface in the AI
-   *  Panel — passed down from the Server Component page that already
-   *  fetched it, so this doesn't re-run the interpretation itself. */
   aiInterpretation?: InterpretationResult;
 }
 
 /**
- * Shared shell for every Agriculture workspace page, wiring the AI
- * Panel to the Stage 4 soil-moisture capability (ticket 6.5).
+ * Shared shell for the Agriculture workspace. Structurally
+ * identical to the other workspaces' `workspace-shell.tsx` — the same
+ * validation of PRD Section C's Modular Workspace Framework claim that
+ * adding a workspace is "fundamentally a configuration and content
+ * exercise."
  *
- * Kept as one small client component reused by both `page.tsx` (Home)
- * and `map/page.tsx`, rather than duplicating the `AppShell` wiring in
- * each — same "no per-app duplication" principle `ui-components` itself
- * follows (Engineering Blueprint Section 4.5).
- *
- * **Honest scope**: this renders the interpretation result and its
- * confidence badge in the panel — real wiring to real Stage 4 output —
- * but there's no actual conversational turn-taking (asking a follow-up
- * question, `userQuery` on `InterpretationRequest` is unused here). That
- * would need a chat UI and a request/response loop this ticket doesn't
- * build. What Section 4's "contextually aware of whatever the user is
- * currently viewing" gets today: the panel shows the interpretation for
- * *this* page's data, automatically, without the user asking — the
- * "aware of context" part is real; the "conversational" part isn't yet.
+ * **Sidebar layout (BUILD_PLAN Stage 13 follow-up)** — two distinct
+ * sections rather than one flat list: "Workspaces" (the cross-workspace
+ * switcher, shared via `../workspace-nav`) and "This Workspace" (pages
+ * within Agriculture specifically). Previously these were
+ * interleaved in a single list, which read as "colliding" once a
+ * workspace was open — a page-switcher item and a page-within-workspace
+ * item looked the same and sat next to each other with no visual
+ * separation. `brand` is now the shared `AppBrand` (app logo + name,
+ * clickable back to `/dashboard`) rather than this workspace's own
+ * name — that identity now lives in the page's own `pageTitle` heading
+ * instead, since the header brand slot is app-level chrome that should
+ * be the same on every page, not page-specific content.
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
 
   return (
     <AppShell
-      brand={<Text variant="sectionTitle">Agriculture</Text>}
-      sidebarItems={[
-        { key: "dashboard-home", label: "Home", href: "/dashboard" },
-        ...WORKSPACE_LINKS.map((w) => ({
-          key: `switch-${w.key}`,
-          label: w.label,
-          href: w.href,
-          active: w.key === "agriculture",
-        })),
+      brand={<AppBrand />}
+      sidebarSections={[
         {
-          key: "home",
-          label: "Field Overview",
-          href: "/workspaces/agriculture",
-          active: activeKey === "home",
+          key: "workspaces",
+          label: "Workspaces",
+          items: WORKSPACE_LINKS.map((w) => ({
+            key: `switch-${w.key}`,
+            label: w.label,
+            href: w.href,
+            active: w.key === "agriculture",
+          })),
         },
         {
-          key: "map",
-          label: "Map",
-          href: "/workspaces/agriculture/map",
-          active: activeKey === "map",
+          key: "this-workspace",
+          label: "This Workspace",
+          items: [
+            {
+              key: "home",
+              label: "Field Overview",
+              href: "/workspaces/agriculture",
+              active: activeKey === "home",
+            },
+            {
+              key: "map",
+              label: "Map",
+              href: "/workspaces/agriculture/map",
+              active: activeKey === "map",
+            },
+          ],
         },
       ]}
       aiPanelOpen={aiPanelOpen}

@@ -51,6 +51,11 @@ export {
 export { AuthIllustration, type AuthIllustrationProps } from "./components/AuthIllustration.js";
 
 export { Header, type HeaderProps } from "./layout/Header.js";
-export { Sidebar, type SidebarProps, type SidebarItem } from "./layout/Sidebar.js";
+export {
+  Sidebar,
+  type SidebarProps,
+  type SidebarItem,
+  type SidebarSection,
+} from "./layout/Sidebar.js";
 export { AIPanel, type AIPanelProps } from "./layout/AIPanel.js";
 export { AppShell, type AppShellProps } from "./layout/AppShell.js";

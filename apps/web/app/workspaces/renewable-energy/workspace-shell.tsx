@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { AppShell, Text, ConfidenceBadge, StateDisplay } from "@world-vitality/ui-components";
+import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
+import { AppBrand } from "../../app-brand";
 import { WORKSPACE_LINKS } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
@@ -12,38 +13,59 @@ export interface WorkspaceShellProps {
 }
 
 /**
- * Shared shell for the Renewable Energy workspace (BUILD_PLAN Stage
- * 13 — the fourth workspace). Structurally identical to the other
- * three workspaces' `workspace-shell.tsx` — the fourth run of the same
- * "adding a workspace is a configuration and content exercise" test.
- * Reuses the shared `WORKSPACE_LINKS` cross-workspace switcher (Stage
- * 12.6) rather than adding a fifth near-identical hardcoded list.
+ * Shared shell for the Renewable Energy workspace. Structurally
+ * identical to the other workspaces' `workspace-shell.tsx` — the same
+ * validation of PRD Section C's Modular Workspace Framework claim that
+ * adding a workspace is "fundamentally a configuration and content
+ * exercise."
+ *
+ * **Sidebar layout (BUILD_PLAN Stage 13 follow-up)** — two distinct
+ * sections rather than one flat list: "Workspaces" (the cross-workspace
+ * switcher, shared via `../workspace-nav`) and "This Workspace" (pages
+ * within Renewable Energy specifically). Previously these were
+ * interleaved in a single list, which read as "colliding" once a
+ * workspace was open — a page-switcher item and a page-within-workspace
+ * item looked the same and sat next to each other with no visual
+ * separation. `brand` is now the shared `AppBrand` (app logo + name,
+ * clickable back to `/dashboard`) rather than this workspace's own
+ * name — that identity now lives in the page's own `pageTitle` heading
+ * instead, since the header brand slot is app-level chrome that should
+ * be the same on every page, not page-specific content.
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
 
   return (
     <AppShell
-      brand={<Text variant="sectionTitle">Renewable Energy</Text>}
-      sidebarItems={[
-        { key: "dashboard-home", label: "Home", href: "/dashboard" },
-        ...WORKSPACE_LINKS.map((w) => ({
-          key: `switch-${w.key}`,
-          label: w.label,
-          href: w.href,
-          active: w.key === "renewable-energy",
-        })),
+      brand={<AppBrand />}
+      sidebarSections={[
         {
-          key: "home",
-          label: "Generation Outlook",
-          href: "/workspaces/renewable-energy",
-          active: activeKey === "home",
+          key: "workspaces",
+          label: "Workspaces",
+          items: WORKSPACE_LINKS.map((w) => ({
+            key: `switch-${w.key}`,
+            label: w.label,
+            href: w.href,
+            active: w.key === "renewable-energy",
+          })),
         },
         {
-          key: "map",
-          label: "Map",
-          href: "/workspaces/renewable-energy/map",
-          active: activeKey === "map",
+          key: "this-workspace",
+          label: "This Workspace",
+          items: [
+            {
+              key: "home",
+              label: "Generation Outlook",
+              href: "/workspaces/renewable-energy",
+              active: activeKey === "home",
+            },
+            {
+              key: "map",
+              label: "Map",
+              href: "/workspaces/renewable-energy/map",
+              active: activeKey === "map",
+            },
+          ],
         },
       ]}
       aiPanelOpen={aiPanelOpen}
