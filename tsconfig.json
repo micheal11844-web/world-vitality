@@ -11,6 +11,7 @@
     { "path": "./services/identity-service" },
     { "path": "./packages/ai-evaluation" },
     { "path": "./packages/ui-components" },
-    { "path": "./packages/design-tokens" }
+    { "path": "./packages/design-tokens" },
+    { "path": "./packages/knowledge-graph" }
   ]
 }

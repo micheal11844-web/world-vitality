@@ -2,7 +2,7 @@
 
 import { NasaPowerConnector, OpenMeteoConnector } from "@world-vitality/data-ingestion";
 import type { NormalizedDataRecord, IngestionGap } from "@world-vitality/data-schemas";
-import { logSecurity } from "./logger";
+import { logSecurity, logTelemetry } from "./logger";
 
 export type DatasetSource = "nasa-power" | "open-meteo";
 
@@ -52,6 +52,7 @@ export async function fetchDatasetAction(query: DatasetQuery): Promise<DatasetQu
         type: "manual",
         requestedBy: "research-dataset-explorer",
       });
+      logTelemetry.event("dataset_fetched", { source: query.source, recordCount: records.length });
       return { ok: true, records, gaps };
     }
 
@@ -60,6 +61,7 @@ export async function fetchDatasetAction(query: DatasetQuery): Promise<DatasetQu
       type: "manual",
       requestedBy: "research-dataset-explorer",
     });
+    logTelemetry.event("dataset_fetched", { source: query.source, recordCount: records.length });
     return { ok: true, records, gaps };
   } catch (err) {
     logSecurity.error("research_dataset_fetch_failed", err, { source: query.source });

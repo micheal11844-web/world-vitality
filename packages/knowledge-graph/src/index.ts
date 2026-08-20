@@ -1,0 +1,17 @@
+export {
+  getGraph,
+  getNode,
+  getRelated,
+  metricsFeedingWorkspace,
+  workspacesUsingMetric,
+  NODES,
+  EDGES,
+  METRIC_NODES,
+  CAPABILITY_NODES,
+  WORKSPACE_NODES,
+  type KnowledgeNode,
+  type KnowledgeNodeType,
+  type KnowledgeEdge,
+  type KnowledgeEdgeRelationship,
+  type KnowledgeGraph,
+} from "./graph.js";

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthService } from "../../../lib/auth";
 import { getOAuthClient } from "../../../lib/supabase-ssr";
 import { setSessionCookies } from "../../../lib/session-cookies";
-import { logSecurity } from "../../../lib/logger";
+import { logSecurity, logTelemetry } from "../../../lib/logger";
 
 /**
  * The route both the magic-link email, the password-reset email, AND
@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
         throw new Error(error?.message ?? "no session returned");
       }
       logSecurity.info("oauth_verified", { userId: data.user.id, provider: "google" });
+      logTelemetry.event("oauth_verified", { provider: "google" });
 
       const response = NextResponse.redirect(new URL("/dashboard", request.url));
       setSessionCookies(
@@ -84,6 +85,7 @@ export async function GET(request: NextRequest) {
       const auth = getAuthService();
       const session = await auth.verifyPasswordResetCallback(tokenHash);
       logSecurity.info("password_reset_link_verified", { userId: session.userId });
+      logTelemetry.event("password_reset_link_verified");
 
       const response = NextResponse.redirect(new URL("/reset-password", request.url));
       // Always false — see this function's doc comment for why a
@@ -100,6 +102,7 @@ export async function GET(request: NextRequest) {
     const auth = getAuthService();
     const session = await auth.verifyMagicLinkCallback(tokenHash);
     logSecurity.info("magic_link_verified", { userId: session.userId });
+    logTelemetry.event("magic_link_verified");
 
     const response = NextResponse.redirect(new URL("/dashboard", request.url));
     setSessionCookies(response.cookies, session, rememberMe);

@@ -7,6 +7,7 @@ import {
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
+import { logTelemetry } from "../../../lib/logger";
 
 // Same reasoning as Agriculture and Weather & Climate: environmental
 // data must be fetched fresh on every request, never baked in at build
@@ -106,6 +107,7 @@ async function getSiteRiskTimeline() {
  * real request yet.
  */
 export default async function ConstructionWorkspaceHome() {
+  logTelemetry.event("workspace_viewed", { workspace: "construction" });
   const [{ result, ingestionGaps }, { result: timelineResult, ingestionGaps: timelineGaps }] =
     await Promise.all([getSiteRiskStatus(), getSiteRiskTimeline()]);
 

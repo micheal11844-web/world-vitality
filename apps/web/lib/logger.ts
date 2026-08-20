@@ -22,6 +22,14 @@
  * - **Audit logs** (immutable who-changed-what) — no admin/config
  *   mutation surface exists yet to audit.
  *
+ * **Telemetry** (`logTelemetry`, added later — see its own doc comment
+ * below) reuses this same `write()` pipeline under a third category,
+ * `"telemetry"`, rather than a separate system — same reasoning as
+ * `logSecurity` getting its own category instead of its own file: one
+ * consistent log shape, distinguishable by category for later
+ * routing/retention, not three different logging mechanisms to keep in
+ * sync.
+ *
  * What this *does* give, for real: every log line has a consistent
  * shape, security-relevant events are tagged distinctly from general
  * application events (`category: "security"` vs `"application"`) so
@@ -30,7 +38,7 @@
  * the original (pre-Stage-7) callback/action code did.
  */
 
-export type LogCategory = "application" | "security";
+export type LogCategory = "application" | "security" | "telemetry";
 export type LogLevel = "info" | "warn" | "error";
 
 export interface LogFields {
@@ -118,5 +126,55 @@ export const logSecurity = {
       category: "security",
       message,
       fields: { ...fields, errorMessage: err instanceof Error ? err.message : String(err) },
+    }),
+};
+
+/**
+ * Product/usage telemetry — an external review flagged this as a real
+ * gap (correctly; nothing tracked any user action anywhere in this
+ * codebase before this) and it's built here to a realistic, honestly
+ * bounded scope, same discipline as the rest of this file.
+ *
+ * **What this gives, for real:** every call site below adds one
+ * structured event line to the same log pipeline `logApplication`/
+ * `logSecurity` already use — visible in Vercel's runtime logs today,
+ * queryable/exportable from there. Real events, not decorative:
+ * workspace page views (server-rendered, so this captures genuine page
+ * loads, not client-only navigation), the Research Dataset Explorer's
+ * fetch attempts, and the auth funnel (magic link requested/verified,
+ * password sign-up/sign-in, Google OAuth verified, password reset
+ * requested/completed) — see each call site's own context for exactly
+ * what's captured.
+ *
+ * **What this deliberately does NOT give yet, stated plainly rather
+ * than silently implied:**
+ * - **No aggregation, dashboard, or funnel visualization.** These are
+ *   individual structured log lines, not a queryable events table or a
+ *   product-analytics dashboard. Building either needs a real vendor
+ *   decision (a hosted product-analytics tool, or a self-hosted
+ *   events warehouse) — cost and, more importantly, a real
+ *   consent/privacy-notice decision, neither made here. Do not wire
+ *   one up without that conversation happening first.
+ * - **No client-side interaction events** (sidebar collapse, AI panel
+ *   toggle, button clicks that don't hit a Server Action). Capturing
+ *   those would need a client → server telemetry endpoint, which
+ *   doesn't exist — everything below rides on data that was already
+ *   making a server round-trip anyway (a page render or a Server
+ *   Action call), not new instrumentation infrastructure.
+ * - **No per-user identity attached to events** — no user ID is
+ *   logged on page-view events (only on already-identified auth
+ *   events, where a `userId` was already being logged by
+ *   `logSecurity` anyway). This is closer to anonymous usage counting
+ *   than real user-journey analytics; a deliberate, conservative
+ *   default given no consent mechanism exists, not an oversight.
+ */
+export const logTelemetry = {
+  event: (name: string, fields?: LogFields) =>
+    write({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      category: "telemetry",
+      message: name,
+      fields,
     }),
 };

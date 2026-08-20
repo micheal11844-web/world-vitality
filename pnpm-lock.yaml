@@ -68,6 +68,9 @@ importers:
       '@world-vitality/interpretation-engine':
         specifier: workspace:*
         version: link:../../services/interpretation-engine
+      '@world-vitality/knowledge-graph':
+        specifier: workspace:*
+        version: link:../../packages/knowledge-graph
       '@world-vitality/ui-components':
         specifier: workspace:*
         version: link:../../packages/ui-components
@@ -102,6 +105,8 @@ importers:
         version: 3.25.76
 
   packages/design-tokens: {}
+
+  packages/knowledge-graph: {}
 
   packages/ui-components:
     dependencies:

@@ -6,7 +6,7 @@ import { getAuthService } from "./auth";
 import { getOAuthClient } from "./supabase-ssr";
 import { setSessionCookies } from "./session-cookies";
 import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
-import { logSecurity } from "./logger";
+import { logSecurity, logTelemetry } from "./logger";
 
 export interface RequestMagicLinkResult {
   ok: boolean;
@@ -39,6 +39,7 @@ export async function requestMagicLinkAction(email: string): Promise<RequestMagi
     const auth = getAuthService();
     await auth.requestMagicLink(email);
     logSecurity.info("magic_link_requested", { email });
+    logTelemetry.event("magic_link_requested");
     return { ok: true };
   } catch (err) {
     logSecurity.error("magic_link_request_failed", err, { email });
@@ -73,6 +74,7 @@ export async function signUpWithPasswordAction(
     const cookieStore = await cookies();
     setSessionCookies(cookieStore, session, rememberMe);
     logSecurity.info("password_signup_succeeded", { userId: session.userId });
+    logTelemetry.event("password_signup_succeeded");
     return { ok: true };
   } catch (err) {
     logSecurity.error("password_signup_failed", err, { email });
@@ -105,6 +107,7 @@ export async function signInWithPasswordAction(
     const cookieStore = await cookies();
     setSessionCookies(cookieStore, session, rememberMe);
     logSecurity.info("password_signin_succeeded", { userId: session.userId });
+    logTelemetry.event("password_signin_succeeded");
     return { ok: true };
   } catch (err) {
     logSecurity.error("password_signin_failed", err, { email });
@@ -191,6 +194,7 @@ export async function requestPasswordResetAction(email: string): Promise<Request
     const auth = getAuthService();
     await auth.requestPasswordReset(email);
     logSecurity.info("password_reset_requested", { email });
+    logTelemetry.event("password_reset_requested");
     return { ok: true };
   } catch (err) {
     logSecurity.error("password_reset_request_failed", err, { email });
@@ -250,6 +254,7 @@ export async function updatePasswordAction(newPassword: string): Promise<UpdateP
     cookieStore.delete(SESSION_COOKIE);
     cookieStore.delete(REFRESH_COOKIE);
     logSecurity.info("password_reset_completed", { userId: session.userId });
+    logTelemetry.event("password_reset_completed");
     return { ok: true };
   } catch (err) {
     logSecurity.error("password_reset_failed", err);

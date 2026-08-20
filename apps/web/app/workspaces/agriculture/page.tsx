@@ -6,6 +6,7 @@ import {
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
+import { logTelemetry } from "../../../lib/logger";
 
 // Environmental data must be fetched fresh on every request, never
 // baked in at build time — a statically prerendered page would show
@@ -75,6 +76,7 @@ async function getSoilMoistureStatus() {
  * case below — but hasn't been exercised against a real request yet.
  */
 export default async function AgricultureWorkspaceHome() {
+  logTelemetry.event("workspace_viewed", { workspace: "agriculture" });
   const { result, ingestionGaps } = await getSoilMoistureStatus();
 
   return (

@@ -7,6 +7,7 @@ import {
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
+import { logTelemetry } from "../../../lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,7 @@ async function getGenerationOutlook() {
  * page: this sandbox cannot reach either API directly.
  */
 export default async function RenewableEnergyWorkspaceHome() {
+  logTelemetry.event("workspace_viewed", { workspace: "renewable-energy" });
   const [{ result, ingestionGaps }, { result: outlookResult, ingestionGaps: outlookGaps }] =
     await Promise.all([getCurrentGenerationStatus(), getGenerationOutlook()]);
 

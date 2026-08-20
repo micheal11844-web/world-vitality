@@ -16,6 +16,7 @@
     "@world-vitality/design-tokens": "workspace:*",
     "@world-vitality/identity-service": "workspace:*",
     "@world-vitality/interpretation-engine": "workspace:*",
+    "@world-vitality/knowledge-graph": "workspace:*",
     "@world-vitality/ui-components": "workspace:*",
     "maplibre-gl": "^4.7.0",
     "next": "^15.5.21",

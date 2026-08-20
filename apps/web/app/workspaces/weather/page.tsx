@@ -7,6 +7,7 @@ import {
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
+import { logTelemetry } from "../../../lib/logger";
 
 // Same reasoning as the Agriculture workspace: environmental data must
 // be fetched fresh on every request, never baked in at build time.
@@ -99,6 +100,7 @@ async function getForecastTrend() {
  * request yet.
  */
 export default async function WeatherWorkspaceHome() {
+  logTelemetry.event("workspace_viewed", { workspace: "weather" });
   const [{ result, ingestionGaps }, { result: forecastResult, ingestionGaps: forecastGaps }] =
     await Promise.all([getTemperatureStatus(), getForecastTrend()]);
 
