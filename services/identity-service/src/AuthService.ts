@@ -118,4 +118,45 @@ export interface AuthService {
 
   /** Invalidate a session (sign out). */
   signOut(sessionToken: string): Promise<void>;
+
+  /**
+   * Send a password-reset email to the given address — a *separate*
+   * flow from `requestMagicLink`, even though both arrive as an emailed
+   * link. Magic link signs the user in directly; this sends a link that
+   * lands on a "set a new password" page instead (see
+   * `verifyPasswordResetCallback`/`updatePassword` below). Same
+   * doesn't-reveal-account-existence intent as `requestMagicLink` — the
+   * caller should show the same "check your email" response regardless
+   * of whether the address has an account.
+   */
+  requestPasswordReset(email: string): Promise<void>;
+
+  /**
+   * Verify a password-reset callback token (Supabase's `token_hash`
+   * flow, `type: "recovery"` — the same self-contained,
+   * no-client-state-required verification `verifyMagicLinkCallback`
+   * uses, for the same reason: this is a stateless server completing a
+   * link a different request/context initiated).
+   *
+   * Returns a real `Session` — Supabase's recovery flow is designed so
+   * that clicking the link *does* authenticate the user, specifically
+   * so they can call `updatePassword` while identified. **This session
+   * is not meant to be treated as an ordinary signed-in session past
+   * that point** — see `app/auth/callback/route.ts` and the
+   * reset-password Server Action for how this app deliberately signs
+   * the user back out immediately after the password is updated,
+   * rather than leaving a recovery-token-derived session active.
+   */
+  verifyPasswordResetCallback(tokenHash: string): Promise<Session>;
+
+  /**
+   * Set a new password for the given user, overwriting whatever
+   * password (if any) previously existed. The caller is responsible
+   * for having already verified the user's identity (via
+   * `verifyPasswordResetCallback`, in this app's only current caller,
+   * `app/lib/actions.ts`'s `updatePasswordAction`) — this method itself
+   * does not re-check identity, so it must never be reachable from an
+   * unauthenticated request.
+   */
+  updatePassword(userId: string, newPassword: string): Promise<void>;
 }

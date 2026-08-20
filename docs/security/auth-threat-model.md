@@ -208,6 +208,39 @@ user signs in again without Remember Me checked, so a stale long-lived
 cookie from an earlier choice can't silently persist past a later,
 different choice.
 
+### 9. Forgot Password — a token that authenticates, by design
+
+`requestPasswordReset` → emailed link → `/auth/callback?type=recovery`
+→ `verifyPasswordResetCallback` → `/reset-password`. The recovery
+`token_hash`, once verified, genuinely authenticates the user (this is
+Supabase's own designed behavior, not a bug this app introduced) —
+necessary so the reset-password Server Action can identify _whose_
+password to change without trusting a client-submitted user ID, which
+would be trivially spoofable.
+
+**Real consequence worth naming plainly:** anyone with access to the
+recovery email link (inbox access, a forwarded email, a shared/public
+computer where it was opened) briefly holds an authenticated session
+for that account — the same property every "reset link" flow in every
+app has, not unique to this implementation.
+
+**What's real here, mitigating that:** (1) the recovery session is
+short-lived (bounded by Supabase's JWT expiry, same as any other
+session — no extended lifetime granted), (2) `rememberMe` is forced
+`false` for this session regardless of any query param, so it can never
+become a persistent 30-day `REFRESH_COOKIE`, and (3) `updatePasswordAction`
+signs the user **out** of this session immediately after a successful
+password change, rather than leaving it active — a person completing a
+reset is required to sign in fresh with the new password, which is the
+more conservative choice for a flow that only proves inbox access, not
+necessarily physical device control.
+
+**What's honestly NOT added:** no rate limiting on `requestPasswordReset`
+beyond whatever Supabase's platform applies by default (same open gap
+already recorded for password sign-in, threat #6) — an attacker could
+spam reset emails at a known address, which is an annoyance/abuse
+vector, not an account-compromise one, but is real and unaddressed.
+
 ## What this threat model does NOT cover
 
 Per this project's honest-flagging pattern: no formal STRIDE/DREAD

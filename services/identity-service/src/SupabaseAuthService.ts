@@ -179,4 +179,48 @@ export class SupabaseAuthService implements AuthService {
   async signOut(sessionToken: string): Promise<void> {
     await this.client.auth.admin.signOut(sessionToken);
   }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const { error } = await this.client.auth.resetPasswordForEmail(email, {
+      redirectTo: this.redirectTo,
+    });
+    // Same account-existence-shouldn't-leak intent as requestMagicLink
+    // — Supabase's default config does not distinguish known/unknown
+    // emails via this call's error shape either.
+    if (error) {
+      throw new Error(`Failed to send password reset email: ${error.message}`);
+    }
+  }
+
+  async verifyPasswordResetCallback(tokenHash: string): Promise<Session> {
+    const { data, error } = await this.client.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "recovery",
+    });
+    if (error || !data.session || !data.user?.email) {
+      throw new Error(
+        `Failed to verify password-reset token: ${error?.message ?? "no session returned"}`,
+      );
+    }
+    return this.toSession(data.session, data.user.email, data.user.id);
+  }
+
+  /**
+   * Uses the **admin** API (`auth.admin.updateUserById`), not
+   * `auth.updateUser` — this service's client is the service-role
+   * client with `persistSession: false` (see the constructor); it never
+   * holds a "currently signed in" user session to call the non-admin
+   * `updateUser` against. The admin call instead takes the target
+   * `userId` directly, which is exactly what this method's caller
+   * already has (from `verifyPasswordResetCallback`'s returned
+   * `Session.userId`).
+   */
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    const { error } = await this.client.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+    if (error) {
+      throw new Error(`Failed to update password: ${error.message}`);
+    }
+  }
 }

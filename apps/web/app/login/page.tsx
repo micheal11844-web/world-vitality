@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Button,
   Card,
@@ -47,7 +48,6 @@ const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
   oauth_not_configured:
     "Google sign-in isn't set up yet on this deployment. Use email sign-in for now.",
 };
-
 type AuthMode = "link" | "password";
 type PasswordSubMode = "signin" | "signup";
 
@@ -88,6 +88,7 @@ function LoginForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string | undefined>();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const resetSuccess = searchParams.get("reset") === "success";
 
   // Surfaces a failure from the /auth/callback redirect — previously
   // this silently landed back on a blank login form with zero
@@ -192,6 +193,18 @@ function LoginForm() {
         </Text>
       ) : (
         <>
+          {resetSuccess && (
+            <Text
+              variant="body"
+              style={{
+                color: "var(--wv-text-secondary)",
+                textAlign: "center",
+                marginBottom: "var(--wv-space-md)",
+              }}
+            >
+              Your password has been updated. Please sign in.
+            </Text>
+          )}
           <Button
             type="button"
             variant="secondary"
@@ -301,6 +314,20 @@ function LoginForm() {
                 />
                 {passwordSubMode === "signup" && (
                   <PasswordStrengthMeter password={password} userInputs={[email]} />
+                )}
+                {passwordSubMode === "signin" && (
+                  <Text
+                    variant="caption"
+                    style={{
+                      display: "block",
+                      marginTop: "var(--wv-space-xs)",
+                      textAlign: "right",
+                    }}
+                  >
+                    <Link href="/forgot-password" style={{ color: "var(--wv-text-secondary)" }}>
+                      Forgot password?
+                    </Link>
+                  </Text>
                 )}
               </div>
 

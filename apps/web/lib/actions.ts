@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getAuthService } from "./auth";
 import { getOAuthClient } from "./supabase-ssr";
 import { setSessionCookies } from "./session-cookies";
+import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
 import { logSecurity } from "./logger";
 
 export interface RequestMagicLinkResult {
@@ -173,4 +174,85 @@ export async function signInWithGoogleAction(rememberMe: boolean): Promise<void>
     redirect(`/login?error=${code}`);
   }
   redirect(providerUrl);
+}
+
+/**
+ * Server Action backing `app/forgot-password/page.tsx`. A genuinely
+ * separate flow from `requestMagicLinkAction` above, even though both
+ * send an emailed link — see `AuthService.requestPasswordReset`'s doc
+ * comment. Same account-existence-shouldn't-leak discipline as every
+ * other request-an-email action in this file.
+ */
+export async function requestPasswordResetAction(email: string): Promise<RequestMagicLinkResult> {
+  if (!email || !email.includes("@")) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+  try {
+    const auth = getAuthService();
+    await auth.requestPasswordReset(email);
+    logSecurity.info("password_reset_requested", { email });
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("password_reset_request_failed", err, { email });
+    return { ok: false, error: "Something went wrong sending the link. Please try again." };
+  }
+}
+
+export interface UpdatePasswordResult {
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Server Action backing `app/reset-password/page.tsx`. Only reachable
+ * with a valid session cookie — which, on this page, can only have
+ * gotten there via `/auth/callback`'s `type=recovery` branch (see that
+ * route's doc comment). Identifies *who* is resetting from that
+ * session cookie itself, not from any value the client submits, since
+ * a client-submitted user ID would be trivially spoofable.
+ *
+ * **Deliberately signs the user out immediately after a successful
+ * update**, rather than leaving the recovery-derived session active —
+ * clears both cookies directly (safe to do before any `redirect()`,
+ * unlike calling `redirect()` itself inside `try`; see
+ * `signInWithGoogleAction`'s doc comment above for that specific
+ * gotcha, avoided here by not calling `redirect()` in this function at
+ * all — the client navigates via `window.location.href` on `ok: true`,
+ * same pattern as `handlePasswordSubmit` on the login page). The
+ * reasoning: a password-reset flow proves control of an inbox, not
+ * necessarily physical control of whatever device the link was
+ * clicked from (a shared/public computer, a screenshare, etc.) —
+ * requiring a fresh sign-in with the new password is the more
+ * conservative choice. See `docs/security/auth-threat-model.md`.
+ */
+export async function updatePasswordAction(newPassword: string): Promise<UpdatePasswordResult> {
+  if (!newPassword || newPassword.length < 8) {
+    return { ok: false, error: "Password must be at least 8 characters." };
+  }
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!sessionToken) {
+    return {
+      ok: false,
+      error: "Your password reset link has expired. Please request a new one.",
+    };
+  }
+  try {
+    const auth = getAuthService();
+    const session = await auth.getSession(sessionToken);
+    if (!session) {
+      return {
+        ok: false,
+        error: "Your password reset link has expired. Please request a new one.",
+      };
+    }
+    await auth.updatePassword(session.userId, newPassword);
+    cookieStore.delete(SESSION_COOKIE);
+    cookieStore.delete(REFRESH_COOKIE);
+    logSecurity.info("password_reset_completed", { userId: session.userId });
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("password_reset_failed", err);
+    return { ok: false, error: "Couldn't update your password. Please try again." };
+  }
 }

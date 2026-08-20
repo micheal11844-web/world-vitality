@@ -118,3 +118,25 @@ or serve `apps/web` until its Root Directory setting is changed:**
    stateless Server Action that has no persisted `code_verifier`).
    `apps/web/lib/auth.ts` reads them at request time to construct the
    identity-service client for the login/callback flow.
+
+8. **Also required for Forgot Password (BUILD_PLAN Stage 13 follow-up),
+   same reason as the Magic Link template above:** Supabase →
+   Authentication → Emails → Templates → **Reset Password**. Same fix,
+   `type=recovery` instead of `type=email`:
+
+   ```html
+   <h2>Reset your World Vitality password</h2>
+   <p>
+     <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery"
+       >Reset password</a
+     >
+   </p>
+   ```
+
+   Without this, `/auth/callback` never sees `type=recovery` and falls
+   through to the magic-link branch instead — the user would still get
+   signed in, but land on `/dashboard` rather than `/reset-password`,
+   never actually getting to set a new password. See
+   `AuthService.requestPasswordReset`'s and `verifyPasswordResetCallback`'s
+   doc comments, and `app/auth/callback/route.ts`'s `type === "recovery"`
+   branch.
