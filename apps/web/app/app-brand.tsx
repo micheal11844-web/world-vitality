@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 
 /**
  * App logo + name, shown in the header across every page that uses
- * `AppShell` — dashboard and all four workspaces. Clicking it returns
+ * `AppShell` — dashboard and all five workspaces. Clicking it returns
  * to `/dashboard` (BUILD_PLAN Stage 13 follow-up: "have a placeholder
  * for the app logo with the app name beside it ... make it so that
  * when the name is clicked it brings us back to the homepage").
@@ -14,9 +15,14 @@ import Link from "next/link";
  * header brand slot is app-level chrome, not page content, so it
  * should be the same everywhere rather than changing per workspace.
  *
- * The mark itself is a **placeholder** — a plain circular badge with
- * "WV" — since no real logo asset exists yet. Stated plainly rather
- * than dressed up as a finished mark.
+ * **The real logo** (BUILD_PLAN Stage 14 follow-up #3) — the owner's
+ * own provided mark, `public/brand/world-vitality-mark.png`, cropped
+ * from the full lockup (`world-vitality-logo.png`, used on the auth
+ * illustration panel — see `AuthIllustration`'s doc comment) to just
+ * the globe/leaf/ribbon icon, since the wordmark text is already
+ * rendered separately right next to it here. Replaces the earlier
+ * placeholder "WV" circular badge this component used before a real
+ * asset existed.
  */
 export function AppBrand() {
   return (
@@ -30,24 +36,14 @@ export function AppBrand() {
         color: "inherit",
       }}
     >
-      <span
-        aria-hidden="true"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "1.75rem",
-          height: "1.75rem",
-          borderRadius: "50%",
-          backgroundColor: "var(--wv-color-accent-500)",
-          color: "var(--wv-color-neutral-50)",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          flexShrink: 0,
-        }}
-      >
-        WV
-      </span>
+      <Image
+        src="/brand/world-vitality-mark.png"
+        alt="World Vitality"
+        width={900}
+        height={560}
+        style={{ height: "1.5rem", width: "auto", flexShrink: 0 }}
+        priority
+      />
       <span
         style={{
           fontFamily: "var(--wv-font-sans)",

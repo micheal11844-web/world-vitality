@@ -7,13 +7,20 @@ test.afterEach(() => {
   cleanup();
 });
 
-test("is purely decorative — aria-hidden, never a carrier of meaning", () => {
+test("renders the real logo with meaningful alt text, not aria-hidden", () => {
+  // Unlike the earlier abstract SVG scene (purely decorative, rightly
+  // aria-hidden), the real logo carries real brand meaning (the "See.
+  // Understand. Act." tagline is part of the asset itself), so it
+  // should be announced, not hidden, from assistive technology.
   const { container } = render(<AuthIllustration />);
-  const svg = container.querySelector("svg");
-  assert.equal(svg?.getAttribute("aria-hidden"), "true");
+  const img = container.querySelector("img");
+  assert.ok(img);
+  assert.equal(img?.getAttribute("src"), "/brand/world-vitality-logo.png");
+  assert.ok(img?.getAttribute("alt"));
+  assert.notEqual(img?.getAttribute("aria-hidden"), "true");
 });
 
-test("renders without crashing and produces visible shapes", () => {
+test("still shows the Guide Character alongside the logo", () => {
   const { container } = render(<AuthIllustration />);
-  assert.ok((container.querySelectorAll("svg path, svg circle, svg rect").length ?? 0) > 0);
+  assert.ok(container.querySelector("[title='Orbi']"));
 });
