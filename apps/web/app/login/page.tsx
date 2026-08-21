@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Button,
   Card,
@@ -156,20 +157,39 @@ function LoginForm() {
       {/* Real brand mark — research on login-page polish specifically
           calls out brand identity (logo/wordmark) reinforcing trust;
           previously this page had no branding beyond the page title
-          text, one of the concrete things that made it feel unfinished. */}
-      <Text
-        variant="caption"
+          text, one of the concrete things that made it feel unfinished.
+          The real mark (not just text) is used here deliberately: the
+          split-screen `AuthIllustration` panel with the full logo only
+          renders at >=768px (see the layout below), so below that
+          breakpoint this form column is the only branding a visitor
+          sees — it needs the actual mark, not text alone. */}
+      <div
         style={{
-          display: "block",
-          textAlign: "center",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--wv-text-secondary)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "var(--wv-space-xs, 0.5rem)",
           marginBottom: "var(--wv-space-md)",
         }}
       >
-        World Vitality
-      </Text>
+        <Image
+          src="/brand/world-vitality-mark.png"
+          alt=""
+          width={900}
+          height={560}
+          style={{ height: "1.125rem", width: "auto", flexShrink: 0 }}
+        />
+        <Text
+          variant="caption"
+          style={{
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--wv-text-secondary)",
+          }}
+        >
+          World Vitality
+        </Text>
+      </div>
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
       >
