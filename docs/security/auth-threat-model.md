@@ -143,15 +143,35 @@ distinguish wrong-password from no-such-account, matching magic
 link's own account-existence-shouldn't-leak principle) and requires an
 8-character minimum, and `PasswordStrengthMeter` gives real,
 pattern-aware (not naive character-class) feedback beyond that floor.
+New passwords (sign-up and password reset) are also checked against
+Have I Been Pwned's k-anonymity range API and rejected if they've
+appeared in a known breach corpus (`apps/web/lib/password-breach-check.ts`)
+— fails open on a third-party outage, logged, never blocking a
+legitimate user over an unrelated service being briefly unreachable.
 
-**What's honestly NOT built:** rate limiting on sign-in attempts
-beyond whatever Supabase's platform applies by default (not
-independently verified here — flagged, not assumed sufficient); no
-check against known-breached-password lists (OWASP's Authentication
-Cheat Sheet recommends this, e.g. Have I Been Pwned's Pwned Passwords
-API) — a structurally-strong-looking password can still be one that's
-already in a real breach corpus; no account lockout or progressive
-delay after repeated failures. All real, open follow-up work.
+Account lockout / rate limiting on sign-in attempts is now built: a
+Postgres table (`auth_rate_limits`) and three RPC functions
+(`is_signin_locked`, `record_failed_signin_attempt`,
+`record_successful_signin`), applied directly to the live Supabase
+project and verified against real inputs (5 simulated failures
+triggering lockout, a success clearing the record) before the calling
+code was written. `signInWithPasswordAction` checks lockout status
+_before_ ever calling Supabase's own sign-in API, so a known-
+locked-out account doesn't spend that budget on a request already
+known to fail. Sliding window: 5 failures within 15 minutes locks the
+account for 15 minutes; a successful sign-in clears the record
+entirely, since the point of a lockout is to stop guessing, not to
+punish an account once it's proven the caller knows the real password.
+This table is per-email, RLS-enabled with zero policies (service-role
+access only, same trust boundary every other identity table in this
+schema already uses), never touched by a user-scoped client.
+
+**What's honestly NOT built:** IP-based rate limiting (this is
+per-email only — an attacker rotating through many different target
+emails from one IP isn't slowed by this mechanism; email-based lockout
+was chosen first because it's the most direct protection for a
+specific account being targeted, which is the more common
+credential-stuffing shape this app's current scale is exposed to).
 
 ### 7. Google OAuth — new PKCE-based flow, new client, new credential class
 
@@ -236,10 +256,10 @@ more conservative choice for a flow that only proves inbox access, not
 necessarily physical device control.
 
 **What's honestly NOT added:** no rate limiting on `requestPasswordReset`
-beyond whatever Supabase's platform applies by default (same open gap
-already recorded for password sign-in, threat #6) — an attacker could
-spam reset emails at a known address, which is an annoyance/abuse
-vector, not an account-compromise one, but is real and unaddressed.
+— this remains open (a separate gap from threat #6's sign-in lockout,
+now closed) — an attacker could spam reset emails at a known address,
+which is an annoyance/abuse vector, not an account-compromise one, but
+is real and unaddressed.
 
 ## What this threat model does NOT cover
 
@@ -258,8 +278,13 @@ Per Engineering Blueprint Section 3 (docs reviewed at fixed intervals,
 not only on change): revisit this document when any of the following
 happen, whichever comes first — a second workspace is added (directly
 activates threat #4), real users beyond the owner exist (changes the
-stakes on #2, #5, #6, #7, and #8 substantially), rate limiting or
-breached-password screening is added for password auth (closes part of
-#6), or the OAuth flow (#7) is actually exercised against a live
-Google/Supabase setup for the first time — its "not verified" status
-above should be updated to a real result, not left stale.
+stakes on #2, #5, #6, #7, and #8 substantially), or the OAuth flow
+(#7) is actually exercised against a live Google/Supabase setup for
+the first time — its "not verified" status above should be updated to
+a real result, not left stale.
+
+**Trigger fired and acted on:** rate limiting and breached-password
+screening were both added for password auth — threat #6's body text
+above reflects this now-current state, not the original "not built"
+status. This document is itself the evidence the review-on-trigger
+process works, not just an aspiration.

@@ -180,6 +180,47 @@ export class SupabaseAuthService implements AuthService {
     await this.client.auth.admin.signOut(sessionToken);
   }
 
+  async checkSignInLockout(
+    email: string,
+  ): Promise<{ locked: boolean; lockedUntil: string | null }> {
+    const { data, error } = await this.client.rpc("is_signin_locked", { p_email: email });
+    if (error) {
+      // A real DB/RPC failure here (not "no record found" — that's a
+      // normal, expected zero-row-equivalent result the function
+      // itself already handles) — treat as "not locked" rather than
+      // blocking sign-in entirely on an unrelated infrastructure
+      // hiccup. This is defense-in-depth, not the primary defense
+      // (Supabase's own auth API is), same fail-open reasoning already
+      // used for `checkPasswordBreach`.
+      return { locked: false, lockedUntil: null };
+    }
+    const row = data?.[0];
+    return { locked: Boolean(row?.locked), lockedUntil: row?.locked_until ?? null };
+  }
+
+  async recordFailedSignIn(
+    email: string,
+    maxAttempts = 5,
+    windowMinutes = 15,
+    lockoutMinutes = 15,
+  ): Promise<void> {
+    // Errors are deliberately swallowed, not thrown: a rate-limit
+    // bookkeeping failure must never mask the real "invalid email or
+    // password" outcome the caller (signInWithPasswordAction, which
+    // already logs the failed sign-in itself) needs to return to the
+    // user.
+    await this.client.rpc("record_failed_signin_attempt", {
+      p_email: email,
+      p_max_attempts: maxAttempts,
+      p_window_minutes: windowMinutes,
+      p_lockout_minutes: lockoutMinutes,
+    });
+  }
+
+  async recordSuccessfulSignIn(email: string): Promise<void> {
+    await this.client.rpc("record_successful_signin", { p_email: email });
+  }
+
   async requestPasswordReset(email: string): Promise<void> {
     const { error } = await this.client.auth.resetPasswordForEmail(email, {
       redirectTo: this.redirectTo,

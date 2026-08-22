@@ -109,15 +109,52 @@ export interface AuthService {
    * Sign in with an existing email + password. This is genuinely a
    * different attack surface than magic-link/OTP (credential stuffing,
    * brute force, password reuse across breached sites) — see
-   * `docs/security/auth-threat-model.md`'s updated threat list. Rate
-   * limiting is Supabase's responsibility at the platform level; this
-   * method doesn't add its own on top, which is recorded there as real,
-   * open follow-up rather than assumed handled.
+   * `docs/security/auth-threat-model.md`'s updated threat list. This
+   * method itself does not rate-limit — call `checkSignInLockout`
+   * before it and `recordFailedSignIn`/`recordSuccessfulSignIn` around
+   * it (see `apps/web/lib/actions.ts`'s `signInWithPasswordAction`),
+   * kept as separate methods rather than baked in here so this method's
+   * contract stays "does this password match," not entangled with a
+   * lockout policy a caller might reasonably want to apply differently.
    */
   signInWithPassword(email: string, password: string): Promise<Session>;
 
   /** Invalidate a session (sign out). */
   signOut(sessionToken: string): Promise<void>;
+
+  /**
+   * Checks whether `email` is currently locked out of password sign-in
+   * due to repeated recent failures — see `recordFailedSignIn` for the
+   * lockout policy. Read-only; deliberately called *before* attempting
+   * `signInWithPassword` at all, so a known-locked-out account never
+   * even reaches Supabase's own auth API (avoiding spending its rate-
+   * limit budget on a request this app already knows will fail).
+   */
+  checkSignInLockout(email: string): Promise<{ locked: boolean; lockedUntil: string | null }>;
+
+  /**
+   * Records one failed password sign-in attempt for `email`, applying a
+   * sliding-window lockout policy: `maxAttempts` failures within
+   * `windowMinutes` locks the account out for `lockoutMinutes`. Closes
+   * the "no account lockout or progressive delay after repeated
+   * failures" gap `docs/security/auth-threat-model.md` Section 6
+   * explicitly flagged as not built. Call this from the `catch` branch
+   * of a failed `signInWithPassword` — never on a successful sign-in.
+   */
+  recordFailedSignIn(
+    email: string,
+    maxAttempts?: number,
+    windowMinutes?: number,
+    lockoutMinutes?: number,
+  ): Promise<void>;
+
+  /**
+   * Clears any lockout record for `email` after a successful password
+   * sign-in — the point of a lockout is to stop guessing, not to
+   * punish an account once it's proven the caller knows the real
+   * password.
+   */
+  recordSuccessfulSignIn(email: string): Promise<void>;
 
   /**
    * Send a password-reset email to the given address — a *separate*

@@ -102,6 +102,23 @@ export async function signUpWithPasswordAction(
  * matters more here than for magic link since this is exactly the
  * attack surface credential-stuffing/brute-force tools target — see
  * `docs/security/auth-threat-model.md`'s updated threat list.
+ *
+ * **Rate limiting, closing this file's other previously-flagged gap:**
+ * checks `checkSignInLockout` before ever calling Supabase's own auth
+ * API, so a known-locked-out account doesn't spend that budget on a
+ * request already known to fail. A failed attempt is recorded via
+ * `recordFailedSignIn` (5 failures within 15 minutes locks the account
+ * for 15 minutes, sliding window — see the `auth_rate_limits` table
+ * and its RPC functions, applied directly to the live Supabase project
+ * via `Supabase:apply_migration`, verified against real inputs before
+ * this code was written to call it). A successful sign-in clears any
+ * record via `recordSuccessfulSignIn`. The lockout message is
+ * deliberately more specific than the generic invalid-credentials one
+ * — telling a legitimate locked-out user "too many attempts, try again
+ * later" is meaningfully more useful than leaving them guessing
+ * whether their password itself is wrong, and locking the account
+ * already prevents further guessing regardless of what the message
+ * says.
  */
 export async function signInWithPasswordAction(
   email: string,
@@ -113,13 +130,32 @@ export async function signInWithPasswordAction(
   }
   try {
     const auth = getAuthService();
-    const session = await auth.signInWithPassword(email, password);
-    const cookieStore = await cookies();
-    setSessionCookies(cookieStore, session, rememberMe);
-    logSecurity.info("password_signin_succeeded", { userId: session.userId });
-    logTelemetry.event("password_signin_succeeded");
-    return { ok: true };
+    const lockout = await auth.checkSignInLockout(email);
+    if (lockout.locked) {
+      logSecurity.info("password_signin_blocked_rate_limited", { email });
+      return {
+        ok: false,
+        error: "Too many failed attempts. Please try again in a few minutes.",
+      };
+    }
+    try {
+      const session = await auth.signInWithPassword(email, password);
+      const cookieStore = await cookies();
+      setSessionCookies(cookieStore, session, rememberMe);
+      await auth.recordSuccessfulSignIn(email);
+      logSecurity.info("password_signin_succeeded", { userId: session.userId });
+      logTelemetry.event("password_signin_succeeded");
+      return { ok: true };
+    } catch (err) {
+      await auth.recordFailedSignIn(email);
+      logSecurity.error("password_signin_failed", err, { email });
+      return { ok: false, error: "Invalid email or password." };
+    }
   } catch (err) {
+    // getAuthService() throws if Supabase env vars are missing — an
+    // infrastructure/config failure, not a credential failure. Same
+    // outer safety net the original (pre-rate-limiting) version of
+    // this function already had.
     logSecurity.error("password_signin_failed", err, { email });
     return { ok: false, error: "Invalid email or password." };
   }
