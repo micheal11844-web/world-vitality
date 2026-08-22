@@ -192,6 +192,19 @@ export function DashboardView() {
             </Text>
           </Card>
         </Link>
+        <Link href="/workspaces/logistics" style={{ textDecoration: "none", color: "inherit" }}>
+          <Card>
+            <Text variant="sectionTitle" as="h2">
+              Logistics & Shipping
+            </Text>
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              Route risk status for weather-sensitive shipments.
+            </Text>
+          </Card>
+        </Link>
       </div>
     </AppShell>
   );

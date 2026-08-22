@@ -42,3 +42,9 @@ export {
   CAPABILITY_ID as WIND_GENERATION_OUTLOOK_CAPABILITY_ID,
 } from "./providers/wind-generation-outlook-provider.js";
 export type { OutlookDayEntry as WindOutlookDayEntry } from "./providers/wind-generation-outlook-provider.js";
+export {
+  LogisticsRouteRiskProvider,
+  CAPABILITY_ID as LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
+  classifyRouteRisk,
+} from "./providers/logistics-route-risk-provider.js";
+export type { RouteRiskBand as LogisticsRouteRiskBand } from "./providers/logistics-route-risk-provider.js";

@@ -28,4 +28,5 @@ export const WORKSPACE_LINKS: WorkspaceLink[] = [
   { key: "construction", label: "Construction", href: "/workspaces/construction" },
   { key: "renewable-energy", label: "Renewable Energy", href: "/workspaces/renewable-energy" },
   { key: "research", label: "Research", href: "/workspaces/research" },
+  { key: "logistics", label: "Logistics & Shipping", href: "/workspaces/logistics" },
 ];
