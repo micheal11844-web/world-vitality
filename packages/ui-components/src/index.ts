@@ -59,3 +59,4 @@ export {
 } from "./layout/Sidebar.js";
 export { AIPanel, type AIPanelProps } from "./layout/AIPanel.js";
 export { AppShell, type AppShellProps } from "./layout/AppShell.js";
+export { AppShellSkeleton } from "./layout/AppShellSkeleton.js";
