@@ -34,9 +34,14 @@ export default function LandingPage() {
         >
           Real-time environmental intelligence, interpreted plainly.
         </Text>
-        <Link href="/login" style={{ textDecoration: "none" }}>
-          <Button>Sign in</Button>
-        </Link>
+        <div style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
+          <Link href="/explore" style={{ textDecoration: "none" }}>
+            <Button variant="secondary">Explore the planet</Button>
+          </Link>
+          <Link href="/login" style={{ textDecoration: "none" }}>
+            <Button>Sign in</Button>
+          </Link>
+        </div>
       </div>
     </main>
   );
