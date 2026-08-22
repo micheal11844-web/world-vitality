@@ -7,6 +7,7 @@ import { getOAuthClient } from "./supabase-ssr";
 import { setSessionCookies } from "./session-cookies";
 import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
 import { logSecurity, logTelemetry } from "./logger";
+import { checkPasswordBreach } from "./password-breach-check";
 
 export interface RequestMagicLinkResult {
   ok: boolean;
@@ -67,6 +68,15 @@ export async function signUpWithPasswordAction(
     // PasswordStrengthMeter gives real-time feedback beyond this floor,
     // this is just the hard minimum, not the actual quality bar.
     return { ok: false, error: "Password must be at least 8 characters." };
+  }
+  const breachCheck = await checkPasswordBreach(password);
+  if (breachCheck.breached) {
+    logSecurity.info("password_signup_rejected_breached", { email });
+    return {
+      ok: false,
+      error:
+        "This password has appeared in a known data breach. Please choose a different password.",
+    };
   }
   try {
     const auth = getAuthService();
@@ -232,6 +242,15 @@ export interface UpdatePasswordResult {
 export async function updatePasswordAction(newPassword: string): Promise<UpdatePasswordResult> {
   if (!newPassword || newPassword.length < 8) {
     return { ok: false, error: "Password must be at least 8 characters." };
+  }
+  const breachCheck = await checkPasswordBreach(newPassword);
+  if (breachCheck.breached) {
+    logSecurity.info("password_reset_rejected_breached", {});
+    return {
+      ok: false,
+      error:
+        "This password has appeared in a known data breach. Please choose a different password.",
+    };
   }
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
