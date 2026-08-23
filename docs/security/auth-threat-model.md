@@ -166,12 +166,26 @@ This table is per-email, RLS-enabled with zero policies (service-role
 access only, same trust boundary every other identity table in this
 schema already uses), never touched by a user-scoped client.
 
-**What's honestly NOT built:** IP-based rate limiting (this is
-per-email only — an attacker rotating through many different target
-emails from one IP isn't slowed by this mechanism; email-based lockout
-was chosen first because it's the most direct protection for a
-specific account being targeted, which is the more common
-credential-stuffing shape this app's current scale is exposed to).
+**What's honestly NOT built:** IP-based rate limiting was scoped and
+built as a follow-up (see below) — this section originally flagged it
+as absent and that has since changed.
+
+**Per-IP lockout, added as a follow-up:** `checkSignInIpLockout`/
+`recordFailedSignInIp` lock an IP address out for 15 minutes after 20
+failed sign-in attempts within 15 minutes (a deliberately higher
+threshold than the per-email lockout, since one IP can represent many
+real users behind NAT/a shared network) — protecting against an
+attacker rotating through many different target emails from one IP,
+which the per-email lockout alone doesn't slow down. Deliberately
+never cleared on a successful sign-in, unlike the per-email lockout: a
+successful sign-in from one account on a shared IP doesn't prove that
+IP itself is safe — an attacker could otherwise reset the IP counter
+at will by controlling one throwaway account. The client IP is read
+from the `x-forwarded-for` header (Vercel's documented behavior for
+identifying the real client behind its edge network) via
+`apps/web/lib/get-client-ip.ts`; if neither `x-forwarded-for` nor
+`x-real-ip` is present, IP-based limiting is skipped for that request
+rather than rate-limiting against a fabricated key.
 
 ### 7. Google OAuth — new PKCE-based flow, new client, new credential class
 
@@ -255,11 +269,7 @@ reset is required to sign in fresh with the new password, which is the
 more conservative choice for a flow that only proves inbox access, not
 necessarily physical device control.
 
-**What's honestly NOT added:** no rate limiting on `requestPasswordReset`
-— this remains open (a separate gap from threat #6's sign-in lockout,
-now closed) — an attacker could spam reset emails at a known address,
-which is an annoyance/abuse vector, not an account-compromise one, but
-is real and unaddressed.
+**What's honestly NOT added:** ~~no rate limiting on `requestPasswordReset`~~ **Closed** — `recordPasswordResetRequest` caps this at 3 requests per email per 15 minutes before any reset email goes out, verified against real inputs directly in Postgres before the calling code was written. This does not leak account existence: the cap is enforced identically regardless of whether the email belongs to a real account.
 
 ## What this threat model does NOT cover
 

@@ -8,6 +8,7 @@ import { setSessionCookies } from "./session-cookies";
 import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
 import { logSecurity, logTelemetry } from "./logger";
 import { checkPasswordBreach } from "./password-breach-check";
+import { getClientIp } from "./get-client-ip";
 
 export interface RequestMagicLinkResult {
   ok: boolean;
@@ -103,16 +104,19 @@ export async function signUpWithPasswordAction(
  * attack surface credential-stuffing/brute-force tools target — see
  * `docs/security/auth-threat-model.md`'s updated threat list.
  *
- * **Rate limiting, closing this file's other previously-flagged gap:**
- * checks `checkSignInLockout` before ever calling Supabase's own auth
- * API, so a known-locked-out account doesn't spend that budget on a
- * request already known to fail. A failed attempt is recorded via
- * `recordFailedSignIn` (5 failures within 15 minutes locks the account
- * for 15 minutes, sliding window — see the `auth_rate_limits` table
- * and its RPC functions, applied directly to the live Supabase project
- * via `Supabase:apply_migration`, verified against real inputs before
- * this code was written to call it). A successful sign-in clears any
- * record via `recordSuccessfulSignIn`. The lockout message is
+ * **Rate limiting, extended to per-IP too:** checks per-email
+ * (`checkSignInLockout`) and per-IP (`checkSignInIpLockout`) lockout
+ * status before ever calling Supabase's own auth API, so a
+ * known-locked-out account/network doesn't spend that budget on a
+ * request already known to fail. Per-email: 5 failures within 15
+ * minutes locks the account for 15 minutes, cleared on success via
+ * `recordSuccessfulSignIn`. Per-IP: 20 failures within 15 minutes
+ * locks that IP for 15 minutes — higher threshold since an IP can
+ * represent many real users behind NAT/a shared network, and
+ * deliberately never cleared on success (see `get-client-ip.ts` and
+ * `SupabaseAuthService`'s doc comments for why). Both applied directly
+ * to the live Supabase project and verified against real inputs before
+ * this code was written to call them. The lockout message is
  * deliberately more specific than the generic invalid-credentials one
  * — telling a legitimate locked-out user "too many attempts, try again
  * later" is meaningfully more useful than leaving them guessing
@@ -130,6 +134,19 @@ export async function signInWithPasswordAction(
   }
   try {
     const auth = getAuthService();
+    const ip = await getClientIp();
+
+    if (ip) {
+      const ipLockout = await auth.checkSignInIpLockout(ip);
+      if (ipLockout.locked) {
+        logSecurity.info("password_signin_blocked_ip_rate_limited", { ip });
+        return {
+          ok: false,
+          error: "Too many failed attempts from this network. Please try again in a few minutes.",
+        };
+      }
+    }
+
     const lockout = await auth.checkSignInLockout(email);
     if (lockout.locked) {
       logSecurity.info("password_signin_blocked_rate_limited", { email });
@@ -148,6 +165,9 @@ export async function signInWithPasswordAction(
       return { ok: true };
     } catch (err) {
       await auth.recordFailedSignIn(email);
+      if (ip) {
+        await auth.recordFailedSignInIp(ip);
+      }
       logSecurity.error("password_signin_failed", err, { email });
       return { ok: false, error: "Invalid email or password." };
     }
@@ -231,6 +251,17 @@ export async function signInWithGoogleAction(rememberMe: boolean): Promise<void>
  * send an emailed link — see `AuthService.requestPasswordReset`'s doc
  * comment. Same account-existence-shouldn't-leak discipline as every
  * other request-an-email action in this file.
+ *
+ * **Rate limiting, closing `docs/security/auth-threat-model.md`'s
+ * previously-flagged "no rate limiting on `requestPasswordReset`"
+ * gap:** `recordPasswordResetRequest` caps this at 3 requests per
+ * email per 15 minutes before ever calling Supabase's own
+ * `resetPasswordForEmail` — once exceeded, no further reset emails go
+ * out until the window clears. This does NOT leak account existence:
+ * the cap is recorded and enforced identically regardless of whether
+ * the email belongs to a real account (the RPC call always runs
+ * first, unconditionally), so a spammed nonexistent address hits the
+ * exact same "too many requests" response a spammed real one does.
  */
 export async function requestPasswordResetAction(email: string): Promise<RequestMagicLinkResult> {
   if (!email || !email.includes("@")) {
@@ -238,6 +269,14 @@ export async function requestPasswordResetAction(email: string): Promise<Request
   }
   try {
     const auth = getAuthService();
+    const rateLimit = await auth.recordPasswordResetRequest(email);
+    if (!rateLimit.allowed) {
+      logSecurity.info("password_reset_blocked_rate_limited", { email });
+      return {
+        ok: false,
+        error: "Too many reset requests for this email. Please try again in a few minutes.",
+      };
+    }
     await auth.requestPasswordReset(email);
     logSecurity.info("password_reset_requested", { email });
     logTelemetry.event("password_reset_requested");

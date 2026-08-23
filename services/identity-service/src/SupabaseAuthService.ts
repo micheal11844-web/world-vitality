@@ -221,6 +221,43 @@ export class SupabaseAuthService implements AuthService {
     await this.client.rpc("record_successful_signin", { p_email: email });
   }
 
+  async checkSignInIpLockout(
+    ipAddress: string,
+  ): Promise<{ locked: boolean; lockedUntil: string | null }> {
+    const { data, error } = await this.client.rpc("is_signin_ip_locked", { p_ip: ipAddress });
+    if (error) {
+      // Same fail-open reasoning as checkSignInLockout — a real DB/RPC
+      // failure here must never block sign-in entirely on an unrelated
+      // infrastructure hiccup.
+      return { locked: false, lockedUntil: null };
+    }
+    const row = data?.[0];
+    return { locked: Boolean(row?.locked), lockedUntil: row?.locked_until ?? null };
+  }
+
+  async recordFailedSignInIp(ipAddress: string): Promise<void> {
+    // Errors deliberately swallowed — same reasoning as
+    // recordFailedSignIn: rate-limit bookkeeping must never mask the
+    // real sign-in outcome.
+    await this.client.rpc("record_failed_signin_attempt_ip", { p_ip: ipAddress });
+  }
+
+  async recordPasswordResetRequest(
+    email: string,
+  ): Promise<{ allowed: boolean; requestCount: number }> {
+    const { data, error } = await this.client.rpc("record_password_reset_request", {
+      p_email: email,
+    });
+    if (error) {
+      // Fail open: a bookkeeping failure must never block a legitimate
+      // password-reset request, which is the one recovery path a
+      // locked-out real user has left.
+      return { allowed: true, requestCount: 0 };
+    }
+    const row = data?.[0];
+    return { allowed: row?.allowed ?? true, requestCount: row?.request_count ?? 0 };
+  }
+
   async requestPasswordReset(email: string): Promise<void> {
     const { error } = await this.client.auth.resetPasswordForEmail(email, {
       redirectTo: this.redirectTo,

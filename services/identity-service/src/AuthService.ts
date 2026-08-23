@@ -157,6 +157,32 @@ export interface AuthService {
   recordSuccessfulSignIn(email: string): Promise<void>;
 
   /**
+   * IP-scoped counterpart to `checkSignInLockout`/`recordFailedSignIn`
+   * — protects against bulk credential stuffing across *many
+   * different* target emails from one IP, which the per-email lockout
+   * alone doesn't slow down. Deliberately a separate, higher threshold
+   * (an IP can legitimately represent many real users behind NAT/a
+   * shared network) and deliberately has no "clear on success"
+   * counterpart — see `apps/web/lib/rate-limit.ts`'s doc comment for
+   * why a successful sign-in from one account doesn't prove a shared
+   * IP is safe.
+   */
+  checkSignInIpLockout(ipAddress: string): Promise<{ locked: boolean; lockedUntil: string | null }>;
+
+  /** Records one failed sign-in attempt for `ipAddress` — see `checkSignInIpLockout`. */
+  recordFailedSignInIp(ipAddress: string): Promise<void>;
+
+  /**
+   * Records one password-reset request for `email` and returns whether
+   * it should proceed (`allowed`) — a request-volume cooldown, not a
+   * lockout, since a reset request has no "wrong password" outcome to
+   * distinguish. Closes `docs/security/auth-threat-model.md`'s
+   * previously-flagged "no rate limiting on `requestPasswordReset`"
+   * gap.
+   */
+  recordPasswordResetRequest(email: string): Promise<{ allowed: boolean; requestCount: number }>;
+
+  /**
    * Send a password-reset email to the given address — a *separate*
    * flow from `requestMagicLink`, even though both arrive as an emailed
    * link. Magic link signs the user in directly; this sends a link that
