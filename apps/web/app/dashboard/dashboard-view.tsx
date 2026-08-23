@@ -205,6 +205,22 @@ export function DashboardView() {
             </Text>
           </Card>
         </Link>
+        <Link
+          href="/workspaces/disaster-monitoring"
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          <Card>
+            <Text variant="sectionTitle" as="h2">
+              Disaster Monitoring
+            </Text>
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              Live official National Weather Service alerts (U.S. only).
+            </Text>
+          </Card>
+        </Link>
       </div>
     </AppShell>
   );
