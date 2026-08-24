@@ -5,6 +5,11 @@ import {
   SHELTER_STATUS_CAVEAT,
   type ShelterLocation,
 } from "../../../lib/fema-shelters";
+import {
+  fetchActiveFireDetections,
+  FIRE_DETECTION_CAVEAT,
+  type FireDetection,
+} from "../../../lib/nasa-firms";
 import { Card, Text, StateDisplay } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry, logSecurity } from "../../../lib/logger";
@@ -33,12 +38,12 @@ const SEVERITY_ORDER: Record<string, number> = {
 
 /**
  * Disaster Monitoring Workspace Home — Active Alerts, Flood Impact
- * Locations, and Nearby Designated Shelters (BUILD_PLAN "STAGE —
- * DISASTER MONITORING WORKSPACE" + its follow-up adding flood/shelter
- * data). Scoped and confirmed with the owner explicitly before
+ * Locations, Nearby Designated Shelters, and Active Fire Detections
+ * (BUILD_PLAN "STAGE — DISASTER MONITORING WORKSPACE" + its two
+ * follow-ups). Scoped and confirmed with the owner explicitly before
  * building each piece, given this workspace's stakes — see
- * `nws-alerts.ts`, `usgs-flood-impacts.ts`, and `fema-shelters.ts`'s
- * doc comments for why each is built the way it is.
+ * `nws-alerts.ts`, `usgs-flood-impacts.ts`, `fema-shelters.ts`, and
+ * `nasa-firms.ts`'s doc comments for why each is built the way it is.
  *
  * **Honest scope, stated plainly, not silently glossed over — this is
  * still a small fraction of PRD A.7's actual ambition:**
@@ -52,21 +57,28 @@ const SEVERITY_ORDER: Record<string, number> = {
  *   shelter facility locations within 25 miles, from HIFLD open data.
  *   **Reference locations only, not live open/closed status** — see
  *   the on-page caveat, shown verbatim from FEMA/HIFLD, not softened.
+ * - **Active Fire Detections**: real — live NASA FIRMS satellite
+ *   thermal-anomaly data within ~1° of the demo location, last 24
+ *   hours. Requires the owner's own `NASA_FIRMS_MAP_KEY` (this app
+ *   can't self-register for one); shows an honest "not configured"
+ *   state rather than silently omitting the section if unset. **Not
+ *   confirmed wildfires** — thermal anomalies only, see the on-page
+ *   caveat, shown verbatim from NASA FIRMS.
  * - No AI summarization, scoring, or reinterpretation of any of the
  *   above, anywhere — see `workspace-shell.tsx`'s doc comment for why.
- * - **U.S. and territories only** for all three sources.
- * - **Still NOT built, honestly**: fire perimeter/hotspot data (NASA
- *   FIRMS — needs a registered API key the owner is obtaining), live
- *   evacuation-zone status (no unified free real-time API exists for
- *   this — it's issued ad hoc per county/state), multi-hazard AI
- *   cross-validation (deliberately declined, not just unbuilt — see
- *   `workspace-shell.tsx`), agency coordination features,
- *   offline-first emergency mode, SMS/push delivery.
+ * - **U.S. and territories only** for all four sources.
+ * - **Still NOT built, honestly**: live evacuation-zone status (no
+ *   unified free real-time API exists for this — it's issued ad hoc
+ *   per county/state), multi-hazard AI cross-validation (deliberately
+ *   declined, not just unbuilt — see `workspace-shell.tsx`), agency
+ *   coordination features, offline-first emergency mode, SMS/push
+ *   delivery.
  *
- * **Not verified against any of the three live APIs from this build
+ * **Not verified against any of the four live APIs from this build
  * environment** — same caveat as every other network-dependent code
  * path in this app (this sandbox cannot reach api.weather.gov,
- * api.waterdata.usgs.gov, or maps.nccs.nasa.gov).
+ * api.waterdata.usgs.gov, maps.nccs.nasa.gov, or
+ * firms.modaps.eosdis.nasa.gov).
  */
 export default async function DisasterMonitoringWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "disaster-monitoring" });
@@ -97,6 +109,27 @@ export default async function DisasterMonitoringWorkspaceHome() {
   } catch (err) {
     logSecurity.error("disaster_monitoring_shelters_fetch_failed", err);
     sheltersFailed = true;
+  }
+
+  // Distinct from the other three fetches: a missing NASA_FIRMS_MAP_KEY
+  // is a configuration state, not a transient failure, so it gets its
+  // own flag and its own on-page message rather than the generic
+  // "couldn't reach the service" error state.
+  let fireDetections: FireDetection[] = [];
+  let fireDetectionsFailed = false;
+  let fireDetectionsNotConfigured = false;
+  try {
+    fireDetections = await fetchActiveFireDetections(
+      DEMO_LOCATION.latitude,
+      DEMO_LOCATION.longitude,
+    );
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("NASA_FIRMS_MAP_KEY")) {
+      fireDetectionsNotConfigured = true;
+    } else {
+      logSecurity.error("disaster_monitoring_fire_detections_fetch_failed", err);
+      fireDetectionsFailed = true;
+    }
   }
 
   return (
@@ -293,6 +326,81 @@ export default async function DisasterMonitoringWorkspaceHome() {
                   Evacuation capacity (designated): {shelter.evacuationCapacity}
                 </Text>
               )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Text
+        variant="pageTitle"
+        as="h2"
+        style={{ margin: "var(--wv-space-xl) 0 var(--wv-space-xs)" }}
+      >
+        Active Fire Detections
+      </Text>
+      <Text
+        variant="body"
+        style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
+      >
+        Within ~1° of {DEMO_LOCATION.label} · Source: NASA FIRMS (VIIRS satellite), last 24 hours
+      </Text>
+      <Text
+        variant="caption"
+        style={{
+          display: "block",
+          marginBottom: "var(--wv-space-lg)",
+          color: "var(--wv-text-secondary)",
+        }}
+      >
+        {FIRE_DETECTION_CAVEAT}
+      </Text>
+
+      {fireDetectionsNotConfigured && (
+        <Card>
+          <StateDisplay
+            status="empty"
+            title="Fire detection data not configured"
+            description="Set NASA_FIRMS_MAP_KEY in this app's environment variables to enable this section."
+          />
+        </Card>
+      )}
+      {fireDetectionsFailed && (
+        <Card>
+          <StateDisplay
+            status="error"
+            title="Couldn't reach NASA FIRMS"
+            description="Fire detection data couldn't be fetched right now."
+          />
+        </Card>
+      )}
+      {!fireDetectionsNotConfigured && !fireDetectionsFailed && fireDetections.length === 0 && (
+        <Card>
+          <StateDisplay
+            status="success"
+            title="No fire detections in range"
+            description={`No satellite thermal anomalies detected near ${DEMO_LOCATION.label} in the last 24 hours.`}
+          />
+        </Card>
+      )}
+      {!fireDetectionsNotConfigured && !fireDetectionsFailed && fireDetections.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
+          {fireDetections.map((detection, i) => (
+            <Card key={`${detection.latitude},${detection.longitude},${i}`}>
+              <Text variant="sectionTitle" as="p">
+                {detection.latitude.toFixed(4)}, {detection.longitude.toFixed(4)}
+              </Text>
+              <Text variant="caption">
+                Confidence: {detection.confidence || "unknown"} ·{" "}
+                {detection.dayNight === "N" ? "Night" : "Day"} detection · Satellite:{" "}
+                {detection.satellite || "unknown"}
+              </Text>
+              <Text
+                variant="caption"
+                style={{ display: "block", color: "var(--wv-text-secondary)" }}
+              >
+                Detected {detection.acquiredDate} {detection.acquiredTime} UTC
+                {detection.frp !== null ? ` · Fire Radiative Power: ${detection.frp} MW` : ""}
+              </Text>
             </Card>
           ))}
         </div>
