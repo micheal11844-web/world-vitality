@@ -68,6 +68,16 @@ const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
  * so without persistence the collapse state would silently reset on
  * every navigation, which would be a worse experience than not having
  * the feature at all.
+ *
+ * **`data-app-shell-chrome` (added for Government & NGOs' formal
+ * report export, BUILD_PLAN "STAGE — GOVERNMENT & NGOS WORKSPACE"):**
+ * Header/Sidebar/AIPanel are each wrapped in a `div` carrying this
+ * attribute, purely so a page's own `@media print` stylesheet can hide
+ * app chrome and print only its content — see
+ * `apps/web/app/workspaces/government-ngos/report/page.tsx`. Purely
+ * additive: no visual or behavioral change for any existing page,
+ * confirmed against `layout.test.tsx`'s existing assertions (all
+ * ARIA-role-based, none depend on exact DOM nesting).
  */
 export function AppShell({
   brand,
@@ -116,13 +126,17 @@ export function AppShell({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <Header brand={brand} actions={headerActions} />
+      <div data-app-shell-chrome>
+        <Header brand={brand} actions={headerActions} />
+      </div>
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <Sidebar
-          sections={sidebarSections}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={toggleSidebar}
-        />
+        <div data-app-shell-chrome>
+          <Sidebar
+            sections={sidebarSections}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={toggleSidebar}
+          />
+        </div>
         <main
           style={{
             flex: 1,
@@ -134,9 +148,11 @@ export function AppShell({
         >
           {children}
         </main>
-        <AIPanel open={aiPanelOpen} onToggle={onToggleAiPanel}>
-          {aiPanelContent}
-        </AIPanel>
+        <div data-app-shell-chrome>
+          <AIPanel open={aiPanelOpen} onToggle={onToggleAiPanel}>
+            {aiPanelContent}
+          </AIPanel>
+        </div>
       </div>
       {showGuide && (
         <div

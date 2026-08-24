@@ -34,4 +34,5 @@ export const WORKSPACE_LINKS: WorkspaceLink[] = [
     label: "Disaster Monitoring",
     href: "/workspaces/disaster-monitoring",
   },
+  { key: "government-ngos", label: "Government & NGOs", href: "/workspaces/government-ngos" },
 ];

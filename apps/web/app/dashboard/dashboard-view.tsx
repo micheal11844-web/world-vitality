@@ -221,6 +221,22 @@ export function DashboardView() {
             </Text>
           </Card>
         </Link>
+        <Link
+          href="/workspaces/government-ngos"
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          <Card>
+            <Text variant="sectionTitle" as="h2">
+              Government & NGOs
+            </Text>
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              Multi-domain jurisdiction overview and reports.
+            </Text>
+          </Card>
+        </Link>
       </div>
     </AppShell>
   );
