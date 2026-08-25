@@ -7,4 +7,5 @@ export {
   type Profile,
   type WorkspaceMembership,
   type DataExportRequest,
+  type AuditLogEntry,
 } from "./account.js";

@@ -43,6 +43,26 @@ export interface DataExportRequest {
 }
 
 /**
+ * A single audit-log entry (Insurance workspace, BUILD_PLAN "STAGE —
+ * INSURANCE WORKSPACE"). This app's first audit log — `logger.ts` has
+ * flagged "no admin/config mutation surface exists yet to audit" as an
+ * honest gap since Stage 7; PRD A.3 (Insurance) is the first workspace
+ * that actually requires one ("shared portfolio views... with
+ * audit-logged access"). Deliberately narrow: one action per entry,
+ * append-only, no generic audit framework — see
+ * `supabase/migrations/0004_audit_log.sql` for why this isn't
+ * generalized yet.
+ */
+export interface AuditLogEntry {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  action: string;
+  resourceDescription?: string;
+  createdAt: string;
+}
+
+/**
  * Account settings basics (BUILD_PLAN ticket 3.3), required to exist
  * before any real user data accumulates per Constitution Section 11
  * (Privacy Principles) and Section 2, Principle 5: "Data export, account
@@ -73,6 +93,23 @@ export interface AccountService {
    * this behind manual review as their default path.
    */
   deleteAccount(userId: string): Promise<void>;
+
+  /**
+   * Record one audit-log entry (see `AuditLogEntry`'s doc comment).
+   * Callers should treat this as fire-and-forget-but-not-swallowed: a
+   * failure here is logged by the caller via `logSecurity`, but must
+   * never block the underlying action (e.g. a report a user is
+   * genuinely permitted to generate) from completing — an audit trail
+   * that can silently prevent legitimate use would be the wrong
+   * trade-off. See `apps/web/app/workspaces/insurance/report/page.tsx`
+   * for the one real caller today.
+   */
+  recordAuditEvent(entry: {
+    workspaceId: string;
+    userId: string;
+    action: string;
+    resourceDescription?: string;
+  }): Promise<AuditLogEntry>;
 }
 
 /**
@@ -176,5 +213,34 @@ export class SupabaseAccountService implements AccountService {
     if (error) {
       throw new Error(`Failed to delete account ${userId}: ${error.message}`);
     }
+  }
+
+  async recordAuditEvent(entry: {
+    workspaceId: string;
+    userId: string;
+    action: string;
+    resourceDescription?: string;
+  }): Promise<AuditLogEntry> {
+    const { data, error } = await this.client
+      .from("audit_log")
+      .insert({
+        workspace_id: entry.workspaceId,
+        user_id: entry.userId,
+        action: entry.action,
+        resource_description: entry.resourceDescription ?? null,
+      })
+      .select("id, workspace_id, user_id, action, resource_description, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(`Failed to record audit event for ${entry.userId}: ${error?.message}`);
+    }
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      userId: data.user_id,
+      action: data.action,
+      resourceDescription: data.resource_description ?? undefined,
+      createdAt: data.created_at,
+    };
   }
 }
