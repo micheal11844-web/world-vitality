@@ -250,6 +250,19 @@ export function DashboardView() {
             </Text>
           </Card>
         </Link>
+        <Link href="/workspaces/education" style={{ textDecoration: "none", color: "inherit" }}>
+          <Card>
+            <Text variant="sectionTitle" as="h2">
+              Education
+            </Text>
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              Grade-level data explanations and sample lesson plans for educators.
+            </Text>
+          </Card>
+        </Link>
       </div>
     </AppShell>
   );
