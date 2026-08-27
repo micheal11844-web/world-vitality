@@ -17,17 +17,14 @@ import { logSecurity } from "./logger";
  *
  * **Fail-safe default, stated explicitly: no membership record for a
  * workspace resolves to `viewer_external` (least privilege), never to
- * an elevated role.** This matters concretely today: nothing in this
- * app has any UI for assigning a workspace membership yet (no invite
- * flow, no admin console), so *every* real signed-in user currently has
- * zero membership rows for every workspace — meaning everyone sees the
- * `viewer_external` view of any role-gated UI by default, until
- * memberships are created directly (which the owner can request be done
- * via a Supabase migration, the same way `test-workspace` was verified
- * before this code was written). This is the correct, safe default for
- * "no role configured" — the alternative (defaulting to an elevated
- * role) would mean every unconfigured user silently getting full
- * access, which is backwards for a permission system.
+ * an elevated role.** This mattered concretely before BUILD_PLAN
+ * "STAGE — TEAM/INVITE UI" added a real invite flow
+ * (`/workspaces/[workspaceId]/team`): every real signed-in user had
+ * zero membership rows for every workspace until one was created
+ * directly via SQL. A real invite path exists now, but this default
+ * still matters — an uninvited signed-in user, or one whose invite
+ * link hasn't been accepted yet, must still resolve to the
+ * least-privileged view, not an elevated one.
  *
  * Also fails safe on any lookup error (missing session, missing env
  * vars, a real database failure) — same reasoning: a permission check

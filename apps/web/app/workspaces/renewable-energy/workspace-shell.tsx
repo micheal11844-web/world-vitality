@@ -65,6 +65,12 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
               href: "/workspaces/renewable-energy/map",
               active: activeKey === "map",
             },
+            {
+              key: "team",
+              label: "Team",
+              href: "/workspaces/renewable-energy/team",
+              active: false,
+            },
           ],
         },
       ]}

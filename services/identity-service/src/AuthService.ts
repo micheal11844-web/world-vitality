@@ -1,3 +1,5 @@
+import type { Role } from "./roles.js";
+
 /**
  * An authenticated session.
  *
@@ -222,4 +224,48 @@ export interface AuthService {
    * unauthenticated request.
    */
   updatePassword(userId: string, newPassword: string): Promise<void>;
+
+  /**
+   * Invite a person by email to join a workspace with a given role
+   * (BUILD_PLAN "STAGE — TEAM/INVITE UI", closing the "no invite/admin
+   * console anywhere" gap flagged since Government & NGOs). Uses
+   * Supabase's own `admin.inviteUserByEmail` — a real invite email
+   * through the same auth provider already in use, not a new email
+   * system. The intended workspace/role/resource-scope travels in the
+   * invited user's `user_metadata` as `pendingWorkspaceId`,
+   * `pendingRole`, `pendingScopedResourceIds` — read back and consumed
+   * exactly once by `verifyInviteCallback`.
+   *
+   * Does not itself create the `workspace_members` row — that only
+   * happens once the invite is actually accepted (see
+   * `verifyInviteCallback` and `app/auth/callback/route.ts`'s `invite`
+   * branch), so an unaccepted invite never grants access.
+   */
+  inviteUser(
+    email: string,
+    pending: { workspaceId: string; role: Role; scopedResourceIds?: string[] },
+  ): Promise<void>;
+
+  /**
+   * Verifies an invite link's token (Supabase's `invite` OTP type —
+   * structurally the same verification as `verifyPasswordResetCallback`,
+   * just a different `type`) and returns both the resulting session and
+   * whatever pending workspace/role/scope was stored by `inviteUser`.
+   *
+   * Eagerly clears the `pending*` fields from the user's metadata
+   * before returning, so a replayed or reused invite link can never
+   * grant workspace access a second time — the caller (the `auth/callback`
+   * route) is then responsible for actually creating the
+   * `workspace_members` row from the returned pending fields. Same
+   * "sign back out after the recovery-derived session's one real job is
+   * done" pattern as `verifyPasswordResetCallback` — this session's one
+   * real job is being redirected to `/reset-password` so the invitee
+   * sets their own password.
+   */
+  verifyInviteCallback(tokenHash: string): Promise<{
+    session: Session;
+    pendingWorkspaceId?: string;
+    pendingRole?: Role;
+    pendingScopedResourceIds?: string[];
+  }>;
 }

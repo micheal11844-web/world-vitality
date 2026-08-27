@@ -8,4 +8,5 @@ export {
   type WorkspaceMembership,
   type DataExportRequest,
   type AuditLogEntry,
+  type WorkspaceMemberSummary,
 } from "./account.js";

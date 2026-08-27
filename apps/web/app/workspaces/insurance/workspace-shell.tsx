@@ -75,6 +75,12 @@ export function WorkspaceShell({
               href: "/workspaces/insurance/map",
               active: activeKey === "map",
             },
+            {
+              key: "team",
+              label: "Team",
+              href: "/workspaces/insurance/team",
+              active: false,
+            },
           ],
         },
       ]}

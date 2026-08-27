@@ -63,6 +63,21 @@ export interface AuditLogEntry {
 }
 
 /**
+ * One workspace member, joined with their profile for display (BUILD_PLAN
+ * "STAGE — TEAM/INVITE UI"). `email`/`displayName` come from `profiles`,
+ * not `workspace_members` itself — see `listWorkspaceMembers`'s doc
+ * comment for why this is two queries merged in application code rather
+ * than a single PostgREST embedded-relationship query.
+ */
+export interface WorkspaceMemberSummary {
+  userId: string;
+  email: string;
+  displayName: string | null;
+  role: Role;
+  scopedResourceIds?: string[];
+}
+
+/**
  * Account settings basics (BUILD_PLAN ticket 3.3), required to exist
  * before any real user data accumulates per Constitution Section 11
  * (Privacy Principles) and Section 2, Principle 5: "Data export, account
@@ -77,6 +92,23 @@ export interface AccountService {
   updateProfile(userId: string, updates: Partial<Pick<Profile, "displayName">>): Promise<Profile>;
 
   getWorkspaceMemberships(userId: string): Promise<WorkspaceMembership[]>;
+
+  /**
+   * Creates (or updates, if one already exists) a workspace membership
+   * row directly — the second real way a `workspace_members` row can
+   * come into existence, alongside the invite-accept flow that is this
+   * method's one real caller (`app/auth/callback/route.ts`'s `invite`
+   * branch). Upserts on `(workspace_id, user_id)` rather than failing on
+   * conflict, since a user could in principle click an old invite link
+   * twice before it's fully consumed, or an admin could re-invite
+   * someone whose membership already exists to change their role.
+   */
+  createMembership(membership: {
+    workspaceId: string;
+    userId: string;
+    role: Role;
+    scopedResourceIds?: string[];
+  }): Promise<void>;
 
   /**
    * Kick off a data export. Must not require more effort from the user
@@ -110,6 +142,25 @@ export interface AccountService {
     action: string;
     resourceDescription?: string;
   }): Promise<AuditLogEntry>;
+
+  /**
+   * Lists everyone with a membership in one workspace, joined with their
+   * profile for display (BUILD_PLAN "STAGE — TEAM/INVITE UI", closing
+   * the "no invite/admin console anywhere" gap flagged since Government
+   * & NGOs). Backs the `/workspaces/[workspaceId]/team` page.
+   */
+  listWorkspaceMembers(workspaceId: string): Promise<WorkspaceMemberSummary[]>;
+
+  /**
+   * Removes one member's access to a workspace. Refuses (throws) if the
+   * target is that workspace's last remaining `admin_owner` — a real
+   * safety rail, not a UI-only convenience check, since this is the
+   * first place in this app a membership row can be deleted at all.
+   * Without it, a workspace could be left with zero admins and no way
+   * back in short of direct SQL (this app's only recourse today for
+   * every membership operation before this one).
+   */
+  removeMember(workspaceId: string, userId: string): Promise<void>;
 }
 
 /**
@@ -173,6 +224,28 @@ export class SupabaseAccountService implements AccountService {
       // case with different (accidentally deny-all) semantics.
       scopedResourceIds: row.scoped_resource_ids ?? undefined,
     }));
+  }
+
+  async createMembership(membership: {
+    workspaceId: string;
+    userId: string;
+    role: Role;
+    scopedResourceIds?: string[];
+  }): Promise<void> {
+    const { error } = await this.client.from("workspace_members").upsert(
+      {
+        workspace_id: membership.workspaceId,
+        user_id: membership.userId,
+        role: membership.role,
+        scoped_resource_ids: membership.scopedResourceIds ?? null,
+      },
+      { onConflict: "workspace_id,user_id" },
+    );
+    if (error) {
+      throw new Error(
+        `Failed to create membership for ${membership.userId} in ${membership.workspaceId}: ${error.message}`,
+      );
+    }
   }
 
   async requestDataExport(userId: string): Promise<DataExportRequest> {
@@ -242,5 +315,77 @@ export class SupabaseAccountService implements AccountService {
       resourceDescription: data.resource_description ?? undefined,
       createdAt: data.created_at,
     };
+  }
+
+  /**
+   * Two queries merged in application code, not one embedded-relationship
+   * PostgREST query: `workspace_members.user_id` and `profiles.user_id`
+   * both reference `auth.users(id)` independently, but there is no FK
+   * between `workspace_members` and `profiles` directly for PostgREST to
+   * infer a join from — so this fetches members, then fetches matching
+   * profiles by the resulting user_ids, then merges by hand. A member
+   * with no matching profile row (should not happen once `profiles` has
+   * a signup trigger, but not verified here) falls back to an empty
+   * display name rather than being silently dropped from the list.
+   */
+  async listWorkspaceMembers(workspaceId: string): Promise<WorkspaceMemberSummary[]> {
+    const { data: members, error: membersError } = await this.client
+      .from("workspace_members")
+      .select("user_id, role, scoped_resource_ids")
+      .eq("workspace_id", workspaceId);
+    if (membersError) {
+      throw new Error(`Failed to load members for ${workspaceId}: ${membersError.message}`);
+    }
+    if (!members || members.length === 0) {
+      return [];
+    }
+
+    const userIds = members.map((m) => m.user_id);
+    const { data: profiles, error: profilesError } = await this.client
+      .from("profiles")
+      .select("user_id, email, display_name")
+      .in("user_id", userIds);
+    if (profilesError) {
+      throw new Error(
+        `Failed to load profiles for ${workspaceId} members: ${profilesError.message}`,
+      );
+    }
+    const profileById = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+
+    return members.map((m) => {
+      const profile = profileById.get(m.user_id);
+      return {
+        userId: m.user_id,
+        email: profile?.email ?? "(no profile found)",
+        displayName: profile?.display_name ?? null,
+        role: m.role as Role,
+        scopedResourceIds: m.scoped_resource_ids ?? undefined,
+      };
+    });
+  }
+
+  async removeMember(workspaceId: string, userId: string): Promise<void> {
+    const members = await this.listWorkspaceMembers(workspaceId);
+    const target = members.find((m) => m.userId === userId);
+    if (!target) {
+      // Already gone — deleting a non-existent membership is not an
+      // error a caller needs to handle specially.
+      return;
+    }
+    const remainingAdminOwners = members.filter((m) => m.role === "admin_owner");
+    if (target.role === "admin_owner" && remainingAdminOwners.length <= 1) {
+      throw new Error(
+        `Cannot remove ${userId}: they are the last admin_owner in workspace ${workspaceId}.`,
+      );
+    }
+
+    const { error } = await this.client
+      .from("workspace_members")
+      .delete()
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", userId);
+    if (error) {
+      throw new Error(`Failed to remove member ${userId} from ${workspaceId}: ${error.message}`);
+    }
   }
 }

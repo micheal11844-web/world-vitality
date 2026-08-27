@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthService } from "../../../lib/auth";
+import { getAccountService } from "../../../lib/account";
 import { getOAuthClient } from "../../../lib/supabase-ssr";
 import { setSessionCookies } from "../../../lib/session-cookies";
 import { logSecurity, logTelemetry } from "../../../lib/logger";
@@ -22,6 +23,20 @@ import { logSecurity, logTelemetry } from "../../../lib/logger";
  *   forced `false` regardless of the `remember` query param — a
  *   recovery-derived session is short-lived and single-purpose, never
  *   something to persist long-term. See `docs/security/auth-threat-model.md`.
+ * - `token_hash` + `type=invite` → a team invite (BUILD_PLAN "STAGE —
+ *   TEAM/INVITE UI"), verified via `getAuthService().verifyInviteCallback()`.
+ *   Structurally the same as the recovery branch (redirects to
+ *   `/reset-password` so the invitee sets their own password, session
+ *   never "remembered") with one addition: on success, this route itself
+ *   creates the real `workspace_members` row from the pending
+ *   workspace/role/scope the invite carried — the one and only place
+ *   that row gets created outside direct SQL. If that membership write
+ *   fails, the invite's own metadata has already been cleared (see
+ *   `verifyInviteCallback`'s doc comment), so this is logged via
+ *   `logSecurity` and surfaced to the user as a verification failure
+ *   rather than silently dropping them into an app with no workspace
+ *   access — the fallback is the same direct-SQL path every other
+ *   membership issue on this app has used so far.
  * - `token_hash` (no `type`, or `type=email`) → magic link, verified via
  *   `getAuthService().verifyMagicLinkCallback()` (service-role client,
  *   this app's original/primary auth method — see that method's own
@@ -94,6 +109,58 @@ export async function GET(request: NextRequest) {
       return response;
     } catch (err) {
       logSecurity.error("password_reset_link_verification_failed", err);
+      return NextResponse.redirect(new URL("/login?error=verification_failed", request.url));
+    }
+  }
+
+  if (type === "invite") {
+    try {
+      const auth = getAuthService();
+      const { session, pendingWorkspaceId, pendingRole, pendingScopedResourceIds } =
+        await auth.verifyInviteCallback(tokenHash);
+
+      if (pendingWorkspaceId && pendingRole) {
+        // Membership creation is the actual point of this branch — a
+        // failure here must surface as a verification failure, not be
+        // silently swallowed, since the alternative is a user who
+        // "accepted" an invite with no resulting workspace access.
+        await getAccountService().createMembership({
+          workspaceId: pendingWorkspaceId,
+          userId: session.userId,
+          role: pendingRole,
+          scopedResourceIds: pendingScopedResourceIds,
+        });
+        try {
+          await getAccountService().recordAuditEvent({
+            workspaceId: pendingWorkspaceId,
+            userId: session.userId,
+            action: "invite:accepted",
+          });
+        } catch (auditErr) {
+          // An audit-write failure must never block a genuinely accepted
+          // invite that already succeeded above — same fail-open
+          // reasoning as every other recordAuditEvent caller.
+          logSecurity.error("invite_audit_event_write_failed", auditErr, {
+            workspace: pendingWorkspaceId,
+          });
+        }
+      } else {
+        logSecurity.warn("invite_link_missing_pending_fields", { userId: session.userId });
+      }
+
+      logSecurity.info("invite_link_verified", {
+        userId: session.userId,
+        workspace: pendingWorkspaceId,
+      });
+      logTelemetry.event("invite_link_verified", { workspace: pendingWorkspaceId });
+
+      const response = NextResponse.redirect(new URL("/reset-password", request.url));
+      // Always false — same reasoning as the recovery branch: an
+      // invite-derived session is short-lived and single-purpose.
+      setSessionCookies(response.cookies, session, false);
+      return response;
+    } catch (err) {
+      logSecurity.error("invite_link_verification_failed", err);
       return NextResponse.redirect(new URL("/login?error=verification_failed", request.url));
     }
   }

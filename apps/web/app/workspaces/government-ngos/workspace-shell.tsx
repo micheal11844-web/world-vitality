@@ -72,6 +72,12 @@ export function WorkspaceShell({
               href: "/workspaces/government-ngos/map",
               active: activeKey === "map",
             },
+            {
+              key: "team",
+              label: "Team",
+              href: "/workspaces/government-ngos/team",
+              active: false,
+            },
           ],
         },
       ]}

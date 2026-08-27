@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { AuthService, Session } from "./AuthService.js";
+import type { Role } from "./roles.js";
 
 export interface SupabaseAuthServiceConfig {
   /** Supabase project URL, e.g. https://xyzcompany.supabase.co */
@@ -300,5 +301,64 @@ export class SupabaseAuthService implements AuthService {
     if (error) {
       throw new Error(`Failed to update password: ${error.message}`);
     }
+  }
+
+  async inviteUser(
+    email: string,
+    pending: { workspaceId: string; role: Role; scopedResourceIds?: string[] },
+  ): Promise<void> {
+    const { error } = await this.client.auth.admin.inviteUserByEmail(email, {
+      redirectTo: this.redirectTo,
+      data: {
+        pendingWorkspaceId: pending.workspaceId,
+        pendingRole: pending.role,
+        pendingScopedResourceIds: pending.scopedResourceIds ?? null,
+      },
+    });
+    if (error) {
+      throw new Error(`Failed to invite ${email}: ${error.message}`);
+    }
+  }
+
+  async verifyInviteCallback(tokenHash: string): Promise<{
+    session: Session;
+    pendingWorkspaceId?: string;
+    pendingRole?: Role;
+    pendingScopedResourceIds?: string[];
+  }> {
+    const { data, error } = await this.client.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "invite",
+    });
+    if (error || !data.session || !data.user?.email) {
+      throw new Error(
+        `Failed to verify invite token: ${error?.message ?? "no session returned"}`,
+      );
+    }
+    const meta = data.user.user_metadata ?? {};
+    const pendingWorkspaceId = typeof meta.pendingWorkspaceId === "string" ? meta.pendingWorkspaceId : undefined;
+    const pendingRole = typeof meta.pendingRole === "string" ? (meta.pendingRole as Role) : undefined;
+    const pendingScopedResourceIds = Array.isArray(meta.pendingScopedResourceIds)
+      ? (meta.pendingScopedResourceIds as string[])
+      : undefined;
+
+    // Eagerly clear, before returning, so a replayed/reused invite link
+    // can never grant workspace access a second time — see this
+    // method's doc comment on `AuthService`.
+    await this.client.auth.admin.updateUserById(data.user.id, {
+      user_metadata: {
+        ...meta,
+        pendingWorkspaceId: null,
+        pendingRole: null,
+        pendingScopedResourceIds: null,
+      },
+    });
+
+    return {
+      session: this.toSession(data.session, data.user.email, data.user.id),
+      pendingWorkspaceId,
+      pendingRole,
+      pendingScopedResourceIds,
+    };
   }
 }

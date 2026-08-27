@@ -62,6 +62,12 @@ export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
               href: "/workspaces/disaster-monitoring/map",
               active: activeKey === "map",
             },
+            {
+              key: "team",
+              label: "Team",
+              href: "/workspaces/disaster-monitoring/team",
+              active: false,
+            },
           ],
         },
       ]}

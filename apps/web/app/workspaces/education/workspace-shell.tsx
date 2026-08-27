@@ -71,6 +71,12 @@ export function WorkspaceShell({ activeKey, children, role }: WorkspaceShellProp
               href: "/workspaces/education/lesson-plan",
               active: activeKey === "lesson-plan",
             },
+            {
+              key: "team",
+              label: "Team",
+              href: "/workspaces/education/team",
+              active: false,
+            },
           ],
         },
       ]}
