@@ -9,6 +9,16 @@ import { WORKSPACE_LINKS } from "../workspace-nav";
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
   children: ReactNode;
+  /**
+   * Shown as the AI panel's headline summary. Since BUILD_PLAN "STAGE —
+   * AGRICULTURE FIELDS" made this workspace real-multi-field, this is
+   * deliberately just one representative result (the first visible
+   * field's soil-moisture status), not an attempt to summarize every
+   * field in one panel — each field's own full breakdown (both metrics,
+   * both confidence badges) renders inline in its own card on the page
+   * itself. A true multi-field AI panel would need real design work
+   * this stage isn't scoped to do.
+   */
   aiInterpretation?: InterpretationResult;
 }
 

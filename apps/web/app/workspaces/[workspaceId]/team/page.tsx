@@ -9,7 +9,6 @@ import { getAuthService } from "../../../../lib/auth";
 import { SESSION_COOKIE } from "../../../../lib/constants";
 import { TeamShell } from "./team-shell";
 import { TeamClient } from "./team-client";
-
 export const dynamic = "force-dynamic";
 
 /**
@@ -62,6 +61,13 @@ export default async function TeamPage({
   const currentUserId = session?.userId ?? "";
 
   const members = await getAccountService().listWorkspaceMembers(workspaceId);
+  // Only Agriculture has a real resource type to scope a
+  // scoped_field_user invite to (BUILD_PLAN "STAGE — AGRICULTURE
+  // FIELDS") — every other workspace passes an empty list, and
+  // TeamClient simply doesn't show a field picker when there's nothing
+  // real to pick from.
+  const availableFields =
+    workspaceId === "agriculture" ? await getAccountService().listFields(workspaceId) : [];
 
   return (
     <TeamShell>
@@ -79,6 +85,7 @@ export default async function TeamPage({
           workspaceId={workspaceId}
           currentUserId={currentUserId}
           initialMembers={members}
+          availableFields={availableFields}
         />
       </div>
     </TeamShell>

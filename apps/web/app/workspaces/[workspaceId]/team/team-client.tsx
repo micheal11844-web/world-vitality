@@ -2,13 +2,20 @@
 
 import { useState, useTransition } from "react";
 import { Button, Card, StateDisplay, Table, Text, type TableColumn } from "@world-vitality/ui-components";
-import type { Role, WorkspaceMemberSummary } from "@world-vitality/identity-service";
+import type { Field, Role, WorkspaceMemberSummary } from "@world-vitality/identity-service";
 import { inviteMemberAction, removeMemberAction } from "./team-actions";
 
 export interface TeamClientProps {
   workspaceId: string;
   currentUserId: string;
   initialMembers: WorkspaceMemberSummary[];
+  /**
+   * Real fields to scope a `scoped_field_user` invite to — currently
+   * only ever non-empty for the Agriculture workspace (BUILD_PLAN
+   * "STAGE — AGRICULTURE FIELDS"). Empty for every other workspace,
+   * which simply means the field picker below never renders there.
+   */
+  availableFields: Field[];
 }
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
@@ -26,9 +33,15 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
  * on next render — simpler than maintaining a parallel client-side
  * copy of server state for a page used occasionally, not continuously.
  */
-export function TeamClient({ workspaceId, currentUserId, initialMembers }: TeamClientProps) {
+export function TeamClient({
+  workspaceId,
+  currentUserId,
+  initialMembers,
+  availableFields,
+}: TeamClientProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("operational_user");
+  const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -38,15 +51,24 @@ export function TeamClient({ workspaceId, currentUserId, initialMembers }: TeamC
     e.preventDefault();
     setFormError(null);
     setFormSuccess(null);
+    const scopedResourceIds =
+      role === "scoped_field_user" && selectedFieldIds.length > 0 ? selectedFieldIds : undefined;
     startTransition(async () => {
-      const result = await inviteMemberAction(workspaceId, email, role);
+      const result = await inviteMemberAction(workspaceId, email, role, scopedResourceIds);
       if (result.ok) {
         setFormSuccess(`Invite sent to ${email}.`);
         setEmail("");
+        setSelectedFieldIds([]);
       } else {
         setFormError(result.error ?? "Failed to send invite.");
       }
     });
+  }
+
+  function toggleField(fieldId: string) {
+    setSelectedFieldIds((prev) =>
+      prev.includes(fieldId) ? prev.filter((id) => id !== fieldId) : [...prev, fieldId],
+    );
   }
 
   function handleRemove(userId: string) {
@@ -139,6 +161,28 @@ export function TeamClient({ workspaceId, currentUserId, initialMembers }: TeamC
             Send Invite
           </Button>
         </form>
+        {role === "scoped_field_user" && availableFields.length > 0 && (
+          <div style={{ marginTop: "var(--wv-space-sm)" }}>
+            <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
+              Scope to specific fields (optional — leave unchecked for workspace-wide access):
+            </Text>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--wv-space-sm)" }}>
+              {availableFields.map((field) => (
+                <label
+                  key={field.id}
+                  style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-xs)" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedFieldIds.includes(field.id)}
+                    onChange={() => toggleField(field.id)}
+                  />
+                  <Text variant="caption">{field.name}</Text>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         {formError && (
           <Text variant="caption" style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}>
             {formError}

@@ -78,6 +78,23 @@ export interface WorkspaceMemberSummary {
 }
 
 /**
+ * A real, workspace-scoped resource — currently used only by
+ * Agriculture (BUILD_PLAN "STAGE — AGRICULTURE FIELDS", PRD A.1's
+ * "Field Overview"). See `services/identity-service/supabase/migrations/0006_agriculture_fields.sql`'s
+ * doc comment for why this is deliberately Agriculture-only rather than
+ * a generic cross-workspace "resources" concept.
+ */
+export interface Field {
+  id: string;
+  workspaceId: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+/**
  * Account settings basics (BUILD_PLAN ticket 3.3), required to exist
  * before any real user data accumulates per Constitution Section 11
  * (Privacy Principles) and Section 2, Principle 5: "Data export, account
@@ -161,6 +178,29 @@ export interface AccountService {
    * every membership operation before this one).
    */
   removeMember(workspaceId: string, userId: string): Promise<void>;
+
+  /**
+   * Lists the real resource rows for a workspace (currently only
+   * Agriculture's `fields` table has any rows). Returns every field
+   * regardless of role/scope — callers filter to what the current
+   * user's role/scope actually permits via `can(role, "data:view", {
+   * resourceId, scopedResourceIds })`, the same pattern used everywhere
+   * else `can()` gates a list.
+   */
+  listFields(workspaceId: string): Promise<Field[]>;
+
+  /**
+   * Creates a real field row. Callers gate this with `can(role,
+   * "data:edit")` (workspace-wide — creating a field has no existing
+   * resourceId to scope against) before calling.
+   */
+  createField(field: {
+    workspaceId: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    createdBy: string;
+  }): Promise<Field>;
 }
 
 /**
@@ -387,5 +427,57 @@ export class SupabaseAccountService implements AccountService {
     if (error) {
       throw new Error(`Failed to remove member ${userId} from ${workspaceId}: ${error.message}`);
     }
+  }
+
+  async listFields(workspaceId: string): Promise<Field[]> {
+    const { data, error } = await this.client
+      .from("fields")
+      .select("id, workspace_id, name, latitude, longitude, created_by, created_at")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      throw new Error(`Failed to load fields for ${workspaceId}: ${error.message}`);
+    }
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      workspaceId: row.workspace_id,
+      name: row.name,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async createField(field: {
+    workspaceId: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    createdBy: string;
+  }): Promise<Field> {
+    const { data, error } = await this.client
+      .from("fields")
+      .insert({
+        workspace_id: field.workspaceId,
+        name: field.name,
+        latitude: field.latitude,
+        longitude: field.longitude,
+        created_by: field.createdBy,
+      })
+      .select("id, workspace_id, name, latitude, longitude, created_by, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(`Failed to create field in ${field.workspaceId}: ${error?.message}`);
+    }
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      name: data.name,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+    };
   }
 }

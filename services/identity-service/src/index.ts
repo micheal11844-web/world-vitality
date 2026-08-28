@@ -9,4 +9,5 @@ export {
   type DataExportRequest,
   type AuditLogEntry,
   type WorkspaceMemberSummary,
+  type Field,
 } from "./account.js";

@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { NasaPowerConnector } from "@world-vitality/data-ingestion";
 import {
+  WeatherStatusProvider,
+  WEATHER_TEMPERATURE_CAPABILITY_ID,
   SoilMoistureStatusProvider,
   SOIL_MOISTURE_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
+import { can, type Field } from "@world-vitality/identity-service";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
+import { AddFieldForm } from "./add-field-form";
 import { logTelemetry } from "../../../lib/logger";
+import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
+import { getAccountService } from "../../../lib/account";
 
 // Environmental data must be fetched fresh on every request, never
 // baked in at build time — a statically prerendered page would show
@@ -15,72 +21,115 @@ import { logTelemetry } from "../../../lib/logger";
 // problem Section 11's map timeline labeling exists to prevent.
 export const dynamic = "force-dynamic";
 
-// A fixed demo field location — no real user-configured fields exist yet
-// (that's a Stage 6+ data-model gap, not built here). Coordinates are a
-// real agricultural area (Oyo State, Nigeria) so the request is
-// meaningful, not arbitrary.
-const DEMO_FIELD = { id: "demo-field-1", latitude: 7.3775, longitude: 3.947 };
+interface FieldStatus {
+  field: Field;
+  weather: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
+  soilMoisture: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
+  ingestionGaps: number;
+}
 
-async function getSoilMoistureStatus() {
+/**
+ * Fetches and interprets one field's data. Deliberately one
+ * `NasaPowerConnector` call per field, not one batched call for every
+ * field at once: `NasaPowerConnector` supports multiple `locations` in
+ * a single call, but the resulting `records` array would mix every
+ * field's readings together tagged only by metric, not by field —
+ * `WeatherStatusProvider`/`SoilMoistureStatusProvider` don't filter by
+ * location, so interpreting a mixed-location `records` array would
+ * silently blend fields' data together. One call per field costs more
+ * network round-trips but is correctness-safe and matches the exact
+ * pattern every other single-location workspace page already uses — a
+ * real, honest trade-off for a field list expected to stay small, not
+ * a premature optimization avoided for its own sake. Batching-with-
+ * correct-grouping (each field's own `id` as its `NasaPowerLocation.id`,
+ * then splitting `records` by the id embedded in each `record.id`)
+ * would be the natural fix if a real deployment's field count made N
+ * calls a real problem.
+ */
+async function getFieldStatus(field: Field): Promise<FieldStatus> {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_FIELD],
-    parameters: ["GWETROOT"],
+    locations: [{ id: field.id, latitude: field.latitude, longitude: field.longitude }],
+    parameters: ["T2M", "GWETROOT"],
     community: "AG",
     lookbackDays: 7,
   });
 
   const { records, gaps } = await connector.ingest({
     type: "manual",
-    requestedBy: "workspace-home-page",
+    requestedBy: "agriculture-workspace-home-page",
   });
 
-  const provider = new SoilMoistureStatusProvider();
-  const result = await provider.interpret({
+  const weather = await new WeatherStatusProvider().interpret({
+    capability: WEATHER_TEMPERATURE_CAPABILITY_ID,
+    records,
+  });
+  const soilMoisture = await new SoilMoistureStatusProvider().interpret({
     capability: SOIL_MOISTURE_CAPABILITY_ID,
     records,
   });
 
-  return { result, ingestionGaps: gaps };
+  return { field, weather, soilMoisture, ingestionGaps: gaps.length };
 }
 
 /**
- * Agriculture Workspace Home (ticket 6.3), using the shared dashboard
- * widget grammar (Experience Blueprint Section 9). This is the first
- * page in the whole build that actually exercises the full pipeline
- * live: `NasaPowerConnector` (Stage 2) → `SoilMoistureStatusProvider`
- * (Stage 4) → `ConfidenceBadge` (Stage 5), all wired together for real,
- * not just unit-tested in isolation.
+ * Agriculture Workspace Home (ticket 6.3; made real-multi-field by
+ * BUILD_PLAN "STAGE — AGRICULTURE FIELDS", Part B of the
+ * "scoped_field_user resource-scoping + no invite UI" gap-closing
+ * work). Uses the shared dashboard widget grammar (Experience Blueprint
+ * Section 9).
  *
- * **Honest scope, per widget** (Section 9 defines 7 widget types; this
- * workspace has real data for exactly one):
- * - **Status widget**: real — live NASA POWER data, real classification,
- *   real confidence.
- * - **Map thumbnail**: real link to the Stage 6.4 map view, but the
- *   "thumbnail" itself is a static placeholder, not a live mini-map.
+ * **This is the first page in the whole app that actually calls
+ * `can()` with a real `resourceId`** — every field is filtered through
+ * `can(role, "data:view", { resourceId: field.id, scopedResourceIds })`
+ * before being shown, so a `scoped_field_user` membership with a real
+ * `scopedResourceIds` array now genuinely narrows what's visible,
+ * closing the *product* gap `roles.ts`'s own module doc comment named
+ * (the *mechanism* already existed, untested, since Stage 7). Every
+ * other role continues to see every field, unchanged.
+ *
+ * **Honest scope, per widget** (Section 9 defines 7 widget types):
+ * - **Status widget, per field**: real — live NASA POWER data (both
+ *   temperature and soil moisture now, not soil moisture alone), real
+ *   classification, real confidence, for every field this role/scope
+ *   can see.
+ * - **Add a field**: real, gated by `can(role, "data:edit")` — the
+ *   first real write path for this table, alongside the one-time
+ *   migration seed that preserved the pre-existing demo field.
+ * - **Map thumbnail**: still a static placeholder linking to the real
+ *   map page, same honest limitation as before — the map page itself
+ *   wasn't changed by this stage.
  * - **Trend, Comparison, Alert summary, Recent reports, Team activity**:
- *   honest `StateDisplay` empty states. No historical-comparison data
- *   model, alerts system, reports system, or team-activity feed exists
- *   yet — rendering fabricated chart data here would violate the same
- *   "never fabricate" principle the interpretation layer itself is held
- *   to (Constitution Section 9). An empty state that says so plainly is
- *   more honest than a chart with invented numbers.
- * - Per Section 9's prioritization rule, alerts would render top-row
- *   above status when active — there being no real alert to show is why
- *   this layout doesn't yet need to implement that override logic.
+ *   still honest `StateDisplay` empty states — no historical-comparison
+ *   data model, alerts system, reports system, or team-activity feed
+ *   exists yet. Multiple real fields don't change this: fabricating
+ *   trend/comparison data would violate the same "never fabricate"
+ *   principle regardless of field count.
+ * - **Not built, deliberately**: editing or deleting a field (see
+ *   `0006_agriculture_fields.sql`'s doc comment) — not required to make
+ *   the resource-scoping mechanism real for the first time, which is
+ *   this stage's actual goal.
  *
  * **Not verified against the live API from this build environment** —
- * same caveat as `NasaPowerConnector` itself (see its README): the
- * sandbox this was built in cannot reach `power.larc.nasa.gov`. This
- * Server Component is written to handle both outcomes (real data or an
- * `insufficient-data` result if the fetch fails) — see the "no data"
- * case below — but hasn't been exercised against a real request yet.
+ * same caveat as `NasaPowerConnector` itself.
  */
 export default async function AgricultureWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "agriculture" });
-  const { result, ingestionGaps } = await getSoilMoistureStatus();
+
+  const membership = await getWorkspaceMembership("agriculture");
+  const allFields = await getAccountService().listFields("agriculture");
+  const visibleFields = allFields.filter((field) =>
+    can(membership.role, "data:view", {
+      resourceId: field.id,
+      scopedResourceIds: membership.scopedResourceIds,
+    }),
+  );
+
+  const statuses = await Promise.all(visibleFields.map((field) => getFieldStatus(field)));
+  const canEdit = can(membership.role, "data:edit");
+  const headlineInterpretation = statuses[0]?.soilMoisture;
 
   return (
-    <WorkspaceShell activeKey="home" aiInterpretation={result}>
+    <WorkspaceShell activeKey="home" aiInterpretation={headlineInterpretation}>
       <div
         style={{
           display: "flex",
@@ -94,6 +143,73 @@ export default async function AgricultureWorkspaceHome() {
         </Text>
       </div>
 
+      {canEdit && <AddFieldForm />}
+
+      {statuses.length === 0 ? (
+        <StateDisplay
+          status="empty"
+          title={allFields.length === 0 ? "No fields yet" : "No fields visible for your role"}
+          description={
+            allFields.length === 0
+              ? "Add a field above to get started."
+              : "Your access is scoped to specific fields, and none are currently assigned to you."
+          }
+        />
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(18rem, 1fr))",
+            gap: "var(--wv-space-md)",
+            marginBottom: "var(--wv-space-lg)",
+          }}
+        >
+          {statuses.map(({ field, weather, soilMoisture, ingestionGaps }) => (
+            <Card key={field.id}>
+              <Text variant="sectionTitle" as="p" style={{ marginBottom: "var(--wv-space-sm)" }}>
+                {field.name}
+              </Text>
+
+              <Text variant="caption">SOIL MOISTURE</Text>
+              {soilMoisture.unableToAnswer ? (
+                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                  {soilMoisture.summary}
+                </Text>
+              ) : (
+                <>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {soilMoisture.summary}
+                  </Text>
+                  <ConfidenceBadge level={soilMoisture.confidence} />
+                </>
+              )}
+
+              <div style={{ height: "var(--wv-space-sm)" }} />
+
+              <Text variant="caption">TEMPERATURE</Text>
+              {weather.unableToAnswer ? (
+                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                  {weather.summary}
+                </Text>
+              ) : (
+                <>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {weather.summary}
+                  </Text>
+                  <ConfidenceBadge level={weather.confidence} />
+                </>
+              )}
+
+              {ingestionGaps > 0 && (
+                <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                  {ingestionGaps} day(s) had no data available.
+                </Text>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
       <div
         style={{
           display: "grid",
@@ -102,38 +218,11 @@ export default async function AgricultureWorkspaceHome() {
           marginBottom: "var(--wv-space-md)",
         }}
       >
-        {/* Status widget — real */}
-        <Card>
-          <Text variant="caption">STATUS</Text>
-          <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
-            Soil moisture
-          </Text>
-          {result.unableToAnswer ? (
-            <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              {result.summary}
-            </Text>
-          ) : (
-            <>
-              <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
-                {result.summary}
-              </Text>
-              <ConfidenceBadge level={result.confidence} />
-            </>
-          )}
-          {ingestionGaps.length > 0 && (
-            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {ingestionGaps.length} day(s) had no data available.
-            </Text>
-          )}
-        </Card>
-
-        {/* Alert summary widget — honest empty state, no alerts system built yet */}
         <Card>
           <Text variant="caption">ALERTS</Text>
           <StateDisplay status="empty" title="No active alerts" />
         </Card>
 
-        {/* Map thumbnail widget — real link, static preview */}
         <Link
           href="/workspaces/agriculture/map"
           style={{ textDecoration: "none", color: "inherit" }}
