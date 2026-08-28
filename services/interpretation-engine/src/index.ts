@@ -49,6 +49,11 @@ export {
 } from "./providers/solar-irradiance-status-provider.js";
 export type { IrradianceBand } from "./providers/solar-irradiance-status-provider.js";
 export {
+  SolarIrradianceOutlookProvider,
+  CAPABILITY_ID as SOLAR_IRRADIANCE_OUTLOOK_CAPABILITY_ID,
+} from "./providers/solar-irradiance-outlook-provider.js";
+export type { SolarOutlookDayEntry } from "./providers/solar-irradiance-outlook-provider.js";
+export {
   LogisticsRouteRiskProvider,
   CAPABILITY_ID as LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
   classifyRouteRisk,

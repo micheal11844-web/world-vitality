@@ -14,6 +14,19 @@ const METRIC = "T2M";
  *  Open-Meteo's own default is km/h, which would silently mismatch
  *  NASA POWER's WS2M unit otherwise. */
 const WIND_METRIC = "WS2M";
+/** Same metric code NASA POWER uses for solar irradiance
+ *  (`ALLSKY_SFC_SW_DWN`), so `SolarIrradianceStatusProvider`/
+ *  `SolarIrradianceOutlookProvider` can treat records from either
+ *  connector identically — same reuse reasoning as `WIND_METRIC`
+ *  above. Open-Meteo's own `shortwave_radiation_sum` is a daily total
+ *  in MJ/m², not NASA POWER's kWh/m²/day average — converted at
+ *  ingestion (divide by 3.6, the standard MJ→kWh conversion) so the
+ *  normalized record always carries the same unit regardless of
+ *  source, per ADR-0002: ingestion hides provider-specific format,
+ *  interpretation never sees it.
+ */
+const SOLAR_METRIC = "ALLSKY_SFC_SW_DWN";
+const MJ_TO_KWH = 3.6;
 
 export interface OpenMeteoLocation {
   id: string;
@@ -41,6 +54,10 @@ interface OpenMeteoApiResponse {
      *  older/other callers of this parser (existing tests) don't
      *  include it — additive, not a breaking change. */
     wind_speed_10m_max?: number[];
+    /** Daily total shortwave solar radiation, MJ/m² (Open-Meteo's own
+     *  unit) — converted to kWh/m²/day at ingestion, see `SOLAR_METRIC`
+     *  above. Optional for the same reason `wind_speed_10m_max` is. */
+    shortwave_radiation_sum?: number[];
   };
   daily_units?: Record<string, string>;
   error?: boolean;
@@ -82,6 +99,7 @@ export function parseOpenMeteoResponse(
     temperature_2m_max: highs,
     temperature_2m_min: lows,
     wind_speed_10m_max: winds,
+    shortwave_radiation_sum: solarRadiationMJ,
   } = response.daily;
   const unit = response.daily_units?.temperature_2m_max ?? "°C";
   const windUnit = response.daily_units?.wind_speed_10m_max ?? "m/s";
@@ -146,6 +164,28 @@ export function parseOpenMeteoResponse(
         forecastIssuedAt: retrievedAt,
         provenance: provenanceFor(
           "Daily value is the model's forecast maximum wind speed for the day, not an hourly-resolution figure.",
+        ),
+      });
+    }
+
+    // Solar irradiance, additive, same reasoning as wind above — no gap
+    // when absent. Converted from Open-Meteo's MJ/m² to kWh/m²/day (see
+    // SOLAR_METRIC's doc comment) so this record is unit-identical to
+    // NASA POWER's ALLSKY_SFC_SW_DWN regardless of which connector
+    // produced it.
+    const solarMJ = solarRadiationMJ?.[i];
+    if (solarMJ !== undefined) {
+      records.push({
+        id: `${connectorId}:${location.id}:${SOLAR_METRIC}:${dateStr}`,
+        metric: SOLAR_METRIC,
+        value: solarMJ / MJ_TO_KWH,
+        unit: "kWh/m^2/day",
+        location: { latitude: location.latitude, longitude: location.longitude },
+        timestamp,
+        recordType: "forecast",
+        forecastIssuedAt: retrievedAt,
+        provenance: provenanceFor(
+          "Daily value is the model's forecast total shortwave radiation for the day, converted from Open-Meteo's native MJ/m² to kWh/m²/day (÷3.6) to match NASA POWER's unit — not an hourly-resolution figure.",
         ),
       });
     }
@@ -234,7 +274,10 @@ export class OpenMeteoConnector implements DataIngestionConnector {
     const url = new URL(FORECAST_API_BASE);
     url.searchParams.set("latitude", String(location.latitude));
     url.searchParams.set("longitude", String(location.longitude));
-    url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,wind_speed_10m_max");
+    url.searchParams.set(
+      "daily",
+      "temperature_2m_max,temperature_2m_min,wind_speed_10m_max,shortwave_radiation_sum",
+    );
     url.searchParams.set("wind_speed_unit", "ms");
     url.searchParams.set("forecast_days", String(this.config.forecastDays));
     url.searchParams.set("timezone", "UTC");

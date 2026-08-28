@@ -6,6 +6,8 @@ import {
   WIND_GENERATION_OUTLOOK_CAPABILITY_ID,
   SolarIrradianceStatusProvider,
   SOLAR_IRRADIANCE_STATUS_CAPABILITY_ID,
+  SolarIrradianceOutlookProvider,
+  SOLAR_IRRADIANCE_OUTLOOK_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
@@ -79,6 +81,31 @@ async function getGenerationOutlook() {
 }
 
 /**
+ * Solar's forecast outlook pipeline (BUILD_PLAN "STAGE — RENEWABLE
+ * ENERGY FOLLOW-UP: SOLAR OUTLOOK"), closing the "no solar forecast/
+ * outlook widget" gap named when solar's current-status-only provider
+ * first shipped. Same `OpenMeteoConnector` call as wind's outlook could
+ * reuse (both wind and solar forecast fields come from one API
+ * request) — but this function issues its own call rather than sharing
+ * one, matching this page's existing one-call-per-widget structure
+ * rather than introducing a shared-fetch refactor as a side effect of
+ * this addition.
+ */
+async function getSolarOutlook() {
+  const connector = new OpenMeteoConnector({ locations: [DEMO_LOCATION], forecastDays: 7 });
+  const { records, gaps } = await connector.ingest({
+    type: "manual",
+    requestedBy: "renewable-energy-workspace-home-page",
+  });
+  const provider = new SolarIrradianceOutlookProvider();
+  const result = await provider.interpret({
+    capability: SOLAR_IRRADIANCE_OUTLOOK_CAPABILITY_ID,
+    records,
+  });
+  return { result, ingestionGaps: gaps };
+}
+
+/**
  * Renewable Energy Workspace Home (BUILD_PLAN Stage 13) — the fourth
  * workspace, and the first one where the primary widget is
  * forecast-based from the start rather than added as a follow-up: the
@@ -103,10 +130,12 @@ async function getGenerationOutlook() {
  *   real kWh generated for any asset.
  * - **Still no hydro** — needs streamflow/hydrological data this
  *   codebase has no connector for at all, unchanged by this addition.
- * - **No outlook (forecast) for solar** — only wind has a forecast-
- *   based `Generation Outlook` widget; a solar equivalent would mirror
- *   `WindGenerationOutlookProvider`'s pattern but wasn't part of what
- *   was flagged as the immediate follow-up.
+ * - **No outlook (forecast) for solar** — ~~only wind has a forecast-
+ *   based `Generation Outlook` widget~~ **closed** (BUILD_PLAN "STAGE
+ *   — RENEWABLE ENERGY FOLLOW-UP: SOLAR OUTLOOK"): `SolarIrradianceOutlookProvider`
+ *   mirrors `WindGenerationOutlookProvider`'s exact pattern, consuming
+ *   `OpenMeteoConnector`'s solar-irradiance forecast field (added
+ *   alongside this provider).
  * - See `WindGenerationStatusProvider`'s doc comment for wind's own
  *   stated gaps (no anomaly/underperformance detection against real
  *   output, generic not asset-specific turbine envelope) — unchanged.
@@ -124,10 +153,12 @@ export default async function RenewableEnergyWorkspaceHome() {
     { result, ingestionGaps },
     { result: outlookResult, ingestionGaps: outlookGaps },
     { result: solarResult, ingestionGaps: solarGaps },
+    { result: solarOutlookResult, ingestionGaps: solarOutlookGaps },
   ] = await Promise.all([
     getCurrentGenerationStatus(),
     getGenerationOutlook(),
     getCurrentSolarStatus(),
+    getSolarOutlook(),
   ]);
 
   return (
@@ -145,7 +176,7 @@ export default async function RenewableEnergyWorkspaceHome() {
         }}
       >
         <Card style={{ gridColumn: "1 / -1" }}>
-          <Text variant="caption">GENERATION OUTLOOK (NEXT 7 DAYS)</Text>
+          <Text variant="caption">GENERATION OUTLOOK — WIND (NEXT 7 DAYS)</Text>
           {outlookResult.unableToAnswer ? (
             <Text
               variant="body"
@@ -167,6 +198,32 @@ export default async function RenewableEnergyWorkspaceHome() {
           {outlookGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
               {outlookGaps.length} forecast day(s) had no data available.
+            </Text>
+          )}
+        </Card>
+        <Card style={{ gridColumn: "1 / -1" }}>
+          <Text variant="caption">GENERATION OUTLOOK — SOLAR (NEXT 7 DAYS)</Text>
+          {solarOutlookResult.unableToAnswer ? (
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              {solarOutlookResult.summary}
+            </Text>
+          ) : (
+            <>
+              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                {solarOutlookResult.summary}
+              </Text>
+              <ConfidenceBadge level={solarOutlookResult.confidence} showDescription />
+              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                {solarOutlookResult.explanation}
+              </Text>
+            </>
+          )}
+          {solarOutlookGaps.length > 0 && (
+            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+              {solarOutlookGaps.length} forecast day(s) had no data available.
             </Text>
           )}
         </Card>

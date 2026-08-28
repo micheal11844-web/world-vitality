@@ -105,3 +105,37 @@ test("an API error response produces a gap, not a thrown exception or fabricated
   assert.equal(gaps.length, 1);
   assert.match(gaps[0]!.description, /invalid parameter/);
 });
+
+test("also normalizes daily total shortwave radiation into an ALLSKY_SFC_SW_DWN forecast record per day, converted MJ/m² -> kWh/m²/day", () => {
+  const { records } = parseOpenMeteoResponse("open-meteo", "Open-Meteo", LOCATION, {
+    daily: {
+      time: ["2026-08-16", "2026-08-17", "2026-08-18"],
+      temperature_2m_max: [28.4, 29.1, 27.0],
+      temperature_2m_min: [18.2, 19.0, 17.5],
+      shortwave_radiation_sum: [7.2, 18.0, 25.2],
+    },
+    daily_units: { temperature_2m_max: "°C" },
+  });
+
+  const solarRecords = records.filter((r) => r.metric === "ALLSKY_SFC_SW_DWN");
+  assert.equal(solarRecords.length, 3);
+  const day1 = solarRecords.find((r) => r.timestamp.startsWith("2026-08-16"));
+  assert.ok(day1);
+  assert.equal(day1?.value, 2); // 7.2 MJ/m² / 3.6 = 2 kWh/m²/day
+  assert.equal(day1?.unit, "kWh/m^2/day");
+  assert.equal(day1?.recordType, "forecast");
+});
+
+test("does not produce a solar record, and does not report a gap, when solar radiation data is absent", () => {
+  const { records, gaps } = parseOpenMeteoResponse("open-meteo", "Open-Meteo", LOCATION, {
+    daily: {
+      time: ["2026-08-16"],
+      temperature_2m_max: [28.4],
+      temperature_2m_min: [18.2],
+      // no shortwave_radiation_sum at all — a temperature-only caller's shape
+    },
+    daily_units: { temperature_2m_max: "°C" },
+  });
+  assert.equal(records.filter((r) => r.metric === "ALLSKY_SFC_SW_DWN").length, 0);
+  assert.equal(gaps.length, 0);
+});
