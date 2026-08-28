@@ -10,6 +10,7 @@ import { can, type Field } from "@world-vitality/identity-service";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { AddFieldForm } from "./add-field-form";
+import { FieldManageControls } from "./field-manage-controls";
 import { logTelemetry } from "../../../lib/logger";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getAccountService } from "../../../lib/account";
@@ -92,9 +93,17 @@ async function getFieldStatus(field: Field): Promise<FieldStatus> {
  *   temperature and soil moisture now, not soil moisture alone), real
  *   classification, real confidence, for every field this role/scope
  *   can see.
- * - **Add a field**: real, gated by `can(role, "data:edit")` — the
- *   first real write path for this table, alongside the one-time
- *   migration seed that preserved the pre-existing demo field.
+ * - **Add / edit / delete a field**: all real now (BUILD_PLAN "STAGE —
+ *   AGRICULTURE FIELDS FOLLOW-UP: EDIT/DELETE" closed the
+ *   previously-flagged gap). Creating is gated by `can(role,
+ *   "data:edit")` workspace-wide (no existing resource to scope
+ *   against); editing and deleting are gated by the *resource-scoped*
+ *   check, `can(role, "data:edit", { resourceId, scopedResourceIds })`
+ *   — a `scoped_field_user` holding `data:edit` in general is still
+ *   refused for a field outside their configured scope. **Known,
+ *   honestly-flagged edge case**: deleting a field doesn't clean up any
+ *   membership's `scopedResourceIds` that references it — see
+ *   `AccountService.deleteField`'s doc comment.
  * - **Map thumbnail**: still a static placeholder linking to the real
  *   map page, same honest limitation as before — the map page itself
  *   wasn't changed by this stage.
@@ -104,10 +113,9 @@ async function getFieldStatus(field: Field): Promise<FieldStatus> {
  *   exists yet. Multiple real fields don't change this: fabricating
  *   trend/comparison data would violate the same "never fabricate"
  *   principle regardless of field count.
- * - **Not built, deliberately**: editing or deleting a field (see
- *   `0006_agriculture_fields.sql`'s doc comment) — not required to make
- *   the resource-scoping mechanism real for the first time, which is
- *   this stage's actual goal.
+ * - **Not built, deliberately**: bulk field import, field-level
+ *   commentary/collaboration threads (PRD A.1) — not required for this
+ *   stage's or the follow-up's actual goals.
  *
  * **Not verified against the live API from this build environment** —
  * same caveat as `NasaPowerConnector` itself.
@@ -204,6 +212,18 @@ export default async function AgricultureWorkspaceHome() {
                 <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
                   {ingestionGaps} day(s) had no data available.
                 </Text>
+              )}
+
+              {can(membership.role, "data:edit", {
+                resourceId: field.id,
+                scopedResourceIds: membership.scopedResourceIds,
+              }) && (
+                <FieldManageControls
+                  fieldId={field.id}
+                  initialName={field.name}
+                  initialLatitude={field.latitude}
+                  initialLongitude={field.longitude}
+                />
               )}
             </Card>
           ))}

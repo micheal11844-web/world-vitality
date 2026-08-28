@@ -201,6 +201,34 @@ export interface AccountService {
     longitude: number;
     createdBy: string;
   }): Promise<Field>;
+
+  /**
+   * Updates a field's name/coordinates. Callers must gate this with a
+   * *resource-scoped* `can(role, "data:edit", { resourceId: fieldId,
+   * scopedResourceIds })` check — unlike `createField` (no existing
+   * resource to scope against), editing an existing field is exactly
+   * the kind of action `roles.ts`'s scoping mechanism was built for: a
+   * `scoped_field_user` holding `data:edit` in general must still be
+   * refused for a field outside their configured scope.
+   */
+  updateField(
+    fieldId: string,
+    updates: { name?: string; latitude?: number; longitude?: number },
+  ): Promise<Field>;
+
+  /**
+   * Deletes a field. Same resource-scoped `can()` gating requirement as
+   * `updateField`. **Known, honestly-flagged limitation**: no
+   * membership's `scopedResourceIds` is checked for a reference to the
+   * deleted field id — deleting a field a `scoped_field_user` is
+   * currently scoped to leaves a harmless dangling id in that
+   * membership's array (it's a plain string array, not a foreign key),
+   * which could leave that user seeing zero fields until their
+   * membership is updated. Not a data-integrity bug, just a real,
+   * undealt-with edge case, same honesty standard as every other
+   * flagged gap in this app.
+   */
+  deleteField(fieldId: string): Promise<void>;
 }
 
 /**
@@ -479,5 +507,41 @@ export class SupabaseAccountService implements AccountService {
       createdBy: data.created_by,
       createdAt: data.created_at,
     };
+  }
+
+  async updateField(
+    fieldId: string,
+    updates: { name?: string; latitude?: number; longitude?: number },
+  ): Promise<Field> {
+    const patch: Record<string, string | number> = {};
+    if (updates.name !== undefined) patch.name = updates.name;
+    if (updates.latitude !== undefined) patch.latitude = updates.latitude;
+    if (updates.longitude !== undefined) patch.longitude = updates.longitude;
+
+    const { data, error } = await this.client
+      .from("fields")
+      .update(patch)
+      .eq("id", fieldId)
+      .select("id, workspace_id, name, latitude, longitude, created_by, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(`Failed to update field ${fieldId}: ${error?.message}`);
+    }
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      name: data.name,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+    };
+  }
+
+  async deleteField(fieldId: string): Promise<void> {
+    const { error } = await this.client.from("fields").delete().eq("id", fieldId);
+    if (error) {
+      throw new Error(`Failed to delete field ${fieldId}: ${error.message}`);
+    }
   }
 }
