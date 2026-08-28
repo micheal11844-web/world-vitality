@@ -218,15 +218,11 @@ export interface AccountService {
 
   /**
    * Deletes a field. Same resource-scoped `can()` gating requirement as
-   * `updateField`. **Known, honestly-flagged limitation**: no
-   * membership's `scopedResourceIds` is checked for a reference to the
-   * deleted field id — deleting a field a `scoped_field_user` is
-   * currently scoped to leaves a harmless dangling id in that
-   * membership's array (it's a plain string array, not a foreign key),
-   * which could leave that user seeing zero fields until their
-   * membership is updated. Not a data-integrity bug, just a real,
-   * undealt-with edge case, same honesty standard as every other
-   * flagged gap in this app.
+   * `updateField`. Also cleans up any membership's `scopedResourceIds`
+   * that references the deleted field id — closing what was originally
+   * a known, flagged gap (a dangling reference in a plain string array,
+   * not a foreign key, that could leave a `scoped_field_user` seeing
+   * zero fields until their membership was manually updated).
    */
   deleteField(fieldId: string): Promise<void>;
 }
@@ -539,6 +535,39 @@ export class SupabaseAccountService implements AccountService {
   }
 
   async deleteField(fieldId: string): Promise<void> {
+    // Clean up any membership's scopedResourceIds referencing this
+    // field BEFORE deleting it — closing a previously-flagged gap
+    // (BUILD_PLAN "STAGE — AGRICULTURE FOLLOW-UP: REPORT/EXPORT").
+    // Fetch-then-write rather than a single computed SQL update: the
+    // Supabase JS client's .update() sets literal values, not SQL
+    // expressions referencing the existing row (no array_remove()
+    // support without a dedicated RPC function, which felt like more
+    // new infra than this small cleanup warranted).
+    const { data: affected, error: fetchError } = await this.client
+      .from("workspace_members")
+      .select("workspace_id, user_id, scoped_resource_ids")
+      .contains("scoped_resource_ids", [fieldId]);
+    if (fetchError) {
+      throw new Error(
+        `Failed to check for memberships scoped to field ${fieldId}: ${fetchError.message}`,
+      );
+    }
+    for (const membership of affected ?? []) {
+      const updatedScope = (membership.scoped_resource_ids ?? []).filter(
+        (id: string) => id !== fieldId,
+      );
+      const { error: updateError } = await this.client
+        .from("workspace_members")
+        .update({ scoped_resource_ids: updatedScope })
+        .eq("workspace_id", membership.workspace_id)
+        .eq("user_id", membership.user_id);
+      if (updateError) {
+        throw new Error(
+          `Failed to remove dangling reference to field ${fieldId} from membership ${membership.user_id}: ${updateError.message}`,
+        );
+      }
+    }
+
     const { error } = await this.client.from("fields").delete().eq("id", fieldId);
     if (error) {
       throw new Error(`Failed to delete field ${fieldId}: ${error.message}`);

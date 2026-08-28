@@ -1,16 +1,10 @@
 import Link from "next/link";
-import { NasaPowerConnector } from "@world-vitality/data-ingestion";
-import {
-  WeatherStatusProvider,
-  WEATHER_TEMPERATURE_CAPABILITY_ID,
-  SoilMoistureStatusProvider,
-  SOIL_MOISTURE_CAPABILITY_ID,
-} from "@world-vitality/interpretation-engine";
-import { can, type Field } from "@world-vitality/identity-service";
+import { can } from "@world-vitality/identity-service";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { AddFieldForm } from "./add-field-form";
 import { FieldManageControls } from "./field-manage-controls";
+import { getFieldStatus } from "./field-status";
 import { logTelemetry } from "../../../lib/logger";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getAccountService } from "../../../lib/account";
@@ -21,56 +15,6 @@ import { getAccountService } from "../../../lib/account";
 // forever, which is exactly the kind of stale-data-presented-as-current
 // problem Section 11's map timeline labeling exists to prevent.
 export const dynamic = "force-dynamic";
-
-interface FieldStatus {
-  field: Field;
-  weather: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
-  soilMoisture: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
-  ingestionGaps: number;
-}
-
-/**
- * Fetches and interprets one field's data. Deliberately one
- * `NasaPowerConnector` call per field, not one batched call for every
- * field at once: `NasaPowerConnector` supports multiple `locations` in
- * a single call, but the resulting `records` array would mix every
- * field's readings together tagged only by metric, not by field —
- * `WeatherStatusProvider`/`SoilMoistureStatusProvider` don't filter by
- * location, so interpreting a mixed-location `records` array would
- * silently blend fields' data together. One call per field costs more
- * network round-trips but is correctness-safe and matches the exact
- * pattern every other single-location workspace page already uses — a
- * real, honest trade-off for a field list expected to stay small, not
- * a premature optimization avoided for its own sake. Batching-with-
- * correct-grouping (each field's own `id` as its `NasaPowerLocation.id`,
- * then splitting `records` by the id embedded in each `record.id`)
- * would be the natural fix if a real deployment's field count made N
- * calls a real problem.
- */
-async function getFieldStatus(field: Field): Promise<FieldStatus> {
-  const connector = new NasaPowerConnector({
-    locations: [{ id: field.id, latitude: field.latitude, longitude: field.longitude }],
-    parameters: ["T2M", "GWETROOT"],
-    community: "AG",
-    lookbackDays: 7,
-  });
-
-  const { records, gaps } = await connector.ingest({
-    type: "manual",
-    requestedBy: "agriculture-workspace-home-page",
-  });
-
-  const weather = await new WeatherStatusProvider().interpret({
-    capability: WEATHER_TEMPERATURE_CAPABILITY_ID,
-    records,
-  });
-  const soilMoisture = await new SoilMoistureStatusProvider().interpret({
-    capability: SOIL_MOISTURE_CAPABILITY_ID,
-    records,
-  });
-
-  return { field, weather, soilMoisture, ingestionGaps: gaps.length };
-}
 
 /**
  * Agriculture Workspace Home (ticket 6.3; made real-multi-field by
@@ -134,6 +78,7 @@ export default async function AgricultureWorkspaceHome() {
 
   const statuses = await Promise.all(visibleFields.map((field) => getFieldStatus(field)));
   const canEdit = can(membership.role, "data:edit");
+  const canCreateReports = can(membership.role, "reports:create");
   const headlineInterpretation = statuses[0]?.soilMoisture;
 
   return (
@@ -264,6 +209,24 @@ export default async function AgricultureWorkspaceHome() {
             </div>
           </Card>
         </Link>
+
+        {canCreateReports && (
+          <Link
+            href="/workspaces/agriculture/report"
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <Card>
+              <Text variant="caption">FIELD REPORT</Text>
+              <Text
+                variant="body"
+                style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-sm)" }}
+              >
+                Current-conditions snapshot for every field you can see, exportable as CSV or
+                PDF →
+              </Text>
+            </Card>
+          </Link>
+        )}
       </div>
 
       <div

@@ -7,7 +7,7 @@ import { AppBrand } from "../../app-brand";
 import { WORKSPACE_LINKS } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
-  activeKey: "home" | "map";
+  activeKey: "home" | "map" | "report";
   children: ReactNode;
   /**
    * Shown as the AI panel's headline summary. Since BUILD_PLAN "STAGE —
@@ -74,6 +74,12 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
               label: "Map",
               href: "/workspaces/agriculture/map",
               active: activeKey === "map",
+            },
+            {
+              key: "report",
+              label: "Field Report",
+              href: "/workspaces/agriculture/report",
+              active: activeKey === "report",
             },
             {
               key: "team",
