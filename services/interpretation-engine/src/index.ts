@@ -43,6 +43,12 @@ export {
 } from "./providers/wind-generation-outlook-provider.js";
 export type { OutlookDayEntry as WindOutlookDayEntry } from "./providers/wind-generation-outlook-provider.js";
 export {
+  SolarIrradianceStatusProvider,
+  CAPABILITY_ID as SOLAR_IRRADIANCE_STATUS_CAPABILITY_ID,
+  classifySolarIrradiance,
+} from "./providers/solar-irradiance-status-provider.js";
+export type { IrradianceBand } from "./providers/solar-irradiance-status-provider.js";
+export {
   LogisticsRouteRiskProvider,
   CAPABILITY_ID as LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
   classifyRouteRisk,

@@ -4,6 +4,8 @@ import {
   WIND_GENERATION_STATUS_CAPABILITY_ID,
   WindGenerationOutlookProvider,
   WIND_GENERATION_OUTLOOK_CAPABILITY_ID,
+  SolarIrradianceStatusProvider,
+  SOLAR_IRRADIANCE_STATUS_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
@@ -30,6 +32,33 @@ async function getCurrentGenerationStatus() {
   const provider = new WindGenerationStatusProvider();
   const result = await provider.interpret({
     capability: WIND_GENERATION_STATUS_CAPABILITY_ID,
+    records,
+  });
+  return { result, ingestionGaps: gaps };
+}
+
+/**
+ * Solar irradiance's current-status pipeline (BUILD_PLAN "STAGE —
+ * RENEWABLE ENERGY FOLLOW-UP: SOLAR IRRADIANCE"), closing the gap this
+ * workspace's own doc comment named since Stage 13. A separate
+ * `NasaPowerConnector` call with `community: "RE"` — NASA POWER's own
+ * grouping for `ALLSKY_SFC_SW_DWN` — rather than reusing the wind
+ * pipeline's `community: "AG"` call.
+ */
+async function getCurrentSolarStatus() {
+  const connector = new NasaPowerConnector({
+    locations: [DEMO_LOCATION],
+    parameters: ["ALLSKY_SFC_SW_DWN"],
+    community: "RE",
+    lookbackDays: 7,
+  });
+  const { records, gaps } = await connector.ingest({
+    type: "manual",
+    requestedBy: "renewable-energy-workspace-home-page",
+  });
+  const provider = new SolarIrradianceStatusProvider();
+  const result = await provider.interpret({
+    capability: SOLAR_IRRADIANCE_STATUS_CAPABILITY_ID,
     records,
   });
   return { result, ingestionGaps: gaps };
@@ -64,11 +93,23 @@ async function getGenerationOutlook() {
  *   forecast data, classified via `WindGenerationOutlookProvider`,
  *   real lead-time confidence.
  * - **Current status**: real — live NASA POWER wind data via
- *   `WindGenerationStatusProvider`.
- * - **Wind only** — no solar or hydro assets. See
- *   `WindGenerationStatusProvider`'s doc comment for why, and for the
- *   other stated gaps (no anomaly/underperformance detection against
- *   real output, generic not asset-specific turbine envelope).
+ *   `WindGenerationStatusProvider`, **and now solar irradiance** via
+ *   `SolarIrradianceStatusProvider` (BUILD_PLAN "STAGE — RENEWABLE
+ *   ENERGY FOLLOW-UP: SOLAR IRRADIANCE"), closing the gap this
+ *   workspace's own doc comment named since Stage 13.
+ * - **Solar is irradiance-level only, not generation output or
+ *   capacity factor** — see `SolarIrradianceStatusProvider`'s doc
+ *   comment for why this codebase can't honestly claim to estimate
+ *   real kWh generated for any asset.
+ * - **Still no hydro** — needs streamflow/hydrological data this
+ *   codebase has no connector for at all, unchanged by this addition.
+ * - **No outlook (forecast) for solar** — only wind has a forecast-
+ *   based `Generation Outlook` widget; a solar equivalent would mirror
+ *   `WindGenerationOutlookProvider`'s pattern but wasn't part of what
+ *   was flagged as the immediate follow-up.
+ * - See `WindGenerationStatusProvider`'s doc comment for wind's own
+ *   stated gaps (no anomaly/underperformance detection against real
+ *   output, generic not asset-specific turbine envelope) — unchanged.
  * - **No Portfolio Risk Map, no asset-type selection at sign-up** —
  *   this workspace has one demo asset location, same limitation as
  *   every other workspace's single demo location.
@@ -79,8 +120,15 @@ async function getGenerationOutlook() {
  */
 export default async function RenewableEnergyWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "renewable-energy" });
-  const [{ result, ingestionGaps }, { result: outlookResult, ingestionGaps: outlookGaps }] =
-    await Promise.all([getCurrentGenerationStatus(), getGenerationOutlook()]);
+  const [
+    { result, ingestionGaps },
+    { result: outlookResult, ingestionGaps: outlookGaps },
+    { result: solarResult, ingestionGaps: solarGaps },
+  ] = await Promise.all([
+    getCurrentGenerationStatus(),
+    getGenerationOutlook(),
+    getCurrentSolarStatus(),
+  ]);
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={outlookResult}>
@@ -132,7 +180,7 @@ export default async function RenewableEnergyWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">CURRENT STATUS</Text>
+          <Text variant="caption">CURRENT STATUS — WIND</Text>
           {result.unableToAnswer ? (
             <Text
               variant="body"
@@ -151,6 +199,29 @@ export default async function RenewableEnergyWorkspaceHome() {
           {ingestionGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
               {ingestionGaps.length} day(s) had no data available.
+            </Text>
+          )}
+        </Card>
+        <Card>
+          <Text variant="caption">CURRENT STATUS — SOLAR</Text>
+          {solarResult.unableToAnswer ? (
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              {solarResult.summary}
+            </Text>
+          ) : (
+            <>
+              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                {solarResult.summary}
+              </Text>
+              <ConfidenceBadge level={solarResult.confidence} showDescription />
+            </>
+          )}
+          {solarGaps.length > 0 && (
+            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+              {solarGaps.length} day(s) had no data available.
             </Text>
           )}
         </Card>
