@@ -1,4 +1,4 @@
-import { NasaPowerConnector, OpenMeteoConnector } from "@world-vitality/data-ingestion";
+import { NasaPowerConnector, OpenMeteoConnector, UsgsStreamflowConnector } from "@world-vitality/data-ingestion";
 import {
   WindGenerationStatusProvider,
   WIND_GENERATION_STATUS_CAPABILITY_ID,
@@ -8,6 +8,8 @@ import {
   SOLAR_IRRADIANCE_STATUS_CAPABILITY_ID,
   SolarIrradianceOutlookProvider,
   SOLAR_IRRADIANCE_OUTLOOK_CAPABILITY_ID,
+  HydroFlowStatusProvider,
+  HYDRO_FLOW_STATUS_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
@@ -19,6 +21,19 @@ export const dynamic = "force-dynamic";
 // Agriculture's home page comment for why (no real user-configured
 // saved asset locations exist yet).
 const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
+
+// Hydro's demo site is deliberately different from every other demo
+// location in this workspace (and this app): streamflow is only
+// measured at fixed USGS gauge stations, not any point on Earth — see
+// `UsgsStreamflowConnector`'s doc comment. This is USGS site 01646500,
+// Potomac River at Little Falls Pump Station near Washington, DC — a
+// real, long-running, reliably-active gauge, not a placeholder.
+const DEMO_GAUGE_STATION = {
+  id: "potomac-little-falls",
+  siteNumber: "01646500",
+  latitude: 38.94974,
+  longitude: -77.12786,
+};
 
 async function getCurrentGenerationStatus() {
   const connector = new NasaPowerConnector({
@@ -106,6 +121,28 @@ async function getSolarOutlook() {
 }
 
 /**
+ * Hydro's current-status pipeline (BUILD_PLAN "STAGE — RENEWABLE
+ * ENERGY FOLLOW-UP: HYDRO"), closing the last of the PRD's three named
+ * asset types. Uses a real US gauge station (`DEMO_GAUGE_STATION`), not
+ * `DEMO_LOCATION` — see that constant's own doc comment for why. No
+ * outlook counterpart exists for hydro (see `UsgsStreamflowConnector`'s
+ * doc comment for why).
+ */
+async function getCurrentHydroStatus() {
+  const connector = new UsgsStreamflowConnector({ stations: [DEMO_GAUGE_STATION] });
+  const { records, gaps } = await connector.ingest({
+    type: "manual",
+    requestedBy: "renewable-energy-workspace-home-page",
+  });
+  const provider = new HydroFlowStatusProvider();
+  const result = await provider.interpret({
+    capability: HYDRO_FLOW_STATUS_CAPABILITY_ID,
+    records,
+  });
+  return { result, ingestionGaps: gaps };
+}
+
+/**
  * Renewable Energy Workspace Home (BUILD_PLAN Stage 13) — the fourth
  * workspace, and the first one where the primary widget is
  * forecast-based from the start rather than added as a follow-up: the
@@ -128,8 +165,23 @@ async function getSolarOutlook() {
  *   capacity factor** — see `SolarIrradianceStatusProvider`'s doc
  *   comment for why this codebase can't honestly claim to estimate
  *   real kWh generated for any asset.
- * - **Still no hydro** — needs streamflow/hydrological data this
- *   codebase has no connector for at all, unchanged by this addition.
+ * - **Still no hydro** — ~~needs streamflow/hydrological data this
+ *   codebase has no connector for at all~~ **closed** (BUILD_PLAN
+ *   "STAGE — RENEWABLE ENERGY FOLLOW-UP: HYDRO"): `HydroFlowStatusProvider`
+ *   consumes real-time discharge from `UsgsStreamflowConnector` (USGS
+ *   NWIS, free, no key). **Genuinely different from wind/solar in two
+ *   ways, stated honestly**: (1) streamflow is only measured at fixed
+ *   US gauge stations, not any point on Earth, so hydro uses its own
+ *   dedicated demo site (`DEMO_GAUGE_STATION`, a real Potomac River
+ *   gauge), not the shared `DEMO_LOCATION`; (2) no forecast/outlook
+ *   exists for hydro — USGS NWIS has no public streamflow forecast API,
+ *   so this is current-conditions only, unlike wind and solar which
+ *   both now have outlook widgets. Streamflow *level*, not generation
+ *   output or capacity factor — same "describe the resource, not the
+ *   output" discipline as solar, since this codebase has no turbine/
+ *   head/penstock specification for any real hydro asset either.
+ *   Renewable Energy now covers all three of PRD A.4's named asset
+ *   types (solar, wind, hydro).
  * - **No outlook (forecast) for solar** — ~~only wind has a forecast-
  *   based `Generation Outlook` widget~~ **closed** (BUILD_PLAN "STAGE
  *   — RENEWABLE ENERGY FOLLOW-UP: SOLAR OUTLOOK"): `SolarIrradianceOutlookProvider`
@@ -143,9 +195,9 @@ async function getSolarOutlook() {
  *   this workspace has one demo asset location, same limitation as
  *   every other workspace's single demo location.
  *
- * **Not verified against the live NASA POWER or Open-Meteo APIs from
- * this build environment** — same caveat as every other workspace's
- * page: this sandbox cannot reach either API directly.
+ * **Not verified against the live NASA POWER, Open-Meteo, or USGS NWIS
+ * APIs from this build environment** — same caveat as every other
+ * workspace's page: this sandbox cannot reach any of them directly.
  */
 export default async function RenewableEnergyWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "renewable-energy" });
@@ -154,11 +206,13 @@ export default async function RenewableEnergyWorkspaceHome() {
     { result: outlookResult, ingestionGaps: outlookGaps },
     { result: solarResult, ingestionGaps: solarGaps },
     { result: solarOutlookResult, ingestionGaps: solarOutlookGaps },
+    { result: hydroResult, ingestionGaps: hydroGaps },
   ] = await Promise.all([
     getCurrentGenerationStatus(),
     getGenerationOutlook(),
     getCurrentSolarStatus(),
     getSolarOutlook(),
+    getCurrentHydroStatus(),
   ]);
 
   return (
@@ -279,6 +333,29 @@ export default async function RenewableEnergyWorkspaceHome() {
           {solarGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
               {solarGaps.length} day(s) had no data available.
+            </Text>
+          )}
+        </Card>
+        <Card>
+          <Text variant="caption">CURRENT STATUS — HYDRO (US gauge station)</Text>
+          {hydroResult.unableToAnswer ? (
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              {hydroResult.summary}
+            </Text>
+          ) : (
+            <>
+              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                {hydroResult.summary}
+              </Text>
+              <ConfidenceBadge level={hydroResult.confidence} showDescription />
+            </>
+          )}
+          {hydroGaps.length > 0 && (
+            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+              {hydroGaps.length} reading(s) had no data available.
             </Text>
           )}
         </Card>

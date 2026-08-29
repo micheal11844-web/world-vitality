@@ -15,3 +15,10 @@ export {
   type OpenMeteoLocation,
   type OpenMeteoConnectorConfig,
 } from "./connectors/open-meteo-connector.js";
+export {
+  UsgsStreamflowConnector,
+  parseNwisResponse,
+  STREAMFLOW_METRIC,
+  type UsgsGaugeStation,
+  type UsgsStreamflowConnectorConfig,
+} from "./connectors/usgs-streamflow-connector.js";

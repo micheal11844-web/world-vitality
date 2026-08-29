@@ -54,6 +54,12 @@ export {
 } from "./providers/solar-irradiance-outlook-provider.js";
 export type { SolarOutlookDayEntry } from "./providers/solar-irradiance-outlook-provider.js";
 export {
+  HydroFlowStatusProvider,
+  CAPABILITY_ID as HYDRO_FLOW_STATUS_CAPABILITY_ID,
+  classifyStreamflow,
+} from "./providers/hydro-flow-status-provider.js";
+export type { FlowBand } from "./providers/hydro-flow-status-provider.js";
+export {
   LogisticsRouteRiskProvider,
   CAPABILITY_ID as LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
   classifyRouteRisk,
