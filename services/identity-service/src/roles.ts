@@ -21,18 +21,15 @@
  * resource, which explodes combinatorially) — an authenticated user in
  * a workspace, taking an action, against an optional specific resource.
  * This closes the *mechanism* gap `scoped_field_user` previously had no
- * answer for. It does NOT yet close the *product* gap: no sub-workspace
- * resource type (a "field," a "site") exists anywhere in
- * `packages/data-schemas` or the Agriculture workspace's data model, so
- * nothing in this codebase actually calls `can()` with a `resourceId`
- * yet — there is nothing real to scope to. Building a resource type
- * with no product surface behind it would be premature (see
- * BUILD_PLAN's explicitly-deferred "any workspace beyond Agriculture").
- * What's real here: the interface is ready, tested, and standards-
- * aligned (WorkOS/Aserto-style tenant-scoped RBAC+ABAC hybrid) for the
- * day a scoped resource type exists — consistent with ADR-0003's
- * "interfaces before implementations" principle, applied one level
- * deeper than ADR-0003 itself covers.
+ * answer for. **The *product* gap is now closed too, for Agriculture
+ * specifically**: `fields` (BUILD_PLAN "STAGE — AGRICULTURE FIELDS")
+ * is a real sub-workspace resource type, `agriculture/page.tsx` is the
+ * first page in this app to call `can()` with a real `resourceId`, and
+ * the Team page's invite-time field picker is the first way a real
+ * membership's `scopedResourceIds` gets populated with anything
+ * meaningful. Every other workspace still has no comparable resource
+ * type — Engineering Blueprint 4.5's "promote once a genuine second
+ * consumer exists" still applies to any future one.
  */
 export type Role = "admin_owner" | "operational_user" | "scoped_field_user" | "viewer_external";
 
@@ -52,7 +49,8 @@ export type Permission =
   | "reports:create"
   | "alerts:view"
   | "alerts:manage"
-  | "export:data";
+  | "export:data"
+  | "comments:create";
 
 /**
  * Which permissions each role holds, workspace-scoped (a user's role can
@@ -67,12 +65,16 @@ export type Permission =
  *   minus report creation, PLUS resource-level scoping: when a
  *   membership carries `scopedResourceIds` (see `WorkspaceMembership`
  *   in `account.ts`), this role's access narrows to just those resource
- *   IDs rather than the whole workspace. No membership can populate
- *   `scopedResourceIds` with anything meaningful yet — see the module
- *   doc comment above for why. Until then this role behaves exactly
- *   like before (workspace-wide), which is the correct, honest default
- *   for "no scope constraint configured," not a bug.
- * - `viewer_external` — strictly read-only.
+ *   IDs rather than the whole workspace — real and exercised since
+ *   BUILD_PLAN "STAGE — AGRICULTURE FIELDS" (Agriculture's `fields`
+ *   table, plus the Team page's invite-time field picker). Every other
+ *   workspace still has no resource type to scope to, so this role
+ *   continues to behave workspace-wide there — the correct, honest
+ *   default for "no scope constraint configured," not a bug.
+ * - `viewer_external` — strictly read-only. Deliberately excluded from
+ *   `comments:create` (BUILD_PLAN "STAGE — AGRICULTURE FIELD COMMENTS")
+ *   — PRD A.1 names this distinction explicitly: "Agronomist/Advisor
+ *   (read + comment)" vs. "Viewer (read-only)."
  */
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   admin_owner: [
@@ -87,6 +89,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "alerts:view",
     "alerts:manage",
     "export:data",
+    "comments:create",
   ],
   operational_user: [
     "data:view",
@@ -96,8 +99,15 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "alerts:view",
     "alerts:manage",
     "export:data",
+    "comments:create",
   ],
-  scoped_field_user: ["data:view", "data:edit", "reports:view", "alerts:view"],
+  scoped_field_user: [
+    "data:view",
+    "data:edit",
+    "reports:view",
+    "alerts:view",
+    "comments:create",
+  ],
   viewer_external: ["data:view", "reports:view", "alerts:view"],
 } as const;
 

@@ -135,3 +135,44 @@ export async function deleteFieldAction(fieldId: string): Promise<CreateFieldRes
     return { ok: false, error: "Failed to delete field. Please try again." };
   }
 }
+
+/**
+ * Creates a comment on a field (BUILD_PLAN "STAGE — AGRICULTURE FIELD
+ * COMMENTS", PRD A.1's "commentary threads on specific fields").
+ * **Resource-scoped**, same as `updateFieldAction`/`deleteFieldAction`
+ * — uses `getWorkspaceMembership`, not just `getWorkspaceRole`, so a
+ * `scoped_field_user` holding `comments:create` in general is still
+ * refused for a field outside their configured scope.
+ */
+export async function createFieldCommentAction(
+  fieldId: string,
+  body: string,
+): Promise<CreateFieldResult> {
+  if (!body.trim()) {
+    return { ok: false, error: "Comment can't be empty." };
+  }
+
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (
+    !can(membership.role, "comments:create", {
+      resourceId: fieldId,
+      scopedResourceIds: membership.scopedResourceIds,
+    })
+  ) {
+    return { ok: false, error: "You do not have permission to comment on this field." };
+  }
+
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+  }
+
+  try {
+    await getAccountService().createFieldComment({ fieldId, userId, body: body.trim() });
+    revalidatePath("/workspaces/agriculture");
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("create_field_comment_failed", err, { workspaceId: WORKSPACE_ID, fieldId });
+    return { ok: false, error: "Failed to post comment. Please try again." };
+  }
+}

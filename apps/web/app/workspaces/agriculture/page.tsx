@@ -4,6 +4,7 @@ import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-co
 import { WorkspaceShell } from "./workspace-shell";
 import { AddFieldForm } from "./add-field-form";
 import { FieldManageControls } from "./field-manage-controls";
+import { FieldComments } from "./field-comments";
 import { getFieldStatus } from "./field-status";
 import { logTelemetry } from "../../../lib/logger";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
@@ -57,9 +58,17 @@ export const dynamic = "force-dynamic";
  *   exists yet. Multiple real fields don't change this: fabricating
  *   trend/comparison data would violate the same "never fabricate"
  *   principle regardless of field count.
- * - **Not built, deliberately**: bulk field import, field-level
- *   commentary/collaboration threads (PRD A.1) — not required for this
- *   stage's or the follow-up's actual goals.
+ * - **Not built, deliberately**: bulk field import — not required for
+ *   this stage's or any follow-up's actual goals.
+ * - **Field-level commentary/collaboration threads (PRD A.1) — now
+ *   real** (BUILD_PLAN "STAGE — AGRICULTURE FIELD COMMENTS"): each
+ *   field card has an expandable comment thread, gated by the new
+ *   resource-scoped `comments:create` permission (granted to
+ *   `admin_owner`/`operational_user`/`scoped_field_user`, not
+ *   `viewer_external` — matching PRD A.1's own "Agronomist/Advisor
+ *   (read + comment)" vs. "Viewer (read-only)" distinction). Comment
+ *   editing/deletion is a real, explicitly-deferred gap, same as
+ *   `fields` itself was before its own edit/delete follow-up.
  *
  * **Not verified against the live API from this build environment** —
  * same caveat as `NasaPowerConnector` itself.
@@ -77,6 +86,14 @@ export default async function AgricultureWorkspaceHome() {
   );
 
   const statuses = await Promise.all(visibleFields.map((field) => getFieldStatus(field)));
+  const commentsByField = new Map(
+    await Promise.all(
+      visibleFields.map(
+        async (field) =>
+          [field.id, await getAccountService().listFieldComments(field.id)] as const,
+      ),
+    ),
+  );
   const canEdit = can(membership.role, "data:edit");
   const canCreateReports = can(membership.role, "reports:create");
   const headlineInterpretation = statuses[0]?.soilMoisture;
@@ -170,6 +187,15 @@ export default async function AgricultureWorkspaceHome() {
                   initialLongitude={field.longitude}
                 />
               )}
+
+              <FieldComments
+                fieldId={field.id}
+                initialComments={commentsByField.get(field.id) ?? []}
+                canComment={can(membership.role, "comments:create", {
+                  resourceId: field.id,
+                  scopedResourceIds: membership.scopedResourceIds,
+                })}
+              />
             </Card>
           ))}
         </div>

@@ -10,4 +10,5 @@ export {
   type AuditLogEntry,
   type WorkspaceMemberSummary,
   type Field,
+  type FieldComment,
 } from "./account.js";

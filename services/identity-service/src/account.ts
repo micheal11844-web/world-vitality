@@ -95,6 +95,23 @@ export interface Field {
 }
 
 /**
+ * One comment on a field (BUILD_PLAN "STAGE — AGRICULTURE FIELD
+ * COMMENTS", PRD A.1's "commentary threads on specific fields").
+ * `email`/`displayName` are joined from `profiles`, same reasoning as
+ * `WorkspaceMemberSummary` — no FK-based embedded join exists between
+ * `field_comments` and `profiles`.
+ */
+export interface FieldComment {
+  id: string;
+  fieldId: string;
+  userId: string;
+  email: string;
+  displayName: string | null;
+  body: string;
+  createdAt: string;
+}
+
+/**
  * Account settings basics (BUILD_PLAN ticket 3.3), required to exist
  * before any real user data accumulates per Constitution Section 11
  * (Privacy Principles) and Section 2, Principle 5: "Data export, account
@@ -225,6 +242,27 @@ export interface AccountService {
    * zero fields until their membership was manually updated).
    */
   deleteField(fieldId: string): Promise<void>;
+
+  /**
+   * Lists comments on a field, oldest first, joined with each
+   * commenter's profile for display — same two-query merge pattern as
+   * `listWorkspaceMembers`.
+   */
+  listFieldComments(fieldId: string): Promise<FieldComment[]>;
+
+  /**
+   * Creates a comment on a field. Callers must gate this with a
+   * *resource-scoped* `can(role, "comments:create", { resourceId:
+   * fieldId, scopedResourceIds })` check — same reasoning as
+   * `updateField`/`deleteField`: a `scoped_field_user` holding
+   * `comments:create` in general must still be refused for a field
+   * outside their configured scope.
+   */
+  createFieldComment(comment: {
+    fieldId: string;
+    userId: string;
+    body: string;
+  }): Promise<FieldComment>;
 }
 
 /**
@@ -572,5 +610,75 @@ export class SupabaseAccountService implements AccountService {
     if (error) {
       throw new Error(`Failed to delete field ${fieldId}: ${error.message}`);
     }
+  }
+
+  async listFieldComments(fieldId: string): Promise<FieldComment[]> {
+    const { data: comments, error: commentsError } = await this.client
+      .from("field_comments")
+      .select("id, field_id, user_id, body, created_at")
+      .eq("field_id", fieldId)
+      .order("created_at", { ascending: true });
+    if (commentsError) {
+      throw new Error(`Failed to load comments for field ${fieldId}: ${commentsError.message}`);
+    }
+    if (!comments || comments.length === 0) {
+      return [];
+    }
+
+    const userIds = [...new Set(comments.map((c) => c.user_id))];
+    const { data: profiles, error: profilesError } = await this.client
+      .from("profiles")
+      .select("user_id, email, display_name")
+      .in("user_id", userIds);
+    if (profilesError) {
+      throw new Error(
+        `Failed to load profiles for field ${fieldId} comments: ${profilesError.message}`,
+      );
+    }
+    const profileById = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+
+    return comments.map((c) => {
+      const profile = profileById.get(c.user_id);
+      return {
+        id: c.id,
+        fieldId: c.field_id,
+        userId: c.user_id,
+        email: profile?.email ?? "(no profile found)",
+        displayName: profile?.display_name ?? null,
+        body: c.body,
+        createdAt: c.created_at,
+      };
+    });
+  }
+
+  async createFieldComment(comment: {
+    fieldId: string;
+    userId: string;
+    body: string;
+  }): Promise<FieldComment> {
+    const { data, error } = await this.client
+      .from("field_comments")
+      .insert({ field_id: comment.fieldId, user_id: comment.userId, body: comment.body })
+      .select("id, field_id, user_id, body, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(`Failed to create comment on field ${comment.fieldId}: ${error?.message}`);
+    }
+
+    const { data: profile } = await this.client
+      .from("profiles")
+      .select("email, display_name")
+      .eq("user_id", comment.userId)
+      .maybeSingle();
+
+    return {
+      id: data.id,
+      fieldId: data.field_id,
+      userId: data.user_id,
+      email: profile?.email ?? "(no profile found)",
+      displayName: profile?.display_name ?? null,
+      body: data.body,
+      createdAt: data.created_at,
+    };
   }
 }
