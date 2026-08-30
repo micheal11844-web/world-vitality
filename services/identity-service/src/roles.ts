@@ -61,16 +61,17 @@ export type Permission =
  * - `operational_user` — day-to-day platform use: views and edits data,
  *   creates reports, manages alerts. Cannot change who's on the team,
  *   billing, or workspace-level settings.
- * - `scoped_field_user` — same permission *types* as `operational_user`
- *   minus report creation, PLUS resource-level scoping: when a
- *   membership carries `scopedResourceIds` (see `WorkspaceMembership`
- *   in `account.ts`), this role's access narrows to just those resource
- *   IDs rather than the whole workspace — real and exercised since
- *   BUILD_PLAN "STAGE — AGRICULTURE FIELDS" (Agriculture's `fields`
- *   table, plus the Team page's invite-time field picker). Every other
- *   workspace still has no resource type to scope to, so this role
- *   continues to behave workspace-wide there — the correct, honest
- *   default for "no scope constraint configured," not a bug.
+ * - `scoped_field_user` — narrower than `operational_user`: no report
+ *   creation, alert management, or data export — plus resource-level
+ *   scoping: when a membership carries `scopedResourceIds` (see
+ *   `WorkspaceMembership` in `account.ts`), this role's access narrows
+ *   to just those resource IDs rather than the whole workspace — real
+ *   and exercised since BUILD_PLAN "STAGE — AGRICULTURE FIELDS"
+ *   (Agriculture's `fields` table, plus the Team page's invite-time
+ *   field picker). Every other workspace still has no resource type to
+ *   scope to, so this role continues to behave workspace-wide there —
+ *   the correct, honest default for "no scope constraint configured,"
+ *   not a bug.
  * - `viewer_external` — strictly read-only. Deliberately excluded from
  *   `comments:create` (BUILD_PLAN "STAGE — AGRICULTURE FIELD COMMENTS")
  *   — PRD A.1 names this distinction explicitly: "Agronomist/Advisor
@@ -114,17 +115,22 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
 /**
  * Resource-scoping context for a `can()` check — the "resource" leg of
  * the actor → action → resource pattern. Omit entirely for a
- * workspace-wide check (the only kind that currently means anything,
- * since no membership has a populated `scopedResourceIds` — see the
- * module doc comment).
+ * workspace-wide check. Real since BUILD_PLAN "STAGE — AGRICULTURE
+ * FIELDS": Agriculture's `fields` are a real resource type, and a real
+ * membership can carry a populated `scopedResourceIds` via the Team
+ * page's invite-time field picker — this is no longer a
+ * built-ahead-of-need interface (see the module doc comment above).
  */
 export interface ResourceScopeContext {
-  /** The specific resource being acted on, e.g. a future field/site ID. */
+  /** The specific resource being acted on — e.g. a real Agriculture
+   *  `fields.id`, or any future comparable resource in another
+   *  workspace. */
   resourceId: string;
   /**
    * The acting membership's configured scope, from
    * `WorkspaceMembership.scopedResourceIds`. `undefined`/empty means
-   * "not resource-scoped" — workspace-wide access, same as today.
+   * "not resource-scoped" — workspace-wide access, same as before this
+   * mechanism existed.
    */
   scopedResourceIds: readonly string[] | undefined;
 }

@@ -15,12 +15,13 @@ export interface WorkspaceMembership {
   role: Role;
   /**
    * Optional resource-level restriction, consumed by `can()`'s `scope`
-   * parameter (see roles.ts). `undefined` (the only value any real
-   * membership has today) means workspace-wide access — no product
-   * surface yet writes a non-empty value here. See roles.ts's module
-   * doc comment for why this exists ahead of anything that populates
-   * it: the interface is ready before the resource type it will
-   * eventually constrain, per ADR-0003's ordering principle.
+   * parameter (see roles.ts). `undefined`/empty means workspace-wide
+   * access. Real since BUILD_PLAN "STAGE — AGRICULTURE FIELDS": the
+   * Team page's invite-time field picker is a real product surface that
+   * writes a populated value here, for Agriculture's `scoped_field_user`
+   * memberships specifically. Every other workspace still has no
+   * resource type to populate this with, so `undefined` remains the
+   * only real value there — the correct default, not a gap.
    */
   scopedResourceIds?: string[];
 }

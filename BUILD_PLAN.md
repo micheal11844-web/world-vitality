@@ -598,6 +598,10 @@ Owner confirmed this scope explicitly before any code was written (as part of th
 - **Every workspace besides Agriculture still has `scoped_field_user` behaving workspace-wide** — this was always the stated, honest limit of this work: only Agriculture has PRD language supporting a real "field" concept to scope to.
 - **The AI panel's headline summary shows only the first visible field's status**, not a genuine multi-field summary — a true multi-field AI panel would need real design work this stage wasn't scoped to do; each field's own full breakdown renders correctly inline in its own card regardless.
 
+**Fully verified:** `tsc --build`, real production `next build` (all 28 routes, Agriculture's page size grew from the new form/multi-field logic but nothing broke), lint, and 185/185 existing tests (unchanged — `can()`'s resource-scoping logic already had direct unit test coverage from Stage 7, confirmed still passing) all clean. `listFields`/`createField`'s exact SQL shapes verified directly against live Supabase data (insert, select matching the real query, delete, confirmed clean) — same reasoning as Part A: the app's own `SUPABASE_SERVICE_ROLE_KEY` isn't available in this sandbox to exercise the TypeScript directly.
+
+**Not verified against the live NASA POWER API from this build environment** — same caveat as every other workspace's page, now applying per-field rather than once.
+
 ---
 
 ## STAGE — AGRICULTURE FIELDS FOLLOW-UP: EDIT/DELETE
@@ -612,11 +616,9 @@ Owner asked for the next thing in the docs immediately after Part B shipped — 
 
 **Fully verified:** `tsc --build`, real production `next build` (all 28 routes), lint, 185/185 tests (unchanged) all clean. `updateField`/`deleteField`'s exact SQL shapes verified directly against live data via a disposable test field — inserted, renamed/moved, deleted, confirmed the table returned to exactly one row (the real seed field) — same reasoning as every other stage: this sandbox has no access to the app's own service-role key to exercise the TypeScript directly.
 
----**Fully verified:** `tsc --build`, real production `next build` (all 28 routes, Agriculture's page size grew from the new form/multi-field logic but nothing broke), lint, and 185/185 existing tests (unchanged — `can()`'s resource-scoping logic already had direct unit test coverage from Stage 7, confirmed still passing) all clean. `listFields`/`createField`'s exact SQL shapes verified directly against live Supabase data (insert, select matching the real query, delete, confirmed clean) — same reasoning as Part A: the app's own `SUPABASE_SERVICE_ROLE_KEY` isn't available in this sandbox to exercise the TypeScript directly.
-
-**Not verified against the live NASA POWER API from this build environment** — same caveat as every other workspace's page, now applying per-field rather than once.
-
 ---
+
+## EXPLICITLY DEFERRED (do not start early)
 
 - ~~Second **data-provider** connector (a genuinely different provider — not yet done; Stage 10 validated the ingestion/interpretation boundary with a second _parameter_ through the _same_ provider, which is real evidence but not the same test as a structurally different provider's data shape)~~ **Closed by Stage 10 ticket 10.6** — `OpenMeteoConnector`, a structurally different provider (different API shape, different domain, different license terms). See `docs/data-provenance/open-meteo.md`.
 - Mobile app (`apps/mobile`)
