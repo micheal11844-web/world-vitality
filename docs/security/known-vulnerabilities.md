@@ -7,16 +7,27 @@ whenever `next` is upgraded.
 
 ## Currently accepted (as of this entry)
 
-All three are pinned _inside_ `next@15.5.22`'s own dependency tree
-(`next > postcss`, `next > sharp`), not direct dependencies of this
-repo — we cannot bump them independently without either an upstream
-Next.js patch release or a `pnpm.overrides` force-resolution.
+All four are pinned _inside_ `next@15.5.22`'s own dependency tree
+(`next > postcss`, `next > postcss > nanoid`, `next > sharp`), not
+direct dependencies of this repo — we cannot bump them independently
+without either an upstream Next.js patch release or a
+`pnpm.overrides` force-resolution.
 
 | Package         | Installed | Patched  | Severity | Advisory                                                                 |
 | --------------- | --------- | -------- | -------- | ------------------------------------------------------------------------ |
 | postcss         | 8.4.31    | >=8.5.12 | High     | [GHSA-6g55-p6wh-862q](https://github.com/advisories/GHSA-6g55-p6wh-862q) |
 | postcss         | 8.4.31    | >=8.5.18 | High     | [GHSA-r28c-9q8g-f849](https://github.com/advisories/GHSA-r28c-9q8g-f849) |
+| nanoid          | 3.3.17    | >=3.3.18 | High     | [GHSA-2v37-7h3g-55p8](https://github.com/advisories/GHSA-2v37-7h3g-55p8) |
 | sharp (libvips) | 0.34.5    | >=0.35.0 | High     | [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) |
+
+`nanoid` was missing from this table until a repo-wide security audit
+(2026-09-02) cross-checked it against a fresh `pnpm audit
+--audit-level=high` run — it's a real, currently-present finding
+(pulled in transitively via `postcss`), not a new regression; this
+doc had simply drifted from `pnpm audit`'s actual output. Same
+practical risk profile as the others: it requires a custom, attacker-
+controlled ID generator with a zero `size` argument, which nothing in
+this codebase does.
 
 **Why not force-patched via `pnpm.overrides`:** attempted and reverted.
 Overriding `postcss`/`sharp` to patched versions triggered a much wider
