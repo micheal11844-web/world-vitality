@@ -34,11 +34,10 @@ const BAND_LABEL: Record<RouteRiskBand, string> = {
   severe: "Severe risk",
 };
 
-/** Exported so a future forecast-based Route Risk Outlook provider can
- *  classify forecast wind speeds with the exact same bands, rather
- *  than a second, easy-to-drift copy — same reuse pattern as
- *  Construction's and Renewable Energy's status/outlook pairs. Not yet
- *  built here — see this file's own doc comment for what's real. */
+/** Exported so `LogisticsRouteRiskOutlookProvider` can classify
+ *  forecast wind speeds with the exact same bands, rather than a
+ *  second, easy-to-drift copy — same reuse pattern as Construction's
+ *  and Renewable Energy's status/outlook pairs. */
 export function classifyRouteRisk(windMs: number): { band: RouteRiskBand; reason: string } {
   if (windMs < ELEVATED_MS) {
     return {
@@ -85,12 +84,11 @@ export function classifyRouteRisk(windMs: number): { band: RouteRiskBand; reason
  *   location, the same single-point pattern every other workspace's
  *   first cut uses, e.g. Construction's original Stage 12 status-only
  *   build before its Stage 12 follow-up added a timeline).
- * - **No forecast/outlook yet** — current conditions only, same
- *   incremental pattern Construction and Renewable Energy both
- *   followed (status first, forecast-based outlook as a deliberate
- *   follow-up, not assumed to ship together). `classifyRouteRisk` is
- *   already exported in anticipation of that follow-up, same reuse
- *   pattern as `classifyWindSpeed`.
+ * - **No forecast/outlook** for this current-conditions provider
+ *   itself — that's the separate `LogisticsRouteRiskOutlookProvider`,
+ *   same status/outlook split Construction and Renewable Energy both
+ *   use. `classifyRouteRisk` is exported specifically so that provider
+ *   reuses these exact bands rather than a second, easy-to-drift copy.
  * - **Wind-only disruption signal** — real shipping/route disruption
  *   also comes from precipitation-driven flooding, visibility
  *   (fog/dust), and sea state, none of which this codebase has a data

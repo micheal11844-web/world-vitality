@@ -1,7 +1,9 @@
-import { NasaPowerConnector } from "@world-vitality/data-ingestion";
+import { NasaPowerConnector, OpenMeteoConnector } from "@world-vitality/data-ingestion";
 import {
   LogisticsRouteRiskProvider,
   LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
+  LogisticsRouteRiskOutlookProvider,
+  LOGISTICS_ROUTE_RISK_OUTLOOK_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
@@ -41,6 +43,29 @@ async function getRouteRiskStatus() {
 }
 
 /**
+ * Route Risk's forecast outlook pipeline (BUILD_PLAN "STAGE — LOGISTICS
+ * & SHIPPING FOLLOW-UP: ROUTE RISK OUTLOOK"), closing the "no
+ * forecast-based outlook yet" gap this page's own doc comment named
+ * when the current-conditions-only Route Risk Status widget first
+ * shipped. Same `OpenMeteoConnector` wind-speed forecast pipeline
+ * Construction's Site Risk Timeline and Renewable Energy's Wind/Solar
+ * outlooks already validated, reused unchanged here.
+ */
+async function getRouteRiskOutlook() {
+  const connector = new OpenMeteoConnector({ locations: [DEMO_LOCATION], forecastDays: 7 });
+  const { records, gaps } = await connector.ingest({
+    type: "manual",
+    requestedBy: "logistics-workspace-home-page",
+  });
+  const provider = new LogisticsRouteRiskOutlookProvider();
+  const result = await provider.interpret({
+    capability: LOGISTICS_ROUTE_RISK_OUTLOOK_CAPABILITY_ID,
+    records,
+  });
+  return { result, ingestionGaps: gaps };
+}
+
+/**
  * Logistics & Shipping Workspace Home (BUILD_PLAN "STAGE — LOGISTICS &
  * SHIPPING WORKSPACE") — the sixth workspace, second of the six
  * previously-unbuilt PRD workspaces (after Public Explorer), reusing
@@ -52,13 +77,13 @@ async function getRouteRiskStatus() {
  * plainly rather than glossed over:**
  * - **Route Risk Status widget**: real — live NASA POWER wind-speed
  *   data, real risk-band classification via
- *   `LogisticsRouteRiskProvider`, real confidence. But: single point,
- *   not an actual multi-waypoint route (no route/waypoint data model
- *   exists anywhere in this app yet); wind-only (no storm-track,
- *   port-status, or flooding data source exists); current conditions
- *   only, no forecast-based outlook yet (`classifyRouteRisk` is
- *   already exported in anticipation of that follow-up, same pattern
- *   Construction and Renewable Energy both used).
+ *   `LogisticsRouteRiskProvider`, real confidence, plus a real
+ *   forecast-based **Route Risk Outlook** widget
+ *   (`LogisticsRouteRiskOutlookProvider`, same `OpenMeteoConnector`
+ *   pipeline every other outlook widget in this app uses). But: single
+ *   point, not an actual multi-waypoint route (no route/waypoint data
+ *   model exists anywhere in this app yet); wind-only for both widgets
+ *   (no storm-track, port-status, or flooding data source exists).
  * - **Alerts, disruption reports, fleet-wide summary**: honest empty
  *   states — no alert/disruption-event/fleet data model exists yet
  *   (same gap every other workspace's first cut already documents).
@@ -66,15 +91,16 @@ async function getRouteRiskStatus() {
  *   `/workspaces/logistics/map`, same pattern as every other
  *   workspace.
  *
- * **Not verified against the live NASA POWER API from this build
- * environment** — same caveat as every other workspace's page: this
- * sandbox cannot reach power.larc.nasa.gov, so this is written to
- * handle both outcomes but hasn't been exercised against a real
- * request yet.
+ * **Not verified against the live NASA POWER or Open-Meteo APIs from
+ * this build environment** — same caveat as every other workspace's
+ * page: this sandbox cannot reach power.larc.nasa.gov or
+ * api.open-meteo.com, so both pipelines are written to handle real
+ * responses but haven't been exercised against one yet.
  */
 export default async function LogisticsWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "logistics" });
   const { result, ingestionGaps } = await getRouteRiskStatus();
+  const { result: outlookResult, ingestionGaps: outlookGaps } = await getRouteRiskOutlook();
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
@@ -128,8 +154,30 @@ export default async function LogisticsWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">ROUTE RISK OUTLOOK</Text>
-          <StateDisplay status="empty" title="No forecast outlook yet" />
+          <Text variant="caption">ROUTE RISK OUTLOOK (NEXT 7 DAYS)</Text>
+          {outlookResult.unableToAnswer ? (
+            <Text
+              variant="body"
+              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+            >
+              {outlookResult.summary}
+            </Text>
+          ) : (
+            <>
+              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                {outlookResult.summary}
+              </Text>
+              <ConfidenceBadge level={outlookResult.confidence} showDescription />
+              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                {outlookResult.explanation}
+              </Text>
+            </>
+          )}
+          {outlookGaps.length > 0 && (
+            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+              {outlookGaps.length} forecast day(s) had no data available.
+            </Text>
+          )}
         </Card>
         <Card>
           <Text variant="caption">DISRUPTION REPORTS</Text>

@@ -65,3 +65,8 @@ export {
   classifyRouteRisk,
 } from "./providers/logistics-route-risk-provider.js";
 export type { RouteRiskBand as LogisticsRouteRiskBand } from "./providers/logistics-route-risk-provider.js";
+export {
+  LogisticsRouteRiskOutlookProvider,
+  CAPABILITY_ID as LOGISTICS_ROUTE_RISK_OUTLOOK_CAPABILITY_ID,
+} from "./providers/logistics-route-risk-outlook-provider.js";
+export type { RouteRiskOutlookDayEntry } from "./providers/logistics-route-risk-outlook-provider.js";
