@@ -30,7 +30,7 @@ const ACTIVITY_STATUS_COLOR: Record<string, string> = {
 async function getSiteRiskStatus() {
   const connector = new NasaPowerConnector({
     locations: [DEMO_LOCATION],
-    parameters: ["T2M", "WS2M"],
+    parameters: ["T2M", "WS2M", "PRECTOTCORR"],
     community: "AG",
     lookbackDays: 7,
   });
@@ -83,16 +83,21 @@ async function getSiteRiskTimeline() {
  * use) and following the same widget-grid layout pattern as both.
  *
  * **Honest scope, per widget:**
- * - **Today's activity status widget**: real — live NASA POWER T2M/WS2M
- *   data, real per-activity go/caution/no-go classification via
- *   `ConstructionRiskStatusProvider`, real confidence.
+ * - **Today's activity status widget**: real — live NASA POWER
+ *   T2M/WS2M/PRECTOTCORR data, real per-activity go/caution/no-go
+ *   classification via `ConstructionRiskStatusProvider` (now including
+ *   excavation flash-flood risk, closing that PRD-named gap — see the
+ *   provider's own doc comment), real confidence.
  * - **Site Risk Timeline (forward-looking, multi-day)**: real, as of the
- *   Stage 12 follow-up — live Open-Meteo forecast data (temperature and,
- *   newly, daily max wind speed) via `ConstructionSiteRiskTimelineProvider`,
+ *   Stage 12 follow-up — live Open-Meteo forecast data (temperature and
+ *   daily max wind speed) via `ConstructionSiteRiskTimelineProvider`,
  *   which reuses the exact same per-activity threshold functions as the
  *   Today's status widget so the two can never silently disagree on what
  *   counts as risky. Real lead-time-based confidence gradient, same
- *   reasoning as Weather & Climate's forecast trend widget.
+ *   reasoning as Weather & Climate's forecast trend widget. **Excavation
+ *   is not yet part of this timeline** — `OpenMeteoConnector` doesn't
+ *   fetch a precipitation forecast today, only wind and temperature;
+ *   real, separate follow-up work.
  * - **Alerts, delay-logging, historical comparison**: still honest empty
  *   states — no alerts/delay-event data model exists yet (same gap as
  *   Agriculture and Weather & Climate's own pages).

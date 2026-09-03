@@ -6,13 +6,13 @@ import {
 } from "../construction-risk-status-provider.js";
 import type { NormalizedDataRecord } from "@world-vitality/data-schemas";
 
-function record(value: number, dayOffset: number, metric: "T2M" | "WS2M"): NormalizedDataRecord {
+function record(value: number, dayOffset: number, metric: "T2M" | "WS2M" | "PRECTOTCORR"): NormalizedDataRecord {
   const timestamp = new Date(Date.UTC(2024, 0, 1 + dayOffset)).toISOString();
   return {
     id: `test:${metric}:${dayOffset}`,
     metric,
     value,
-    unit: metric === "T2M" ? "C" : "m/s",
+    unit: metric === "T2M" ? "C" : metric === "WS2M" ? "m/s" : "mm/day",
     timestamp,
     provenance: {
       source: "test",
@@ -121,6 +121,54 @@ test("evaluate() reports a mismatch when ground truth disagrees", async () => {
     { anyNoGo: true },
   );
   assert.equal(matchesGroundTruth, false);
+});
+
+test("assesses excavation as go under normal precipitation", async () => {
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(2, 0, "PRECTOTCORR")],
+  });
+  assert.match(result.summary, /Excavation \(flash-flood risk\): go/);
+});
+
+test("assesses excavation as caution under elevated precipitation", async () => {
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(15, 0, "PRECTOTCORR")],
+  });
+  assert.match(result.summary, /Excavation \(flash-flood risk\): caution/);
+});
+
+test("assesses excavation as no-go under heavy precipitation", async () => {
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(30, 0, "PRECTOTCORR")],
+  });
+  assert.match(result.summary, /Excavation \(flash-flood risk\): no-go/);
+});
+
+test("assesses excavation alongside temperature and wind activities when all three metrics are present", async () => {
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(20, 0, "T2M"), record(3, 0, "WS2M"), record(2, 0, "PRECTOTCORR")],
+  });
+  assert.match(result.summary, /Concrete pour: go/);
+  assert.match(result.summary, /Crane operation: go/);
+  assert.match(result.summary, /Roofing work: go/);
+  assert.match(result.summary, /Excavation \(flash-flood risk\): go/);
+  assert.equal(result.unableToAnswer, undefined);
+});
+
+test("still assesses precipitation-only excavation risk when temperature and wind are both missing", async () => {
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(30, 0, "PRECTOTCORR")],
+  });
+  assert.match(result.summary, /Excavation \(flash-flood risk\): no-go/);
+  assert.doesNotMatch(result.summary, /Concrete pour/);
+  assert.match(result.summary, /no temperature data available/);
+  assert.match(result.summary, /no wind speed data available/);
+  assert.equal(result.unableToAnswer, undefined);
 });
 
 test("rejects a request for a capability it doesn't support", async () => {

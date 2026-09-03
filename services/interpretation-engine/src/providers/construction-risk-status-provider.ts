@@ -16,10 +16,15 @@ import type {
  */
 const TEMPERATURE_METRIC = "T2M";
 const WIND_METRIC = "WS2M";
+/** POWER's "Precipitation Corrected", mm/day. Closing this provider's
+ *  own previously-honest "not implemented" gap for excavation/
+ *  flash-flood risk — see the doc comment below and BUILD_PLAN
+ *  "STAGE — CONSTRUCTION FOLLOW-UP: EXCAVATION FLASH-FLOOD RISK". */
+const PRECIP_METRIC = "PRECTOTCORR";
 
 export const CAPABILITY_ID = "construction.site-risk-status";
 
-export type ActivityId = "concretePour" | "craneOperation" | "roofingWork";
+export type ActivityId = "concretePour" | "craneOperation" | "roofingWork" | "excavation";
 
 export type ActivityStatus = "go" | "caution" | "no-go";
 
@@ -34,6 +39,7 @@ const ACTIVITY_LABELS: Record<ActivityId, string> = {
   concretePour: "Concrete pour",
   craneOperation: "Crane operation",
   roofingWork: "Roofing work",
+  excavation: "Excavation (flash-flood risk)",
 };
 
 /**
@@ -50,16 +56,22 @@ const ACTIVITY_LABELS: Record<ActivityId, string> = {
  * defaults, not yet configurable per project, which is a real gap
  * flagged rather than hidden.
  *
- * **Honest scope, stated plainly:** the PRD also lists "flash-flood
- * risk for excavation sites" and "lightning proximity" as activities/
- * alerts for this workspace. Neither is implemented here — flash-flood
- * risk needs precipitation data (POWER's `PRECTOTCORR`) which isn't
- * ingested by this provider yet, and lightning proximity needs a
- * fundamentally different data source (strike-detection, not POWER's
- * daily aggregates) this codebase has no connector for at all. Building
- * either under a name implying it works would be exactly the kind of
- * fabrication the Constitution's AI Principles prohibit — real,
- * open follow-up work, not silently scoped out.
+ * **Honest scope, stated plainly:** the PRD also lists "lightning
+ * proximity" as an alert for this workspace — not implemented here.
+ * Lightning proximity needs a fundamentally different data source
+ * (strike-detection, not POWER's daily aggregates) this codebase has
+ * no connector for at all. Building it under a name implying it works
+ * would be exactly the kind of fabrication the Constitution's AI
+ * Principles prohibit — real, open, permanent gap, not silently
+ * scoped out.
+ *
+ * "Flash-flood risk for excavation sites" — also named in the PRD —
+ * **is** implemented below (`assessExcavation`), using POWER's
+ * `PRECTOTCORR` (Precipitation Corrected, mm/day), added alongside
+ * `T2M`/`WS2M` with zero data-ingestion changes needed: same
+ * `NasaPowerConnector`, same "AG" community, one more parameter code
+ * in the same request — the same validated reuse pattern as every
+ * prior workspace extension.
  */
 const CONCRETE_POUR_MIN_C = 5;
 const CONCRETE_POUR_CAUTION_MAX_C = 32;
@@ -67,6 +79,20 @@ const CRANE_CAUTION_MIN_MS = 8;
 const CRANE_NO_GO_MIN_MS = 13;
 const ROOFING_CAUTION_MIN_MS = 8;
 const ROOFING_NO_GO_MIN_MS = 12;
+/**
+ * mm/day. This project's own reasonable interpretation of commonly-
+ * cited general guidance on when standing/ponding water becomes a
+ * real hazard for open excavations and trenches (soil-wall
+ * destabilization, sudden collapse, engulfment risk) — not a
+ * transcription of any single binding standard (e.g. OSHA 1926
+ * Subpart P names the hazard but doesn't specify a rainfall
+ * threshold; site-specific geotechnical judgment governs in
+ * practice), and not specific to any soil type or shoring method.
+ * Same "stated plainly, not implied authoritative" discipline as
+ * every other threshold in this provider.
+ */
+const EXCAVATION_CAUTION_MIN_MM = 10;
+const EXCAVATION_NO_GO_MIN_MM = 25;
 
 /** Exported so `ConstructionSiteRiskTimelineProvider` can reuse the
  *  exact same per-activity logic against forecast data, rather than a
@@ -146,18 +172,50 @@ export function assessRoofingWork(windMs: number): ActivityAssessment {
   };
 }
 
+/** Exported so `ConstructionSiteRiskTimelineProvider` can reuse the
+ *  exact same logic against forecast data, same reuse pattern as
+ *  `assessConcretePour`/`assessCraneOperation`/`assessRoofingWork`. Not
+ *  yet consumed by the timeline provider — `OpenMeteoConnector` doesn't
+ *  fetch a precipitation forecast today, only wind and temperature, so
+ *  wiring this into the forward-looking timeline is real, separate,
+ *  deliberately deferred follow-up work, not built here. */
+export function assessExcavation(precipMm: number): ActivityAssessment {
+  if (precipMm >= EXCAVATION_NO_GO_MIN_MM) {
+    return {
+      activity: "excavation",
+      label: ACTIVITY_LABELS.excavation,
+      status: "no-go",
+      reason: `${precipMm.toFixed(1)} mm of precipitation meets or exceeds the ${EXCAVATION_NO_GO_MIN_MM} mm threshold used here — real risk of water accumulation and soil-wall destabilization in open excavations/trenches; a site-specific geotechnical assessment is warranted before proceeding.`,
+    };
+  }
+  if (precipMm >= EXCAVATION_CAUTION_MIN_MM) {
+    return {
+      activity: "excavation",
+      label: ACTIVITY_LABELS.excavation,
+      status: "caution",
+      reason: `${precipMm.toFixed(1)} mm of precipitation is elevated — monitor open excavations/trenches for water accumulation.`,
+    };
+  }
+  return {
+    activity: "excavation",
+    label: ACTIVITY_LABELS.excavation,
+    status: "go",
+    reason: `${precipMm.toFixed(1)} mm of precipitation is within the normal range for excavation work.`,
+  };
+}
+
 /**
  * `InterpretationProvider` for Construction's Site Risk status (BUILD_PLAN
- * Stage 12 — the third workspace). Cross-references current wind and
- * temperature conditions against fixed, per-activity operational
- * thresholds and produces a go/caution/no-go recommendation with
- * reasoning for each activity, rather than requiring the site manager to
- * interpret raw meteorological data — matching PRD Section A.2's "How AI
- * enhances the experience".
+ * Stage 12 — the third workspace). Cross-references current wind,
+ * temperature, and precipitation conditions against fixed, per-activity
+ * operational thresholds and produces a go/caution/no-go recommendation
+ * with reasoning for each activity, rather than requiring the site
+ * manager to interpret raw meteorological data — matching PRD Section
+ * A.2's "How AI enhances the experience".
  *
  * Structurally the same threshold-based, non-ML, auditable pattern as
  * `SoilMoistureStatusProvider` and `WeatherStatusProvider`, extended from
- * "one metric, one band set" to "two metrics, several activity-specific
+ * "one metric, one band set" to "three metrics, several activity-specific
  * band sets" — a real but modest extension of the existing pattern, not
  * a new architecture.
  *
@@ -167,7 +225,10 @@ export function assessRoofingWork(windMs: number): ActivityAssessment {
  * (Stage 12 follow-up) that reuses this file's exported per-activity
  * threshold functions against `OpenMeteoConnector`'s forecast data —
  * see that provider's own doc comment for why it's a separate class
- * rather than a mode flag here.
+ * rather than a mode flag here. **Excavation is current-conditions only
+ * for now**: the timeline provider doesn't yet include it, since
+ * `OpenMeteoConnector` doesn't fetch a precipitation forecast today
+ * (wind and temperature only) — real, separate follow-up work.
  */
 export class ConstructionRiskStatusProvider implements InterpretationProvider {
   readonly id = "construction-risk-status-v1";
@@ -186,27 +247,32 @@ export class ConstructionRiskStatusProvider implements InterpretationProvider {
     const windRecords = request.records
       .filter((r) => r.metric === WIND_METRIC)
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    const precipRecords = request.records
+      .filter((r) => r.metric === PRECIP_METRIC)
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
-    if (tempRecords.length === 0 && windRecords.length === 0) {
+    if (tempRecords.length === 0 && windRecords.length === 0 && precipRecords.length === 0) {
       return {
-        summary: `No ${TEMPERATURE_METRIC} (temperature) or ${WIND_METRIC} (wind speed) data is available for this location and time range.`,
+        summary: `No ${TEMPERATURE_METRIC} (temperature), ${WIND_METRIC} (wind speed), or ${PRECIP_METRIC} (precipitation) data is available for this location and time range.`,
         confidence: "insufficient-data",
         explanation:
-          "This capability requires at least one temperature or wind reading and neither was provided in the input records.",
+          "This capability requires at least one temperature, wind, or precipitation reading and none were provided in the input records.",
         contributingFactors: [],
         unableToAnswer: {
-          reason: `No records with metric "${TEMPERATURE_METRIC}" or "${WIND_METRIC}" in the request.`,
+          reason: `No records with metric "${TEMPERATURE_METRIC}", "${WIND_METRIC}", or "${PRECIP_METRIC}" in the request.`,
         },
       };
     }
 
     const latestTemp = tempRecords[tempRecords.length - 1];
     const latestWind = windRecords[windRecords.length - 1];
+    const latestPrecip = precipRecords[precipRecords.length - 1];
 
     const assessments: ActivityAssessment[] = [];
     if (latestTemp) assessments.push(assessConcretePour(latestTemp.value));
     if (latestWind) assessments.push(assessCraneOperation(latestWind.value));
     if (latestWind) assessments.push(assessRoofingWork(latestWind.value));
+    if (latestPrecip) assessments.push(assessExcavation(latestPrecip.value));
 
     const contributingFactors: ContributingFactor[] = [];
     if (latestTemp) {
@@ -223,24 +289,33 @@ export class ConstructionRiskStatusProvider implements InterpretationProvider {
         relativeInfluence: "primary",
       });
     }
+    if (latestPrecip) {
+      contributingFactors.push({
+        description: `Most recent precipitation reading (${latestPrecip.value.toFixed(1)} mm) from ${latestPrecip.timestamp.slice(0, 10)}.`,
+        recordIds: [latestPrecip.id],
+        relativeInfluence: "primary",
+      });
+    }
 
-    const readingCount = tempRecords.length + windRecords.length;
+    const readingCount = tempRecords.length + windRecords.length + precipRecords.length;
     const confidence: ConfidenceLevel = this.confidenceFor(
-      Math.min(tempRecords.length || Infinity, windRecords.length || Infinity),
+      Math.min(
+        tempRecords.length || Infinity,
+        windRecords.length || Infinity,
+        precipRecords.length || Infinity,
+      ),
       readingCount,
     );
 
-    const missingMetric =
-      tempRecords.length === 0
-        ? "temperature"
-        : windRecords.length === 0
-          ? "wind speed"
-          : undefined;
+    const missingMetrics: string[] = [];
+    if (tempRecords.length === 0) missingMetrics.push("temperature");
+    if (windRecords.length === 0) missingMetrics.push("wind speed");
+    if (precipRecords.length === 0) missingMetrics.push("precipitation");
 
     return {
-      summary: this.summaryFor(assessments, missingMetric),
+      summary: this.summaryFor(assessments, missingMetrics),
       confidence,
-      explanation: this.explanationFor(assessments, missingMetric),
+      explanation: this.explanationFor(assessments, missingMetrics),
       contributingFactors,
     };
   }
@@ -266,25 +341,27 @@ export class ConstructionRiskStatusProvider implements InterpretationProvider {
     return "low";
   }
 
-  private summaryFor(assessments: ActivityAssessment[], missingMetric?: string): string {
+  private summaryFor(assessments: ActivityAssessment[], missingMetrics: string[]): string {
     if (assessments.length === 0) {
       return "No activity assessments could be produced from the available data.";
     }
     const parts = assessments.map((a) => `${a.label}: ${a.status}`);
-    const qualifier = missingMetric
-      ? ` (no ${missingMetric} data available, so activities depending on it were skipped)`
-      : "";
+    const qualifier =
+      missingMetrics.length > 0
+        ? ` (${missingMetrics.map((m) => `no ${m} data available`).join("; ")}, so activities depending on it were skipped)`
+        : "";
     return `${parts.join("; ")}.${qualifier}`;
   }
 
-  private explanationFor(assessments: ActivityAssessment[], missingMetric?: string): string {
+  private explanationFor(assessments: ActivityAssessment[], missingMetrics: string[]): string {
     if (assessments.length === 0) {
-      return "Neither temperature nor wind speed data was available to assess any activity.";
+      return "No temperature, wind speed, or precipitation data was available to assess any activity.";
     }
     const reasons = assessments.map((a) => `${a.label} — ${a.reason}`).join(" ");
-    const gapNote = missingMetric
-      ? ` No ${missingMetric} data was available for this location and time range, so activities depending on it were not assessed.`
-      : "";
+    const gapNote =
+      missingMetrics.length > 0
+        ? ` ${missingMetrics.map((m) => `No ${m} data was available for this location and time range`).join("; ")}, so activities depending on ${missingMetrics.length > 1 ? "them" : "it"} were not assessed.`
+        : "";
     return `${reasons}${gapNote} Thresholds used here are fixed general-guidance defaults, not project-specific or manufacturer-specific limits — see this provider's doc comment.`;
   }
 }
