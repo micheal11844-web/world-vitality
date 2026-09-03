@@ -9,6 +9,7 @@ import { getFieldStatus } from "./field-status";
 import { logTelemetry } from "../../../lib/logger";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getAccountService } from "../../../lib/account";
+import { getSessionUserId } from "../../../lib/get-session-user-id";
 
 // Environmental data must be fetched fresh on every request, never
 // baked in at build time — a statically prerendered page would show
@@ -95,6 +96,7 @@ export default async function AgricultureWorkspaceHome() {
     ),
   );
   const canEdit = can(membership.role, "data:edit");
+  const currentUserId = await getSessionUserId();
   const canCreateReports = can(membership.role, "reports:create");
   const headlineInterpretation = statuses[0]?.soilMoisture;
 
@@ -195,6 +197,7 @@ export default async function AgricultureWorkspaceHome() {
                   resourceId: field.id,
                   scopedResourceIds: membership.scopedResourceIds,
                 })}
+                currentUserId={currentUserId}
               />
             </Card>
           ))}

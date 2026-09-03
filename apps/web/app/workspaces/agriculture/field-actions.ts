@@ -176,3 +176,94 @@ export async function createFieldCommentAction(
     return { ok: false, error: "Failed to post comment. Please try again." };
   }
 }
+
+/**
+ * Edits a comment (BUILD_PLAN "STAGE — AGRICULTURE FIELD COMMENTS
+ * FOLLOW-UP: EDIT/DELETE"). Two independent checks, same
+ * defense-in-depth layering as every other write path in this app: a
+ * resource-scoped `can(role, "comments:create", { resourceId,
+ * scopedResourceIds })` (a `scoped_field_user` who lost this field from
+ * their scope is refused, same as `createFieldCommentAction`), **and**
+ * `AccountService.updateFieldComment`'s own author-only enforcement
+ * (a `WHERE user_id = requester` clause on the write itself) — holding
+ * the permission in general does not let anyone edit someone else's
+ * comment.
+ */
+export async function updateFieldCommentAction(
+  commentId: string,
+  fieldId: string,
+  body: string,
+): Promise<CreateFieldResult> {
+  if (!body.trim()) {
+    return { ok: false, error: "Comment can't be empty." };
+  }
+
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (
+    !can(membership.role, "comments:create", {
+      resourceId: fieldId,
+      scopedResourceIds: membership.scopedResourceIds,
+    })
+  ) {
+    return { ok: false, error: "You do not have permission to comment on this field." };
+  }
+
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+  }
+
+  try {
+    await getAccountService().updateFieldComment(commentId, userId, body.trim());
+    revalidatePath("/workspaces/agriculture");
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("update_field_comment_failed", err, {
+      workspaceId: WORKSPACE_ID,
+      fieldId,
+      commentId,
+    });
+    return { ok: false, error: "You can only edit your own comments." };
+  }
+}
+
+/**
+ * Deletes a comment. Same two-layer enforcement as
+ * `updateFieldCommentAction` (resource-scoped `comments:create` plus
+ * `AccountService.deleteFieldComment`'s own author-only WHERE clause).
+ * No admin/moderator override — see `AccountService.deleteFieldComment`'s
+ * doc comment for why that's a deliberate scope boundary, not an
+ * oversight.
+ */
+export async function deleteFieldCommentAction(
+  commentId: string,
+  fieldId: string,
+): Promise<CreateFieldResult> {
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (
+    !can(membership.role, "comments:create", {
+      resourceId: fieldId,
+      scopedResourceIds: membership.scopedResourceIds,
+    })
+  ) {
+    return { ok: false, error: "You do not have permission to comment on this field." };
+  }
+
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+  }
+
+  try {
+    await getAccountService().deleteFieldComment(commentId, userId);
+    revalidatePath("/workspaces/agriculture");
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("delete_field_comment_failed", err, {
+      workspaceId: WORKSPACE_ID,
+      fieldId,
+      commentId,
+    });
+    return { ok: false, error: "You can only delete your own comments." };
+  }
+}

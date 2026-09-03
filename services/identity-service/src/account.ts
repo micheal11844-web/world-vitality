@@ -110,6 +110,7 @@ export interface FieldComment {
   displayName: string | null;
   body: string;
   createdAt: string;
+  updatedAt: string | null;
 }
 
 /**
@@ -264,6 +265,36 @@ export interface AccountService {
     userId: string;
     body: string;
   }): Promise<FieldComment>;
+
+  /**
+   * Edits a comment's body (BUILD_PLAN "STAGE — AGRICULTURE FIELD
+   * COMMENTS FOLLOW-UP: EDIT/DELETE"), closing the gap
+   * `0007_field_comments.sql`'s own doc comment named explicitly. Only
+   * the comment's original author may edit it — enforced by a `WHERE
+   * id = commentId AND user_id = requestingUserId` clause on the write
+   * itself (see the Supabase implementation), not a separate
+   * fetch-then-compare step, so there is no window between checking
+   * and writing. Callers must also independently hold a resource-scoped
+   * `can(role, "comments:create", { resourceId: fieldId,
+   * scopedResourceIds })` — same two-layer check `createFieldComment`
+   * already requires (a `scoped_field_user` who lost that field from
+   * their scope, or a demoted user, is still refused even for their own
+   * prior comment). Throws if no row matches the id+author pair, so
+   * "comment doesn't exist" and "you're not the author" are
+   * deliberately indistinguishable to the caller — same reasoning
+   * `removeMember`'s last-`admin_owner` refusal uses: don't leak which
+   * failure occurred.
+   */
+  updateFieldComment(commentId: string, requestingUserId: string, body: string): Promise<FieldComment>;
+
+  /**
+   * Deletes a comment. Same author-only enforcement and error-shape
+   * reasoning as `updateFieldComment`. No admin/moderator override
+   * exists — PRD A.1 names "commentary threads," not moderation; adding
+   * an override would be scope this stage was never asked to build,
+   * not an oversight.
+   */
+  deleteFieldComment(commentId: string, requestingUserId: string): Promise<void>;
 }
 
 /**
@@ -616,7 +647,7 @@ export class SupabaseAccountService implements AccountService {
   async listFieldComments(fieldId: string): Promise<FieldComment[]> {
     const { data: comments, error: commentsError } = await this.client
       .from("field_comments")
-      .select("id, field_id, user_id, body, created_at")
+      .select("id, field_id, user_id, body, created_at, updated_at")
       .eq("field_id", fieldId)
       .order("created_at", { ascending: true });
     if (commentsError) {
@@ -648,6 +679,7 @@ export class SupabaseAccountService implements AccountService {
         displayName: profile?.display_name ?? null,
         body: c.body,
         createdAt: c.created_at,
+        updatedAt: c.updated_at,
       };
     });
   }
@@ -660,7 +692,7 @@ export class SupabaseAccountService implements AccountService {
     const { data, error } = await this.client
       .from("field_comments")
       .insert({ field_id: comment.fieldId, user_id: comment.userId, body: comment.body })
-      .select("id, field_id, user_id, body, created_at")
+      .select("id, field_id, user_id, body, created_at, updated_at")
       .single();
     if (error || !data) {
       throw new Error(`Failed to create comment on field ${comment.fieldId}: ${error?.message}`);
@@ -680,6 +712,59 @@ export class SupabaseAccountService implements AccountService {
       displayName: profile?.display_name ?? null,
       body: data.body,
       createdAt: data.created_at,
+      updatedAt: data.updated_at,
     };
+  }
+
+  async updateFieldComment(
+    commentId: string,
+    requestingUserId: string,
+    body: string,
+  ): Promise<FieldComment> {
+    const { data, error } = await this.client
+      .from("field_comments")
+      .update({ body, updated_at: new Date().toISOString() })
+      .eq("id", commentId)
+      .eq("user_id", requestingUserId)
+      .select("id, field_id, user_id, body, created_at, updated_at")
+      .single();
+    if (error || !data) {
+      throw new Error(
+        `Failed to update comment ${commentId}: not found, or requester is not the author.`,
+      );
+    }
+
+    const { data: profile } = await this.client
+      .from("profiles")
+      .select("email, display_name")
+      .eq("user_id", data.user_id)
+      .maybeSingle();
+
+    return {
+      id: data.id,
+      fieldId: data.field_id,
+      userId: data.user_id,
+      email: profile?.email ?? "(no profile found)",
+      displayName: profile?.display_name ?? null,
+      body: data.body,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  async deleteFieldComment(commentId: string, requestingUserId: string): Promise<void> {
+    const { data, error } = await this.client
+      .from("field_comments")
+      .delete()
+      .eq("id", commentId)
+      .eq("user_id", requestingUserId)
+      .select("id")
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Failed to delete comment ${commentId}: ${error.message}`);
+    }
+    if (!data) {
+      throw new Error(`Failed to delete comment ${commentId}: not found, or requester is not the author.`);
+    }
   }
 }
