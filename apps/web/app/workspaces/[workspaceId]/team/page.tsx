@@ -8,7 +8,7 @@ import { getAccountService } from "../../../../lib/account";
 import { getAuthService } from "../../../../lib/auth";
 import { SESSION_COOKIE } from "../../../../lib/constants";
 import { TeamShell } from "./team-shell";
-import { TeamClient } from "./team-client";
+import { TeamClient, type ScopableResource } from "./team-client";
 export const dynamic = "force-dynamic";
 
 /**
@@ -61,13 +61,24 @@ export default async function TeamPage({
   const currentUserId = session?.userId ?? "";
 
   const members = await getAccountService().listWorkspaceMembers(workspaceId);
-  // Only Agriculture has a real resource type to scope a
-  // scoped_field_user invite to (BUILD_PLAN "STAGE — AGRICULTURE
-  // FIELDS") — every other workspace passes an empty list, and
-  // TeamClient simply doesn't show a field picker when there's nothing
-  // real to pick from.
-  const availableFields =
-    workspaceId === "agriculture" ? await getAccountService().listFields(workspaceId) : [];
+  // Two workspaces have a real resource type to scope a
+  // scoped_field_user invite to today: Agriculture's fields
+  // (BUILD_PLAN "STAGE — AGRICULTURE FIELDS") and Insurance's insured
+  // properties (BUILD_PLAN "STAGE — INSURANCE FOLLOW-UP: INSURED
+  // PROPERTIES") — each mapped into TeamClient's workspace-neutral
+  // `ScopableResource` shape. Every other workspace passes an empty
+  // list, and TeamClient simply doesn't show a picker when there's
+  // nothing real to pick from — no fabricated resource concept
+  // invented for workspaces that don't have one.
+  const availableResources: ScopableResource[] =
+    workspaceId === "agriculture"
+      ? (await getAccountService().listFields(workspaceId)).map((f) => ({ id: f.id, label: f.name }))
+      : workspaceId === "insurance"
+        ? (await getAccountService().listProperties(workspaceId)).map((p) => ({
+            id: p.id,
+            label: `${p.policyNumber} — ${p.propertyAddress}`,
+          }))
+        : [];
 
   return (
     <TeamShell>
@@ -85,7 +96,7 @@ export default async function TeamPage({
           workspaceId={workspaceId}
           currentUserId={currentUserId}
           initialMembers={members}
-          availableFields={availableFields}
+          availableResources={availableResources}
         />
       </div>
     </TeamShell>

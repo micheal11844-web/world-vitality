@@ -79,16 +79,42 @@ export interface WorkspaceMemberSummary {
 }
 
 /**
- * A real, workspace-scoped resource — currently used only by
- * Agriculture (BUILD_PLAN "STAGE — AGRICULTURE FIELDS", PRD A.1's
- * "Field Overview"). See `services/identity-service/supabase/migrations/0006_agriculture_fields.sql`'s
- * doc comment for why this is deliberately Agriculture-only rather than
- * a generic cross-workspace "resources" concept.
+ * A real, workspace-scoped resource — Agriculture's (BUILD_PLAN "STAGE
+ * — AGRICULTURE FIELDS", PRD A.1's "Field Overview"). See
+ * `services/identity-service/supabase/migrations/0006_agriculture_fields.sql`'s
+ * doc comment for why this is its own table rather than a generic
+ * cross-workspace "resources" concept. As of BUILD_PLAN "STAGE —
+ * INSURANCE FOLLOW-UP: INSURED PROPERTIES", Insurance has its own
+ * separate real resource type too (`InsuranceProperty`, below) — same
+ * reasoning applied to a second, genuinely different domain rather
+ * than merged into this one.
  */
 export interface Field {
   id: string;
   workspaceId: string;
   name: string;
+  latitude: number;
+  longitude: number;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+/**
+ * A real, workspace-scoped resource for Insurance (BUILD_PLAN "STAGE —
+ * INSURANCE FOLLOW-UP: INSURED PROPERTIES"), closing the honest gap
+ * `insurance/workspace-shell.tsx`'s own doc comment named: Claims
+ * Adjuster's resource-level scoping ("scoped to relevant claims," PRD
+ * A.3) had no populated data to scope to. Named "property," not
+ * "claim" — see `0011_insurance_properties.sql`'s doc comment for why
+ * that's a deliberate scope decision (no claims-event data model
+ * exists anywhere in this app; fabricating one would misrepresent real
+ * data the same way a fabricated risk score would).
+ */
+export interface InsuranceProperty {
+  id: string;
+  workspaceId: string;
+  policyNumber: string;
+  propertyAddress: string;
   latitude: number;
   longitude: number;
   createdBy: string | null;
@@ -220,6 +246,30 @@ export interface AccountService {
     longitude: number;
     createdBy: string;
   }): Promise<Field>;
+
+  /**
+   * Lists the real insured-property rows for a workspace (currently
+   * only Insurance's `insurance_properties` table has any rows) —
+   * Insurance's analog of `listFields`. Same "returns every row
+   * regardless of role/scope, callers filter via `can(role,
+   * "data:view", { resourceId, scopedResourceIds })`" pattern.
+   */
+  listProperties(workspaceId: string): Promise<InsuranceProperty[]>;
+
+  /**
+   * Creates a real insured-property row. Callers gate this with
+   * `can(role, "data:edit")` (workspace-wide — creating a property has
+   * no existing resourceId to scope against), same reasoning as
+   * `createField`.
+   */
+  createProperty(property: {
+    workspaceId: string;
+    policyNumber: string;
+    propertyAddress: string;
+    latitude: number;
+    longitude: number;
+    createdBy: string;
+  }): Promise<InsuranceProperty>;
 
   /**
    * Updates a field's name/coordinates. Callers must gate this with a
@@ -568,6 +618,64 @@ export class SupabaseAccountService implements AccountService {
       id: data.id,
       workspaceId: data.workspace_id,
       name: data.name,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+    };
+  }
+
+  async listProperties(workspaceId: string): Promise<InsuranceProperty[]> {
+    const { data, error } = await this.client
+      .from("insurance_properties")
+      .select("id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      throw new Error(`Failed to load insured properties for ${workspaceId}: ${error.message}`);
+    }
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      workspaceId: row.workspace_id,
+      policyNumber: row.policy_number,
+      propertyAddress: row.property_address,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async createProperty(property: {
+    workspaceId: string;
+    policyNumber: string;
+    propertyAddress: string;
+    latitude: number;
+    longitude: number;
+    createdBy: string;
+  }): Promise<InsuranceProperty> {
+    const { data, error } = await this.client
+      .from("insurance_properties")
+      .insert({
+        workspace_id: property.workspaceId,
+        policy_number: property.policyNumber,
+        property_address: property.propertyAddress,
+        latitude: property.latitude,
+        longitude: property.longitude,
+        created_by: property.createdBy,
+      })
+      .select("id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(
+        `Failed to create insured property in ${property.workspaceId}: ${error?.message}`,
+      );
+    }
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      policyNumber: data.policy_number,
+      propertyAddress: data.property_address,
       latitude: data.latitude,
       longitude: data.longitude,
       createdBy: data.created_by,

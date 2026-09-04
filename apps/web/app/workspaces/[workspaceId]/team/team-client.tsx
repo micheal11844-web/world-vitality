@@ -2,20 +2,40 @@
 
 import { useState, useTransition } from "react";
 import { Button, Card, StateDisplay, Table, Text, type TableColumn } from "@world-vitality/ui-components";
-import type { Field, Role, WorkspaceMemberSummary } from "@world-vitality/identity-service";
+import type { Role, WorkspaceMemberSummary } from "@world-vitality/identity-service";
 import { inviteMemberAction, removeMemberAction } from "./team-actions";
+
+/** A real, scopable resource, reduced to just what the invite picker
+ *  needs to display — `page.tsx` maps whichever workspace-specific
+ *  type actually exists (Agriculture's `Field`, Insurance's
+ *  `InsuranceProperty`) into this shape. Generalized here rather than
+ *  left as Agriculture-only `Field[]` the moment Insurance became a
+ *  genuine second consumer (BUILD_PLAN "STAGE — INSURANCE FOLLOW-UP:
+ *  INSURED PROPERTIES") — exactly the Engineering Blueprint 4.5
+ *  trigger ("promote to shared/generic only once a genuine second
+ *  consumer exists") this file's own prior version was written to wait
+ *  for. The underlying database tables stay separate (a field and a
+ *  property don't share a real schema) — only this UI-facing shape is
+ *  shared. */
+export interface ScopableResource {
+  id: string;
+  label: string;
+}
 
 export interface TeamClientProps {
   workspaceId: string;
   currentUserId: string;
   initialMembers: WorkspaceMemberSummary[];
   /**
-   * Real fields to scope a `scoped_field_user` invite to — currently
-   * only ever non-empty for the Agriculture workspace (BUILD_PLAN
-   * "STAGE — AGRICULTURE FIELDS"). Empty for every other workspace,
-   * which simply means the field picker below never renders there.
+   * Real resources to scope a `scoped_field_user` invite to — non-empty
+   * for Agriculture (fields, BUILD_PLAN "STAGE — AGRICULTURE FIELDS")
+   * and Insurance (insured properties, BUILD_PLAN "STAGE — INSURANCE
+   * FOLLOW-UP: INSURED PROPERTIES"). Empty for every other workspace,
+   * which simply means the picker below never renders there — no
+   * fabricated resource concept invented for workspaces that don't have
+   * one.
    */
-  availableFields: Field[];
+  availableResources: ScopableResource[];
 }
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
@@ -37,11 +57,11 @@ export function TeamClient({
   workspaceId,
   currentUserId,
   initialMembers,
-  availableFields,
+  availableResources,
 }: TeamClientProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("operational_user");
-  const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -52,22 +72,22 @@ export function TeamClient({
     setFormError(null);
     setFormSuccess(null);
     const scopedResourceIds =
-      role === "scoped_field_user" && selectedFieldIds.length > 0 ? selectedFieldIds : undefined;
+      role === "scoped_field_user" && selectedResourceIds.length > 0 ? selectedResourceIds : undefined;
     startTransition(async () => {
       const result = await inviteMemberAction(workspaceId, email, role, scopedResourceIds);
       if (result.ok) {
         setFormSuccess(`Invite sent to ${email}.`);
         setEmail("");
-        setSelectedFieldIds([]);
+        setSelectedResourceIds([]);
       } else {
         setFormError(result.error ?? "Failed to send invite.");
       }
     });
   }
 
-  function toggleField(fieldId: string) {
-    setSelectedFieldIds((prev) =>
-      prev.includes(fieldId) ? prev.filter((id) => id !== fieldId) : [...prev, fieldId],
+  function toggleResource(resourceId: string) {
+    setSelectedResourceIds((prev) =>
+      prev.includes(resourceId) ? prev.filter((id) => id !== resourceId) : [...prev, resourceId],
     );
   }
 
@@ -161,23 +181,23 @@ export function TeamClient({
             Send Invite
           </Button>
         </form>
-        {role === "scoped_field_user" && availableFields.length > 0 && (
+        {role === "scoped_field_user" && availableResources.length > 0 && (
           <div style={{ marginTop: "var(--wv-space-sm)" }}>
             <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-              Scope to specific fields (optional — leave unchecked for workspace-wide access):
+              Scope to specific resources (optional — leave unchecked for workspace-wide access):
             </Text>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--wv-space-sm)" }}>
-              {availableFields.map((field) => (
+              {availableResources.map((resource) => (
                 <label
-                  key={field.id}
+                  key={resource.id}
                   style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-xs)" }}
                 >
                   <input
                     type="checkbox"
-                    checked={selectedFieldIds.includes(field.id)}
-                    onChange={() => toggleField(field.id)}
+                    checked={selectedResourceIds.includes(resource.id)}
+                    onChange={() => toggleResource(resource.id)}
                   />
-                  <Text variant="caption">{field.name}</Text>
+                  <Text variant="caption">{resource.label}</Text>
                 </label>
               ))}
             </div>

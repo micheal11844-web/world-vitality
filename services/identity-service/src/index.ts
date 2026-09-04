@@ -11,4 +11,5 @@ export {
   type WorkspaceMemberSummary,
   type Field,
   type FieldComment,
+  type InsuranceProperty,
 } from "./account.js";
