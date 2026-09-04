@@ -122,6 +122,27 @@ export interface InsuranceProperty {
 }
 
 /**
+ * A real, workspace-scoped resource for Government & NGOs (BUILD_PLAN
+ * "STAGE — GOVERNMENT & NGOS FOLLOW-UP: MONITORED LOCATIONS"), the
+ * third real resource type after `Field` and `InsuranceProperty`,
+ * closing the same "genuinely incomplete" resource-scoping gap for
+ * Field Staff ("scoped regional access," PRD A.10). Named "location,"
+ * not "jurisdiction" or "region" — see
+ * `0012_government_ngos_locations.sql`'s doc comment for why (no GIS
+ * boundary data exists in this app; a single point isn't honestly a
+ * jurisdiction).
+ */
+export interface GovernmentNgosLocation {
+  id: string;
+  workspaceId: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+/**
  * One comment on a field (BUILD_PLAN "STAGE — AGRICULTURE FIELD
  * COMMENTS", PRD A.1's "commentary threads on specific fields").
  * `email`/`displayName` are joined from `profiles`, same reasoning as
@@ -295,6 +316,30 @@ export interface AccountService {
    * reference to nothing, same real edge case closed for Fields.
    */
   deleteProperty(propertyId: string): Promise<void>;
+
+  /**
+   * Lists the real monitored-location rows for a workspace (currently
+   * only Government & NGOs' `government_ngos_locations` table has any
+   * rows) — that workspace's analog of `listFields`/`listProperties`.
+   * Same "returns every row regardless of role/scope, callers filter
+   * via `can(role, "data:view", { resourceId, scopedResourceIds })`"
+   * pattern.
+   */
+  listLocations(workspaceId: string): Promise<GovernmentNgosLocation[]>;
+
+  /**
+   * Creates a real monitored-location row. Callers gate this with
+   * `can(role, "data:edit")` (workspace-wide — creating a location has
+   * no existing resourceId to scope against), same reasoning as
+   * `createField`/`createProperty`.
+   */
+  createLocation(location: {
+    workspaceId: string;
+    label: string;
+    latitude: number;
+    longitude: number;
+    createdBy: string;
+  }): Promise<GovernmentNgosLocation>;
 
   /**
    * Updates a field's name/coordinates. Callers must gate this with a
@@ -780,6 +825,60 @@ export class SupabaseAccountService implements AccountService {
     if (error) {
       throw new Error(`Failed to delete insured property ${propertyId}: ${error.message}`);
     }
+  }
+
+  async listLocations(workspaceId: string): Promise<GovernmentNgosLocation[]> {
+    const { data, error } = await this.client
+      .from("government_ngos_locations")
+      .select("id, workspace_id, label, latitude, longitude, created_by, created_at")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      throw new Error(`Failed to load monitored locations for ${workspaceId}: ${error.message}`);
+    }
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      workspaceId: row.workspace_id,
+      label: row.label,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async createLocation(location: {
+    workspaceId: string;
+    label: string;
+    latitude: number;
+    longitude: number;
+    createdBy: string;
+  }): Promise<GovernmentNgosLocation> {
+    const { data, error } = await this.client
+      .from("government_ngos_locations")
+      .insert({
+        workspace_id: location.workspaceId,
+        label: location.label,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        created_by: location.createdBy,
+      })
+      .select("id, workspace_id, label, latitude, longitude, created_by, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(
+        `Failed to create monitored location in ${location.workspaceId}: ${error?.message}`,
+      );
+    }
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      label: data.label,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+    };
   }
 
   async updateField(

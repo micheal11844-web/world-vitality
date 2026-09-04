@@ -12,4 +12,5 @@ export {
   type Field,
   type FieldComment,
   type InsuranceProperty,
+  type GovernmentNgosLocation,
 } from "./account.js";

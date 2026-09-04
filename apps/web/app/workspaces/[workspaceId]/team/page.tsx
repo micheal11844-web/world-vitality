@@ -63,9 +63,11 @@ export default async function TeamPage({
   const members = await getAccountService().listWorkspaceMembers(workspaceId);
   // Two workspaces have a real resource type to scope a
   // scoped_field_user invite to today: Agriculture's fields
-  // (BUILD_PLAN "STAGE — AGRICULTURE FIELDS") and Insurance's insured
+  // (BUILD_PLAN "STAGE — AGRICULTURE FIELDS"), Insurance's insured
   // properties (BUILD_PLAN "STAGE — INSURANCE FOLLOW-UP: INSURED
-  // PROPERTIES") — each mapped into TeamClient's workspace-neutral
+  // PROPERTIES"), and Government & NGOs' monitored locations
+  // (BUILD_PLAN "STAGE — GOVERNMENT & NGOS FOLLOW-UP: MONITORED
+  // LOCATIONS") — each mapped into TeamClient's workspace-neutral
   // `ScopableResource` shape. Every other workspace passes an empty
   // list, and TeamClient simply doesn't show a picker when there's
   // nothing real to pick from — no fabricated resource concept
@@ -78,7 +80,12 @@ export default async function TeamPage({
             id: p.id,
             label: `${p.policyNumber} — ${p.propertyAddress}`,
           }))
-        : [];
+        : workspaceId === "government-ngos"
+          ? (await getAccountService().listLocations(workspaceId)).map((l) => ({
+              id: l.id,
+              label: l.label,
+            }))
+          : [];
 
   return (
     <TeamShell>
