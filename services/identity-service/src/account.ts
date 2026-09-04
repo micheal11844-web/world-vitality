@@ -272,6 +272,31 @@ export interface AccountService {
   }): Promise<InsuranceProperty>;
 
   /**
+   * Updates an insured property's fields — Insurance's analog of
+   * `updateField`. Callers must gate this with a *resource-scoped*
+   * `can(role, "data:edit", { resourceId: propertyId, scopedResourceIds
+   * })` check, same reasoning as `updateField`.
+   */
+  updateProperty(
+    propertyId: string,
+    updates: {
+      policyNumber?: string;
+      propertyAddress?: string;
+      latitude?: number;
+      longitude?: number;
+    },
+  ): Promise<InsuranceProperty>;
+
+  /**
+   * Deletes an insured property. Same resource-scoped gating as
+   * `updateProperty`, and the same dangling-`scopedResourceIds`
+   * cleanup `deleteField` performs — a `scoped_field_user` membership
+   * scoped to a since-deleted property would otherwise carry a
+   * reference to nothing, same real edge case closed for Fields.
+   */
+  deleteProperty(propertyId: string): Promise<void>;
+
+  /**
    * Updates a field's name/coordinates. Callers must gate this with a
    * *resource-scoped* `can(role, "data:edit", { resourceId: fieldId,
    * scopedResourceIds })` check — unlike `createField` (no existing
@@ -681,6 +706,80 @@ export class SupabaseAccountService implements AccountService {
       createdBy: data.created_by,
       createdAt: data.created_at,
     };
+  }
+
+  async updateProperty(
+    propertyId: string,
+    updates: {
+      policyNumber?: string;
+      propertyAddress?: string;
+      latitude?: number;
+      longitude?: number;
+    },
+  ): Promise<InsuranceProperty> {
+    const patch: Record<string, string | number> = {};
+    if (updates.policyNumber !== undefined) patch.policy_number = updates.policyNumber;
+    if (updates.propertyAddress !== undefined) patch.property_address = updates.propertyAddress;
+    if (updates.latitude !== undefined) patch.latitude = updates.latitude;
+    if (updates.longitude !== undefined) patch.longitude = updates.longitude;
+
+    const { data, error } = await this.client
+      .from("insurance_properties")
+      .update(patch)
+      .eq("id", propertyId)
+      .select("id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(`Failed to update insured property ${propertyId}: ${error?.message}`);
+    }
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      policyNumber: data.policy_number,
+      propertyAddress: data.property_address,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+    };
+  }
+
+  async deleteProperty(propertyId: string): Promise<void> {
+    // Same dangling-scopedResourceIds cleanup as deleteField, applied
+    // to insurance_properties instead of fields — see deleteField's
+    // own comment for the full reasoning (fetch-then-write rather than
+    // a single computed SQL update, since the Supabase JS client's
+    // .update() sets literal values, not SQL expressions referencing
+    // the existing row).
+    const { data: affected, error: fetchError } = await this.client
+      .from("workspace_members")
+      .select("workspace_id, user_id, scoped_resource_ids")
+      .contains("scoped_resource_ids", [propertyId]);
+    if (fetchError) {
+      throw new Error(
+        `Failed to check for memberships scoped to property ${propertyId}: ${fetchError.message}`,
+      );
+    }
+    for (const membership of affected ?? []) {
+      const updatedScope = (membership.scoped_resource_ids ?? []).filter(
+        (id: string) => id !== propertyId,
+      );
+      const { error: updateError } = await this.client
+        .from("workspace_members")
+        .update({ scoped_resource_ids: updatedScope })
+        .eq("workspace_id", membership.workspace_id)
+        .eq("user_id", membership.user_id);
+      if (updateError) {
+        throw new Error(
+          `Failed to remove dangling reference to property ${propertyId} from membership ${membership.user_id}: ${updateError.message}`,
+        );
+      }
+    }
+
+    const { error } = await this.client.from("insurance_properties").delete().eq("id", propertyId);
+    if (error) {
+      throw new Error(`Failed to delete insured property ${propertyId}: ${error.message}`);
+    }
   }
 
   async updateField(

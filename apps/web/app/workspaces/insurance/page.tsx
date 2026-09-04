@@ -3,6 +3,7 @@ import { can } from "@world-vitality/identity-service";
 import { Card, Text, StateDisplay, ConfidenceBadge, Button } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { AddPropertyForm } from "./add-property-form";
+import { PropertyManageControls } from "./property-manage-controls";
 import { getPropertyStatus } from "./property-status";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getAccountService } from "../../../lib/account";
@@ -56,8 +57,12 @@ const WORKSPACE_ID = "insurance";
  *   real data. What's real and buildable is the underlying insured
  *   property a claim would always be about; see
  *   `0011_insurance_properties.sql`'s doc comment for the full
- *   reasoning. Create + read only, same deferred edit/delete gap
- *   `fields` itself had before its own follow-up.
+ *   reasoning. **Editing and deleting a property are both real now**
+ *   (BUILD_PLAN "STAGE — INSURANCE FOLLOW-UP: INSURED PROPERTIES
+ *   EDIT/DELETE" closed the gap the original stage explicitly
+ *   deferred), gated by the same resource-scoped `can(role,
+ *   "data:edit", { resourceId, scopedResourceIds })` check viewing
+ *   already uses.
  * - **No claims-verification-against-historical-data tool** — would
  *   need a historical event archive this app doesn't have (Disaster
  *   Monitoring relays only live/current data, by design).
@@ -175,6 +180,19 @@ export default async function InsuranceWorkspaceHome() {
                 <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
                   {ingestionGaps} day(s) had no data available.
                 </Text>
+              )}
+
+              {can(membership.role, "data:edit", {
+                resourceId: property.id,
+                scopedResourceIds: membership.scopedResourceIds,
+              }) && (
+                <PropertyManageControls
+                  propertyId={property.id}
+                  initialPolicyNumber={property.policyNumber}
+                  initialPropertyAddress={property.propertyAddress}
+                  initialLatitude={property.latitude}
+                  initialLongitude={property.longitude}
+                />
               )}
             </Card>
           ))}
