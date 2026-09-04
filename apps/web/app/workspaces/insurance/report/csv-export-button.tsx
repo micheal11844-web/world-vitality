@@ -3,6 +3,8 @@
 import { Button } from "@world-vitality/ui-components";
 
 export interface CsvRow {
+  policyNumber: string;
+  propertyAddress: string;
   metric: string;
   summary: string;
   confidence: string;
@@ -10,15 +12,22 @@ export interface CsvRow {
 }
 
 export interface CsvExportButtonProps {
-  location: string;
   generatedAt: string;
   rows: CsvRow[];
 }
 
-function toCsv({ location, generatedAt, rows }: CsvExportButtonProps): string {
-  const headers = ["location", "generatedAt", "metric", "summary", "confidence", "unableToAnswer"];
+function toCsv({ generatedAt, rows }: CsvExportButtonProps): string {
+  const headers = [
+    "policyNumber",
+    "propertyAddress",
+    "generatedAt",
+    "metric",
+    "summary",
+    "confidence",
+    "unableToAnswer",
+  ];
   const csvRows = rows.map((r) =>
-    [location, generatedAt, r.metric, r.summary, r.confidence, String(r.unableToAnswer)]
+    [r.policyNumber, r.propertyAddress, generatedAt, r.metric, r.summary, r.confidence, String(r.unableToAnswer)]
       .map((field) => `"${field.replace(/"/g, '""')}"`)
       .join(","),
   );
@@ -27,13 +36,12 @@ function toCsv({ location, generatedAt, rows }: CsvExportButtonProps): string {
 
 /**
  * CSV export for the Insurance report (BUILD_PLAN "STAGE — INSURANCE
- * WORKSPACE"). PRD A.3 names "Auditable PDF/CSV reports" explicitly —
- * the PDF path is `print-button.tsx`'s browser print; this is the CSV
- * half, client-side only, same `Blob` + `URL.createObjectURL` download
- * pattern `research/dataset-explorer.tsx` already established for this
- * app's other CSV export. Deliberately a small, fixed two-row export
- * (weather + soil moisture) matching exactly what's shown on-page, not
- * a generalized reporting/export framework.
+ * FOLLOW-UP: REPORT/EXPORT EXTENDED TO REAL PORTFOLIO"). Adapted from
+ * this file's original fixed two-row single-location shape to one row
+ * per property per metric, the same generalization
+ * `agriculture/report/csv-export-button.tsx` already made for its own
+ * multi-field portfolio — same `Blob` + `URL.createObjectURL` download
+ * pattern throughout this app's CSV exports.
  */
 export function CsvExportButton(props: CsvExportButtonProps) {
   function handleClick() {
