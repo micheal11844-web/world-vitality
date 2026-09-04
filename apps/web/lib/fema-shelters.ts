@@ -21,16 +21,29 @@
  * live open/closed status. `SHELTER_STATUS_CAVEAT` below is displayed
  * on-page exactly as written here, not summarized or softened.
  *
- * **Honest uncertainty about field names:** the layer's own published
- * metadata confirms `name`/`fema_id`/`arc_id`/`evac_cap` exist, but
- * this module could not fetch a live response from this sandbox (no
- * outbound access to maps.nccs.nasa.gov) to confirm address/city/state
- * field names — parsing here is deliberately defensive, matching
- * `usgs-flood-impacts.ts`'s same honest-uncertainty approach.
+ * **Field names confirmed against the layer's own published metadata**
+ * (`GET .../FeatureServer/7?f=pjson`, fetched live and read directly):
+ * `name`, `address`, `evac_cap`, `objectid` all exist exactly as
+ * originally guessed here — lowercase, no uppercase-alias fallback
+ * ever actually needed. Kept the defensive multi-key lookups (`readString`/
+ * `readNumber` checking both cases) anyway rather than narrowing them,
+ * since they cost nothing and this is still a third-party service this
+ * app doesn't control the schema of.
+ *
+ * A descriptive `User-Agent` header is included below, same precedent
+ * `nws-alerts.ts`/`usgs-flood-impacts.ts` established for other U.S.
+ * government APIs — this service doesn't document it as a hard
+ * requirement, but many federal API gateways apply bot-mitigation that
+ * can reject or rate-limit a generic/missing User-Agent, and there is
+ * no downside to sending a real one.
  */
 
 const SHELTERS_LAYER_URL =
   "https://maps.nccs.nasa.gov/mapping/rest/services/hifld_open/emergency_services/FeatureServer/7/query";
+
+const REQUEST_HEADERS = {
+  "User-Agent": "World-Vitality-Disaster-Monitoring (github.com/micheal11844-web/world-vitality)",
+};
 
 export const SHELTER_STATUS_CAVEAT =
   "This layer should not be used to determine the operational status of a facility during an active emergency. — FEMA/HIFLD";
@@ -92,7 +105,7 @@ export async function fetchNearbyShelters(
   url.searchParams.set("returnGeometry", "true");
   url.searchParams.set("f", "json");
 
-  const response = await fetch(url.toString());
+  const response = await fetch(url.toString(), { headers: REQUEST_HEADERS });
   if (!response.ok) {
     throw new Error(`HIFLD shelter facilities service returned ${response.status}`);
   }
