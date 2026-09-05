@@ -152,6 +152,19 @@ export function AppShell({
           style={{
             flex: 1,
             minWidth: 0,
+            // Same fix as `Sidebar`'s own `<nav>` — a flex item's
+            // default `min-height: auto` means `overflow: "auto"`
+            // alone doesn't actually create a scroll region until the
+            // item is also allowed to shrink below its content's
+            // natural height. Without this, a sufficiently tall page
+            // (e.g. a multi-property/multi-location workspace list)
+            // could grow `main` past the shell's 100vh height and
+            // scroll the whole page instead of just this region — a
+            // latent version of the same bug `Sidebar` actually hit
+            // once its nested tree got tall enough to trigger it. See
+            // BUILD_PLAN "STAGE — FIXED APP-SHELL LAYOUT (INDEPENDENT
+            // SCROLL REGIONS)".
+            minHeight: 0,
             overflow: "auto",
             padding: "var(--wv-space-lg)",
             backgroundColor: "var(--wv-bg)",

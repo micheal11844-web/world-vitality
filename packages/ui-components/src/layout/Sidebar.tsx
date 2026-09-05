@@ -250,7 +250,27 @@ export function Sidebar({
         gap: "var(--wv-space-md)",
         fontFamily: "var(--wv-font-sans)",
         transition: "width 0.15s ease",
-        overflow: "hidden",
+        // `minHeight: 0` + `overflowY: auto` together, not `overflow:
+        // hidden` alone (BUILD_PLAN "STAGE — FIXED APP-SHELL LAYOUT
+        // (INDEPENDENT SCROLL REGIONS)"): a flex item's default
+        // `min-height: auto` means it refuses to shrink below its own
+        // content's natural height regardless of the parent's
+        // constrained height — so once the nested sidebar tree (this
+        // app's own "STAGE — NESTED WORKSPACE SIDEBAR NAVIGATION")
+        // could grow past viewport height with several workspaces
+        // expanded, the nav's rendered box grew to match, pushing the
+        // whole flex row (and the outer 100vh shell) taller than the
+        // viewport — the entire page scrolled, header and sidebar
+        // included, instead of just the intended content region. Real
+        // regression introduced by that same stage, not present when
+        // the sidebar was still a short, flat list. `overflowX:
+        // "hidden"` is kept (not `overflow: "auto"` on both axes) so
+        // horizontal content still clips cleanly during the
+        // width-collapse transition, exactly as `overflow: "hidden"`
+        // did before — only the vertical axis needed to change.
+        minHeight: 0,
+        overflowX: "hidden",
+        overflowY: "auto",
       }}
     >
       {sections.map((section) => (
