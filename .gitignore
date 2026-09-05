@@ -8,6 +8,13 @@ build/
 .next/
 *.tsbuildinfo
 
+# CesiumJS runtime assets (BUILD_PLAN "STAGE — GOD'S EYE GLOBE VIEW") —
+# copied verbatim from node_modules/cesium at dev/build time by
+# apps/web/scripts/copy-cesium-assets.mjs (predev/prebuild), never
+# committed — same reasoning as dist/ above: a reproducible copy of
+# something pnpm install already gives us.
+apps/web/public/cesium/
+
 # Env / secrets
 .env
 .env.*

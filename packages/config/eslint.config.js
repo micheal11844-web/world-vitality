@@ -16,12 +16,21 @@ export default tseslint.config(
       "**/.turbo/**",
       "**/node_modules/**",
       "**/next-env.d.ts",
+      // CesiumJS's own runtime assets (BUILD_PLAN "STAGE — GOD'S EYE
+      // GLOBE VIEW"), copied verbatim from node_modules at build time
+      // by apps/web/scripts/copy-cesium-assets.mjs — vendor code this
+      // app doesn't author, same reasoning as excluding node_modules
+      // itself. Not committed to git either (see .gitignore), but
+      // still needs excluding here since lint runs against the
+      // working tree, which has it present after `pnpm run build` or
+      // `pnpm run dev` has run at least once.
+      "apps/web/public/cesium/**",
     ],
   },
   {
-    files: ["tools/**/*.mjs"],
+    files: ["tools/**/*.mjs", "apps/web/scripts/**/*.mjs"],
     languageOptions: {
-      globals: { global: "writable", process: "readonly" },
+      globals: { global: "writable", process: "readonly", console: "readonly" },
     },
   },
   {

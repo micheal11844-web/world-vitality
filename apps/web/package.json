@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-cesium-assets.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-cesium-assets.mjs",
     "build": "cd ../.. && pnpm run build && cd apps/web && next build",
     "start": "next start"
   },
@@ -18,9 +20,11 @@
     "@world-vitality/interpretation-engine": "workspace:*",
     "@world-vitality/knowledge-graph": "workspace:*",
     "@world-vitality/ui-components": "workspace:*",
+    "cesium": "^1.145.0",
     "maplibre-gl": "^4.7.0",
     "next": "^15.5.21",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "resium": "^1.26.0"
   }
 }

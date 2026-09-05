@@ -88,6 +88,45 @@ const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
  * confirmed against `layout.test.tsx`'s existing assertions (all
  * ARIA-role-based, none depend on exact DOM nesting).
  */
+
+/**
+ * Persistent "View the Globe" link (BUILD_PLAN "STAGE — GOD'S EYE
+ * GLOBE VIEW") — baked directly into `AppShell` rather than added to
+ * each of the ten workspace shells (plus Dashboard, Public Explorer)
+ * individually, same "app-level chrome that should be the same on
+ * every page" reasoning `brand`/`GuideCharacter` already use here. A
+ * plain `<a>`, not a framework `<Link>` — this package is
+ * framework-light by design (see `AuthIllustration`'s own doc comment
+ * for the same reasoning applied to `next/image`), so Next.js's own
+ * client-side-navigation optimization isn't available from inside
+ * `packages/ui-components`; a full page navigation to `/globe` is a
+ * fine, honest cost for an occasional, deliberate mode switch, not a
+ * frequent in-flow action worth optimizing.
+ */
+function GlobeToggleLink() {
+  return (
+    <a
+      href="/globe"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.375rem",
+        padding: "0.375rem 0.75rem",
+        borderRadius: "var(--wv-radius-sm)",
+        border: "1px solid var(--wv-border)",
+        backgroundColor: "transparent",
+        color: "var(--wv-text-primary)",
+        textDecoration: "none",
+        fontSize: "0.875rem",
+        fontFamily: "var(--wv-font-sans)",
+      }}
+    >
+      <span aria-hidden="true">🌐</span>
+      View the Globe
+    </a>
+  );
+}
+
 export function AppShell({
   brand,
   headerActions,
@@ -137,7 +176,15 @@ export function AppShell({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <div data-app-shell-chrome>
-        <Header brand={brand} actions={headerActions} />
+        <Header
+          brand={brand}
+          actions={
+            <>
+              <GlobeToggleLink />
+              {headerActions}
+            </>
+          }
+        />
       </div>
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <div data-app-shell-chrome>

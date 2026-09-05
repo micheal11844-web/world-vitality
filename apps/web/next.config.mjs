@@ -68,6 +68,20 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
+              // Explicit worker-src (BUILD_PLAN "STAGE — GOD'S EYE
+              // GLOBE VIEW") rather than relying on the fallback-to-
+              // script-src behavior CSP normally uses when worker-src
+              // is unset. This project has already been burned once by
+              // an under-specified CSP directive silently breaking a
+              // real feature only in production (see the script-src
+              // incident record above) — CesiumJS (the 3D globe
+              // library) spins up several same-origin Web Workers for
+              // geometry/imagery processing and, in some code paths,
+              // bootstraps them via `blob:` URLs internally, so both
+              // are allowed explicitly rather than left to an assumed
+              // fallback that may not hold for every browser/Cesium
+              // version.
+              "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https://tile.openstreetmap.org",
               // tile.openstreetmap.org needs to be in BOTH img-src and
