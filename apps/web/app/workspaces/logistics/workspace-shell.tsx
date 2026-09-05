@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import { AppBrand } from "../../app-brand";
-import { WORKSPACE_LINKS } from "../workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -17,7 +17,9 @@ export interface WorkspaceShellProps {
  * identical to every other workspace's `workspace-shell.tsx` — the
  * same validation of PRD Section C's Modular Workspace Framework claim
  * that adding a workspace is "fundamentally a configuration and
- * content exercise," now demonstrated a sixth time.
+ * content exercise," now demonstrated a sixth time. Same single-
+ * section, collapsible "Workspaces" sidebar tree as every other
+ * workspace (BUILD_PLAN "STAGE — NESTED WORKSPACE SIDEBAR NAVIGATION").
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
@@ -29,38 +31,10 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: w.key === "logistics",
-          })),
-        },
-        {
-          key: "this-workspace",
-          label: "This Workspace",
-          items: [
-            {
-              key: "home",
-              label: "Route Risk",
-              href: "/workspaces/logistics",
-              active: activeKey === "home",
-            },
-            {
-              key: "map",
-              label: "Map",
-              href: "/workspaces/logistics/map",
-              active: activeKey === "map",
-            },
-            {
-              key: "team",
-              label: "Team",
-              href: "/workspaces/logistics/team",
-              active: false,
-            },
-          ],
+          items: buildWorkspaceSidebarItems("logistics", activeKey),
         },
       ]}
+      sidebarDefaultExpandedKeys={["logistics"]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

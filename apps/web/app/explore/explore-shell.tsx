@@ -4,7 +4,7 @@ import { type ReactNode, useState } from "react";
 import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import { AppBrand } from "../app-brand";
-import { WORKSPACE_LINKS } from "../workspaces/workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 
 export interface ExploreShellProps {
   children: ReactNode;
@@ -22,12 +22,16 @@ export interface ExploreShellProps {
  * workspaces anyway:** unlike every `workspace-shell.tsx`, this page
  * sits outside `app/workspaces/layout.tsx`'s session check — Public
  * Explorer's PRD mission is explicit: "No sign-up required for first
- * exploration." The sidebar still lists the five vertical workspaces
- * via the same shared `WORKSPACE_LINKS` — clicking one as an anonymous
+ * exploration." The sidebar still lists the ten workspaces via the
+ * same shared `buildWorkspaceSidebarItems` (BUILD_PLAN "STAGE — NESTED
+ * WORKSPACE SIDEBAR NAVIGATION") every workspace shell now uses —
+ * clicking one (or one of its now-visible sub-pages) as an anonymous
  * visitor hits the existing `/login` redirect, which is exactly the
  * PRD's own described "natural upgrade path: if usage patterns suggest
  * a professional need... the platform suggests the relevant vertical
- * workspace" — not a bug to special-case around.
+ * workspace" — not a bug to special-case around. No `currentWorkspaceKey`
+ * is passed, so every workspace starts collapsed — there's no "current
+ * workspace" from Public Explorer.
  */
 export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
@@ -39,12 +43,7 @@ export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) 
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: false,
-          })),
+          items: buildWorkspaceSidebarItems(),
         },
       ]}
       aiPanelOpen={aiPanelOpen}

@@ -5,10 +5,10 @@ import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/u
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import type { Role } from "@world-vitality/identity-service";
 import { AppBrand } from "../../app-brand";
-import { WORKSPACE_LINKS } from "../workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
-  activeKey: "home" | "map";
+  activeKey: "home" | "map" | "report";
   children: ReactNode;
   role: Role;
   aiInterpretation?: InterpretationResult;
@@ -23,8 +23,13 @@ const ROLE_LABEL: Record<Role, string> = {
 
 /**
  * Shared shell for the Government & NGOs workspace (BUILD_PLAN "STAGE
- * — GOVERNMENT & NGOS WORKSPACE"). Same grouped sidebar and shared
- * `AppBrand` as every other workspace shell.
+ * — GOVERNMENT & NGOS WORKSPACE"). Same single-section, collapsible
+ * "Workspaces" sidebar tree (BUILD_PLAN "STAGE — NESTED WORKSPACE
+ * SIDEBAR NAVIGATION") and shared `AppBrand` as every other workspace
+ * shell. Its "Report" sub-page is now listed in the sidebar tree too —
+ * previously only reachable via the "Open Report" button on the home
+ * page, a real, pre-existing inconsistency fixed while centralizing
+ * this list (see `workspace-nav.ts`'s own comment).
  *
  * **This is the first workspace shell to display the signed-in user's
  * actual role** — `role` is passed down from `page.tsx`, which
@@ -49,38 +54,10 @@ export function WorkspaceShell({
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: w.key === "government-ngos",
-          })),
-        },
-        {
-          key: "this-workspace",
-          label: "This Workspace",
-          items: [
-            {
-              key: "home",
-              label: "Jurisdiction Overview",
-              href: "/workspaces/government-ngos",
-              active: activeKey === "home",
-            },
-            {
-              key: "map",
-              label: "Map",
-              href: "/workspaces/government-ngos/map",
-              active: activeKey === "map",
-            },
-            {
-              key: "team",
-              label: "Team",
-              href: "/workspaces/government-ngos/team",
-              active: false,
-            },
-          ],
+          items: buildWorkspaceSidebarItems("government-ngos", activeKey),
         },
       ]}
+      sidebarDefaultExpandedKeys={["government-ngos"]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

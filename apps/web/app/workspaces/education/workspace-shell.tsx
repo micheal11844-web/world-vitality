@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { AppShell, StateDisplay, Text } from "@world-vitality/ui-components";
 import type { Role } from "@world-vitality/identity-service";
 import { AppBrand } from "../../app-brand";
-import { WORKSPACE_LINKS } from "../workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map" | "lesson-plan";
@@ -27,10 +27,12 @@ const ROLE_LABEL: Record<Role, string> = {
 
 /**
  * Shared shell for the Education workspace (BUILD_PLAN "STAGE —
- * EDUCATION WORKSPACE"). No AI panel showing an interpretation result
- * (unlike every other workspace's shell) — this workspace's AI-adjacent
- * feature is the grade-level explanation tool on the home page itself,
- * not a persistent side-panel summary.
+ * EDUCATION WORKSPACE"). Same single-section, collapsible "Workspaces"
+ * sidebar tree as every other workspace shell (BUILD_PLAN "STAGE —
+ * NESTED WORKSPACE SIDEBAR NAVIGATION"). No AI panel showing an
+ * interpretation result (unlike every other workspace's shell) — this
+ * workspace's AI-adjacent feature is the grade-level explanation tool
+ * on the home page itself, not a persistent side-panel summary.
  */
 export function WorkspaceShell({ activeKey, children, role }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
@@ -42,44 +44,10 @@ export function WorkspaceShell({ activeKey, children, role }: WorkspaceShellProp
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: w.key === "education",
-          })),
-        },
-        {
-          key: "this-workspace",
-          label: "This Workspace",
-          items: [
-            {
-              key: "home",
-              label: "Explain This Data",
-              href: "/workspaces/education",
-              active: activeKey === "home",
-            },
-            {
-              key: "map",
-              label: "Map",
-              href: "/workspaces/education/map",
-              active: activeKey === "map",
-            },
-            {
-              key: "lesson-plan",
-              label: "Lesson Plan",
-              href: "/workspaces/education/lesson-plan",
-              active: activeKey === "lesson-plan",
-            },
-            {
-              key: "team",
-              label: "Team",
-              href: "/workspaces/education/team",
-              active: false,
-            },
-          ],
+          items: buildWorkspaceSidebarItems("education", activeKey),
         },
       ]}
+      sidebarDefaultExpandedKeys={["education"]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

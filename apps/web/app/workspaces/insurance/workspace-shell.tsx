@@ -5,10 +5,10 @@ import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/u
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import type { Role } from "@world-vitality/identity-service";
 import { AppBrand } from "../../app-brand";
-import { WORKSPACE_LINKS } from "../workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
-  activeKey: "home" | "map";
+  activeKey: "home" | "map" | "report";
   children: ReactNode;
   role: Role;
   aiInterpretation?: InterpretationResult;
@@ -33,9 +33,14 @@ const ROLE_LABEL: Record<Role, string> = {
 /**
  * Shared shell for the Insurance workspace (BUILD_PLAN "STAGE —
  * INSURANCE WORKSPACE"). Structurally identical to every other
- * workspace shell — `AppShell` wrapper, grouped sidebar, AI panel
- * showing the signed-in user's role plus whatever interpretation
- * result the calling page passes down.
+ * workspace shell — `AppShell` wrapper, single-section collapsible
+ * "Workspaces" sidebar tree (BUILD_PLAN "STAGE — NESTED WORKSPACE
+ * SIDEBAR NAVIGATION"), AI panel showing the signed-in user's role plus
+ * whatever interpretation result the calling page passes down. Its
+ * "Report" sub-page is now listed in the sidebar tree too — previously
+ * only reachable via the "Open Report" button on the home page, a real,
+ * pre-existing inconsistency fixed while centralizing this list (see
+ * `workspace-nav.ts`'s own comment).
  */
 export function WorkspaceShell({
   activeKey,
@@ -52,38 +57,10 @@ export function WorkspaceShell({
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: w.key === "insurance",
-          })),
-        },
-        {
-          key: "this-workspace",
-          label: "This Workspace",
-          items: [
-            {
-              key: "home",
-              label: "Underwriting Risk Context",
-              href: "/workspaces/insurance",
-              active: activeKey === "home",
-            },
-            {
-              key: "map",
-              label: "Map",
-              href: "/workspaces/insurance/map",
-              active: activeKey === "map",
-            },
-            {
-              key: "team",
-              label: "Team",
-              href: "/workspaces/insurance/team",
-              active: false,
-            },
-          ],
+          items: buildWorkspaceSidebarItems("insurance", activeKey),
         },
       ]}
+      sidebarDefaultExpandedKeys={["insurance"]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

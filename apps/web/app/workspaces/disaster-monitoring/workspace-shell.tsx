@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { AppShell, StateDisplay, Text } from "@world-vitality/ui-components";
 import { AppBrand } from "../../app-brand";
-import { WORKSPACE_LINKS } from "../workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -12,9 +12,10 @@ export interface WorkspaceShellProps {
 
 /**
  * Shared shell for the Disaster Monitoring workspace (BUILD_PLAN
- * "STAGE — DISASTER MONITORING WORKSPACE"). Same grouped
- * "Workspaces"/"This Workspace" sidebar and shared `AppBrand` as every
- * other workspace shell.
+ * "STAGE — DISASTER MONITORING WORKSPACE"). Same single-section,
+ * collapsible "Workspaces" sidebar tree (BUILD_PLAN "STAGE — NESTED
+ * WORKSPACE SIDEBAR NAVIGATION") and shared `AppBrand` as every other
+ * workspace shell.
  *
  * **Deliberately no `aiInterpretation` prop, same precedent as
  * `app/workspaces/research/workspace-shell.tsx`, for a related but
@@ -39,38 +40,10 @@ export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: w.key === "disaster-monitoring",
-          })),
-        },
-        {
-          key: "this-workspace",
-          label: "This Workspace",
-          items: [
-            {
-              key: "home",
-              label: "Active Alerts",
-              href: "/workspaces/disaster-monitoring",
-              active: activeKey === "home",
-            },
-            {
-              key: "map",
-              label: "Map",
-              href: "/workspaces/disaster-monitoring/map",
-              active: activeKey === "map",
-            },
-            {
-              key: "team",
-              label: "Team",
-              href: "/workspaces/disaster-monitoring/team",
-              active: false,
-            },
-          ],
+          items: buildWorkspaceSidebarItems("disaster-monitoring", activeKey),
         },
       ]}
+      sidebarDefaultExpandedKeys={["disaster-monitoring"]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

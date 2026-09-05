@@ -66,7 +66,7 @@ export default async function GovernmentNgosReportPage() {
 
   if (!can(role, "reports:create")) {
     return (
-      <WorkspaceShell activeKey="home" role={role}>
+      <WorkspaceShell activeKey="report" role={role}>
         <StateDisplay
           status="error"
           title="Access denied"
@@ -80,7 +80,7 @@ export default async function GovernmentNgosReportPage() {
   const generatedAt = new Date().toISOString();
 
   return (
-    <WorkspaceShell activeKey="home" role={role}>
+    <WorkspaceShell activeKey="report" role={role}>
       <style>{`
         @media print {
           [data-app-shell-chrome] { display: none !important; }

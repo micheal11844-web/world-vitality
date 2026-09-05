@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import { AppBrand } from "../../app-brand";
-import { WORKSPACE_LINKS } from "../workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -19,18 +19,19 @@ export interface WorkspaceShellProps {
  * adding a workspace is "fundamentally a configuration and content
  * exercise."
  *
- * **Sidebar layout (BUILD_PLAN Stage 13 follow-up)** — two distinct
- * sections rather than one flat list: "Workspaces" (the cross-workspace
- * switcher, shared via `../workspace-nav`) and "This Workspace" (pages
- * within Weather & Climate specifically). Previously these were
- * interleaved in a single list, which read as "colliding" once a
- * workspace was open — a page-switcher item and a page-within-workspace
- * item looked the same and sat next to each other with no visual
- * separation. `brand` is now the shared `AppBrand` (app logo + name,
- * clickable back to `/dashboard`) rather than this workspace's own
- * name — that identity now lives in the page's own `pageTitle` heading
- * instead, since the header brand slot is app-level chrome that should
- * be the same on every page, not page-specific content.
+ * **Sidebar layout (BUILD_PLAN "STAGE — NESTED WORKSPACE SIDEBAR
+ * NAVIGATION")** — a single "Workspaces" section, built once by
+ * `buildWorkspaceSidebarItems` and shared across every workspace shell,
+ * rather than this file hand-rolling its own "Workspaces" + "This
+ * Workspace" section pair. Each workspace renders as a collapsible row
+ * with a disclosure chevron; Weather & Climate's own sub-pages nest
+ * inside its row rather than living in a separate section, and start
+ * expanded here since this *is* the current workspace. `brand` is the
+ * shared `AppBrand` (app logo + name, clickable back to `/dashboard`)
+ * rather than this workspace's own name — that identity lives in the
+ * page's own `pageTitle` heading instead, since the header brand slot is
+ * app-level chrome that should be the same on every page, not
+ * page-specific content.
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
@@ -42,38 +43,10 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: w.key === "weather",
-          })),
-        },
-        {
-          key: "this-workspace",
-          label: "This Workspace",
-          items: [
-            {
-              key: "home",
-              label: "Current Conditions",
-              href: "/workspaces/weather",
-              active: activeKey === "home",
-            },
-            {
-              key: "map",
-              label: "Map",
-              href: "/workspaces/weather/map",
-              active: activeKey === "map",
-            },
-            {
-              key: "team",
-              label: "Team",
-              href: "/workspaces/weather/team",
-              active: false,
-            },
-          ],
+          items: buildWorkspaceSidebarItems("weather", activeKey),
         },
       ]}
+      sidebarDefaultExpandedKeys={["weather"]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

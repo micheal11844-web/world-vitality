@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { AppShell, StateDisplay, Text } from "@world-vitality/ui-components";
 import { AppBrand } from "../../app-brand";
-import { WORKSPACE_LINKS } from "../workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -12,9 +12,9 @@ export interface WorkspaceShellProps {
 
 /**
  * Shared shell for the Research workspace (BUILD_PLAN Stage 14 — the
- * fifth workspace). Same grouped "Workspaces"/"This Workspace" sidebar
- * and shared `AppBrand` as every other workspace shell (Stage 13
- * follow-up).
+ * fifth workspace). Same single-section, collapsible "Workspaces"
+ * sidebar tree (BUILD_PLAN "STAGE — NESTED WORKSPACE SIDEBAR
+ * NAVIGATION") and shared `AppBrand` as every other workspace shell.
  *
  * **Deliberately no `aiInterpretation` prop, unlike every other
  * workspace shell.** The PRD is explicit about this workspace's
@@ -38,38 +38,10 @@ export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
         {
           key: "workspaces",
           label: "Workspaces",
-          items: WORKSPACE_LINKS.map((w) => ({
-            key: `switch-${w.key}`,
-            label: w.label,
-            href: w.href,
-            active: w.key === "research",
-          })),
-        },
-        {
-          key: "this-workspace",
-          label: "This Workspace",
-          items: [
-            {
-              key: "home",
-              label: "Dataset Explorer",
-              href: "/workspaces/research",
-              active: activeKey === "home",
-            },
-            {
-              key: "map",
-              label: "Map",
-              href: "/workspaces/research/map",
-              active: activeKey === "map",
-            },
-            {
-              key: "team",
-              label: "Team",
-              href: "/workspaces/research/team",
-              active: false,
-            },
-          ],
+          items: buildWorkspaceSidebarItems("research", activeKey),
         },
       ]}
+      sidebarDefaultExpandedKeys={["research"]}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

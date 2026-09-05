@@ -54,7 +54,7 @@ export default async function InsuranceReportPage() {
 
   if (!can(membership.role, "reports:create")) {
     return (
-      <WorkspaceShell activeKey="home" role={membership.role}>
+      <WorkspaceShell activeKey="report" role={membership.role}>
         <StateDisplay
           status="error"
           title="Access denied"
@@ -113,7 +113,7 @@ export default async function InsuranceReportPage() {
   ]);
 
   return (
-    <WorkspaceShell activeKey="home" role={membership.role}>
+    <WorkspaceShell activeKey="report" role={membership.role}>
       <style>{`
         @media print {
           [data-app-shell-chrome] { display: none !important; }

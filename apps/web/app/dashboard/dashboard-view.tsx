@@ -11,7 +11,7 @@ import {
   type GuideTutorialStep,
 } from "@world-vitality/ui-components";
 import { AppBrand } from "../app-brand";
-import { WORKSPACE_LINKS } from "../workspaces/workspace-nav";
+import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 
 const TUTORIAL_SEEN_KEY = "wv_guide_tutorial_seen";
 
@@ -95,11 +95,13 @@ export function DashboardView() {
           label: "Workspaces",
           items: [
             { key: "home", label: "Home", href: "/dashboard", active: true },
-            ...WORKSPACE_LINKS.map((w) => ({
-              key: `switch-${w.key}`,
-              label: w.label,
-              href: w.href,
-            })),
+            // No `currentWorkspaceKey` here (BUILD_PLAN "STAGE — NESTED
+            // WORKSPACE SIDEBAR NAVIGATION") — nothing is "the current
+            // workspace" from the cross-workspace Dashboard, so every
+            // workspace starts collapsed and none is marked active,
+            // same as before this stage (the flat list never marked
+            // any workspace active from here either).
+            ...buildWorkspaceSidebarItems(),
           ],
         },
       ]}

@@ -15,6 +15,15 @@ export interface AppShellProps {
    * pages within whichever workspace is currently open.
    */
   sidebarSections: SidebarSection[];
+  /**
+   * Passed straight through to `Sidebar`'s `defaultExpandedKeys`
+   * (BUILD_PLAN "STAGE — NESTED WORKSPACE SIDEBAR NAVIGATION") — the
+   * current workspace's key, typically, so its sub-pages are visible
+   * without an extra click. Omit for shells with nothing to
+   * pre-expand (the cross-workspace Dashboard and Public Explorer,
+   * where there's no single "current workspace").
+   */
+  sidebarDefaultExpandedKeys?: string[];
   aiPanelOpen: boolean;
   onToggleAiPanel: () => void;
   aiPanelContent?: ReactNode;
@@ -83,6 +92,7 @@ export function AppShell({
   brand,
   headerActions,
   sidebarSections,
+  sidebarDefaultExpandedKeys,
   aiPanelOpen,
   onToggleAiPanel,
   aiPanelContent,
@@ -135,6 +145,7 @@ export function AppShell({
             sections={sidebarSections}
             collapsed={sidebarCollapsed}
             onToggleCollapse={toggleSidebar}
+            defaultExpandedKeys={sidebarDefaultExpandedKeys}
           />
         </div>
         <main

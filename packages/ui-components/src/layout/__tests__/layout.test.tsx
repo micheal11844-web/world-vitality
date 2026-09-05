@@ -90,6 +90,92 @@ test("Sidebar renders a collapse toggle button when onToggleCollapse is provided
   assert.equal(toggled, true);
 });
 
+test("Sidebar with children starts collapsed by default and expands on chevron click", () => {
+  render(
+    <Sidebar
+      sections={[
+        {
+          key: "workspaces",
+          items: [
+            {
+              key: "agriculture",
+              label: "Agriculture",
+              href: "/workspaces/agriculture",
+              children: [
+                { key: "agriculture-home", label: "Field Overview", href: "/workspaces/agriculture" },
+                { key: "agriculture-map", label: "Map", href: "/workspaces/agriculture/map" },
+              ],
+            },
+          ],
+        },
+      ]}
+    />,
+  );
+  assert.equal(screen.queryByRole("link", { name: "Field Overview" }), null);
+  fireEvent.click(screen.getByRole("button", { name: /Expand Agriculture/i }));
+  assert.ok(screen.getByRole("link", { name: "Field Overview" }));
+  assert.ok(screen.getByRole("link", { name: "Map" }));
+});
+
+test("Sidebar honors defaultExpandedKeys so the current workspace's sub-pages are visible immediately", () => {
+  render(
+    <Sidebar
+      defaultExpandedKeys={["agriculture"]}
+      sections={[
+        {
+          key: "workspaces",
+          items: [
+            {
+              key: "agriculture",
+              label: "Agriculture",
+              href: "/workspaces/agriculture",
+              children: [
+                { key: "agriculture-home", label: "Field Overview", href: "/workspaces/agriculture" },
+              ],
+            },
+          ],
+        },
+      ]}
+    />,
+  );
+  assert.ok(screen.getByRole("link", { name: "Field Overview" }));
+});
+
+test("Sidebar's parent label and chevron are independent controls — clicking the label never toggles expansion", () => {
+  render(
+    <Sidebar
+      sections={[
+        {
+          key: "workspaces",
+          items: [
+            {
+              key: "agriculture",
+              label: "Agriculture",
+              href: "/workspaces/agriculture",
+              children: [
+                { key: "agriculture-home", label: "Field Overview", href: "/workspaces/agriculture" },
+              ],
+            },
+          ],
+        },
+      ]}
+    />,
+  );
+  fireEvent.click(screen.getByRole("link", { name: "Agriculture" }));
+  assert.equal(screen.queryByRole("link", { name: "Field Overview" }), null);
+});
+
+test("Sidebar renders a leaf item (no children) with no chevron, exactly as before this feature existed", () => {
+  render(
+    <Sidebar
+      sections={[
+        { key: "primary", items: [{ key: "dash", label: "Dashboard", href: "/dashboard" }] },
+      ]}
+    />,
+  );
+  assert.equal(screen.queryByRole("button", { name: /Expand|Collapse Dashboard/i }), null);
+});
+
 test("AIPanel renders a collapsed rail with an open toggle when closed", () => {
   render(<AIPanel open={false} onToggle={() => {}} />);
   assert.equal(screen.queryByRole("complementary"), null);
