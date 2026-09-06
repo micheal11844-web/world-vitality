@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { Viewer, Entity, ImageryLayer, PointGraphics, LabelGraphics } from "resium";
-import * as Cesium from "cesium";
+import { useEffect, useState } from "react";
+import type * as ResiumTypes from "resium";
+import type * as CesiumTypes from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 
 export interface GlobePin {
@@ -24,72 +24,80 @@ const WORKSPACE_PIN_COLOR: Record<string, string> = {
 };
 
 /**
- * "God's Eye" global view (BUILD_PLAN "STAGE — GOD'S EYE GLOBE VIEW")
- * — a single 3D-globe visualization of every real, resource-scoped
- * location this app already tracks across workspaces, inspired by the
- * open-source "God's Eye View" project
- * (github.com/bilawalsidhu/gods-eye-view) but deliberately scoped to
- * this app's own real data rather than replicating its actual feature
- * set (flights/ships/CCTV/military are off-mission for World
- * Vitality's PRD verticals — see this stage's BUILD_PLAN entry for the
- * full reasoning).
+ * "God's Eye" global view (BUILD_PLAN "STAGE — GOD'S EYE GLOBE VIEW",
+ * fixed by "STAGE — GLOBE VIEW PRODUCTION FIX") — a single 3D-globe
+ * visualization of every real, resource-scoped location this app
+ * already tracks across workspaces, inspired by the open-source "God's
+ * Eye View" project (github.com/bilawalsidhu/gods-eye-view) but
+ * deliberately scoped to this app's own real data rather than
+ * replicating its actual feature set (flights/ships/CCTV/military are
+ * off-mission for World Vitality's PRD verticals — see this stage's
+ * BUILD_PLAN entry for the full reasoning).
  *
- * **Fully keyless, zero external network requests for the globe itself
- * — a deliberate default, not a limitation glossed over.** Real
- * satellite imagery (Cesium World Imagery, Bing, Google Photorealistic
- * 3D Tiles) all require a Cesium ion account and access token, the
- * same "sign up for a token" step the reference project's own README
- * walks through as an *optional* upgrade tier. This app's own
- * established pattern (NASA POWER, Open-Meteo, USGS, FEMA/HIFLD — every
- * external data source used so far) never requires the person running
- * this app to obtain a key just to see the feature work at all, so the
- * default here is Cesium's own bundled Natural Earth II imagery
- * (`node_modules/cesium/Build/Cesium/Assets/Textures/NaturalEarthII`,
- * copied to `public/cesium/` at build time — see
- * `scripts/copy-cesium-assets.mjs`), served from this app's own origin
- * via `TileMapServiceImageryProvider`. Lower-resolution than real
- * satellite photography, genuinely visually plainer, and stated as
- * such rather than implied to be equivalent — upgrading to a real
- * imagery provider by adding a Cesium ion token is real, optional,
- * separate follow-up work for whoever runs this app, not required to
- * use this feature at all.
- *
- * No terrain provider is configured either (Cesium's default flat
- * WGS84 ellipsoid) — real elevation terrain (Cesium World Terrain) is
- * also an ion-gated asset; the ellipsoid is visually flatter but
- * functionally sufficient for plotting point locations, which is all
- * this view does.
- *
- * All of Cesium's own default UI chrome (base layer picker, timeline,
- * animation controls, geocoder, home button, scene mode picker,
- * navigation help, fullscreen button) is disabled — this app has its
- * own consistent design system, and Cesium's stock demo-app look would
- * clash with it rather than fit in.
+ * **Both `cesium` and `resium` are loaded via a runtime `import()`
+ * inside `useEffect`, never a static top-level `import`, and this is
+ * not a style preference — it's the actual fix for a real production
+ * bug this app shipped with initially.** A static `import * as Cesium
+ * from "cesium"` (and `resium` itself statically imports `cesium`
+ * internally too, confirmed by reading its own compiled output —
+ * fixing only this file's own import would not have been enough) let
+ * webpack's normal bundling pipeline process Cesium's module graph,
+ * which somewhere inlines a WASM/binary resource as a raw string
+ * inside a JS template literal — those raw bytes happened to contain
+ * byte sequences JS parses as illegal octal escape sequences,
+ * producing `SyntaxError: Octal escape sequences are not allowed in
+ * template strings` at runtime in the browser (never caught by this
+ * sandbox's own `next build`, since that only *type-checks* and
+ * *bundles* successfully — it doesn't execute the resulting JS in a
+ * real browser, so a syntactically-invalid-at-runtime chunk still
+ * "builds" cleanly). A real, independently-verified reference project
+ * (github.com/hyundotio/nextjs-ts-cesium-example, "actually builds and
+ * runs on Vercel") empirically found the same class of bug and
+ * documented the same fix: defer both libraries to a runtime `import()`
+ * so webpack code-splits them into an opaque async chunk rather than
+ * statically analyzing/transforming their source the same way it does
+ * this app's own code. `import type` (type-only, fully erased at
+ * compile time — zero runtime output) is used for the TypeScript types
+ * themselves, which is safe precisely because it never reaches the
+ * runtime bundling path that caused the bug in the first place.
  */
 export function GlobeViewer({ pins }: { pins: GlobePin[] }) {
-  // `useMemo`, not `useState`/`useEffect` — computed once, synchronously,
-  // in the render body rather than after a mount effect. Safe to touch
-  // `window` here specifically because this whole component is
-  // dynamically imported with `ssr: false` by its page (see
-  // `globe-shell.tsx`), so by the time this function body ever runs we
-  // are already guaranteed to be client-side.
-  const imageryProviderPromise = useMemo(() => {
+  const [modules, setModules] = useState<{
+    resium: typeof ResiumTypes;
+    Cesium: typeof CesiumTypes;
+    imageryProviderPromise: Promise<CesiumTypes.ImageryProvider>;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
     // Must be set before Cesium's own asset-loading paths
-    // (`buildModuleUrl` below) are touched at all.
+    // (`buildModuleUrl`, called below once the module has loaded) are
+    // touched at all.
     (window as unknown as { CESIUM_BASE_URL: string }).CESIUM_BASE_URL = "/cesium/";
-    // `TileMapServiceImageryProvider` is constructed via an async
-    // `fromUrl` factory in this Cesium version, not a plain
-    // constructor — confirmed against this installed version's own
-    // type definitions (`node_modules/cesium/Source/Cesium.d.ts`)
-    // rather than assumed from older Cesium tutorials/examples, which
-    // commonly still show the old synchronous-constructor pattern.
-    // `ImageryLayer`'s own `imageryProvider` prop accepts this promise
-    // directly (confirmed against resium's own type definitions too),
-    // so no manual promise-resolution state is needed here at all.
-    return Cesium.TileMapServiceImageryProvider.fromUrl(
-      Cesium.buildModuleUrl("Assets/Textures/NaturalEarthII"),
-    );
+
+    Promise.all([import("resium"), import("cesium")]).then(([resium, Cesium]) => {
+      if (cancelled) return;
+      // `TileMapServiceImageryProvider` is constructed via an async
+      // `fromUrl` factory in this Cesium version, not a plain
+      // constructor — confirmed against this installed version's own
+      // type definitions rather than assumed from older examples.
+      const imageryProviderPromise = Cesium.TileMapServiceImageryProvider.fromUrl(
+        Cesium.buildModuleUrl("Assets/Textures/NaturalEarthII"),
+      );
+      setModules({ resium, Cesium, imageryProviderPromise });
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  if (!modules) {
+    return null;
+  }
+
+  const { resium, Cesium, imageryProviderPromise } = modules;
+  const { Viewer, Entity, ImageryLayer, PointGraphics, LabelGraphics } = resium;
 
   return (
     <Viewer

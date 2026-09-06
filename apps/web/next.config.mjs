@@ -106,6 +106,47 @@ const nextConfig = {
       },
     ];
   },
+  // Fixes a real production crash (BUILD_PLAN "STAGE — GLOBE VIEW
+  // PRODUCTION FIX"): `@spz-loader/core`, a transitive dependency of
+  // `@cesium/engine`'s glTF loader (`Source/Scene/GltfSpzLoader.js`,
+  // for the Gaussian Splat / KHR_spz_gaussian_splats_compression glTF
+  // extension — part of Cesium's core model-loading module graph,
+  // pulled in unconditionally regardless of whether any actual splat
+  // content is ever loaded), ships Emscripten-generated WASM-loader
+  // glue code. Next.js's default minifier corrupts a legitimate escape
+  // sequence in that generated code into an illegal octal escape
+  // *specifically inside a template literal* — the JS spec disallows
+  // octal escapes in template literals even where the identical
+  // sequence is valid in an ordinary string literal — producing a
+  // runtime `SyntaxError: Octal escape sequences are not allowed in
+  // template strings` purely as a side effect of minification,
+  // confirmed directly by inspecting the actual built chunk (`node
+  // --check` against `.next/static/chunks/242f9422.*.js` reproduced
+  // the exact error).
+  //
+  // `module.noParse` (Emscripten's own documented recommendation for
+  // this category of bundler issue) was tried first and rejected: it
+  // only skips webpack's dependency-graph parsing of the matched file,
+  // it does not exempt the file's *content* from the separate
+  // minifier pass over the final bundle — the corruption still
+  // happened, and combining `noParse` with Next's built-in minifier
+  // plugin produced a second, unrelated internal error
+  // (`_webpack.WebpackError is not a constructor`) on top of it.
+  //
+  // The actual fix: this codebase never loads glTF/3D-model content at
+  // all (only `Entity`/`PointGraphics`/`LabelGraphics` — see
+  // `app/globe/globe-viewer.tsx`), so Gaussian Splat support is
+  // genuinely, verifiably dead weight, not a feature being narrowly
+  // avoided. Aliased to an empty stub so the problematic code is never
+  // parsed, bundled, or minified at all — the cleanest resolution,
+  // since it removes the buggy code from the build entirely rather
+  // than working around how it gets processed. If this app ever needs
+  // to load a glTF model using the SPZ extension in the future, this
+  // alias is exactly what to remove first.
+  webpack: (config) => {
+    config.resolve.alias["@spz-loader/core"] = false;
+    return config;
+  },
 };
 
 export default nextConfig;
