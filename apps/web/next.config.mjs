@@ -104,6 +104,75 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Scoped CSP override for /globe only (BUILD_PLAN "STAGE —
+        // GLOBE VIEW: UNSAFE-EVAL FOR CESIUM"), placed after the
+        // general `/:path*` rule above — Next.js's own documented
+        // header-overriding behavior ("if two headers match the same
+        // path and set the same header key, the last header key will
+        // override the first") means only this rule's
+        // Content-Security-Policy value is sent for requests to
+        // `/globe`, not both merged; verified against Next's own docs
+        // before relying on it, given this project's history of
+        // getting CSP assumptions wrong. What matters for CSP purposes
+        // is the policy on the HTML *document* that loads the scripts
+        // (this page), not the path the script/asset files themselves
+        // are served from — so this one rule is sufficient; the
+        // `/cesium/*` static assets don't need their own entry.
+        //
+        // **Real, deliberate security tradeoff, not a silent
+        // workaround** — CesiumJS fundamentally requires `'unsafe-eval'`
+        // to function at all: it performs genuine `eval()`/`new
+        // Function()` calls internally (confirmed by matching this
+        // app's exact browser console error — "Refused to evaluate a
+        // string as JavaScript" — against other real users hitting the
+        // identical, well-documented issue on Cesium's own community
+        // forum) as well as WebAssembly compilation. The narrower
+        // `'wasm-unsafe-eval'` CSP token (which permits only
+        // WebAssembly, not textual eval) is NOT sufficient here, since
+        // Cesium's eval usage is separate from its WebAssembly usage —
+        // confirmed by this app's own console showing both a
+        // WebAssembly `CompileError` and an independent `EvalError` for
+        // evaluating a string as JavaScript. `'unsafe-eval'` is a real,
+        // meaningful reduction in this route's XSS defense-in-depth: it
+        // makes it easier for an attacker who has *already* achieved
+        // some script-injection foothold to execute further arbitrary
+        // code via `eval`. Scoped to `/globe` alone, not site-wide, to
+        // contain that reduction to one purely-visual, opt-in page
+        // rather than weakening the login form, workspace data-entry
+        // pages, or anything else. If this tradeoff is ever considered
+        // unacceptable, the honest alternatives are: drop the globe
+        // feature, or replace CesiumJS with a different 3D/globe
+        // library that doesn't require eval — not a lighter-touch CSP
+        // fix, since this is CesiumJS's own core architecture, not a
+        // misconfiguration on this app's part.
+        source: "/globe",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "worker-src 'self' blob:",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data:",
+              `connect-src 'self' https://${supabaseHost}`,
+              "font-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "frame-ancestors 'none'",
+              "form-action 'self'",
+            ].join("; "),
+          },
+        ],
+      },
     ];
   },
   // Fixes a real production crash (BUILD_PLAN "STAGE — GLOBE VIEW
