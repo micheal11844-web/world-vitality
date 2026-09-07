@@ -187,7 +187,31 @@ export function AppShell({
         />
       </div>
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <div data-app-shell-chrome>
+        {/*
+          `display: "flex"` here (BUILD_PLAN "STAGE — SIDEBAR HEIGHT
+          FIX") — a real, separate bug from the "whole page scrolls"
+          one fixed earlier. This `data-app-shell-chrome` wrapper is a
+          plain block-level `<div>` (it exists only as a `@media
+          print` selector target, see the print-stylesheet doc comment
+          below) — as a flex *item* of the row above, it correctly
+          stretches to the row's full height via the default
+          `align-items: stretch`, but a stretched block-level parent
+          does not automatically hand that height down to *its own*
+          children as a percentage: `<nav>`'s height only resolved to
+          its own content, not the wrapper's stretched height. With the
+          nested/collapsible sidebar (BUILD_PLAN "STAGE — NESTED
+          WORKSPACE SIDEBAR NAVIGATION"), most workspaces collapse by
+          default, so the sidebar's content is now genuinely shorter
+          than before — exposing a gap between where the sidebar's
+          background ended and the actual bottom of the viewport, that
+          the earlier flat, always-tall list happened to mask. Making
+          this wrapper `display: "flex"` too makes `<nav>` a genuine
+          flex item of *it*, stretching via the same basic, ubiquitous
+          default rather than relying on a percentage-height-through-
+          a-stretched-block-ancestor spec corner case — confirmed via
+          real before/after image renders, not assumed.
+        */}
+        <div data-app-shell-chrome style={{ display: "flex", minHeight: 0 }}>
           <Sidebar
             sections={sidebarSections}
             collapsed={sidebarCollapsed}
