@@ -170,6 +170,21 @@ export const WORKSPACE_LINKS: WorkspaceLink[] = [
  * lookups at each call site, kept there rather than folded into this
  * function since which key to pre-expand is an `AppShell`-level
  * concern, not a data-shaping one).
+ *
+ * **The top-level workspace item's `active` means "this is the current
+ * workspace," not narrowly "you are on its home page"** (BUILD_PLAN
+ * "STAGE — COLLAPSED SIDEBAR: ACTIVE-ONLY ICON STYLING") — it's true
+ * whenever `currentWorkspaceKey` matches, regardless of which sub-page
+ * `activeSubKey` is. This matters most in the sidebar's collapsed
+ * rail, where sub-items are never visible at all: the top-level letter
+ * is the *only* available "where am I" indicator there, so it needs to
+ * reflect the whole workspace, not just its home page specifically —
+ * previously, viewing any sub-page (Map, Team, a report) left no
+ * workspace marked active at all in collapsed mode, since the
+ * page-specific highlight lived on an invisible child item instead.
+ * Each individual sub-item keeps the narrower, page-specific `active`
+ * check (`activeSubKey === sub.key`) — that distinction is exactly
+ * what's visible once expanded.
  */
 export function buildWorkspaceSidebarItems(
   currentWorkspaceKey?: string,
@@ -181,7 +196,7 @@ export function buildWorkspaceSidebarItems(
       key: workspace.key,
       label: workspace.label,
       href: workspace.href,
-      active: isCurrentWorkspace && activeSubKey === "home",
+      active: isCurrentWorkspace,
       children: workspace.subLinks.map((sub) => ({
         key: `${workspace.key}-${sub.key}`,
         label: sub.label,

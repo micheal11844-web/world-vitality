@@ -176,6 +176,30 @@ test("Sidebar renders a leaf item (no children) with no chevron, exactly as befo
   assert.equal(screen.queryByRole("button", { name: /Expand|Collapse Dashboard/i }), null);
 });
 
+test("Sidebar's collapsed fallback icon is only colored for the active item, not every item", () => {
+  render(
+    <Sidebar
+      collapsed
+      sections={[
+        {
+          key: "workspaces",
+          items: [
+            { key: "agriculture", label: "Agriculture", href: "/workspaces/agriculture", active: false },
+            { key: "construction", label: "Construction", href: "/workspaces/construction", active: true },
+          ],
+        },
+      ]}
+    />,
+  );
+  const links = screen.getAllByRole("link");
+  const agricultureLink = links.find((l) => l.getAttribute("href") === "/workspaces/agriculture")!;
+  const constructionLink = links.find((l) => l.getAttribute("href") === "/workspaces/construction")!;
+  const agricultureCircle = agricultureLink.querySelector("span");
+  const constructionCircle = constructionLink.querySelector("span");
+  assert.notEqual(constructionCircle?.getAttribute("style"), agricultureCircle?.getAttribute("style"));
+  assert.match(constructionCircle?.getAttribute("style") ?? "", /background-color/);
+});
+
 test("AIPanel renders a collapsed rail with an open toggle when closed", () => {
   render(<AIPanel open={false} onToggle={() => {}} />);
   assert.equal(screen.queryByRole("complementary"), null);

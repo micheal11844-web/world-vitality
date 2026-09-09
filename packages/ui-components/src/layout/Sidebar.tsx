@@ -64,11 +64,23 @@ export interface SidebarProps {
 }
 
 /** When an item has no explicit icon, the collapsed rail falls back to
- *  the item's first letter in a small circle — a deliberate, minimal
- *  stand-in rather than pulling in an icon library this project
- *  doesn't otherwise depend on. Real icons are real follow-up work,
- *  not built here. */
-function CollapsedFallbackIcon({ label }: { label: string }) {
+ *  the item's first letter — a deliberate, minimal stand-in rather
+ *  than pulling in an icon library this project doesn't otherwise
+ *  depend on. Real icons are real follow-up work, not built here.
+ *
+ *  **The colored circle only appears for the active item** (BUILD_PLAN
+ *  "STAGE — COLLAPSED SIDEBAR: ACTIVE-ONLY ICON STYLING") — every
+ *  collapsed item showing the same green circle regardless of which
+ *  workspace was actually current made "where am I" indistinguishable
+ *  from "every workspace in this list," the opposite of what an active
+ *  indicator is for. Inactive items now render as a plain letter in
+ *  the row's own neutral text color, no background — matching the
+ *  exact same active/inactive color logic the expanded-state label
+ *  text already uses one level up in `SidebarRow`, just applied to the
+ *  collapsed-rail fallback too, so collapsed and expanded modes agree
+ *  about what "active" looks like instead of each inventing its own
+ *  rule. */
+function CollapsedFallbackIcon({ label, active }: { label: string; active?: boolean }) {
   return (
     <span
       aria-hidden="true"
@@ -79,8 +91,8 @@ function CollapsedFallbackIcon({ label }: { label: string }) {
         width: "1.5rem",
         height: "1.5rem",
         borderRadius: "50%",
-        backgroundColor: "var(--wv-color-accent-50)",
-        color: "var(--wv-color-accent-700)",
+        backgroundColor: active ? "var(--wv-color-accent-50)" : "transparent",
+        color: active ? "var(--wv-color-accent-700)" : "var(--wv-text-secondary)",
         fontSize: "0.75rem",
         fontWeight: 600,
         flexShrink: 0,
@@ -157,7 +169,7 @@ function SidebarRow({
               {item.icon}
             </span>
           ) : (
-            collapsed && <CollapsedFallbackIcon label={item.label} />
+            collapsed && <CollapsedFallbackIcon label={item.label} active={item.active} />
           )}
           {!collapsed && <span>{item.label}</span>}
         </a>
