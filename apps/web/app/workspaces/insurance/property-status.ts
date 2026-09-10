@@ -12,6 +12,15 @@ export interface PropertyStatus {
   weather: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
   soilMoisture: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
   ingestionGaps: number;
+  /**
+   * The raw latest GWETROOT reading (0–1) — same reasoning as
+   * `agriculture/field-status.ts`'s `FieldStatus.moistureValue`:
+   * `InterpretationResult` doesn't expose the underlying number, and
+   * `map/page.tsx` (BUILD_PLAN "STAGE — INSURANCE FOLLOW-UP:
+   * MULTI-MARKER MAP") needs it to color each marker the same way
+   * Agriculture's own multi-marker map does.
+   */
+  moistureValue: number | undefined;
 }
 
 /**
@@ -53,5 +62,15 @@ export async function getPropertyStatus(property: InsuranceProperty): Promise<Pr
     records,
   });
 
-  return { property, weather, soilMoisture, ingestionGaps: gaps.length };
+  const latestMoisture = records
+    .filter((r) => r.metric === "GWETROOT")
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
+
+  return {
+    property,
+    weather,
+    soilMoisture,
+    ingestionGaps: gaps.length,
+    moistureValue: latestMoisture?.value,
+  };
 }
