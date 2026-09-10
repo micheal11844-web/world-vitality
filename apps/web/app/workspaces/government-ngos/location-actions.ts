@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { can } from "@world-vitality/identity-service";
 import { getWorkspaceRole } from "../../../lib/get-workspace-role";
+import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getAccountService } from "../../../lib/account";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
@@ -65,5 +66,82 @@ export async function createLocationAction(
   } catch (err) {
     logSecurity.error("create_location_failed", err, { workspaceId: WORKSPACE_ID });
     return { ok: false, error: "Failed to add monitored location. Please try again." };
+  }
+}
+
+/**
+ * Updates an existing monitored location (BUILD_PLAN "STAGE —
+ * GOVERNMENT & NGOS FOLLOW-UP: MONITORED LOCATIONS EDIT/DELETE").
+ * **Resource-scoped**, unlike `createLocationAction` — uses
+ * `getWorkspaceMembership` (role + `scopedResourceIds`), not just
+ * `getWorkspaceRole`, so a `scoped_field_user` ("Field Staff") holding
+ * `data:edit` in general is still refused for a location outside
+ * their configured scope. Mirrors `updatePropertyAction`/
+ * `updateFieldAction`'s exact reasoning.
+ */
+export async function updateLocationAction(
+  locationId: string,
+  label: string,
+  latitude: number,
+  longitude: number,
+): Promise<CreateLocationResult> {
+  if (!label.trim()) {
+    return { ok: false, error: "Enter a label for this location." };
+  }
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    return { ok: false, error: "Latitude must be a number between -90 and 90." };
+  }
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    return { ok: false, error: "Longitude must be a number between -180 and 180." };
+  }
+
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (
+    !can(membership.role, "data:edit", {
+      resourceId: locationId,
+      scopedResourceIds: membership.scopedResourceIds,
+    })
+  ) {
+    return { ok: false, error: "You do not have permission to edit this location." };
+  }
+
+  try {
+    await getAccountService().updateLocation(locationId, {
+      label: label.trim(),
+      latitude,
+      longitude,
+    });
+    revalidatePath("/workspaces/government-ngos");
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("update_location_failed", err, { workspaceId: WORKSPACE_ID, locationId });
+    return { ok: false, error: "Failed to update monitored location. Please try again." };
+  }
+}
+
+/**
+ * Deletes a monitored location. Same resource-scoped gating as
+ * `updateLocationAction`. See `AccountService.deleteLocation`'s doc
+ * comment for the dangling-`scopedResourceIds` cleanup it performs
+ * before deleting the row itself.
+ */
+export async function deleteLocationAction(locationId: string): Promise<CreateLocationResult> {
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (
+    !can(membership.role, "data:edit", {
+      resourceId: locationId,
+      scopedResourceIds: membership.scopedResourceIds,
+    })
+  ) {
+    return { ok: false, error: "You do not have permission to delete this location." };
+  }
+
+  try {
+    await getAccountService().deleteLocation(locationId);
+    revalidatePath("/workspaces/government-ngos");
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("delete_location_failed", err, { workspaceId: WORKSPACE_ID, locationId });
+    return { ok: false, error: "Failed to delete monitored location. Please try again." };
   }
 }

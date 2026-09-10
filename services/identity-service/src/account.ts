@@ -342,6 +342,29 @@ export interface AccountService {
   }): Promise<GovernmentNgosLocation>;
 
   /**
+   * Updates a monitored location's label/coordinates — this
+   * workspace's analog of `updateField`/`updateProperty`. Callers must
+   * gate this with a *resource-scoped* `can(role, "data:edit", {
+   * resourceId: locationId, scopedResourceIds })` check, same reasoning
+   * as those two.
+   */
+  updateLocation(
+    locationId: string,
+    updates: { label?: string; latitude?: number; longitude?: number },
+  ): Promise<GovernmentNgosLocation>;
+
+  /**
+   * Deletes a monitored location. Same resource-scoped gating as
+   * `updateLocation`, and the same dangling-`scopedResourceIds`
+   * cleanup `deleteField`/`deleteProperty` perform — a
+   * `scoped_field_user` ("Field Staff") membership scoped to a
+   * since-deleted location would otherwise carry a reference to
+   * nothing, same real edge case already closed for Fields and
+   * Properties.
+   */
+  deleteLocation(locationId: string): Promise<void>;
+
+  /**
    * Updates a field's name/coordinates. Callers must gate this with a
    * *resource-scoped* `can(role, "data:edit", { resourceId: fieldId,
    * scopedResourceIds })` check — unlike `createField` (no existing
@@ -879,6 +902,73 @@ export class SupabaseAccountService implements AccountService {
       createdBy: data.created_by,
       createdAt: data.created_at,
     };
+  }
+
+  async updateLocation(
+    locationId: string,
+    updates: { label?: string; latitude?: number; longitude?: number },
+  ): Promise<GovernmentNgosLocation> {
+    const patch: Record<string, string | number> = {};
+    if (updates.label !== undefined) patch.label = updates.label;
+    if (updates.latitude !== undefined) patch.latitude = updates.latitude;
+    if (updates.longitude !== undefined) patch.longitude = updates.longitude;
+
+    const { data, error } = await this.client
+      .from("government_ngos_locations")
+      .update(patch)
+      .eq("id", locationId)
+      .select("id, workspace_id, label, latitude, longitude, created_by, created_at")
+      .single();
+    if (error || !data) {
+      throw new Error(`Failed to update monitored location ${locationId}: ${error?.message}`);
+    }
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      label: data.label,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+    };
+  }
+
+  async deleteLocation(locationId: string): Promise<void> {
+    // Same dangling-scopedResourceIds cleanup as deleteField/
+    // deleteProperty, applied to government_ngos_locations — see
+    // deleteField's own comment for the full reasoning (fetch-then-
+    // write rather than a single computed SQL update, since the
+    // Supabase JS client's .update() sets literal values, not SQL
+    // expressions referencing the existing row).
+    const { data: affected, error: fetchError } = await this.client
+      .from("workspace_members")
+      .select("workspace_id, user_id, scoped_resource_ids")
+      .contains("scoped_resource_ids", [locationId]);
+    if (fetchError) {
+      throw new Error(
+        `Failed to check for memberships scoped to location ${locationId}: ${fetchError.message}`,
+      );
+    }
+    for (const membership of affected ?? []) {
+      const updatedScope = (membership.scoped_resource_ids ?? []).filter(
+        (id: string) => id !== locationId,
+      );
+      const { error: updateError } = await this.client
+        .from("workspace_members")
+        .update({ scoped_resource_ids: updatedScope })
+        .eq("workspace_id", membership.workspace_id)
+        .eq("user_id", membership.user_id);
+      if (updateError) {
+        throw new Error(
+          `Failed to remove dangling reference to location ${locationId} from membership ${membership.user_id}: ${updateError.message}`,
+        );
+      }
+    }
+
+    const { error } = await this.client.from("government_ngos_locations").delete().eq("id", locationId);
+    if (error) {
+      throw new Error(`Failed to delete monitored location ${locationId}: ${error.message}`);
+    }
   }
 
   async updateField(

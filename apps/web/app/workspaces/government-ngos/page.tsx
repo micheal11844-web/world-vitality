@@ -3,6 +3,7 @@ import { can } from "@world-vitality/identity-service";
 import { Card, Text, StateDisplay, ConfidenceBadge, Button } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { AddLocationForm } from "./add-location-form";
+import { LocationManageControls } from "./location-manage-controls";
 import { getLocationStatus } from "./location-status";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getAccountService } from "../../../lib/account";
@@ -53,11 +54,13 @@ const WORKSPACE_ID = "government-ngos";
  *   itself is real, per "STAGE — TEAM/INVITE UI") — every real user
  *   still resolves to the least-privileged `viewer_external` role by
  *   default until a membership row exists.
- * - **Formal report export**: real — see `report/page.tsx`. Still
- *   reports on the one hardcoded demo point, not yet extended to the
- *   real location set — real, separate follow-up work, not done in
- *   this stage (same scope boundary Insurance's own Properties stage
- *   drew for itself before its own report-extension follow-up).
+ * - **Formal report export**: real — see `report/page.tsx`, extended
+ *   to the real location set in "STAGE — GOVERNMENT & NGOS FOLLOW-UP:
+ *   REPORT/EXPORT EXTENDED TO REAL LOCATION SET".
+ * - **Edit/delete**: real — see `location-manage-controls.tsx`
+ *   ("STAGE — GOVERNMENT & NGOS FOLLOW-UP: MONITORED LOCATIONS
+ *   EDIT/DELETE"), closing the same deferred gap Fields and Properties
+ *   both had after their own initial create+read stages.
  * - **NOT built, honestly**: cross-agency collaboration features,
  *   custom scenario modeling, donor-specific report templates, and any
  *   AI-generated narrative synthesis of the two domains into prose —
@@ -159,6 +162,18 @@ export default async function GovernmentNgosWorkspaceHome() {
                 <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
                   {ingestionGaps} day(s) had no data available.
                 </Text>
+              )}
+
+              {can(membership.role, "data:edit", {
+                resourceId: location.id,
+                scopedResourceIds: membership.scopedResourceIds,
+              }) && (
+                <LocationManageControls
+                  locationId={location.id}
+                  initialLabel={location.label}
+                  initialLatitude={location.latitude}
+                  initialLongitude={location.longitude}
+                />
               )}
             </Card>
           ))}
