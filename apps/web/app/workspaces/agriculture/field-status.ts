@@ -12,6 +12,20 @@ export interface FieldStatus {
   weather: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
   soilMoisture: Awaited<ReturnType<SoilMoistureStatusProvider["interpret"]>>;
   ingestionGaps: number;
+  /**
+   * The raw latest GWETROOT reading (0–1), not just its interpreted
+   * summary — `InterpretationResult` deliberately doesn't expose the
+   * underlying number itself (Constitution/ADR-0003: interpretation
+   * output is a summary + confidence + explanation, not a passthrough
+   * of raw data). `map/page.tsx` (BUILD_PLAN "STAGE — AGRICULTURE
+   * FOLLOW-UP: MULTI-MARKER MAP") is this field's second real
+   * consumer — needs the number itself to color each marker by the
+   * same band `MapView.tsx` already used for the single-marker
+   * version — so it's extracted here, once, the same way the
+   * single-marker map page always did, rather than re-parsed from
+   * `soilMoisture.summary`'s text.
+   */
+  moistureValue: number | undefined;
 }
 
 /**
@@ -55,5 +69,15 @@ export async function getFieldStatus(field: Field): Promise<FieldStatus> {
     records,
   });
 
-  return { field, weather, soilMoisture, ingestionGaps: gaps.length };
+  const latestMoisture = records
+    .filter((r) => r.metric === "GWETROOT")
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
+
+  return {
+    field,
+    weather,
+    soilMoisture,
+    ingestionGaps: gaps.length,
+    moistureValue: latestMoisture?.value,
+  };
 }
