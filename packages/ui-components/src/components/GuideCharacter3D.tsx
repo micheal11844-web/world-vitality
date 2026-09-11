@@ -1,210 +1,185 @@
 "use client";
 
 /**
- * **STATUS: still NOT wired into the app, still a real, unresolved
- * production crash — this stage made real progress on diagnosis, not
- * a fix.** The model itself (`OrbiModel`, below) DID get a genuine
- * realism pass this stage (atmosphere glow shader, PBR/clearcoat
- * materials, three-point lighting, rounded hands/feet, a contact
- * shadow) — that code is correct and independent of the crash. The
- * crash itself was not resolved, despite three different real,
- * browser-verified fix attempts.
+ * **STATUS: rewritten to raw `three.js`, no `@react-three/fiber` and
+ * no `react-reconciler` — a different class of fix from the three
+ * `resolve.alias` attempts already tried and confirmed not to work
+ * (see git history / BUILD_PLAN for that full account).** The
+ * underlying crash (`Cannot read properties of undefined (reading
+ * 'ReactCurrentBatchConfig')`) was traced, with real browser
+ * verification, to react-reconciler ending up bound to a different
+ * physical React module instance than the rest of the app — and three
+ * different webpack alias attempts, each verified in a real headless
+ * Chrome instance, failed to fix it (one reproduced the exact original
+ * crash even with a provably-correct alias target). The conclusion
+ * drawn from that debugging session was that `@react-three/fiber`'s
+ * own bundled dependency on `react-reconciler` was the real,
+ * unreachable-from-this-app's-webpack-config culprit.
  *
- * **What actually changed this stage, stated precisely**: for the
- * first time, a real headless Chrome instance (Google Chrome for
- * Testing 131, via Playwright's cache) was available in the build
- * environment, closing the exact gap the previous status note flagged
- * ("needs... verified in a real browser before being wired back in").
- * That let three different webpack `resolve.alias` fix attempts each
- * be tested against the real production build, not just assumed
- * correct from a successful `next build` (which, notably, all three
- * attempts achieved — the crash is purely a runtime/browser-side
- * failure, invisible to `tsc`, lint, tests, or the build step alone):
+ * This version removes that dependency entirely instead of continuing
+ * to work around it: there is no reconciler here, so there is no
+ * possible React-instance mismatch for one to have — this file talks
+ * to the DOM and WebGL directly via `useRef`/`useEffect`, the same way
+ * any other imperative browser API (a chart library, a map library)
+ * gets wrapped for use inside React, rather than declaring the 3D
+ * scene as JSX. `@react-three/fiber` has been removed from
+ * `package.json`'s dependencies (`three` itself is kept — it has no
+ * reconciler, and is the thing actually doing the WebGL rendering).
  *
- * 1. Alias `react`/`react-dom` to their bare package directory — build
- *    succeeded, but real-browser test showed a DIFFERENT crash
- *    (`TypeError: (0 , s.use) is not a function` during hydration).
- * 2. Alias to the exact `require.resolve()`'d file, bare key — broke
- *    the BUILD itself (`Module not found: 'react/jsx-runtime'`
- *    everywhere), because a bare alias key is a webpack prefix match
- *    and also captured every subpath import.
- * 3. Same target, exact-match `"react$"` key — clean build, passed
- *    every other check, but real-browser test reproduced the EXACT
- *    ORIGINAL crash (`ReactCurrentBatchConfig`), unchanged.
+ * All model/material/lighting/animation decisions below are the same
+ * ones from the realism pass (atmosphere glow shader, PBR/clearcoat
+ * materials, three-point lighting, rounded hands/feet, a responsive
+ * contact shadow) — only *how* the scene is built changed (imperative
+ * `new THREE.Mesh(...)` calls instead of JSX), not *what* it looks
+ * like.
  *
- * Conclusion: a `react`/`react-dom` webpack alias, however precisely
- * targeted, does not fix this. The duplicate-React-instance problem is
- * most likely inside `@react-three/fiber`'s own bundled dependency on
- * `react-reconciler` in a way this app's webpack config can't reach —
- * a different class of fix (a specific known-compatible
- * `react-reconciler` version pin, or dropping `@react-three/fiber` for
- * raw `three.js` with no reconciler at all) is the honest next
- * direction, not a variant of the alias approach already tried three
- * times. See `next.config.mjs`'s own doc comment for the same account
- * kept where the next attempt will actually look for it.
+ * **Still must be verified in a real browser before being deployed —
+ * this status note will be updated once that's actually done, the
+ * same discipline the previous (failed) attempts were held to.**
  *
- * All wiring (`AuthIllustration`'s `guideCharacter` override prop,
- * `apps/web/app/login/orbi-3d.tsx`'s `next/dynamic(..., { ssr: false
- * })` wrapper) was reverted from the login page after this real
- * verification, rather than deployed on the strength of a passing
- * build alone — the whole reason a real browser check mattered this
- * time was to NOT repeat that mistake.
- *
- * The reasoning below (deployment strategy, colors-from-theme, model
- * design) all remains accurate; see `OrbiModel`'s own doc comment for
- * the realism-pass changes.
+ * **Critical: this component must never be server-rendered.** Three.js
+ * touches browser globals during module import (`document`, `window`),
+ * which throws during Next.js's SSR pass even for a component marked
+ * `"use client"` — `"use client"` alone does not prevent server-side
+ * evaluation of the initial render. The caller (`apps/web`'s login
+ * page) MUST load this via `next/dynamic(() => import(...), { ssr:
+ * false })`; this package itself stays framework-agnostic and cannot
+ * enforce that from inside `packages/ui-components`.
  */
 
-import { useRef, useMemo, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import type { GuideCharacterMood } from "./GuideCharacter.js";
 
 export interface GuideCharacter3DProps {
   name?: string;
   mood?: GuideCharacterMood;
-  /** Pixel size of the character's bounding box (square). */
   size?: number;
-  /** Plays a single wave gesture once, e.g. on first mount of a page. */
   wave?: boolean;
   className?: string;
 }
 
+interface ThemeColors {
+  ocean: THREE.Color;
+  land: THREE.Color;
+  body: THREE.Color;
+  face: THREE.Color;
+  accent: THREE.Color;
+  atmosphere: THREE.Color;
+}
+
 /**
- * Reads this design system's real CSS custom properties at mount time
- * and parses them into THREE.Color instances — Three.js materials need
- * actual color values, not `var(--wv-...)` strings, so this is how the
- * 3D character stays in sync with the same tokens (`theme.css`) every
+ * Reads this design system's real CSS custom properties and parses
+ * them into THREE.Color instances — Three.js materials need actual
+ * color values, not `var(--wv-...)` strings, so this is how the 3D
+ * character stays in sync with the same tokens (`theme.css`) every
  * other component uses, including dark mode, rather than a second,
- * hardcoded, driftable copy of the same colors.
+ * hardcoded, driftable copy of the same colors. Called once at mount
+ * (client-side only — `getComputedStyle`/`document` don't exist
+ * during SSR, but this file is never server-rendered at all).
  */
-function useThemeColors() {
-  const [colors, setColors] = useState<{
-    ocean: THREE.Color;
-    land: THREE.Color;
-    body: THREE.Color;
-    face: THREE.Color;
-    accent: THREE.Color;
-    /** Cool tone for the atmosphere rim glow and fill light —
-     *  distinct from `accent` so the glow doesn't compete visually
-     *  with the thinking-mode satellite, which is already `accent`-
-     *  colored. */
-    atmosphere: THREE.Color;
-  } | null>(null);
-
-  useEffect(() => {
-    // Only ever runs client-side (inside a "use client" component,
-    // after mount) — getComputedStyle/document don't exist during SSR,
-    // but this file is never server-rendered at all (see the doc
-    // comment on the exported component below for why).
-    const style = getComputedStyle(document.documentElement);
-    const read = (name: string) => new THREE.Color(style.getPropertyValue(name).trim());
-    setColors({
-      ocean: read("--wv-color-neutral-100"),
-      land: read("--wv-color-accent-400"),
-      body: read("--wv-color-neutral-200"),
-      face: read("--wv-color-neutral-900"),
-      accent: read("--wv-color-accent-500"),
-      atmosphere: read("--wv-color-accent-300"),
-    });
-  }, []);
-
-  return colors;
+function readThemeColors(): ThemeColors {
+  const style = getComputedStyle(document.documentElement);
+  const read = (name: string) => new THREE.Color(style.getPropertyValue(name).trim());
+  return {
+    ocean: read("--wv-color-neutral-100"),
+    land: read("--wv-color-accent-400"),
+    body: read("--wv-color-neutral-200"),
+    face: read("--wv-color-neutral-900"),
+    accent: read("--wv-color-accent-500"),
+    atmosphere: read("--wv-color-accent-300"),
+  };
 }
 
 /** Simple procedurally-drawn "continents on an ocean" texture, mirroring
  *  the same blob shapes the 2D GuideCharacter draws as SVG paths — kept
  *  visually consistent between the 2D (still used elsewhere) and 3D
  *  (login page) versions rather than inventing an unrelated look. */
-function useGlobeTexture(ocean: THREE.Color, land: THREE.Color) {
-  return useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = `#${ocean.getHexString()}`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = `#${land.getHexString()}`;
-    ctx.globalAlpha = 0.85;
-    // Two rough continent blobs, echoing the 2D SVG's two <path> shapes.
-    ctx.beginPath();
-    ctx.ellipse(160, 90, 90, 45, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(340, 160, 70, 35, 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    return texture;
-  }, [ocean, land]);
+function buildGlobeTexture(ocean: THREE.Color, land: THREE.Color): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = `#${ocean.getHexString()}`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = `#${land.getHexString()}`;
+  ctx.globalAlpha = 0.85;
+  // Two rough continent blobs, echoing the 2D SVG's two <path> shapes.
+  ctx.beginPath();
+  ctx.ellipse(160, 90, 90, 45, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(340, 160, 70, 35, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 /** Face texture (eyes/eyebrows/mouth), regenerated per mood — mirrors
  *  the 2D component's MOUTH_PATH/EYEBROW_TRANSFORM tables so the same
  *  four moods read as the same expressions in both versions. */
-function useFaceTexture(mood: GuideCharacterMood, faceColor: THREE.Color) {
-  return useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d")!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const hex = `#${faceColor.getHexString()}`;
-    ctx.strokeStyle = hex;
-    ctx.fillStyle = hex;
-    ctx.lineWidth = 8;
-    ctx.lineCap = "round";
+function buildFaceTexture(mood: GuideCharacterMood, faceColor: THREE.Color): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const hex = `#${faceColor.getHexString()}`;
+  ctx.strokeStyle = hex;
+  ctx.fillStyle = hex;
+  ctx.lineWidth = 8;
+  ctx.lineCap = "round";
 
-    // Eyes
+  // Eyes
+  ctx.beginPath();
+  ctx.arc(90, 110, 12, 0, Math.PI * 2);
+  ctx.arc(166, 110, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyebrows — angle per mood, mirroring EYEBROW_TRANSFORM
+  const browAngle: Record<GuideCharacterMood, [number, number]> = {
+    idle: [0, 0],
+    thinking: [-0.15, 0.18],
+    happy: [-0.08, 0.08],
+    concerned: [0.28, -0.28],
+  };
+  const [leftAngle, rightAngle] = browAngle[mood];
+  for (const [cx, angle] of [
+    [90, leftAngle],
+    [166, rightAngle],
+  ] as const) {
+    ctx.save();
+    ctx.translate(cx, 78);
+    ctx.rotate(angle);
     ctx.beginPath();
-    ctx.arc(90, 110, 12, 0, Math.PI * 2);
-    ctx.arc(166, 110, 12, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Eyebrows — angle per mood, mirroring EYEBROW_TRANSFORM
-    const browAngle: Record<GuideCharacterMood, [number, number]> = {
-      idle: [0, 0],
-      thinking: [-0.15, 0.18],
-      happy: [-0.08, 0.08],
-      concerned: [0.28, -0.28],
-    };
-    const [leftAngle, rightAngle] = browAngle[mood];
-    for (const [cx, angle] of [
-      [90, leftAngle],
-      [166, rightAngle],
-    ] as const) {
-      ctx.save();
-      ctx.translate(cx, 78);
-      ctx.rotate(angle);
-      ctx.beginPath();
-      ctx.moveTo(-18, 0);
-      ctx.lineTo(18, 0);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // Mouth — shape per mood, mirroring MOUTH_PATH
-    ctx.beginPath();
-    if (mood === "happy") {
-      ctx.moveTo(70, 155);
-      ctx.quadraticCurveTo(128, 200, 186, 155);
-    } else if (mood === "concerned") {
-      ctx.moveTo(90, 175);
-      ctx.quadraticCurveTo(128, 155, 166, 175);
-    } else if (mood === "thinking") {
-      ctx.moveTo(96, 165);
-      ctx.quadraticCurveTo(128, 160, 160, 165);
-    } else {
-      ctx.moveTo(90, 160);
-      ctx.quadraticCurveTo(128, 175, 166, 160);
-    }
+    ctx.moveTo(-18, 0);
+    ctx.lineTo(18, 0);
     ctx.stroke();
+    ctx.restore();
+  }
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    return texture;
-  }, [mood, faceColor]);
+  // Mouth — shape per mood, mirroring MOUTH_PATH
+  ctx.beginPath();
+  if (mood === "happy") {
+    ctx.moveTo(70, 155);
+    ctx.quadraticCurveTo(128, 200, 186, 155);
+  } else if (mood === "concerned") {
+    ctx.moveTo(90, 175);
+    ctx.quadraticCurveTo(128, 155, 166, 175);
+  } else if (mood === "thinking") {
+    ctx.moveTo(96, 165);
+    ctx.quadraticCurveTo(128, 160, 160, 165);
+  } else {
+    ctx.moveTo(90, 160);
+    ctx.quadraticCurveTo(128, 175, 166, 160);
+  }
+  ctx.stroke();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 /**
@@ -232,231 +207,224 @@ const ATMOSPHERE_FRAGMENT_SHADER = `
   }
 `;
 
-function OrbiModel({
-  mood,
-  wave,
-  colors,
-}: {
-  mood: GuideCharacterMood;
-  wave: boolean;
-  colors: NonNullable<ReturnType<typeof useThemeColors>>;
-}) {
-  const groupRef = useRef<THREE.Group>(null);
-  const headRef = useRef<THREE.Group>(null);
-  const armRef = useRef<THREE.Group>(null);
-  const satelliteRef = useRef<THREE.Mesh>(null);
-  const shadowRef = useRef<THREE.Mesh>(null);
-  const waveStartRef = useRef<number | null>(null);
+/** Mutable handles to the parts of the scene that change after
+ *  creation (per-mood face texture, thinking-mode satellite, the
+ *  waving arm, the idle-bob root, the responsive contact shadow) —
+ *  populated once by the init effect, read/written by the other
+ *  effects and the render loop. Kept as one ref object rather than
+ *  several, since these all come from the same single scene-build
+ *  pass and are never meaningfully independent. */
+interface SceneHandles {
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  clock: THREE.Clock;
+  rootGroup: THREE.Group;
+  headGroup: THREE.Group;
+  armGroup: THREE.Group;
+  satelliteMesh: THREE.Mesh;
+  shadowMesh: THREE.Mesh;
+  faceMesh: THREE.Mesh;
+  faceMaterial: THREE.MeshBasicMaterial;
+  waveStart: number | null;
+  animationFrame: number;
+}
 
-  const globeTexture = useGlobeTexture(colors.ocean, colors.land);
-  const faceTexture = useFaceTexture(mood, colors.face);
+const PBR_MATERIAL_PROPS = { roughness: 0.55, clearcoat: 0.4, clearcoatRoughness: 0.25 } as const;
 
-  const atmosphereUniforms = useMemo(
-    () => ({ glowColor: { value: colors.atmosphere } }),
-    [colors.atmosphere],
+function buildScene(
+  container: HTMLDivElement,
+  size: number,
+  mood: GuideCharacterMood,
+  colors: ThemeColors,
+): SceneHandles {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  // Capped pixel ratio — a small docked/hero character doesn't need
+  // full retina resolution, and uncapped dpr is a real, documented
+  // performance cost on high-density mobile screens.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(size, size);
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+  camera.position.set(0, 0, 3.4);
+
+  // Three-point lighting — key/fill/rim, not a single flat directional
+  // light: key light establishes the main highlight and the
+  // atmosphere-shader's brightest edge; the cooler, dimmer fill
+  // softens the shadow side; the rim light (from behind/above) catches
+  // the back edge of the head and shoulders for separation from the
+  // background, the same standard product-photography three-point
+  // setup used for the original @react-three/fiber version.
+  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  const key = new THREE.DirectionalLight(0xffffff, 1.3);
+  key.position.set(2.4, 3, 4);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(colors.atmosphere, 0.3);
+  fill.position.set(-2.2, -0.6, 2);
+  scene.add(fill);
+  const rim = new THREE.DirectionalLight(colors.atmosphere, 0.6);
+  rim.position.set(-1, 2.5, -3);
+  scene.add(rim);
+
+  const rootGroup = new THREE.Group();
+  scene.add(rootGroup);
+
+  // Contact shadow — a soft, semi-transparent disc on the ground plane
+  // beneath the character. Cheap (no real-time shadow maps) but a
+  // genuine, standard technique for making a floating 3D character
+  // read as physically grounded rather than pasted on.
+  const shadowMaterial = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false,
+  });
+  const shadowMesh = new THREE.Mesh(new THREE.CircleGeometry(0.75, 32), shadowMaterial);
+  shadowMesh.position.set(0, -1.75, 0);
+  shadowMesh.rotation.x = -Math.PI / 2;
+  rootGroup.add(shadowMesh);
+
+  // Body
+  const bodyMaterial = new THREE.MeshPhysicalMaterial({
+    color: colors.body,
+    ...PBR_MATERIAL_PROPS,
+  });
+  const bodyMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 0.5, 8, 16), bodyMaterial);
+  bodyMesh.position.set(0, -1.1, 0);
+  rootGroup.add(bodyMesh);
+
+  // Rounded feet
+  for (const x of [-0.24, 0.24]) {
+    const footMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 16, 16),
+      new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
+    );
+    footMesh.position.set(x, -1.68, 0.05);
+    rootGroup.add(footMesh);
+  }
+
+  // Waving arm (group, so the hand rotates with the forearm)
+  const armGroup = new THREE.Group();
+  armGroup.position.set(-0.7, -0.7, 0);
+  const armMesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
+    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
   );
+  armGroup.add(armMesh);
+  const handMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.13, 16, 16),
+    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
+  );
+  handMesh.position.set(0, 0.3, 0);
+  armGroup.add(handMesh);
+  rootGroup.add(armGroup);
 
-  useEffect(() => {
-    // Reset the one-shot wave animation's clock whenever `wave` flips
-    // true, same trigger semantics as the 2D version's CSS animation.
-    if (wave) waveStartRef.current = null;
-  }, [wave]);
+  // Still arm (opposite side), for visual symmetry when not waving
+  const stillArmMesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
+    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
+  );
+  stillArmMesh.position.set(0.7, -0.7, 0);
+  rootGroup.add(stillArmMesh);
+  const stillHandMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.13, 16, 16),
+    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
+  );
+  stillHandMesh.position.set(0.7, -0.4, 0);
+  rootGroup.add(stillHandMesh);
 
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
+  // Thinking-mode satellite
+  const satelliteMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 12, 12),
+    new THREE.MeshStandardMaterial({
+      color: colors.accent,
+      emissive: colors.accent,
+      emissiveIntensity: 0.4,
+    }),
+  );
+  satelliteMesh.visible = mood === "thinking";
+  rootGroup.add(satelliteMesh);
 
-    // Idle motion: slow continuous head rotation + gentle body float —
-    // deliberately calm (matches theme.css's "purposeful, calm motion
-    // only" principle already applied to the 2D version), and doubles
-    // as the actual justification for going 3D: continents rotating
-    // into and out of view is an effect flat SVG cannot produce.
-    if (headRef.current) {
-      headRef.current.rotation.y = t * 0.15;
-    }
-    const bob = Math.sin(t * 0.7) * 0.08;
-    if (groupRef.current) {
-      groupRef.current.position.y = bob;
-    }
-    // Contact shadow shrinks/softens slightly as the body "lifts" on
-    // the upswing of the float, and vice versa — a cheap but real cue
-    // that the character has weight and is grounded, not just pasted
-    // on top of a flat background.
-    if (shadowRef.current) {
-      const lift = 1 - bob * 2.2; // bob is small (~±0.08); keeps this near 1
-      shadowRef.current.scale.set(lift, lift, 1);
-      const material = shadowRef.current.material as THREE.MeshBasicMaterial;
-      material.opacity = 0.22 * lift;
-    }
+  // Head — the globe, with a canvas-texture "continents on ocean" map,
+  // a separate face-texture plane in front for the expression, and an
+  // atmosphere-glow shell for a real "planet" read.
+  const headGroup = new THREE.Group();
+  headGroup.position.set(0, 0.15, 0);
 
-    // Thinking mood: small satellite orbiting the head, same concept as
-    // the 2D version's orbiting dot (reusing the wv-spin idea in 3D).
-    if (satelliteRef.current) {
-      satelliteRef.current.visible = mood === "thinking";
-      if (mood === "thinking") {
-        satelliteRef.current.position.set(Math.cos(t * 1.4) * 1.3, 1.1, Math.sin(t * 1.4) * 1.3);
-      }
-    }
+  const globeTexture = buildGlobeTexture(colors.ocean, colors.land);
+  const globeMaterial = new THREE.MeshPhysicalMaterial({
+    map: globeTexture,
+    roughness: 0.45,
+    metalness: 0.05,
+    clearcoat: 0.25,
+    clearcoatRoughness: 0.3,
+  });
+  const globeMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 48), globeMaterial);
+  headGroup.add(globeMesh);
 
-    // One-shot wave: a short, timed arm rotation, not a continuous
-    // loop — mirrors the 2D version's single-play wv-guide-wave
-    // animation rather than waving forever.
-    if (armRef.current) {
-      if (wave) {
-        if (waveStartRef.current === null) waveStartRef.current = t;
-        const elapsed = t - waveStartRef.current;
-        const duration = 1.4;
-        if (elapsed < duration) {
-          armRef.current.rotation.z = Math.sin((elapsed / duration) * Math.PI * 2.5) * 0.5;
-        } else {
-          armRef.current.rotation.z = 0;
-        }
-      } else {
-        armRef.current.rotation.z = 0;
+  const faceMaterial = new THREE.MeshBasicMaterial({
+    map: buildFaceTexture(mood, colors.face),
+    transparent: true,
+  });
+  const faceMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.15), faceMaterial);
+  faceMesh.position.set(0, 0, 1.001);
+  headGroup.add(faceMesh);
+
+  const atmosphereMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 48, 48),
+    new THREE.ShaderMaterial({
+      vertexShader: ATMOSPHERE_VERTEX_SHADER,
+      fragmentShader: ATMOSPHERE_FRAGMENT_SHADER,
+      uniforms: { glowColor: { value: colors.atmosphere } },
+      transparent: true,
+      side: THREE.BackSide,
+      depthWrite: false,
+    }),
+  );
+  atmosphereMesh.scale.setScalar(1.08);
+  headGroup.add(atmosphereMesh);
+
+  rootGroup.add(headGroup);
+
+  return {
+    renderer,
+    scene,
+    camera,
+    clock: new THREE.Clock(),
+    rootGroup,
+    headGroup,
+    armGroup,
+    satelliteMesh,
+    shadowMesh,
+    faceMesh,
+    faceMaterial,
+    waveStart: null,
+    animationFrame: 0,
+  };
+}
+
+function disposeScene(handles: SceneHandles, container: HTMLDivElement) {
+  cancelAnimationFrame(handles.animationFrame);
+  // Dispose every geometry/material/texture reachable from the scene
+  // graph — Three.js does not do this automatically, and a character
+  // that mounts/unmounts repeatedly (e.g. route changes) would
+  // otherwise leak GPU resources.
+  handles.scene.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      obj.geometry.dispose();
+      const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+      for (const material of materials) {
+        if ("map" in material && material.map) (material.map as THREE.Texture).dispose();
+        material.dispose();
       }
     }
   });
-
-  return (
-    <group ref={groupRef}>
-      {/* Contact shadow — a soft, semi-transparent disc on the ground
-          plane beneath the character. Cheap (no real-time shadow maps,
-          no extra light needed) but a genuine, standard technique for
-          making a floating 3D character read as physically grounded
-          rather than pasted on. */}
-      <mesh ref={shadowRef} position={[0, -1.75, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.75, 32]} />
-        <meshBasicMaterial color="#000000" transparent opacity={0.22} depthWrite={false} />
-      </mesh>
-
-      {/* Body — meshPhysicalMaterial's clearcoat gives a smooth,
-          slightly glossy "friendly toy/device" finish (a thin lacquer
-          layer on top of the base material) instead of the flatter
-          meshStandardMaterial look the first version used — a real,
-          visible difference on a rounded shape like this, not a
-          no-op setting. */}
-      <mesh position={[0, -1.1, 0]}>
-        <capsuleGeometry args={[0.55, 0.5, 8, 16]} />
-        <meshPhysicalMaterial
-          color={colors.body}
-          roughness={0.55}
-          clearcoat={0.4}
-          clearcoatRoughness={0.25}
-        />
-      </mesh>
-
-      {/* Rounded feet — small spheres at the base, partially embedded
-          in the body capsule. A bare capsule reads as a lozenge with
-          no grounding; two small rounded feet give it a simple,
-          recognizable stance without adding real leg-joint complexity
-          this character doesn't need. */}
-      {[-0.24, 0.24].map((x) => (
-        <mesh key={x} position={[x, -1.68, 0.05]}>
-          <sphereGeometry args={[0.16, 16, 16]} />
-          <meshPhysicalMaterial
-            color={colors.body}
-            roughness={0.55}
-            clearcoat={0.4}
-            clearcoatRoughness={0.25}
-          />
-        </mesh>
-      ))}
-
-      {/* Waving arm, with a rounded hand at the end — same clearcoat
-          material as the body so the whole character reads as one
-          consistent material, not mismatched parts. */}
-      <group ref={armRef} position={[-0.7, -0.7, 0]}>
-        <mesh>
-          <capsuleGeometry args={[0.09, 0.5, 6, 12]} />
-          <meshPhysicalMaterial
-            color={colors.body}
-            roughness={0.55}
-            clearcoat={0.4}
-            clearcoatRoughness={0.25}
-          />
-        </mesh>
-        <mesh position={[0, 0.3, 0]}>
-          <sphereGeometry args={[0.13, 16, 16]} />
-          <meshPhysicalMaterial
-            color={colors.body}
-            roughness={0.55}
-            clearcoat={0.4}
-            clearcoatRoughness={0.25}
-          />
-        </mesh>
-      </group>
-
-      {/* Still arm (opposite side), for visual symmetry when not
-          waving — the first version only had one arm at all, which
-          read as lopsided once the body gained real volume from the
-          feet/hand additions above. */}
-      <mesh position={[0.7, -0.7, 0]}>
-        <capsuleGeometry args={[0.09, 0.5, 6, 12]} />
-        <meshPhysicalMaterial
-          color={colors.body}
-          roughness={0.55}
-          clearcoat={0.4}
-          clearcoatRoughness={0.25}
-        />
-      </mesh>
-      <mesh position={[0.7, -0.4, 0]}>
-        <sphereGeometry args={[0.13, 16, 16]} />
-        <meshPhysicalMaterial
-          color={colors.body}
-          roughness={0.55}
-          clearcoat={0.4}
-          clearcoatRoughness={0.25}
-        />
-      </mesh>
-
-      {/* Thinking-mode satellite */}
-      <mesh ref={satelliteRef} visible={false}>
-        <sphereGeometry args={[0.08, 12, 12]} />
-        <meshStandardMaterial
-          color={colors.accent}
-          emissive={colors.accent}
-          emissiveIntensity={0.4}
-        />
-      </mesh>
-
-      {/* Head — the globe, with a canvas-texture "continents on ocean"
-          map (matching the 2D version's two blob shapes), a separate
-          face-texture plane in front for the expression, and an
-          atmosphere-glow shell for a real "planet" read instead of a
-          flat-lit ball. meshPhysicalMaterial (clearcoat) replaces the
-          globe's own material too, for a subtle wet/glossy "ocean"
-          highlight consistent with the body. */}
-      <group ref={headRef} position={[0, 0.15, 0]}>
-        <mesh>
-          <sphereGeometry args={[1, 48, 48]} />
-          <meshPhysicalMaterial
-            map={globeTexture}
-            roughness={0.45}
-            metalness={0.05}
-            clearcoat={0.25}
-            clearcoatRoughness={0.3}
-          />
-        </mesh>
-        <mesh position={[0, 0, 1.001]}>
-          <planeGeometry args={[1.15, 1.15]} />
-          <meshBasicMaterial map={faceTexture} transparent />
-        </mesh>
-        {/* Atmosphere shell — larger than the globe, back-side only
-            (so it doesn't occlude the face from the front) with the
-            Fresnel glow shader above. */}
-        <mesh scale={1.08}>
-          <sphereGeometry args={[1, 48, 48]} />
-          <shaderMaterial
-            vertexShader={ATMOSPHERE_VERTEX_SHADER}
-            fragmentShader={ATMOSPHERE_FRAGMENT_SHADER}
-            uniforms={atmosphereUniforms}
-            transparent
-            side={THREE.BackSide}
-            depthWrite={false}
-          />
-        </mesh>
-      </group>
-    </group>
-  );
+  handles.renderer.dispose();
+  if (handles.renderer.domElement.parentNode === container) {
+    container.removeChild(handles.renderer.domElement);
+  }
 }
 
 /**
@@ -467,27 +435,7 @@ function OrbiModel({
  * docked corner presence and `GuideTutorial`) rather than replacing it
  * everywhere — running a live WebGL canvas continuously on every page
  * load has a real performance/battery cost this project didn't want to
- * pay everywhere without a deliberate look at it first; the login page
- * (the flagship moment originally described — "interacting with the
- * auth card") is where that cost is judged worth it. See BUILD_PLAN for
- * the full scoping note.
- *
- * **Critical: this component must never be server-rendered.** Three.js
- * touches browser globals during module import (`document`, `window`),
- * which throws during Next.js's SSR pass even for a component marked
- * `"use client"` — `"use client"` alone does not prevent server-side
- * evaluation of the initial render. The caller (`apps/web`'s login
- * page) MUST load this via `next/dynamic(() => import(...), { ssr:
- * false })`; this package itself stays framework-agnostic and cannot
- * enforce that from inside `packages/ui-components` — verified against
- * multiple independent, current sources before writing any of this,
- * given the CSP incident's lesson about not guessing at framework
- * integration details a second time.
- *
- * Verified compatible versions for this project's React 18:
- * `@react-three/fiber@8.18.0` + `three@0.185.1` (`@react-three/fiber@9`
- * requires React 19 and would silently misbehave or fail to install
- * cleanly here).
+ * pay everywhere without a deliberate look at it first.
  */
 export function GuideCharacter3D({
   mood = "idle",
@@ -495,45 +443,100 @@ export function GuideCharacter3D({
   wave = false,
   className,
 }: GuideCharacter3DProps) {
-  const colors = useThemeColors();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const handlesRef = useRef<SceneHandles | null>(null);
+  const moodRef = useRef(mood);
+  const [ready, setReady] = useState(false);
 
-  if (!colors) {
-    // First-paint gap before useEffect reads the theme colors — a
-    // transparent placeholder of the right size avoids a layout jump,
-    // shown for at most one frame in practice.
-    return <div className={className} style={{ width: size, height: size }} />;
-  }
+  // Scene creation — mount only. Deliberately not re-run on prop
+  // changes; `mood`/`wave` are applied to the already-built scene by
+  // the effects below, the same way any other imperative-library React
+  // wrapper (a chart, a map) updates an existing instance rather than
+  // tearing it down and rebuilding for every prop change.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const colors = readThemeColors();
+    const handles = buildScene(container, size, mood, colors);
+    handlesRef.current = handles;
+    setReady(true);
+
+    const animate = () => {
+      const t = handles.clock.getElapsedTime();
+
+      // Idle motion: slow continuous head rotation + gentle body float.
+      handles.headGroup.rotation.y = t * 0.15;
+      const bob = Math.sin(t * 0.7) * 0.08;
+      handles.rootGroup.position.y = bob;
+
+      // Contact shadow shrinks/softens slightly as the body "lifts" —
+      // a cheap but real grounding cue.
+      const lift = 1 - bob * 2.2;
+      handles.shadowMesh.scale.set(lift, lift, 1);
+      (handles.shadowMesh.material as THREE.MeshBasicMaterial).opacity = 0.22 * lift;
+
+      // Thinking mood: small satellite orbiting the head.
+      handles.satelliteMesh.visible = moodRef.current === "thinking";
+      if (moodRef.current === "thinking") {
+        handles.satelliteMesh.position.set(Math.cos(t * 1.4) * 1.3, 1.1, Math.sin(t * 1.4) * 1.3);
+      }
+
+      // One-shot wave: a short, timed arm rotation, driven by
+      // `waveStart` (set by the effect below when `wave` flips true),
+      // not a continuous loop.
+      if (handles.waveStart !== null) {
+        const elapsed = t - handles.waveStart;
+        const duration = 1.4;
+        if (elapsed < duration) {
+          handles.armGroup.rotation.z = Math.sin((elapsed / duration) * Math.PI * 2.5) * 0.5;
+        } else {
+          handles.armGroup.rotation.z = 0;
+          handles.waveStart = null;
+        }
+      }
+
+      handles.renderer.render(handles.scene, handles.camera);
+      handles.animationFrame = requestAnimationFrame(animate);
+    };
+    handles.animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      disposeScene(handles, container);
+      handlesRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mood changes: update the ref the render loop reads, and regenerate
+  // the face texture (a one-time canvas redraw, not a per-frame cost).
+  useEffect(() => {
+    moodRef.current = mood;
+    const handles = handlesRef.current;
+    if (!handles) return;
+    const colors = readThemeColors();
+    const oldTexture = handles.faceMaterial.map;
+    handles.faceMaterial.map = buildFaceTexture(mood, colors.face);
+    handles.faceMaterial.needsUpdate = true;
+    oldTexture?.dispose();
+  }, [mood]);
+
+  // Wave trigger: reset the one-shot animation's start time whenever
+  // `wave` flips true, same trigger semantics as the 2D version's CSS
+  // animation.
+  useEffect(() => {
+    const handles = handlesRef.current;
+    if (!handles || !wave) return;
+    handles.waveStart = handles.clock.getElapsedTime();
+  }, [wave, ready]);
 
   return (
     <div
+      ref={containerRef}
       role="presentation"
       aria-hidden="true"
       className={className}
       style={{ width: size, height: size }}
-    >
-      <Canvas
-        // Capped pixel ratio — a small docked/hero character doesn't
-        // need full retina resolution, and uncapped dpr is a real,
-        // documented performance cost on high-density mobile screens.
-        dpr={[1, 2]}
-        camera={{ position: [0, 0, 3.4], fov: 35 }}
-        gl={{ antialias: true, alpha: true }}
-      >
-        {/* Three-point lighting — a real, standard character-lighting
-            setup (key/fill/rim), not the single flat directional light
-            the first version used. Key light establishes the main
-            highlight and the atmosphere-shader's brightest edge; the
-            cooler, dimmer fill softens the shadow side so it never
-            reads as pure black; the rim light (from behind/above)
-            catches the back edge of the head and shoulders, the same
-            separation-from-background trick real product-photography
-            three-point setups use. */}
-        <ambientLight intensity={0.35} />
-        <directionalLight position={[2.4, 3, 4]} intensity={1.3} />
-        <directionalLight position={[-2.2, -0.6, 2]} intensity={0.3} color={colors.atmosphere} />
-        <directionalLight position={[-1, 2.5, -3]} intensity={0.6} color={colors.atmosphere} />
-        <OrbiModel mood={mood} wave={wave} colors={colors} />
-      </Canvas>
-    </div>
+    />
   );
 }

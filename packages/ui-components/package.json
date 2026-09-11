@@ -14,7 +14,6 @@
     }
   },
   "dependencies": {
-    "@react-three/fiber": "8.18.0",
     "@world-vitality/design-tokens": "workspace:*",
     "@world-vitality/interpretation-engine": "workspace:*",
     "@zxcvbn-ts/core": "^4.1.2",
