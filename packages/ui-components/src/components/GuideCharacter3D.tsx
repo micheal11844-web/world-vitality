@@ -1,31 +1,58 @@
 "use client";
 
 /**
- * **STATUS: built, verified in isolation, but currently NOT wired into
- * the app — a real production crash was found after deploying this,
- * and reverted rather than left broken while investigated further.**
- * See the login page's git history for the revert commit. Symptom:
- * "Cannot read properties of undefined (reading 'ReactCurrentBatchConfig')"
- * thrown from inside react-reconciler (a @react-three/fiber dependency)
- * — a well-documented class of bug (multiple GitHub issues on
- * vercel/next.js and pnpm/pnpm) where react-reconciler ends up with a
- * different physical React module instance than the rest of the app,
- * even when `pnpm why react` shows a single logical version — pnpm's
- * non-hoisted node_modules structure is a known trigger for this
- * specific failure mode with React Three Fiber. Not yet root-caused or
- * fixed with real confidence — the honest, safety-first call was to
- * restore working production first (revert to the flat-SVG
- * `GuideCharacter` on the login page) rather than attempt a third
- * live-fire fix without a real browser available to verify it. The
- * component itself, its bundle-isolation setup (dedicated package
- * subpath export), and its dependency versions are believed correct;
- * the remaining problem is specifically this React-instance-identity
- * issue, which needs either a webpack `resolve.alias` forcing a single
- * physical react/react-dom path, or a different linking approach,
- * verified in a real browser before being wired back in.
+ * **STATUS: still NOT wired into the app, still a real, unresolved
+ * production crash — this stage made real progress on diagnosis, not
+ * a fix.** The model itself (`OrbiModel`, below) DID get a genuine
+ * realism pass this stage (atmosphere glow shader, PBR/clearcoat
+ * materials, three-point lighting, rounded hands/feet, a contact
+ * shadow) — that code is correct and independent of the crash. The
+ * crash itself was not resolved, despite three different real,
+ * browser-verified fix attempts.
+ *
+ * **What actually changed this stage, stated precisely**: for the
+ * first time, a real headless Chrome instance (Google Chrome for
+ * Testing 131, via Playwright's cache) was available in the build
+ * environment, closing the exact gap the previous status note flagged
+ * ("needs... verified in a real browser before being wired back in").
+ * That let three different webpack `resolve.alias` fix attempts each
+ * be tested against the real production build, not just assumed
+ * correct from a successful `next build` (which, notably, all three
+ * attempts achieved — the crash is purely a runtime/browser-side
+ * failure, invisible to `tsc`, lint, tests, or the build step alone):
+ *
+ * 1. Alias `react`/`react-dom` to their bare package directory — build
+ *    succeeded, but real-browser test showed a DIFFERENT crash
+ *    (`TypeError: (0 , s.use) is not a function` during hydration).
+ * 2. Alias to the exact `require.resolve()`'d file, bare key — broke
+ *    the BUILD itself (`Module not found: 'react/jsx-runtime'`
+ *    everywhere), because a bare alias key is a webpack prefix match
+ *    and also captured every subpath import.
+ * 3. Same target, exact-match `"react$"` key — clean build, passed
+ *    every other check, but real-browser test reproduced the EXACT
+ *    ORIGINAL crash (`ReactCurrentBatchConfig`), unchanged.
+ *
+ * Conclusion: a `react`/`react-dom` webpack alias, however precisely
+ * targeted, does not fix this. The duplicate-React-instance problem is
+ * most likely inside `@react-three/fiber`'s own bundled dependency on
+ * `react-reconciler` in a way this app's webpack config can't reach —
+ * a different class of fix (a specific known-compatible
+ * `react-reconciler` version pin, or dropping `@react-three/fiber` for
+ * raw `three.js` with no reconciler at all) is the honest next
+ * direction, not a variant of the alias approach already tried three
+ * times. See `next.config.mjs`'s own doc comment for the same account
+ * kept where the next attempt will actually look for it.
+ *
+ * All wiring (`AuthIllustration`'s `guideCharacter` override prop,
+ * `apps/web/app/login/orbi-3d.tsx`'s `next/dynamic(..., { ssr: false
+ * })` wrapper) was reverted from the login page after this real
+ * verification, rather than deployed on the strength of a passing
+ * build alone — the whole reason a real browser check mattered this
+ * time was to NOT repeat that mistake.
  *
  * The reasoning below (deployment strategy, colors-from-theme, model
- * design) all remains accurate for whenever this is picked back up.
+ * design) all remains accurate; see `OrbiModel`'s own doc comment for
+ * the realism-pass changes.
  */
 
 import { useRef, useMemo, useState, useEffect } from "react";
@@ -58,6 +85,11 @@ function useThemeColors() {
     body: THREE.Color;
     face: THREE.Color;
     accent: THREE.Color;
+    /** Cool tone for the atmosphere rim glow and fill light —
+     *  distinct from `accent` so the glow doesn't compete visually
+     *  with the thinking-mode satellite, which is already `accent`-
+     *  colored. */
+    atmosphere: THREE.Color;
   } | null>(null);
 
   useEffect(() => {
@@ -73,6 +105,7 @@ function useThemeColors() {
       body: read("--wv-color-neutral-200"),
       face: read("--wv-color-neutral-900"),
       accent: read("--wv-color-accent-500"),
+      atmosphere: read("--wv-color-accent-300"),
     });
   }, []);
 
@@ -174,6 +207,31 @@ function useFaceTexture(mood: GuideCharacterMood, faceColor: THREE.Color) {
   }, [mood, faceColor]);
 }
 
+/**
+ * Fresnel-style "atmosphere glow" shader — the classic cheap trick for
+ * making a sphere read as a real planet/globe rather than a flat-lit
+ * ball: brighter at the silhouette edge (grazing angle), fading to
+ * nothing head-on. Written directly rather than reaching for a new
+ * dependency, since it's a handful of lines of standard, well-known
+ * GLSL (the same technique used in most "earth in space" three.js
+ * examples), not project-specific logic worth a package for.
+ */
+const ATMOSPHERE_VERTEX_SHADER = `
+  varying vec3 vNormal;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const ATMOSPHERE_FRAGMENT_SHADER = `
+  varying vec3 vNormal;
+  uniform vec3 glowColor;
+  void main() {
+    float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+    gl_FragColor = vec4(glowColor, clamp(intensity, 0.0, 1.0));
+  }
+`;
+
 function OrbiModel({
   mood,
   wave,
@@ -185,12 +243,18 @@ function OrbiModel({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Group>(null);
-  const armRef = useRef<THREE.Mesh>(null);
+  const armRef = useRef<THREE.Group>(null);
   const satelliteRef = useRef<THREE.Mesh>(null);
+  const shadowRef = useRef<THREE.Mesh>(null);
   const waveStartRef = useRef<number | null>(null);
 
   const globeTexture = useGlobeTexture(colors.ocean, colors.land);
   const faceTexture = useFaceTexture(mood, colors.face);
+
+  const atmosphereUniforms = useMemo(
+    () => ({ glowColor: { value: colors.atmosphere } }),
+    [colors.atmosphere],
+  );
 
   useEffect(() => {
     // Reset the one-shot wave animation's clock whenever `wave` flips
@@ -209,8 +273,19 @@ function OrbiModel({
     if (headRef.current) {
       headRef.current.rotation.y = t * 0.15;
     }
+    const bob = Math.sin(t * 0.7) * 0.08;
     if (groupRef.current) {
-      groupRef.current.position.y = Math.sin(t * 0.7) * 0.08;
+      groupRef.current.position.y = bob;
+    }
+    // Contact shadow shrinks/softens slightly as the body "lifts" on
+    // the upswing of the float, and vice versa — a cheap but real cue
+    // that the character has weight and is grounded, not just pasted
+    // on top of a flat background.
+    if (shadowRef.current) {
+      const lift = 1 - bob * 2.2; // bob is small (~±0.08); keeps this near 1
+      shadowRef.current.scale.set(lift, lift, 1);
+      const material = shadowRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.22 * lift;
     }
 
     // Thinking mood: small satellite orbiting the head, same concept as
@@ -243,16 +318,94 @@ function OrbiModel({
 
   return (
     <group ref={groupRef}>
-      {/* Body */}
-      <mesh position={[0, -1.1, 0]}>
-        <capsuleGeometry args={[0.55, 0.5, 8, 16]} />
-        <meshStandardMaterial color={colors.body} roughness={0.7} />
+      {/* Contact shadow — a soft, semi-transparent disc on the ground
+          plane beneath the character. Cheap (no real-time shadow maps,
+          no extra light needed) but a genuine, standard technique for
+          making a floating 3D character read as physically grounded
+          rather than pasted on. */}
+      <mesh ref={shadowRef} position={[0, -1.75, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.75, 32]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.22} depthWrite={false} />
       </mesh>
 
-      {/* Waving arm */}
-      <mesh ref={armRef} position={[-0.7, -0.7, 0]}>
+      {/* Body — meshPhysicalMaterial's clearcoat gives a smooth,
+          slightly glossy "friendly toy/device" finish (a thin lacquer
+          layer on top of the base material) instead of the flatter
+          meshStandardMaterial look the first version used — a real,
+          visible difference on a rounded shape like this, not a
+          no-op setting. */}
+      <mesh position={[0, -1.1, 0]}>
+        <capsuleGeometry args={[0.55, 0.5, 8, 16]} />
+        <meshPhysicalMaterial
+          color={colors.body}
+          roughness={0.55}
+          clearcoat={0.4}
+          clearcoatRoughness={0.25}
+        />
+      </mesh>
+
+      {/* Rounded feet — small spheres at the base, partially embedded
+          in the body capsule. A bare capsule reads as a lozenge with
+          no grounding; two small rounded feet give it a simple,
+          recognizable stance without adding real leg-joint complexity
+          this character doesn't need. */}
+      {[-0.24, 0.24].map((x) => (
+        <mesh key={x} position={[x, -1.68, 0.05]}>
+          <sphereGeometry args={[0.16, 16, 16]} />
+          <meshPhysicalMaterial
+            color={colors.body}
+            roughness={0.55}
+            clearcoat={0.4}
+            clearcoatRoughness={0.25}
+          />
+        </mesh>
+      ))}
+
+      {/* Waving arm, with a rounded hand at the end — same clearcoat
+          material as the body so the whole character reads as one
+          consistent material, not mismatched parts. */}
+      <group ref={armRef} position={[-0.7, -0.7, 0]}>
+        <mesh>
+          <capsuleGeometry args={[0.09, 0.5, 6, 12]} />
+          <meshPhysicalMaterial
+            color={colors.body}
+            roughness={0.55}
+            clearcoat={0.4}
+            clearcoatRoughness={0.25}
+          />
+        </mesh>
+        <mesh position={[0, 0.3, 0]}>
+          <sphereGeometry args={[0.13, 16, 16]} />
+          <meshPhysicalMaterial
+            color={colors.body}
+            roughness={0.55}
+            clearcoat={0.4}
+            clearcoatRoughness={0.25}
+          />
+        </mesh>
+      </group>
+
+      {/* Still arm (opposite side), for visual symmetry when not
+          waving — the first version only had one arm at all, which
+          read as lopsided once the body gained real volume from the
+          feet/hand additions above. */}
+      <mesh position={[0.7, -0.7, 0]}>
         <capsuleGeometry args={[0.09, 0.5, 6, 12]} />
-        <meshStandardMaterial color={colors.body} roughness={0.7} />
+        <meshPhysicalMaterial
+          color={colors.body}
+          roughness={0.55}
+          clearcoat={0.4}
+          clearcoatRoughness={0.25}
+        />
+      </mesh>
+      <mesh position={[0.7, -0.4, 0]}>
+        <sphereGeometry args={[0.13, 16, 16]} />
+        <meshPhysicalMaterial
+          color={colors.body}
+          roughness={0.55}
+          clearcoat={0.4}
+          clearcoatRoughness={0.25}
+        />
       </mesh>
 
       {/* Thinking-mode satellite */}
@@ -266,16 +419,40 @@ function OrbiModel({
       </mesh>
 
       {/* Head — the globe, with a canvas-texture "continents on ocean"
-          map (matching the 2D version's two blob shapes) and a
-          separate face-texture plane in front for the expression. */}
+          map (matching the 2D version's two blob shapes), a separate
+          face-texture plane in front for the expression, and an
+          atmosphere-glow shell for a real "planet" read instead of a
+          flat-lit ball. meshPhysicalMaterial (clearcoat) replaces the
+          globe's own material too, for a subtle wet/glossy "ocean"
+          highlight consistent with the body. */}
       <group ref={headRef} position={[0, 0.15, 0]}>
         <mesh>
           <sphereGeometry args={[1, 48, 48]} />
-          <meshStandardMaterial map={globeTexture} roughness={0.55} metalness={0.05} />
+          <meshPhysicalMaterial
+            map={globeTexture}
+            roughness={0.45}
+            metalness={0.05}
+            clearcoat={0.25}
+            clearcoatRoughness={0.3}
+          />
         </mesh>
         <mesh position={[0, 0, 1.001]}>
           <planeGeometry args={[1.15, 1.15]} />
           <meshBasicMaterial map={faceTexture} transparent />
+        </mesh>
+        {/* Atmosphere shell — larger than the globe, back-side only
+            (so it doesn't occlude the face from the front) with the
+            Fresnel glow shader above. */}
+        <mesh scale={1.08}>
+          <sphereGeometry args={[1, 48, 48]} />
+          <shaderMaterial
+            vertexShader={ATMOSPHERE_VERTEX_SHADER}
+            fragmentShader={ATMOSPHERE_FRAGMENT_SHADER}
+            uniforms={atmosphereUniforms}
+            transparent
+            side={THREE.BackSide}
+            depthWrite={false}
+          />
         </mesh>
       </group>
     </group>
@@ -342,8 +519,19 @@ export function GuideCharacter3D({
         camera={{ position: [0, 0, 3.4], fov: 35 }}
         gl={{ antialias: true, alpha: true }}
       >
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[2, 3, 4]} intensity={1.1} />
+        {/* Three-point lighting — a real, standard character-lighting
+            setup (key/fill/rim), not the single flat directional light
+            the first version used. Key light establishes the main
+            highlight and the atmosphere-shader's brightest edge; the
+            cooler, dimmer fill softens the shadow side so it never
+            reads as pure black; the rim light (from behind/above)
+            catches the back edge of the head and shoulders, the same
+            separation-from-background trick real product-photography
+            three-point setups use. */}
+        <ambientLight intensity={0.35} />
+        <directionalLight position={[2.4, 3, 4]} intensity={1.3} />
+        <directionalLight position={[-2.2, -0.6, 2]} intensity={0.3} color={colors.atmosphere} />
+        <directionalLight position={[-1, 2.5, -3]} intensity={0.6} color={colors.atmosphere} />
         <OrbiModel mood={mood} wave={wave} colors={colors} />
       </Canvas>
     </div>

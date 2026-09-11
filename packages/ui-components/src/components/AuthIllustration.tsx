@@ -1,7 +1,21 @@
+import type { ReactNode } from "react";
 import { GuideCharacter } from "./GuideCharacter.js";
 
 export interface AuthIllustrationProps {
   className?: string;
+  /**
+   * Optional replacement for the default flat-SVG `GuideCharacter` in
+   * the corner spot below the logo (BUILD_PLAN "STAGE — GUIDE
+   * CHARACTER 3D: REAL FIX + REALISM PASS"). Lets `apps/web` inject
+   * the WebGL `GuideCharacter3D` here via its own `next/dynamic(...,
+   * { ssr: false })` wrapper, without this framework-light package
+   * needing to know about Next.js dynamic-import mechanics itself —
+   * same reasoning as this file's own doc comment on why it doesn't
+   * use `next/image` directly. Defaults to the existing flat-SVG
+   * character when omitted, so every other caller of
+   * `AuthIllustration` is unaffected.
+   */
+  guideCharacter?: ReactNode;
 }
 
 /**
@@ -59,7 +73,7 @@ export interface AuthIllustrationProps {
  * the hill silhouettes, as if standing on the horizon rather than
  * floating on a flat background.
  */
-export function AuthIllustration({ className }: AuthIllustrationProps) {
+export function AuthIllustration({ className, guideCharacter }: AuthIllustrationProps) {
   return (
     <div
       className={className}
@@ -156,7 +170,7 @@ export function AuthIllustration({ className }: AuthIllustrationProps) {
         />
       </div>
       <div style={{ position: "absolute", bottom: "8%", zIndex: 1 }}>
-        <GuideCharacter size={88} mood="happy" />
+        {guideCharacter ?? <GuideCharacter size={88} mood="happy" />}
       </div>
     </div>
   );

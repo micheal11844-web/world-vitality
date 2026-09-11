@@ -214,6 +214,53 @@ const nextConfig = {
   // alias is exactly what to remove first.
   webpack: (config) => {
     config.resolve.alias["@spz-loader/core"] = false;
+
+    // INCIDENT RECORD (Guide Character 3D) — kept here since this is
+    // where the next attempt will look. Deploying the WebGL Orbi
+    // (`GuideCharacter3D`, `@react-three/fiber`) has caused a real
+    // production crash every time it's been wired in and deployed:
+    // "Cannot read properties of undefined (reading
+    // 'ReactCurrentBatchConfig')" thrown from inside react-reconciler.
+    //
+    // Three genuinely different webpack `resolve.alias` fixes were
+    // tried in one session (BUILD_PLAN "STAGE — GUIDE CHARACTER 3D:
+    // REAL FIX ATTEMPT + REALISM PASS"), this time with a real headless
+    // Chrome instance available to verify each one against the actual
+    // built app rather than just a successful `next build`:
+    //
+    // 1. Aliasing `react`/`react-dom` to their bare package directory
+    //    broke client-side hydration with a DIFFERENT crash
+    //    (`TypeError: (0 , s.use) is not a function`) — a bare-
+    //    directory alias resolves through a package's plain `main`
+    //    field, not its `exports` conditional map, landing on an
+    //    incomplete build missing the `use()` hook.
+    // 2. Aliasing to the exact `require.resolve()`'d file (correct
+    //    target) using a bare `"react"` key broke the BUILD outright
+    //    (`Module not found: Can't resolve 'react/jsx-runtime'`
+    //    everywhere) — a bare alias key is a webpack PREFIX match, so
+    //    it also intercepted subpath imports like `react/jsx-runtime`.
+    // 3. Fixing that with an exact-match `"react$"` key, still pointed
+    //    at `require.resolve()`'s correct target, produced a clean
+    //    build AND passed every other check — but loading the real
+    //    page in real headless Chrome reproduced the EXACT ORIGINAL
+    //    crash (`ReactCurrentBatchConfig`), unchanged.
+    //
+    // Conclusion, stated plainly: the duplicate-React-instance problem
+    // is not coming from a `react`/`react-dom` bare-specifier
+    // resolution mismatch at all — a webpack `resolve.alias`, however
+    // precisely targeted, cannot fix it. The real cause is most likely
+    // inside `@react-three/fiber`'s own bundled/pre-built dependency on
+    // `react-reconciler` (possibly a version pinned or bundled in a way
+    // that doesn't respect this app's webpack config at all), which
+    // would need a different class of fix entirely — e.g. a specific
+    // known-compatible `react-reconciler` version pin, or switching
+    // away from `@react-three/fiber` to raw `three.js` (no reconciler,
+    // no react-instance-identity risk by construction) if this is
+    // picked up again. No `react`/`react-dom` alias remains in this
+    // config — three attempts confirmed it doesn't help and isn't
+    // worth the added resolution complexity for every other route in
+    // this app.
+
     return config;
   },
 };
