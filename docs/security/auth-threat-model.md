@@ -15,6 +15,21 @@ model built on top of it (`account.ts`, `roles.ts`). Not the NASA
 connector or interpretation engine — those have their own concerns per
 ADR-0002/0003.
 
+**Scope note, added later (BUILD_PLAN "STAGE — PASSWORD SIGN-IN
+DEFAULT, MAGIC LINK REMOVED"):** the login page's own UI has since
+removed magic link as a sign-in option — password sign-in is now the
+only sign-in method exposed there (see `docs/Decision-Log.md`'s entry
+for the real reasoning and trade-off). The magic-link infrastructure
+this document analyzes (`requestMagicLinkAction`, `/auth/callback`'s
+token verification) still exists and is still real, live code — this
+threat model's analysis of it remains accurate for as long as that
+code exists — but it's no longer reachable from the primary login
+flow. Password-specific threats (credential stuffing, breach-password
+reuse) were already covered elsewhere in this document since password
+sign-in already existed as a secondary option before this change; this
+note exists so a reader doesn't assume magic link is still the
+front-door flow it describes.
+
 ## Assets being protected
 
 1. **User accounts and sessions** — anyone who can complete the

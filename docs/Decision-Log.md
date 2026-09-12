@@ -267,3 +267,38 @@ implicitly made by building it this way.
 
 **Status:** Accepted. Aggregation/dashboarding/vendor selection remains
 open, explicitly deferred, not silently implied by this decision.
+
+## Decision #016 — Password sign-in made the default; magic link removed from the login page
+
+**Reason:** explicit owner request. The login page's original design
+(documented in its own code comments, matching BUILD_PLAN Stage 3's
+"magic link + optional SSO" phrasing) made magic link the default,
+primary sign-in path, with password as a secondary option one click
+away — a deliberate choice at the time, not an oversight, but one the
+owner has now decided to reverse for this product.
+
+**Chosen:** password sign-in is now the only sign-in method on
+`/login` — the magic-link form, its "sent" confirmation state, and the
+link/password mode toggle were all removed from that page. Email links
+remain in the product for the genuinely different job of resetting a
+forgotten password (`/forgot-password`, unaffected by this change) —
+this decision does not remove email-based auth from the app entirely,
+only as an alternate sign-in method.
+
+**What was NOT deleted:** `requestMagicLinkAction` (the Server Action),
+the underlying `AuthService.requestMagicLink` call, and `/auth/callback`'s
+magic-link token verification all remain in the codebase, unreachable
+from any UI now but real, working, independently-useful auth
+infrastructure — left in place as a real candidate for a future
+magic-link re-entry point rather than deleted outright. See that
+function's own doc comment in `apps/web/lib/actions.ts`.
+
+**Trade-off, stated honestly:** the removed UI's own code comment cited
+real login-page UX research favoring exactly one prominent primary flow
+(not a tab strip) — that principle is preserved (password sign-in is
+now that one flow), but the specific choice of _which_ method is
+primary reverses a documented earlier decision. `docs/security/auth-threat-model.md`
+was updated with a scope note pointing to this entry, rather than left
+silently describing a flow that's no longer the front door.
+
+**Status:** Accepted.

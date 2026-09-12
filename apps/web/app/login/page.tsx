@@ -16,7 +16,6 @@ import {
   type GuideCharacterMood,
 } from "@world-vitality/ui-components";
 import {
-  requestMagicLinkAction,
   signInWithPasswordAction,
   signUpWithPasswordAction,
   signInWithGoogleAction,
@@ -25,14 +24,17 @@ import {
 /**
  * Maps the form's real states onto the Guide Character's moods (Stage
  * 9, ticket 9.3). Deliberate 1:1 mapping to state that already exists,
- * not new state invented just for the character.
+ * not new state invented just for the character. No "sent" state
+ * anymore (BUILD_PLAN "STAGE — PASSWORD SIGN-IN DEFAULT, MAGIC LINK
+ * REMOVED") — that was specific to the magic-link email-sent
+ * confirmation; password sign-in either redirects immediately on
+ * success or shows an error, it never lingers in a "sent" display
+ * state.
  */
-function moodFor(status: "idle" | "sending" | "sent" | "error"): GuideCharacterMood {
+function moodFor(status: "idle" | "sending" | "error"): GuideCharacterMood {
   switch (status) {
     case "sending":
       return "thinking";
-    case "sent":
-      return "happy";
     case "error":
       return "concerned";
     case "idle":
@@ -49,7 +51,6 @@ const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
   oauth_not_configured:
     "Google sign-in isn't set up yet on this deployment. Use email sign-in for now.",
 };
-type AuthMode = "link" | "password";
 type PasswordSubMode = "signin" | "signup";
 
 function GoogleIcon() {
@@ -81,12 +82,11 @@ function GoogleIcon() {
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const [mode, setMode] = useState<AuthMode>("link");
   const [passwordSubMode, setPasswordSubMode] = useState<PasswordSubMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState<string | undefined>();
   const [googleLoading, setGoogleLoading] = useState(false);
   const resetSuccess = searchParams.get("reset") === "success";
@@ -104,18 +104,6 @@ function LoginForm() {
       );
     }
   }, [searchParams]);
-
-  async function handleMagicLinkSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus("sending");
-    const result = await requestMagicLinkAction(email);
-    if (result.ok) {
-      setStatus("sent");
-    } else {
-      setStatus("error");
-      setError(result.error);
-    }
-  }
 
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -200,230 +188,161 @@ function LoginForm() {
         as="h1"
         style={{ marginBottom: "var(--wv-space-lg)", textAlign: "center" }}
       >
-        {mode === "link"
-          ? "Sign in"
-          : passwordSubMode === "signup"
-            ? "Create your account"
-            : "Sign in"}
+        {passwordSubMode === "signup" ? "Create your account" : "Sign in"}
       </Text>
 
-      {status === "sent" && mode === "link" ? (
-        <Text variant="body" style={{ color: "var(--wv-text-secondary)", textAlign: "center" }}>
-          Check your email — we sent a sign-in link to {email}.
+      {resetSuccess && (
+        <Text
+          variant="body"
+          style={{
+            color: "var(--wv-text-secondary)",
+            textAlign: "center",
+            marginBottom: "var(--wv-space-md)",
+          }}
+        >
+          Your password has been updated. Please sign in.
         </Text>
-      ) : (
-        <>
-          {resetSuccess && (
+      )}
+      <Button
+        type="button"
+        variant="secondary"
+        loading={googleLoading}
+        onClick={handleGoogleClick}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "var(--wv-space-sm)",
+          marginBottom: "var(--wv-space-md)",
+        }}
+      >
+        <GoogleIcon />
+        Continue with Google
+      </Button>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--wv-space-sm)",
+          margin: "var(--wv-space-md) 0",
+        }}
+      >
+        <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
+        <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+          or
+        </Text>
+        <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
+      </div>
+
+      {/*
+            Single primary flow, no tab strip — real login-page UX
+            research is explicit that tabbed/modal-switching login UIs
+            are an anti-pattern: they add an extra decision/click
+            before the actual task (real, cited finding, not a
+            stylistic guess — see this file's git history for the
+            source). That principle is still honored here even though
+            the flow it applies to changed: magic link (previously the
+            default) has been removed from this page entirely
+            (BUILD_PLAN "STAGE — PASSWORD SIGN-IN DEFAULT, MAGIC LINK
+            REMOVED") — password sign-in is now the only sign-in method
+            here, with sign-in/sign-up as the one remaining toggle
+            (still a plain link, not a tab). Email links remain in the
+            product, but only for the genuinely different job of
+            resetting a forgotten password (`/forgot-password`), not as
+            an alternate way to sign in.
+          */}
+      <form
+        onSubmit={handlePasswordSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" }}
+      >
+        <Input
+          label="Email address"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <div>
+          <Input
+            label="Password"
+            type="password"
+            required
+            minLength={passwordSubMode === "signup" ? 8 : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={status === "error" ? error : undefined}
+          />
+          {passwordSubMode === "signup" && (
+            <PasswordStrengthMeter password={password} userInputs={[email]} />
+          )}
+          {passwordSubMode === "signin" && (
             <Text
-              variant="body"
+              variant="caption"
               style={{
-                color: "var(--wv-text-secondary)",
-                textAlign: "center",
-                marginBottom: "var(--wv-space-md)",
+                display: "block",
+                marginTop: "var(--wv-space-xs)",
+                textAlign: "right",
               }}
             >
-              Your password has been updated. Please sign in.
+              <Link href="/forgot-password" style={{ color: "var(--wv-text-secondary)" }}>
+                Forgot password?
+              </Link>
             </Text>
           )}
-          <Button
-            type="button"
-            variant="secondary"
-            loading={googleLoading}
-            onClick={handleGoogleClick}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "var(--wv-space-sm)",
-              marginBottom: "var(--wv-space-md)",
-            }}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </Button>
+        </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "var(--wv-space-sm)",
-              margin: "var(--wv-space-md) 0",
-            }}
-          >
-            <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
-            <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              or
-            </Text>
-            <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
-          </div>
+        <Checkbox
+          label="Remember me on this device"
+          checked={rememberMe}
+          onChange={(e) => setRememberMe(e.target.checked)}
+        />
 
-          {/*
-            Single primary flow + a plain secondary link to switch
-            methods — NOT a tab strip. Real login-page UX research is
-            explicit that tabbed/modal-switching login UIs are an
-            anti-pattern: they add an extra decision/click before the
-            actual task, and can make people unsure where to find the
-            method they actually want (real, cited finding, not a
-            stylistic guess — see this file's git history for the
-            source). Magic link stays the default/primary path, matching
-            this app's own founding security choice (see
-            docs/security/auth-threat-model.md) — password is a
-            same-weight but secondary option, one link away, not an
-            equally-prominent competing tab.
-          */}
-          {mode === "link" ? (
-            <form
-              onSubmit={handleMagicLinkSubmit}
-              style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" }}
-            >
-              <Input
-                label="Email address"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={status === "error" ? error : undefined}
-              />
-              <Button type="submit" loading={status === "sending"}>
-                Send sign-in link
-              </Button>
-              <Text variant="caption" style={{ textAlign: "center" }}>
-                Prefer a password?{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("password");
-                    setStatus("idle");
-                    setError(undefined);
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--wv-accent)",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    padding: 0,
-                  }}
-                >
-                  Sign in with a password instead
-                </button>
-              </Text>
-            </form>
+        <Button type="submit" loading={status === "sending"}>
+          {passwordSubMode === "signup" ? "Create account" : "Sign in"}
+        </Button>
+
+        <Text variant="caption" style={{ textAlign: "center" }}>
+          {passwordSubMode === "signup" ? (
+            <>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => setPasswordSubMode("signin")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--wv-accent)",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+              >
+                Sign in
+              </button>
+            </>
           ) : (
-            <form
-              onSubmit={handlePasswordSubmit}
-              style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" }}
-            >
-              <Input
-                label="Email address"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <div>
-                <Input
-                  label="Password"
-                  type="password"
-                  required
-                  minLength={passwordSubMode === "signup" ? 8 : undefined}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  error={status === "error" ? error : undefined}
-                />
-                {passwordSubMode === "signup" && (
-                  <PasswordStrengthMeter password={password} userInputs={[email]} />
-                )}
-                {passwordSubMode === "signin" && (
-                  <Text
-                    variant="caption"
-                    style={{
-                      display: "block",
-                      marginTop: "var(--wv-space-xs)",
-                      textAlign: "right",
-                    }}
-                  >
-                    <Link href="/forgot-password" style={{ color: "var(--wv-text-secondary)" }}>
-                      Forgot password?
-                    </Link>
-                  </Text>
-                )}
-              </div>
-
-              <Checkbox
-                label="Remember me on this device"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-
-              <Button type="submit" loading={status === "sending"}>
-                {passwordSubMode === "signup" ? "Create account" : "Sign in"}
-              </Button>
-
-              <Text variant="caption" style={{ textAlign: "center" }}>
-                {passwordSubMode === "signup" ? (
-                  <>
-                    Already have an account?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setPasswordSubMode("signin")}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "var(--wv-accent)",
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                        padding: 0,
-                      }}
-                    >
-                      Sign in
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    New here?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setPasswordSubMode("signup")}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "var(--wv-accent)",
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                        padding: 0,
-                      }}
-                    >
-                      Create an account
-                    </button>
-                  </>
-                )}
-              </Text>
-              <Text variant="caption" style={{ textAlign: "center" }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("link");
-                    setStatus("idle");
-                    setError(undefined);
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--wv-text-secondary)",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    padding: 0,
-                  }}
-                >
-                  Use an email link instead
-                </button>
-              </Text>
-            </form>
+            <>
+              New here?{" "}
+              <button
+                type="button"
+                onClick={() => setPasswordSubMode("signup")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--wv-accent)",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+              >
+                Create an account
+              </button>
+            </>
           )}
-        </>
-      )}
+        </Text>
+      </form>
     </Card>
   );
 }

@@ -21,10 +21,24 @@ export interface PasswordAuthResult {
 }
 
 /**
- * Server Action backing the login form (`app/login/page.tsx`). Always
- * returns the same shape whether or not the email has an existing
- * account — per `AuthService.requestMagicLink`'s contract, never leak
- * account existence through a different response shape here either.
+ * **STATUS: no longer called from any UI (BUILD_PLAN "STAGE —
+ * PASSWORD SIGN-IN DEFAULT, MAGIC LINK REMOVED").** The login form
+ * this comment used to describe (`app/login/page.tsx`) removed its
+ * magic-link sign-in option entirely — password sign-in is now the
+ * only sign-in method there. Left in place rather than deleted: this
+ * function, the underlying `AuthService.requestMagicLink` call, and
+ * the `/auth/callback` route's token-verification handling for it are
+ * real, working, independently-useful auth infrastructure (Supabase's
+ * `signInWithOtp`), not something specific to the removed UI — a
+ * future magic-link re-entry point (a different page, an admin
+ * invite flow, etc.) could reuse this without rebuilding it. If no
+ * such use emerges, this is a real candidate for deletion later,
+ * flagged here rather than left ambiguous.
+ *
+ * Always returns the same shape whether or not the email has an
+ * existing account — per `AuthService.requestMagicLink`'s contract,
+ * never leak account existence through a different response shape
+ * either.
  *
  * The real failure reason is logged server-side via `logSecurity`
  * (this is an auth event) — never returned to the browser. An earlier
