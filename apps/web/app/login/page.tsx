@@ -4,14 +4,13 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Orbi3D } from "./orbi-3d";
+import { Orbi3D } from "../orbi-3d";
 import {
   Button,
   Card,
   Input,
   Text,
   Checkbox,
-  GuideCharacter,
   AuthIllustration,
   PasswordStrengthMeter,
   type GuideCharacterMood,
@@ -194,7 +193,7 @@ function LoginForm() {
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
       >
-        <GuideCharacter mood={moodFor(status)} wave={status === "idle"} />
+        <Orbi3D mood={moodFor(status)} wave={status === "idle"} />
       </div>
       <Text
         variant="sectionTitle"
@@ -452,7 +451,7 @@ export default function LoginPage() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <div className="wv-auth-illustration-panel" style={{ flex: 1, display: "none" }}>
-        <AuthIllustration guideCharacter={<Orbi3D />} />
+        <AuthIllustration guideCharacter={<Orbi3D mood="happy" wave />} />
       </div>
       <div
         style={{

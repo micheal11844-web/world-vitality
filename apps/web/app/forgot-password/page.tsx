@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button, Card, Input, Text, GuideCharacter } from "@world-vitality/ui-components";
+import { Button, Card, Input, Text } from "@world-vitality/ui-components";
+import { Orbi3D } from "../orbi-3d";
 import { requestPasswordResetAction } from "../../lib/actions";
 
 /**
@@ -52,9 +53,7 @@ export default function ForgotPasswordPage() {
         <div
           style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
         >
-          <GuideCharacter
-            mood={status === "sent" ? "happy" : status === "error" ? "concerned" : "idle"}
-          />
+          <Orbi3D mood={status === "sent" ? "happy" : status === "error" ? "concerned" : "idle"} />
         </div>
         <Text
           variant="sectionTitle"

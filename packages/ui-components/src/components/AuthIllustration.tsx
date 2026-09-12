@@ -29,30 +29,36 @@ export interface AuthIllustrationProps {
  * (`public/brand/world-vitality-logo.png`, the full lockup with
  * wordmark and tagline).
  *
- * **Sunset-horizon background scene, added after real use showed the
- * flat neutral panel read as bland** — plain surface color let both
- * the logo's own tagline text and the guide character wash out with
- * little to anchor them, especially in dark mode (the panel and the
- * page background were nearly indistinguishable). Rather than reaching
- * for a stock photo (licensing/consistency risk, and a photo would
- * compete with rather than support the logo's own colors) or an
- * arbitrary decorative gradient, the scene is built from colors this
- * app already owns: `--wv-color-critical-500`'s burnt-orange for the
- * sunset glow and `--wv-color-accent-900`'s deep forest green for the
- * hill silhouettes — the same two accent families used everywhere else
- * in this app for warmth and for the brand's "vitality" green,
- * reapplied here as a literal earth/horizon scene rather than
- * introduced as new, unrelated hex values. The logo's own colors (blue
- * globe, green leaf, orange-gold ribbon) sit comfortably against this
- * palette rather than clashing with it — the horizon's orange and the
- * ribbon's gold read as the same warm family; the hills' green matches
- * the leaf.
+ * **Rebuilt this stage (BUILD_PLAN "STAGE — GUIDE CHARACTER 3D: BRAND
+ * COLORS + STANDING/TRACKING/CLICK/WALK-AWAY BEHAVIOR"), replacing the
+ * previous sunset-over-hills scene after real feedback that it "still
+ * looks generic" and doesn't actually read as connected to the logo —
+ * true even though that version deliberately reused this app's own
+ * accent/critical color tokens, because color reuse alone doesn't make
+ * an unrelated scene (a landscape horizon) look like it belongs to a
+ * wave/globe/leaf mark.** This version instead extends the logo's own
+ * motif outward into the panel: two soft flowing ribbon bands (echoing
+ * the logo's own wave shape, not a new unrelated shape), a large soft
+ * radial glow blending the logo's three real colors behind it (as if
+ * the logo's own light is spilling into the scene), and a thin orbital
+ * arc (a satellite-orbit ellipse, tying to this app's actual
+ * NASA-data/monitoring subject matter, not decoration for its own
+ * sake) — plus a light scatter of small dots suggesting data points
+ * across the globe, kept from the previous version since that detail
+ * worked.
  *
- * Pure SVG/CSS, no external image request: a gradient sky, two
- * overlapping hill silhouettes for depth, a glowing low sun straddling
- * the horizon, and a handful of static stars in the upper sky — one
- * deliberate focal point (the sun's glow) with everything else quiet,
- * not a scene trying to do many things at once. `aria-hidden` — purely
+ * **New fixed "ocean blue" colors, not this app's design tokens —
+ * documented deliberately, same reasoning as `GuideCharacter3D`'s own
+ * fixed identity colors.** This app's token system has a green
+ * (`accent`) and orange (`critical`) family but no blue family at all
+ * (nothing in `packages/design-tokens` produces one) — yet the real
+ * logo's globe is unmistakably blue, and a "complements the logo"
+ * background needs that blue to actually read as the same object. Two
+ * new fixed hex values (`OCEAN_COLORS` below) exist for this reason;
+ * everything else in the scene still uses this app's real green/orange
+ * tokens (`--wv-color-accent-*`, `--wv-color-critical-*`).
+ *
+ * Pure SVG/CSS, no external image request. `aria-hidden` — purely
  * decorative, the logo's own `alt` text remains the panel's real
  * content for assistive tech.
  *
@@ -69,10 +75,16 @@ export interface AuthIllustrationProps {
  * correct place for that optimization, not here.
  *
  * Guide Character still appears here (smaller, lower on the panel) —
- * "the guide lives in this world" remains true; it now sits just above
- * the hill silhouettes, as if standing on the horizon rather than
- * floating on a flat background.
+ * "the guide lives in this world" remains true.
  */
+
+/** Fixed, non-token blue — see the doc comment above for why this
+ *  isn't a design-system color. Two shades: a pale sky/ocean tint for
+ *  the gradient glow, and a deeper marine blue for the orbital arc and
+ *  ribbon band so it reads as the same "water" family, not two
+ *  unrelated blues. */
+const OCEAN_COLORS = { pale: "#cfe6f2", deep: "#2f6f94" };
+
 export function AuthIllustration({ className, guideCharacter }: AuthIllustrationProps) {
   return (
     <div
@@ -97,55 +109,92 @@ export function AuthIllustration({ className, guideCharacter }: AuthIllustration
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 0 }}
       >
         <defs>
-          <linearGradient id="wv-auth-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" style={{ stopColor: "var(--wv-color-neutral-900)" }} />
-            <stop offset="55%" style={{ stopColor: "var(--wv-color-accent-800)" }} />
-            <stop offset="80%" style={{ stopColor: "var(--wv-color-critical-600)" }} />
-            <stop offset="100%" style={{ stopColor: "var(--wv-color-critical-400)" }} />
+          <linearGradient id="wv-auth-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style={{ stopColor: "var(--wv-color-neutral-50)" }} />
+            <stop offset="100%" style={{ stopColor: "var(--wv-color-neutral-100)" }} />
           </linearGradient>
-          <radialGradient id="wv-auth-sun-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" style={{ stopColor: "var(--wv-color-critical-200)", stopOpacity: 0.95 }} />
-            <stop offset="45%" style={{ stopColor: "var(--wv-color-critical-300)", stopOpacity: 0.55 }} />
-            <stop offset="100%" style={{ stopColor: "var(--wv-color-critical-400)", stopOpacity: 0 }} />
+          {/* The logo's own three colors, blended into one soft glow —
+              "the logo's own light spilling outward," not a separate
+              unrelated color story. */}
+          <radialGradient id="wv-auth-logo-glow" cx="50%" cy="42%" r="55%">
+            <stop offset="0%" style={{ stopColor: OCEAN_COLORS.pale, stopOpacity: 0.55 }} />
+            <stop
+              offset="55%"
+              style={{ stopColor: "var(--wv-color-accent-200)", stopOpacity: 0.32 }}
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: "var(--wv-color-critical-200)", stopOpacity: 0 }}
+            />
           </radialGradient>
-          <linearGradient id="wv-auth-hill-far" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" style={{ stopColor: "var(--wv-color-accent-700)" }} />
-            <stop offset="100%" style={{ stopColor: "var(--wv-color-accent-800)" }} />
+          <linearGradient id="wv-auth-ribbon-blue" x1="0" y1="0" x2="1" y2="0.4">
+            <stop offset="0%" style={{ stopColor: OCEAN_COLORS.deep, stopOpacity: 0 }} />
+            <stop offset="50%" style={{ stopColor: OCEAN_COLORS.deep, stopOpacity: 0.22 }} />
+            <stop offset="100%" style={{ stopColor: OCEAN_COLORS.pale, stopOpacity: 0 }} />
+          </linearGradient>
+          <linearGradient id="wv-auth-ribbon-warm" x1="1" y1="0" x2="0" y2="0.6">
+            <stop
+              offset="0%"
+              style={{ stopColor: "var(--wv-color-critical-400)", stopOpacity: 0 }}
+            />
+            <stop
+              offset="50%"
+              style={{ stopColor: "var(--wv-color-critical-300)", stopOpacity: 0.2 }}
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: "var(--wv-color-accent-300)", stopOpacity: 0 }}
+            />
           </linearGradient>
         </defs>
 
-        <rect x="0" y="0" width="100" height="100" fill="url(#wv-auth-sky)" />
+        <rect x="0" y="0" width="100" height="100" fill="url(#wv-auth-bg)" />
+        <rect x="0" y="0" width="100" height="100" fill="url(#wv-auth-logo-glow)" />
 
-        {/* Static stars, upper sky only — a quiet detail, not a pattern
+        {/* Two flowing ribbon bands — the logo's own wave shape,
+            extended outward across the whole panel rather than
+            confined to the small logo image. One cool (ocean/sky),
+            one warm (the ribbon's gold-orange edge), crossing behind
+            the logo the same way the logo's own ribbon wraps the
+            globe. */}
+        <path
+          d="M-10,30 C20,15 45,45 70,25 C90,10 105,20 115,10 L115,55 C95,45 85,58 65,50 C40,40 20,60 -10,48 Z"
+          fill="url(#wv-auth-ribbon-blue)"
+        />
+        <path
+          d="M-10,68 C15,80 35,55 60,72 C82,87 100,72 115,80 L115,100 L-10,100 Z"
+          fill="url(#wv-auth-ribbon-warm)"
+        />
+
+        {/* A thin satellite-orbit arc — ties to this app's real
+            NASA-data/monitoring subject matter, not decoration picked
+            for its own sake. */}
+        <ellipse
+          cx="50"
+          cy="46"
+          rx="42"
+          ry="16"
+          fill="none"
+          stroke={OCEAN_COLORS.deep}
+          strokeOpacity={0.18}
+          strokeWidth={0.4}
+          transform="rotate(-8 50 46)"
+        />
+
+        {/* Scattered data points — a quiet detail, not a pattern
             repeated across the whole scene. */}
         {[
-          [8, 10], [22, 6], [35, 14], [50, 5], [64, 11], [78, 7], [90, 15], [14, 22], [58, 20],
+          [8, 14], [22, 8], [35, 18], [64, 9], [78, 15], [90, 20], [14, 28], [86, 32],
         ].map(([x, y], i) => (
           <circle
             key={i}
             cx={x}
             cy={y}
             r={i % 3 === 0 ? 0.5 : 0.3}
-            style={{ fill: "var(--wv-color-neutral-100)" }}
-            opacity={0.6}
+            style={{ fill: "var(--wv-color-accent-400)" }}
+            opacity={0.4}
           />
         ))}
-
-        {/* Low sun, straddling the horizon line. */}
-        <circle cx="50" cy="62" r="16" fill="url(#wv-auth-sun-glow)" />
-        <circle cx="50" cy="62" r="7" style={{ fill: "var(--wv-color-critical-200)" }} />
-
-        {/* Far hill, softer/darker for depth. */}
-        <path
-          d="M0,72 C15,66 30,70 42,64 C58,56 70,68 85,62 C92,59 97,63 100,61 L100,100 L0,100 Z"
-          fill="url(#wv-auth-hill-far)"
-        />
-
-        {/* Near hill — deepest green, mirrors the logo's leaf color. */}
-        <path
-          d="M0,80 C18,72 32,78 48,73 C64,68 76,78 100,72 L100,100 L0,100 Z"
-          style={{ fill: "var(--wv-color-accent-900)" }}
-        />
       </svg>
 
       <div
@@ -165,7 +214,7 @@ export function AuthIllustration({ className, guideCharacter }: AuthIllustration
             width: "100%",
             maxWidth: "26rem",
             height: "auto",
-            filter: "drop-shadow(0 4px 24px rgba(0, 0, 0, 0.35))",
+            filter: "drop-shadow(0 4px 24px rgba(0, 0, 0, 0.2))",
           }}
         />
       </div>
