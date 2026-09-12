@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { AppShell } from "@world-vitality/ui-components";
+import { AppShell } from "../../../app-shell-with-guide";
 import { AppBrand } from "../../../app-brand";
 
 export interface TeamShellProps {

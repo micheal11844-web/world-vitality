@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  AppShell,
   Card,
   Text,
   StateDisplay,
   GuideTutorial,
   type GuideTutorialStep,
 } from "@world-vitality/ui-components";
+import { AppShell } from "../app-shell-with-guide";
+import { Orbi3D } from "../orbi-3d";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 
@@ -115,7 +116,12 @@ export function DashboardView() {
         />
       }
     >
-      <GuideTutorial open={tutorialOpen} onDismiss={dismissTutorial} steps={TUTORIAL_STEPS} />
+      <GuideTutorial
+        open={tutorialOpen}
+        onDismiss={dismissTutorial}
+        steps={TUTORIAL_STEPS}
+        renderGuideCharacter={(mood) => <Orbi3D mood={mood} size={80} />}
+      />
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
         Your workspaces
       </Text>

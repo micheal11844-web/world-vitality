@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { AppShell, Text, StateDisplay } from "@world-vitality/ui-components";
+import { AppShell } from "../app-shell-with-guide";
+import { Text, StateDisplay } from "@world-vitality/ui-components";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 import type { GlobePin } from "./globe-viewer";

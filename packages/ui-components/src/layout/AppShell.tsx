@@ -38,6 +38,17 @@ export interface AppShellProps {
    * (none exist yet), not a default anyone should reach for.
    */
   showGuide?: boolean;
+  /**
+   * Optional replacement for the default flat-SVG `GuideCharacter` in
+   * the docked corner spot (BUILD_PLAN "STAGE — GUIDE CHARACTER 3D:
+   * EXTENDED TO APPSHELL + GUIDETUTORIAL"). Lets `apps/web` inject the
+   * WebGL `GuideCharacter3D` here via its own `next/dynamic(...,
+   * { ssr: false })` wrapper, without this framework-light package
+   * needing to know about Next.js dynamic-import mechanics — same
+   * pattern as `AuthIllustration`'s own `guideCharacter` prop. Defaults
+   * to the flat-SVG character when omitted.
+   */
+  guideCharacter?: ReactNode;
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
@@ -137,6 +148,7 @@ export function AppShell({
   aiPanelContent,
   children,
   showGuide = true,
+  guideCharacter,
 }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -259,7 +271,7 @@ export function AppShell({
             zIndex: 10,
           }}
         >
-          <GuideCharacter mood="idle" size={64} />
+          {guideCharacter ?? <GuideCharacter mood="idle" size={64} />}
         </div>
       )}
     </div>

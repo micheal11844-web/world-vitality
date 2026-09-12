@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { AppShell, StateDisplay, Text } from "@world-vitality/ui-components";
+import { AppShell } from "../../app-shell-with-guide";
+import { StateDisplay, Text } from "@world-vitality/ui-components";
 import type { Role } from "@world-vitality/identity-service";
 import { AppBrand } from "../../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspace-nav";

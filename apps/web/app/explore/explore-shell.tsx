@@ -1,7 +1,8 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import { AppShell, ConfidenceBadge, StateDisplay, Text } from "@world-vitality/ui-components";
+import { AppShell } from "../app-shell-with-guide";
+import { ConfidenceBadge, StateDisplay, Text } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
