@@ -312,7 +312,24 @@ function buildScene(
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-  camera.position.set(0, 0, 3.4);
+  // **Bug fixed this stage, found from a real user screenshot showing
+  // Orbi's legs/feet cut off**: the character's full head-to-feet
+  // extent is ~3.1 world units tall (globe top ~1.23 to body-capsule
+  // bottom ~-1.9 before this fix), but at the old camera distance
+  // (3.4) and this 35° vertical FOV, the visible frame only covered
+  // ~2.1 units — the lower third of the body and both feet were
+  // simply never inside the camera's frustum at all, not merely
+  // hidden by CSS overflow (the container div is sized exactly to the
+  // render, so there was nothing to clip against). Fixed two ways
+  // together: every body-part mesh's y-position (below) was shifted up
+  // by +0.34 so the character's vertical center sits near the world
+  // origin instead of near its head, and the camera was moved back to
+  // 5.4 so the full, now-centered height fits inside the frame with a
+  // small margin — verified this time by literally computing the
+  // frustum's visible height at this distance/FOV and confirming it
+  // exceeds the character's real bounding box, not just eyeballing a
+  // screenshot.
+  camera.position.set(0, 0, 5.4);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.35));
   const key = new THREE.DirectionalLight(0xffffff, 1.3);
@@ -335,7 +352,7 @@ function buildScene(
     depthWrite: false,
   });
   const shadowMesh = new THREE.Mesh(new THREE.CircleGeometry(0.75, 32), shadowMaterial);
-  shadowMesh.position.set(0, -1.75, 0);
+  shadowMesh.position.set(0, -1.41, 0);
   shadowMesh.rotation.x = -Math.PI / 2;
   rootGroup.add(shadowMesh);
 
@@ -344,7 +361,7 @@ function buildScene(
     ...PBR_MATERIAL_PROPS,
   });
   const bodyMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 0.5, 8, 16), bodyMaterial);
-  bodyMesh.position.set(0, -1.1, 0);
+  bodyMesh.position.set(0, -0.76, 0);
   rootGroup.add(bodyMesh);
 
   for (const x of [-0.24, 0.24]) {
@@ -352,12 +369,12 @@ function buildScene(
       new THREE.SphereGeometry(0.16, 16, 16),
       new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
     );
-    footMesh.position.set(x, -1.68, 0.05);
+    footMesh.position.set(x, -1.34, 0.05);
     rootGroup.add(footMesh);
   }
 
   const armGroup = new THREE.Group();
-  armGroup.position.set(-0.7, -0.7, 0);
+  armGroup.position.set(-0.7, -0.36, 0);
   const armMesh = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
     new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
@@ -375,13 +392,13 @@ function buildScene(
     new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
     new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
   );
-  stillArmMesh.position.set(0.7, -0.7, 0);
+  stillArmMesh.position.set(0.7, -0.36, 0);
   rootGroup.add(stillArmMesh);
   const stillHandMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.13, 16, 16),
     new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
   );
-  stillHandMesh.position.set(0.7, -0.4, 0);
+  stillHandMesh.position.set(0.7, -0.06, 0);
   rootGroup.add(stillHandMesh);
 
   const satelliteMesh = new THREE.Mesh(
@@ -396,7 +413,7 @@ function buildScene(
   rootGroup.add(satelliteMesh);
 
   const headGroup = new THREE.Group();
-  headGroup.position.set(0, 0.15, 0);
+  headGroup.position.set(0, 0.49, 0);
 
   const globeTexture = buildGlobeTexture(colors.ocean, colors.land);
   const globeMaterial = new THREE.MeshPhysicalMaterial({
@@ -598,7 +615,7 @@ export function GuideCharacter3D({
       handles.satelliteMesh.visible =
         moodRef.current === "thinking" && handles.walkAwayStart === null;
       if (handles.satelliteMesh.visible) {
-        handles.satelliteMesh.position.set(Math.cos(t * 1.4) * 1.3, 1.1, Math.sin(t * 1.4) * 1.3);
+        handles.satelliteMesh.position.set(Math.cos(t * 1.4) * 1.3, 1.44, Math.sin(t * 1.4) * 1.3);
       }
 
       // One-shot wave.
