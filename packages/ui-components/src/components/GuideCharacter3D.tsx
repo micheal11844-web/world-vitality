@@ -373,8 +373,22 @@ function buildScene(
     rootGroup.add(footMesh);
   }
 
+  // Arms sit wider (0.92, was 0.7) and slightly forward (z 0.35, was
+  // 0) than the original version — real bug found this stage: at the
+  // old position, the arms sat almost entirely INSIDE the head
+  // sphere's own horizontal silhouette (head radius ~1.08 > arm x
+  // 0.7), so the wave animation's rotation — which swings the arm
+  // within its own depth plane, not toward the camera — barely showed
+  // at all from the front-facing camera every instance of this
+  // component uses. Confirmed via real cropped screenshots at the
+  // wave's peak swing before this fix: the arm was essentially
+  // invisible behind the head the whole time. Moving the arms outside
+  // the head's silhouette and slightly toward the camera is what
+  // actually makes the wave (and the click-bounce, which also moves
+  // the whole body) read as motion rather than a barely-perceptible
+  // wiggle.
   const armGroup = new THREE.Group();
-  armGroup.position.set(-0.7, -0.36, 0);
+  armGroup.position.set(-0.92, -0.36, 0.35);
   const armMesh = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
     new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
@@ -392,13 +406,13 @@ function buildScene(
     new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
     new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
   );
-  stillArmMesh.position.set(0.7, -0.36, 0);
+  stillArmMesh.position.set(0.92, -0.36, 0.35);
   rootGroup.add(stillArmMesh);
   const stillHandMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.13, 16, 16),
     new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
   );
-  stillHandMesh.position.set(0.7, -0.06, 0);
+  stillHandMesh.position.set(0.92, -0.06, 0.35);
   rootGroup.add(stillHandMesh);
 
   const satelliteMesh = new THREE.Mesh(
@@ -618,12 +632,22 @@ export function GuideCharacter3D({
         handles.satelliteMesh.position.set(Math.cos(t * 1.4) * 1.3, 1.44, Math.sin(t * 1.4) * 1.3);
       }
 
-      // One-shot wave.
+      // One-shot wave — a brief anticipation "wind-up" (arm dips
+      // slightly the wrong way first) before the actual wave swing,
+      // per real animation-principle research this stage (anticipation
+      // makes an action read as deliberate rather than instant/robotic
+      // — a small, standard technique, not this app's own invention).
       if (handles.waveStart !== null) {
         const elapsed = t - handles.waveStart;
+        const anticipation = 0.15;
         const duration = 1.4;
-        if (elapsed < duration) {
-          handles.armGroup.rotation.z = Math.sin((elapsed / duration) * Math.PI * 2.5) * 0.5;
+        if (elapsed < anticipation) {
+          handles.armGroup.rotation.z = lerp(0, -0.12, elapsed / anticipation);
+        } else if (elapsed < duration) {
+          const waveElapsed = elapsed - anticipation;
+          const waveDuration = duration - anticipation;
+          handles.armGroup.rotation.z =
+            Math.sin((waveElapsed / waveDuration) * Math.PI * 2.5) * 0.5;
         } else {
           handles.armGroup.rotation.z = 0;
           handles.waveStart = null;
@@ -646,18 +670,39 @@ export function GuideCharacter3D({
         }
       }
 
-      // Walk-away — one-shot exit: turn, waddle sideways with a hop
-      // cycle, fade out.
+      // Walk-away — one-shot exit: a brief anticipation settle (a
+      // small squash, telegraphing "about to move" — same principle as
+      // the wave's wind-up above), then turn, waddle sideways with a
+      // hop cycle easing in from standstill, fade out.
       if (handles.walkAwayStart !== null) {
         const elapsed = t - handles.walkAwayStart;
+        const anticipationDuration = 0.18;
         const turnDuration = 0.35;
         const walkDuration = 1.3;
-        if (elapsed < turnDuration) {
-          handles.rootGroup.rotation.y = lerp(0, Math.PI * 0.55, elapsed / turnDuration);
+        const easeInDuration = 0.3;
+        if (elapsed < anticipationDuration) {
+          const p = elapsed / anticipationDuration;
+          const squash = Math.sin(p * Math.PI) * 0.08;
+          handles.rootGroup.scale.set(1 + squash, 1 - squash, 1 + squash);
+        } else if (elapsed < anticipationDuration + turnDuration) {
+          handles.rootGroup.scale.set(1, 1, 1);
+          const turnElapsed = elapsed - anticipationDuration;
+          handles.rootGroup.rotation.y = lerp(0, Math.PI * 0.55, turnElapsed / turnDuration);
         } else {
-          const walkElapsed = Math.min(elapsed - turnDuration, walkDuration);
-          const progress = walkElapsed / walkDuration;
-          handles.rootGroup.position.x = lerp(0, -2.6, progress);
+          const walkElapsed = Math.min(elapsed - anticipationDuration - turnDuration, walkDuration);
+          const rawProgress = walkElapsed / walkDuration;
+          // Ease in from standstill (smoothstep) only over the first
+          // easeInDuration, then continue at a roughly constant walking
+          // pace — a walk-away should keep moving at walking speed, not
+          // decelerate to a stop the way an arriving motion would.
+          const easeInProgress = Math.min(walkElapsed / easeInDuration, 1);
+          const eased = easeInProgress * easeInProgress * (3 - 2 * easeInProgress);
+          const easedDistance =
+            walkElapsed <= easeInDuration
+              ? eased * (easeInDuration / walkDuration)
+              : easeInDuration / walkDuration + (walkElapsed - easeInDuration) / walkDuration;
+          const progress = rawProgress; // still used for the fade below
+          handles.rootGroup.position.x = lerp(0, -2.6, Math.min(easedDistance, 1));
           handles.rootGroup.position.y = Math.abs(Math.sin(walkElapsed * 9)) * 0.08;
           handles.rootGroup.rotation.z = Math.sin(walkElapsed * 9) * 0.08;
           const fadeStart = 0.6;
@@ -671,7 +716,10 @@ export function GuideCharacter3D({
               }
             }
           });
-          if (elapsed >= turnDuration + walkDuration && !handles.walkAwayDone) {
+          if (
+            elapsed >= anticipationDuration + turnDuration + walkDuration &&
+            !handles.walkAwayDone
+          ) {
             handles.walkAwayDone = true;
             onWalkAwayCompleteRef.current?.();
           }
