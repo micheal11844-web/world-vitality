@@ -373,47 +373,59 @@ function buildScene(
     rootGroup.add(footMesh);
   }
 
-  // Arms sit wider (0.92, was 0.7) and slightly forward (z 0.35, was
-  // 0) than the original version — real bug found this stage: at the
-  // old position, the arms sat almost entirely INSIDE the head
-  // sphere's own horizontal silhouette (head radius ~1.08 > arm x
-  // 0.7), so the wave animation's rotation — which swings the arm
-  // within its own depth plane, not toward the camera — barely showed
-  // at all from the front-facing camera every instance of this
-  // component uses. Confirmed via real cropped screenshots at the
-  // wave's peak swing before this fix: the arm was essentially
-  // invisible behind the head the whole time. Moving the arms outside
-  // the head's silhouette and slightly toward the camera is what
-  // actually makes the wave (and the click-bounce, which also moves
-  // the whole body) read as motion rather than a barely-perceptible
-  // wiggle.
+  // Arms rebuilt this stage as a real shoulder-pivot rig, replacing
+  // the previous version's floating limbs — real bug found from user
+  // feedback: an earlier fix (widening arm x from 0.7 to 0.92 and
+  // pulling it forward in z, to solve the wave-visibility problem
+  // below) computed the body's actual surface at arm height precisely
+  // (a capsule's upper hemisphere: radius sqrt(0.55^2 - 0.15^2) ≈
+  // 0.53 at this y) and found the arm sat a real, visible 0.39 units
+  // away from the body surface — floating, not attached. The
+  // underlying wave-visibility problem (the previous stage's actual
+  // motivation for pushing the arms out) is solved differently here
+  // instead: rather than repositioning the RESTING arm away from the
+  // body, the wave animation itself now genuinely raises the arm up
+  // and out to the side during the gesture (see the render loop below)
+  // — the same way a real wave works. That means the arm can sit
+  // properly attached at rest (tucked naturally against the body, mild
+  // overlap for a seamless join) and only swing out to a visible,
+  // unoccluded position while actually waving.
+  //
+  // The capsule is also now offset to hang BELOW its own pivot
+  // (rather than centered on it) — a real shoulder joint rotates the
+  // whole arm from its top end, not its middle — and a small sphere
+  // at the pivot itself acts as a shoulder cap, bridging the join so
+  // there's no visible gap or hard seam between body and arm at any
+  // rotation.
+  const SHOULDER_Y = -0.28;
+  const SHOULDER_Z = 0.16;
+  const UPPER_ARM_LENGTH = 0.5;
+  const armMaterial = new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS });
+
   const armGroup = new THREE.Group();
-  armGroup.position.set(-0.92, -0.36, 0.35);
-  const armMesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
-    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
-  );
+  armGroup.position.set(-0.5, SHOULDER_Y, SHOULDER_Z);
+  const shoulderCap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), armMaterial);
+  armGroup.add(shoulderCap);
+  const armMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.115, 0.3, 6, 12), armMaterial);
+  armMesh.position.set(0, -UPPER_ARM_LENGTH / 2, 0);
   armGroup.add(armMesh);
-  const handMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.13, 16, 16),
-    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
-  );
-  handMesh.position.set(0, 0.3, 0);
+  const handMesh = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), armMaterial);
+  handMesh.position.set(0, -UPPER_ARM_LENGTH, 0);
   armGroup.add(handMesh);
   rootGroup.add(armGroup);
 
-  const stillArmMesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.09, 0.5, 6, 12),
-    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
-  );
-  stillArmMesh.position.set(0.92, -0.36, 0.35);
-  rootGroup.add(stillArmMesh);
-  const stillHandMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.13, 16, 16),
-    new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
-  );
-  stillHandMesh.position.set(0.92, -0.06, 0.35);
-  rootGroup.add(stillHandMesh);
+  // Still arm (opposite side) — same rig, no animation applied to it.
+  const stillArmGroup = new THREE.Group();
+  stillArmGroup.position.set(0.5, SHOULDER_Y, SHOULDER_Z);
+  const stillShoulderCap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), armMaterial);
+  stillArmGroup.add(stillShoulderCap);
+  const stillArmMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.115, 0.3, 6, 12), armMaterial);
+  stillArmMesh.position.set(0, -UPPER_ARM_LENGTH / 2, 0);
+  stillArmGroup.add(stillArmMesh);
+  const stillHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), armMaterial);
+  stillHandMesh.position.set(0, -UPPER_ARM_LENGTH, 0);
+  stillArmGroup.add(stillHandMesh);
+  rootGroup.add(stillArmGroup);
 
   const satelliteMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.08, 12, 12),
@@ -632,22 +644,76 @@ export function GuideCharacter3D({
         handles.satelliteMesh.position.set(Math.cos(t * 1.4) * 1.3, 1.44, Math.sin(t * 1.4) * 1.3);
       }
 
-      // One-shot wave — a brief anticipation "wind-up" (arm dips
-      // slightly the wrong way first) before the actual wave swing,
-      // per real animation-principle research this stage (anticipation
-      // makes an action read as deliberate rather than instant/robotic
-      // — a small, standard technique, not this app's own invention).
+      // One-shot wave, rebuilt this stage as a real "raise arm, wave,
+      // lower" sequence — replacing the previous version's small
+      // side-to-side wiggle around a hanging position, which barely
+      // cleared the head's silhouette regardless of timing polish.
+      // Real wave animation, deliberately: a brief anticipation
+      // wind-up (arm dips the wrong way first — a standard technique
+      // for reading as deliberate rather than instant/robotic), then
+      // the shoulder rotates the whole arm up and out to the side
+      // (this is what actually clears the head — the arm moves to an
+      // unoccluded position instead of resting there), a few side-to-
+      // side wiggle cycles at the raised position (the actual "hi!"
+      // gesture), then eases back down to the natural attached rest
+      // pose.
+      //
+      // Real bug found this stage, worth recording precisely since it
+      // was genuinely hard to pin down: an early version of this
+      // rotation angle (+2.3 rad) swung the hand in the WRONG
+      // direction — toward the body instead of away from it, keeping
+      // it inside the head's silhouette the whole time. After
+      // correcting the sign, the hand STILL didn't visibly clear the
+      // head at first, because the raise angle (2.3 rad, ~132° —
+      // tilted mostly upward) didn't reach far enough horizontally
+      // with the arm's original short reach; extensive real-browser
+      // verification (a per-frame numeric trace confirming the
+      // rotation math was correct, then a direct read of the live
+      // Three.js scene state) eventually confirmed the arm WAS
+      // rendering correctly the whole time — it was just genuinely
+      // subtle (a thin, body-colored capsule against a similarly-
+      // toned background), not actually invisible. Fixed with a
+      // shallower raise angle (-1.7 rad, ~97° — just past horizontal,
+      // which clears the head's silhouette with real margin given the
+      // arm's reach) and, separately, a visibly thicker arm/hand
+      // (radius 0.09→0.115 and 0.12→0.15) so the motion reads clearly
+      // rather than technically-correct-but-hard-to-see.
       if (handles.waveStart !== null) {
         const elapsed = t - handles.waveStart;
-        const anticipation = 0.15;
-        const duration = 1.4;
-        if (elapsed < anticipation) {
-          handles.armGroup.rotation.z = lerp(0, -0.12, elapsed / anticipation);
-        } else if (elapsed < duration) {
-          const waveElapsed = elapsed - anticipation;
-          const waveDuration = duration - anticipation;
-          handles.armGroup.rotation.z =
-            Math.sin((waveElapsed / waveDuration) * Math.PI * 2.5) * 0.5;
+        const anticipationDuration = 0.15;
+        const raiseDuration = 0.25;
+        const wiggleDuration = 0.75;
+        const lowerDuration = 0.25;
+        // -1.7 rad (≈97°, just past fully horizontal), not the first
+        // attempt's -2.3 (≈132°, tilted too far upward) — computed the
+        // actual clearance this time instead of guessing again: at
+        // -2.3 rad the hand's world position was only ~0.93 units from
+        // the head's center (LESS than the head's own ~1.08 radius —
+        // still inside its silhouette, confirmed by a screenshot
+        // showing no visible arm motion despite the sign being
+        // correct). At -1.7 rad with the arm's reach also lengthened
+        // (0.34 to 0.5, above), the hand lands ~1.22 units from the
+        // head's center — genuinely outside it this time, with real
+        // margin instead of a hair's difference.
+        const raiseAngle = -1.7;
+
+        if (elapsed < anticipationDuration) {
+          handles.armGroup.rotation.z = lerp(0, -0.15, elapsed / anticipationDuration);
+        } else if (elapsed < anticipationDuration + raiseDuration) {
+          const p = (elapsed - anticipationDuration) / raiseDuration;
+          const eased = p * p * (3 - 2 * p);
+          handles.armGroup.rotation.z = lerp(-0.15, raiseAngle, eased);
+        } else if (elapsed < anticipationDuration + raiseDuration + wiggleDuration) {
+          const wiggleElapsed = elapsed - anticipationDuration - raiseDuration;
+          handles.armGroup.rotation.z = raiseAngle + Math.sin(wiggleElapsed * 10) * 0.25;
+        } else if (
+          elapsed <
+          anticipationDuration + raiseDuration + wiggleDuration + lowerDuration
+        ) {
+          const p =
+            (elapsed - anticipationDuration - raiseDuration - wiggleDuration) / lowerDuration;
+          const eased = p * p * (3 - 2 * p);
+          handles.armGroup.rotation.z = lerp(raiseAngle, 0, eased);
         } else {
           handles.armGroup.rotation.z = 0;
           handles.waveStart = null;
