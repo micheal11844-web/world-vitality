@@ -12,10 +12,16 @@ export interface AuthIllustrationProps {
    * needing to know about Next.js dynamic-import mechanics itself —
    * same reasoning as this file's own doc comment on why it doesn't
    * use `next/image` directly. Defaults to the existing flat-SVG
-   * character when omitted, so every other caller of
-   * `AuthIllustration` is unaffected.
+   * character when omitted (`undefined`), so every other caller of
+   * `AuthIllustration` is unaffected — pass `null` explicitly to show
+   * no guide character here at all (BUILD_PLAN "STAGE — GUIDE
+   * CHARACTER 3D: HONEY-POT REDESIGN, SINGLE INSTANCE ON LOGIN"): the
+   * login page uses this to avoid showing Orbi twice on the same
+   * screen (once here, once already in its own form header) — real
+   * user feedback that two simultaneous instances read as one too
+   * many, not a design intended to always show two.
    */
-  guideCharacter?: ReactNode;
+  guideCharacter?: ReactNode | null;
 }
 
 /**
@@ -219,7 +225,7 @@ export function AuthIllustration({ className, guideCharacter }: AuthIllustration
         />
       </div>
       <div style={{ position: "absolute", bottom: "8%", zIndex: 1 }}>
-        {guideCharacter ?? <GuideCharacter size={88} mood="happy" />}
+        {guideCharacter === undefined ? <GuideCharacter size={88} mood="happy" /> : guideCharacter}
       </div>
     </div>
   );

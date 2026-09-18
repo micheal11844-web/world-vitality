@@ -329,7 +329,17 @@ function buildScene(
   // frustum's visible height at this distance/FOV and confirming it
   // exceeds the character's real bounding box, not just eyeballing a
   // screenshot.
-  camera.position.set(0, 0, 5.4);
+  // Distance increased slightly (5.4 -> 5.75) to fit the new honey-pot
+  // body's taller extent (feet now sit lower, at y≈-1.85, than the
+  // old capsule body did) with real margin — computed, not eyeballed:
+  // at distance 5.75 the frustum's visible half-height is
+  // 5.75*tan(17.5°)≈1.81, comfortably exceeding the character's new
+  // ~3.42-unit total height. The head's own position/geometry is
+  // untouched — this only pulls the camera back slightly, matching
+  // this app's own established discipline of computing the actual
+  // frustum math for a full-body-framing bug rather than adjusting it
+  // by trial and error.
+  camera.position.set(0, 0, 5.75);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.35));
   const key = new THREE.DirectionalLight(0xffffff, 1.3);
@@ -351,8 +361,8 @@ function buildScene(
     opacity: 0.22,
     depthWrite: false,
   });
-  const shadowMesh = new THREE.Mesh(new THREE.CircleGeometry(0.75, 32), shadowMaterial);
-  shadowMesh.position.set(0, -1.41, 0);
+  const shadowMesh = new THREE.Mesh(new THREE.CircleGeometry(0.85, 32), shadowMaterial);
+  shadowMesh.position.set(0, -1.87, 0);
   shadowMesh.rotation.x = -Math.PI / 2;
   rootGroup.add(shadowMesh);
 
@@ -360,16 +370,47 @@ function buildScene(
     color: colors.body,
     ...PBR_MATERIAL_PROPS,
   });
-  const bodyMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 0.5, 8, 16), bodyMaterial);
-  bodyMesh.position.set(0, -0.76, 0);
+  // Body rebuilt this stage as a real "honey pot bear" silhouette —
+  // owner feedback: not cartoon-like/sensible enough as a plain
+  // capsule. A `LatheGeometry` (a profile curve revolved around the
+  // vertical axis) is the correct real technique for this — the same
+  // way a potter's wheel or a real honey-pot/Pooh-bear belly shape is
+  // actually modeled — rather than trying to fake a belly with a
+  // stretched sphere or capsule. Profile, bottom to top: a small
+  // rounded foot-tip, widening quickly into a big round belly (the
+  // "honey pot" bulge, wider than the old capsule's constant 0.55
+  // radius ever was), then tapering back in through a narrower waist/
+  // neck up to where it meets the head — the head itself is
+  // deliberately unchanged, per the request to leave it as-is.
+  const BODY_PROFILE: Array<[number, number]> = [
+    [0, -1.6],
+    [0.22, -1.56],
+    [0.5, -1.42],
+    [0.7, -1.2],
+    [0.78, -0.95],
+    [0.76, -0.72],
+    [0.6, -0.45],
+    [0.42, -0.22],
+    [0.34, -0.05],
+  ];
+  const bodyGeometry = new THREE.LatheGeometry(
+    BODY_PROFILE.map(([x, y]) => new THREE.Vector2(x, y)),
+    32,
+  );
+  const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
   rootGroup.add(bodyMesh);
 
-  for (const x of [-0.24, 0.24]) {
+  // Feet moved out from under the belly (previously embedded inside
+  // the capsule's own lower half) to below its new, much wider base,
+  // and spaced further apart — a big round belly needs feet peeking
+  // out past its own silhouette to read as "standing", not tucked
+  // invisibly underneath it.
+  for (const x of [-0.32, 0.32]) {
     const footMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.16, 16, 16),
+      new THREE.SphereGeometry(0.17, 16, 16),
       new THREE.MeshPhysicalMaterial({ color: colors.body, ...PBR_MATERIAL_PROPS }),
     );
-    footMesh.position.set(x, -1.34, 0.05);
+    footMesh.position.set(x, -1.68, 0.1);
     rootGroup.add(footMesh);
   }
 

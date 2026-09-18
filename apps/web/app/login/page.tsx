@@ -181,7 +181,7 @@ function LoginForm() {
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
       >
-        <Orbi3D mood={moodFor(status)} wave={status === "idle"} />
+        <Orbi3D mood={moodFor(status)} wave={status === "idle"} size={160} />
       </div>
       <Text
         variant="sectionTitle"
@@ -370,7 +370,7 @@ export default function LoginPage() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <div className="wv-auth-illustration-panel" style={{ flex: 1, display: "none" }}>
-        <AuthIllustration guideCharacter={<Orbi3D mood="happy" wave />} />
+        <AuthIllustration guideCharacter={null} />
       </div>
       <div
         style={{
