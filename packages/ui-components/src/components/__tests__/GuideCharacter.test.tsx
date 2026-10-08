@@ -43,10 +43,10 @@ test("every mood renders a distinct mouth path", () => {
 
 test("wave gesture only animates when explicitly requested", () => {
   const { container: still } = render(<GuideCharacter wave={false} />);
-  const stillArm = still.querySelector("line[x1='30']");
+  const stillArm = still.querySelector("line[x1='38']");
   assert.equal(stillArm?.hasAttribute("style"), false);
 
   const { container: waving } = render(<GuideCharacter wave={true} />);
-  const wavingArm = waving.querySelector("line[x1='30']");
+  const wavingArm = waving.querySelector("line[x1='38']");
   assert.ok(wavingArm?.getAttribute("style")?.includes("wv-guide-wave"));
 });

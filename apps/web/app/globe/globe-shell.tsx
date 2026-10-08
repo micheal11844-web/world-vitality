@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { AppShell } from "../app-shell-with-guide";
-import { Text, StateDisplay } from "@world-vitality/ui-components";
+import { Text, StateDisplay, AppShell } from "@world-vitality/ui-components";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 import type { GlobePin } from "./globe-viewer";
@@ -16,7 +15,9 @@ import type { GlobePin } from "./globe-viewer";
 const GlobeViewer = dynamic(() => import("./globe-viewer").then((m) => m.GlobeViewer), {
   ssr: false,
   loading: () => (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+    <div
+      style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}
+    >
       <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
         Loading the globe…
       </Text>
@@ -59,7 +60,14 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
         },
       ]}
     >
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: "var(--wv-space-sm)" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          gap: "var(--wv-space-sm)",
+        }}
+      >
         <div>
           <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
             The Globe
@@ -70,7 +78,9 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
             hazard/status detail lives in each workspace; this is an overview, not a replacement.
           </Text>
         </div>
-        <div style={{ flex: 1, minHeight: 0, borderRadius: "var(--wv-radius-md)", overflow: "hidden" }}>
+        <div
+          style={{ flex: 1, minHeight: 0, borderRadius: "var(--wv-radius-md)", overflow: "hidden" }}
+        >
           {pins.length === 0 ? (
             <StateDisplay
               status="empty"

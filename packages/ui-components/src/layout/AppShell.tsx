@@ -271,7 +271,7 @@ export function AppShell({
             zIndex: 10,
           }}
         >
-          {guideCharacter ?? <GuideCharacter mood="idle" size={64} />}
+          {guideCharacter ?? <GuideCharacter mood="idle" size={84} />}
         </div>
       )}
     </div>

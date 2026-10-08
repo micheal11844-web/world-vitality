@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button, Card, Input, Text, PasswordStrengthMeter } from "@world-vitality/ui-components";
-import { Orbi3D } from "../orbi-3d";
+import {
+  Button,
+  Card,
+  GuideCharacter,
+  Input,
+  Text,
+  PasswordStrengthMeter,
+} from "@world-vitality/ui-components";
 import { updatePasswordAction } from "../../lib/actions";
 
 /**
@@ -63,7 +69,7 @@ export default function ResetPasswordPage() {
         <div
           style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
         >
-          <Orbi3D mood={status === "error" ? "concerned" : "idle"} />
+          <GuideCharacter mood={status === "error" ? "concerned" : "idle"} />
         </div>
         <Text
           variant="sectionTitle"

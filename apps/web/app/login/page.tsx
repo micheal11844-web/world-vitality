@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Orbi3D } from "../orbi-3d";
 import {
   Button,
   Card,
@@ -12,6 +11,7 @@ import {
   Text,
   Checkbox,
   AuthIllustration,
+  GuideCharacter,
   PasswordStrengthMeter,
   type GuideCharacterMood,
 } from "@world-vitality/ui-components";
@@ -181,7 +181,7 @@ function LoginForm() {
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
       >
-        <Orbi3D mood={moodFor(status)} wave={status === "idle"} size={160} />
+        <GuideCharacter mood={moodFor(status)} wave={status === "idle"} size={200} />
       </div>
       <Text
         variant="sectionTitle"
