@@ -50,3 +50,31 @@ test("wave gesture only animates when explicitly requested", () => {
   const wavingArm = waving.querySelector("line[x1='38']");
   assert.ok(wavingArm?.getAttribute("style")?.includes("wv-guide-wave"));
 });
+
+test("walkAway calls onWalkAwayComplete (immediately when animations are unavailable)", () => {
+  let completed = 0;
+  render(<GuideCharacter walkAway onWalkAwayComplete={() => (completed += 1)} />);
+  assert.equal(completed, 1);
+});
+
+test("walkAway does nothing until requested", () => {
+  let completed = 0;
+  render(<GuideCharacter onWalkAwayComplete={() => (completed += 1)} />);
+  assert.equal(completed, 0);
+});
+
+test("eyes follow the pointer unless `still`", () => {
+  const { container } = render(<GuideCharacter />);
+  const eye = container.querySelector("circle[cx='59']") as SVGCircleElement;
+  assert.ok(eye);
+  // jsdom has no layout (zero-size rect) — the component must not
+  // throw or write NaN transforms when it can't measure itself.
+  window.dispatchEvent(new window.Event("pointermove"));
+  assert.ok(!eye.style.transform.includes("NaN"));
+
+  cleanup();
+  const { container: stillContainer } = render(<GuideCharacter still />);
+  const stillEye = stillContainer.querySelector("circle[cx='59']") as SVGCircleElement;
+  window.dispatchEvent(new window.Event("pointermove"));
+  assert.equal(stillEye.style.transform, "");
+});

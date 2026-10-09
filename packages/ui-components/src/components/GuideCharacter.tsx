@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+
 export type GuideCharacterMood = "idle" | "thinking" | "happy" | "concerned";
 
 export interface GuideCharacterProps {
@@ -9,6 +13,15 @@ export interface GuideCharacterProps {
   size?: number;
   /** Plays a single wave gesture once, e.g. on first mount of a page. */
   wave?: boolean;
+  /** Walks off to the right and fades out (e.g. on successful sign-in).
+   *  Calls `onWalkAwayComplete` when finished — immediately under
+   *  reduced motion. */
+  walkAway?: boolean;
+  onWalkAwayComplete?: () => void;
+  /** Turns off cursor-following eyes, blinking and the click hop (the
+   *  explicit `wave`/`walkAway` props are unaffected). Reduced-motion
+   *  users get this automatically. Default: alive. */
+  still?: boolean;
   className?: string;
 }
 
@@ -39,8 +52,27 @@ const EYEBROW_TRANSFORM: Record<GuideCharacterMood, { left: string; right: strin
   concerned: { left: "rotate(14deg)", right: "rotate(-14deg)" },
 };
 
+/** Eyes scale around their own centre when blinking. */
+const EYE_STYLE = {
+  transformBox: "fill-box",
+  transformOrigin: "center",
+  transition: "transform 90ms ease-out",
+} as const;
+
 const VIEW_W = 140;
 const VIEW_H = 190;
+const HEAD_CX = 70;
+const HEAD_CY = 40;
+/** How far (artwork units) the eyes travel toward the cursor. */
+const MAX_EYE_TRAVEL = 2.6;
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 /**
  * The Guide Character ("Orbi") — a 2D, sticker-style honey-pot bear with
@@ -61,15 +93,123 @@ export function GuideCharacter({
   mood = "idle",
   size = 140,
   wave = false,
+  walkAway = false,
+  onWalkAwayComplete,
+  still = false,
   className,
 }: GuideCharacterProps) {
   const eyebrow = EYEBROW_TRANSFORM[mood];
+  const rootRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const eyeRefs = useRef<Array<SVGCircleElement | null>>([null, null]);
+  const look = useRef({ x: 0, y: 0 });
+  const blinking = useRef(false);
+  const onCompleteRef = useRef(onWalkAwayComplete);
+  onCompleteRef.current = onWalkAwayComplete;
+
+  // Cursor-following eyes, idle blink and a small hop on any click.
+  // Eyes are moved by writing their `style.transform` directly — a
+  // pointermove must never trigger a React re-render. Skipped entirely
+  // for reduced-motion users and when `still`.
+  useEffect(() => {
+    if (still || prefersReducedMotion()) return;
+
+    const applyEyes = () => {
+      const { x, y } = look.current;
+      const scaleY = blinking.current ? 0.1 : 1;
+      for (const eye of eyeRefs.current) {
+        if (eye) eye.style.transform = `translate(${x}px, ${y}px) scaleY(${scaleY})`;
+      }
+    };
+
+    const aimAt = (clientX: number, clientY: number) => {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect || rect.width === 0) return;
+      // Head centre in the artwork is (70, 40) of a 140x190 box.
+      const cx = rect.left + rect.width * (HEAD_CX / VIEW_W);
+      const cy = rect.top + rect.height * (HEAD_CY / VIEW_H);
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      const reach = Math.min(dist / 200, 1) * MAX_EYE_TRAVEL;
+      look.current = { x: (dx / dist) * reach, y: (dy / dist) * reach };
+      applyEyes();
+    };
+
+    const onMove = (e: PointerEvent) => aimAt(e.clientX, e.clientY);
+    const onDown = (e: PointerEvent) => {
+      aimAt(e.clientX, e.clientY);
+      const svg = svgRef.current;
+      if (svg && typeof svg.animate === "function") {
+        svg.animate(
+          [
+            { transform: "translateY(0) scale(1, 1)" },
+            { transform: "translateY(-9px) scale(0.98, 1.03)" },
+            { transform: "translateY(0) scale(1.03, 0.97)" },
+            { transform: "translateY(0) scale(1, 1)" },
+          ],
+          { duration: 420, easing: "ease-out" },
+        );
+      }
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown, { passive: true });
+
+    let blinkTimer: number | undefined;
+    let openTimer: number | undefined;
+    const scheduleBlink = () => {
+      blinkTimer = window.setTimeout(
+        () => {
+          blinking.current = true;
+          applyEyes();
+          openTimer = window.setTimeout(() => {
+            blinking.current = false;
+            applyEyes();
+            scheduleBlink();
+          }, 130);
+        },
+        2600 + Math.random() * 3200,
+      );
+    };
+    scheduleBlink();
+
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.clearTimeout(blinkTimer);
+      window.clearTimeout(openTimer);
+    };
+  }, [still]);
+
+  // Walk away to the right with a small step-bob, then fade.
+  useEffect(() => {
+    if (!walkAway) return;
+    const svg = svgRef.current;
+    if (prefersReducedMotion() || !svg || typeof svg.animate !== "function") {
+      onCompleteRef.current?.();
+      return;
+    }
+    const animation = svg.animate(
+      [
+        { transform: "translate(0px, 0px)", opacity: 1 },
+        { transform: "translate(30px, -5px)", opacity: 1, offset: 0.2 },
+        { transform: "translate(60px, 0px)", opacity: 1, offset: 0.4 },
+        { transform: "translate(90px, -5px)", opacity: 0.8, offset: 0.6 },
+        { transform: "translate(120px, 0px)", opacity: 0.4, offset: 0.8 },
+        { transform: "translate(150px, -5px)", opacity: 0 },
+      ],
+      { duration: 1100, easing: "ease-in", fill: "forwards" },
+    );
+    animation.onfinish = () => onCompleteRef.current?.();
+    return () => animation.cancel();
+  }, [walkAway]);
   const waveStyle = wave
     ? { transformOrigin: "38px 94px", animation: "wv-guide-wave 1.4s ease-in-out 1" }
     : undefined;
 
   return (
     <div
+      ref={rootRef}
       role="presentation"
       aria-hidden="true"
       title={name}
@@ -83,6 +223,7 @@ export function GuideCharacter({
       }}
     >
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         width="100%"
         height="100%"
@@ -200,8 +341,26 @@ export function GuideCharacter({
         />
 
         {/* Face */}
-        <circle cx="59" cy="42" r="4.5" fill={INK} />
-        <circle cx="81" cy="42" r="4.5" fill={INK} />
+        <circle
+          ref={(el) => {
+            eyeRefs.current[0] = el;
+          }}
+          cx="59"
+          cy="42"
+          r="4.5"
+          fill={INK}
+          style={EYE_STYLE}
+        />
+        <circle
+          ref={(el) => {
+            eyeRefs.current[1] = el;
+          }}
+          cx="81"
+          cy="42"
+          r="4.5"
+          fill={INK}
+          style={EYE_STYLE}
+        />
         <line
           x1="52"
           y1="32"

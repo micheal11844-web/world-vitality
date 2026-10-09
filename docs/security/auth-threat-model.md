@@ -129,6 +129,13 @@ explicitly-deferred list) — flagged here so that work doesn't proceed
 without first revisiting this role model, rather than the gap being
 rediscovered the hard way later.
 
+> **Update (BUILD_PLAN v79):** the trigger above has fired and the work
+> was done — resource-scoped `can(...)` checks now cover Agriculture
+> Fields, Insurance Properties and Government & NGOs Monitored
+> Locations. See the addendum in
+> `docs/reviews/stage-7-observability-security-accessibility.md`. The
+> remaining workspaces hold no user-owned resources.
+
 ### 5. Account deletion / data export — no additional auth step
 
 `deleteAccount` and `requestDataExport` are single-call, "as easy as

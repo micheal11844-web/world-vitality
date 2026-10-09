@@ -1,39 +1,22 @@
-import { NasaPowerConnector } from "@world-vitality/data-ingestion";
 import { WorkspaceShell } from "../workspace-shell";
+import { getReferenceSiteData } from "../../../../lib/reference-sites";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
 
-const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
-
-async function getRawReadings() {
-  const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
-    parameters: ["T2M", "WS2M"],
-    community: "AG",
-    lookbackDays: 7,
-  });
-  const { records } = await connector.ingest({ type: "manual", requestedBy: "research-map-page" });
-  const latestTemp = records
-    .filter((r) => r.metric === "T2M")
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
-  const latestWind = records
-    .filter((r) => r.metric === "WS2M")
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
-  return { temperatureValue: latestTemp?.value, windValue: latestWind?.value };
-}
-
 /**
- * Research's map page (BUILD_PLAN Stage 14). Unlike every other
- * workspace's map, this one shows the **raw metric values themselves**
- * in the marker popup — no risk band, no color-coded interpretation —
- * per the PRD's "minimally interpreted, maximally transparent" design
- * for this workspace (Section A.9: "Full raw-layer geospatial
- * visualization"). Same base-layer honest scope as every other
- * workspace's map otherwise.
+ * Research's map page. Unlike every other workspace's map, it shows the
+ * **raw metric values themselves** in each marker's popup — no risk
+ * band, no color-coded interpretation — per the PRD's "minimally
+ * interpreted, maximally transparent" design for this workspace
+ * (Section A.9). Now one marker per shared sample reference site (see
+ * `lib/reference-sites.ts`) instead of a single point.
  */
 export default async function ResearchMapPage() {
-  const { temperatureValue, windValue } = await getRawReadings();
+  const { readings, failedSites } = await getReferenceSiteData(
+    ["T2M", "WS2M"],
+    "research-map-page",
+  );
 
   return (
     <WorkspaceShell activeKey="map">
@@ -45,12 +28,7 @@ export default async function ResearchMapPage() {
           overflow: "hidden",
         }}
       >
-        <MapView
-          latitude={DEMO_LOCATION.latitude}
-          longitude={DEMO_LOCATION.longitude}
-          temperatureValue={temperatureValue}
-          windValue={windValue}
-        />
+        <MapView sites={readings} failedSites={failedSites} />
       </div>
     </WorkspaceShell>
   );

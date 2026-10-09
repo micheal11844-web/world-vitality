@@ -1,46 +1,29 @@
-import { NasaPowerConnector } from "@world-vitality/data-ingestion";
 import {
   WindGenerationStatusProvider,
   WIND_GENERATION_STATUS_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
 import { WorkspaceShell } from "../workspace-shell";
+import { getReferenceSiteData } from "../../../../lib/reference-sites";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
 
-const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
-
-async function getCurrentGenerationData() {
-  const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
-    parameters: ["WS2M"],
-    community: "AG",
-    lookbackDays: 7,
-  });
-  const { records } = await connector.ingest({
-    type: "manual",
-    requestedBy: "renewable-energy-map-page",
-  });
-  const provider = new WindGenerationStatusProvider();
-  const result = await provider.interpret({
-    capability: WIND_GENERATION_STATUS_CAPABILITY_ID,
-    records,
-  });
-  const latest = records
-    .filter((r) => r.metric === "WS2M")
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
-  return { result, windValue: latest?.value };
-}
-
 /**
- * Renewable Energy's map page (BUILD_PLAN Stage 13). Structurally
- * identical to the other three workspaces' map pages — same "base
- * layers + one data overlay" honest scope. No true "regional resource
- * map" (the PRD's multi-year siting/feasibility vision) exists — this
- * shows the single demo asset location's current generation band only.
+ * Renewable Energy's map page — a multi-marker map over the shared
+ * sample reference sites (see `lib/reference-sites.ts`), each colored by
+ * its own latest wind-generation band, so wind-resource variation
+ * across regions is visible at a glance. The AI panel interprets the
+ * primary site. Still not the PRD's multi-year siting/feasibility map.
  */
 export default async function RenewableEnergyMapPage() {
-  const { result, windValue } = await getCurrentGenerationData();
+  const { readings, primaryRecords, failedSites } = await getReferenceSiteData(
+    ["WS2M"],
+    "renewable-energy-map-page",
+  );
+  const result = await new WindGenerationStatusProvider().interpret({
+    capability: WIND_GENERATION_STATUS_CAPABILITY_ID,
+    records: primaryRecords,
+  });
 
   return (
     <WorkspaceShell activeKey="map" aiInterpretation={result}>
@@ -52,11 +35,7 @@ export default async function RenewableEnergyMapPage() {
           overflow: "hidden",
         }}
       >
-        <MapView
-          latitude={DEMO_LOCATION.latitude}
-          longitude={DEMO_LOCATION.longitude}
-          windValue={windValue}
-        />
+        <MapView sites={readings} failedSites={failedSites} />
       </div>
     </WorkspaceShell>
   );

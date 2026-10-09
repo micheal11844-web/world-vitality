@@ -1,49 +1,30 @@
-import { NasaPowerConnector } from "@world-vitality/data-ingestion";
 import {
   LogisticsRouteRiskProvider,
   LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
 } from "@world-vitality/interpretation-engine";
 import { WorkspaceShell } from "../workspace-shell";
+import { getReferenceSiteData } from "../../../../lib/reference-sites";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
 
-const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
-
-async function getCurrentRouteRiskData() {
-  const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
-    parameters: ["WS2M"],
-    community: "AG",
-    lookbackDays: 7,
-  });
-  const { records } = await connector.ingest({
-    type: "manual",
-    requestedBy: "logistics-map-page",
-  });
-  const provider = new LogisticsRouteRiskProvider();
-  const result = await provider.interpret({
-    capability: LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
-    records,
-  });
-  const latest = records
-    .filter((r) => r.metric === "WS2M")
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
-  return { result, windValue: latest?.value };
-}
-
 /**
- * Logistics & Shipping's map page (BUILD_PLAN "STAGE — LOGISTICS &
- * SHIPPING WORKSPACE"). Structurally identical to every other
- * workspace's map page — same "base layers + one data overlay" honest
- * scope. No true multi-waypoint route overlay (the PRD's actual "Route
- * overlays with live storm tracks, port-status indicators, flood-prone
- * corridor flags" vision) exists — this shows the single demo
- * location's current route-risk band only, same honest single-point
- * scope as the home page.
+ * Logistics & Shipping's map page — a multi-marker map over the shared
+ * sample reference sites (see `lib/reference-sites.ts`), each colored by
+ * its own latest route-risk band. Still not the PRD's multi-waypoint
+ * route overlay with storm tracks and port status: these are
+ * independent points, not connected routes. The AI panel interprets the
+ * primary site.
  */
 export default async function LogisticsMapPage() {
-  const { result, windValue } = await getCurrentRouteRiskData();
+  const { readings, primaryRecords, failedSites } = await getReferenceSiteData(
+    ["WS2M"],
+    "logistics-map-page",
+  );
+  const result = await new LogisticsRouteRiskProvider().interpret({
+    capability: LOGISTICS_ROUTE_RISK_CAPABILITY_ID,
+    records: primaryRecords,
+  });
 
   return (
     <WorkspaceShell activeKey="map" aiInterpretation={result}>
@@ -55,11 +36,7 @@ export default async function LogisticsMapPage() {
           overflow: "hidden",
         }}
       >
-        <MapView
-          latitude={DEMO_LOCATION.latitude}
-          longitude={DEMO_LOCATION.longitude}
-          windValue={windValue}
-        />
+        <MapView sites={readings} failedSites={failedSites} />
       </div>
     </WorkspaceShell>
   );

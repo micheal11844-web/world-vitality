@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -89,6 +89,16 @@ function LoginForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState<string | undefined>();
   const [googleLoading, setGoogleLoading] = useState(false);
+  // Orbi walks off on a successful sign-in; navigation happens when he
+  // finishes (or after a safety timeout, so a failed animation can never
+  // strand someone on the login page).
+  const [leaving, setLeaving] = useState(false);
+  const navigated = useRef(false);
+  function goToDashboard() {
+    if (navigated.current) return;
+    navigated.current = true;
+    window.location.href = "/dashboard";
+  }
   const resetSuccess = searchParams.get("reset") === "success";
 
   // Surfaces a failure from the /auth/callback redirect — previously
@@ -116,7 +126,8 @@ function LoginForm() {
       // redirect on next navigation — a full navigation is used here
       // (rather than router.push) since the cookie was set by a Server
       // Action and downstream Server Components need to see it fresh.
-      window.location.href = "/dashboard";
+      setLeaving(true);
+      window.setTimeout(goToDashboard, 1800);
     } else {
       setStatus("error");
       setError(result.error);
@@ -181,7 +192,13 @@ function LoginForm() {
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
       >
-        <GuideCharacter mood={moodFor(status)} wave={status === "idle"} size={200} />
+        <GuideCharacter
+          mood={leaving ? "happy" : moodFor(status)}
+          wave={status === "idle"}
+          walkAway={leaving}
+          onWalkAwayComplete={goToDashboard}
+          size={200}
+        />
       </div>
       <Text
         variant="sectionTitle"

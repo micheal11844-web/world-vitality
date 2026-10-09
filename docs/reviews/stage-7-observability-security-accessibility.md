@@ -192,3 +192,18 @@ audit --audit-level=high` on every push/PR. Set to
   stays open until a second workspace or per-resource data model
   exists (both already on BUILD_PLAN's explicitly-deferred list) — see
   the threat model's threat #4 for why this matters once that happens.
+
+### Addendum (BUILD_PLAN v79) — `scoped_field_user` scoping is no longer open
+
+The "still open, and correctly so" note above was written when no
+sub-workspace resource existed to scope against. That is no longer true:
+Agriculture Fields (v37), Insurance Properties (v49) and Government &
+NGOs Monitored Locations (v54) are real per-resource data models, each
+filtered through `can(role, "data:view" | "data:edit", { resourceId,
+scopedResourceIds })` on every page that lists or plots them (including
+the multi-marker maps, v65–v67). The remaining workspaces (Weather,
+Construction, Renewable Energy, Logistics, Research, Education, Disaster
+Monitoring) hold no user-owned resources — they show public environmental
+data — so there is nothing per-user to under-scope. Recorded as an
+addendum rather than editing the audit above, same convention as the
+earlier addendum in this file.
