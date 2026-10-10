@@ -60,3 +60,17 @@ export {
 export { AIPanel, type AIPanelProps } from "./layout/AIPanel.js";
 export { AppShell, type AppShellProps } from "./layout/AppShell.js";
 export { AppShellSkeleton } from "./layout/AppShellSkeleton.js";
+export { GlobalSearch, type GlobalSearchProps } from "./search/GlobalSearch.js";
+export {
+  classifyQuery,
+  extractPlaceCandidate,
+  normalizeQuery,
+  rankEntries,
+  suggestionsFromEntries,
+  topicTokens,
+  type QueryKind,
+  type RankedEntry,
+  type SearchEntry,
+  type SearchEntryKind,
+  type SearchSuggestion,
+} from "./search/search-core.js";

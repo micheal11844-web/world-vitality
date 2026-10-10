@@ -93,6 +93,11 @@ export async function middleware(request: NextRequest) {
   }
 }
 
+// `/search` is public (anonymous visitors can search) but still listed
+// here so a signed-in visitor whose short-lived access token has expired
+// is refreshed first and the page can tell they're signed in — without
+// this the header would wrongly show them as signed out until their
+// next gated page.
 export const config = {
-  matcher: ["/dashboard/:path*", "/workspaces/:path*", "/settings/:path*"],
+  matcher: ["/dashboard/:path*", "/workspaces/:path*", "/settings/:path*", "/search"],
 };

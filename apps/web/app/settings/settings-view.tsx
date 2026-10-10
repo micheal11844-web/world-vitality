@@ -147,68 +147,72 @@ export function SettingsView({
           </div>
         </Card>
 
-        <Card>
-          <div style={sectionGap}>
-            <Text variant="sectionTitle" as="h2">
-              Download your data
-            </Text>
-            <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              One click, no waiting: a JSON file with your profile, your workspace memberships,
-              everything you created (fields, properties, locations) and the comments you wrote. It
-              doesn&apos;t include other people&apos;s data or public environmental readings, and
-              the file says so.
-            </Text>
-            <div>
-              <a
-                href="/settings/export"
-                download
-                style={{
-                  display: "inline-block",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "var(--wv-radius-sm)",
-                  border: "1px solid var(--wv-border)",
-                  color: "var(--wv-text-primary)",
-                  textDecoration: "none",
-                  fontFamily: "var(--wv-font-sans)",
-                  fontSize: "0.875rem",
-                }}
-              >
-                Download my data
-              </a>
+        <div id="download-data" style={{ scrollMarginTop: "var(--wv-space-lg)" }}>
+          <Card>
+            <div style={sectionGap}>
+              <Text variant="sectionTitle" as="h2">
+                Download your data
+              </Text>
+              <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                One click, no waiting: a JSON file with your profile, your workspace memberships,
+                everything you created (fields, properties, locations) and the comments you wrote.
+                It doesn&apos;t include other people&apos;s data or public environmental readings,
+                and the file says so.
+              </Text>
+              <div>
+                <a
+                  href="/settings/export"
+                  download
+                  style={{
+                    display: "inline-block",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "var(--wv-radius-sm)",
+                    border: "1px solid var(--wv-border)",
+                    color: "var(--wv-text-primary)",
+                    textDecoration: "none",
+                    fontFamily: "var(--wv-font-sans)",
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  Download my data
+                </a>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
-        <Card>
-          <form onSubmit={deleteAccount} style={sectionGap}>
-            <Text variant="sectionTitle" as="h2">
-              Delete your account
-            </Text>
-            <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              This permanently deletes your account, memberships and the comments you wrote, right
-              away. Fields, properties and locations you added belong to the workspace, so they stay
-              — without your name on them. This can&apos;t be undone; download your data first if
-              you want a copy.
-            </Text>
-            <Input
-              label={`Type ${DELETE_CONFIRMATION_WORD} to confirm`}
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              autoComplete="off"
-              error={deleteError}
-            />
-            <div>
-              <Button
-                type="submit"
-                variant="destructive"
-                loading={deleting}
-                disabled={confirmText.trim() !== DELETE_CONFIRMATION_WORD}
-              >
-                Delete my account
-              </Button>
-            </div>
-          </form>
-        </Card>
+        <div id="delete-account" style={{ scrollMarginTop: "var(--wv-space-lg)" }}>
+          <Card>
+            <form onSubmit={deleteAccount} style={sectionGap}>
+              <Text variant="sectionTitle" as="h2">
+                Delete your account
+              </Text>
+              <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                This permanently deletes your account, memberships and the comments you wrote, right
+                away. Fields, properties and locations you added belong to the workspace, so they
+                stay — without your name on them. This can&apos;t be undone; download your data
+                first if you want a copy.
+              </Text>
+              <Input
+                label={`Type ${DELETE_CONFIRMATION_WORD} to confirm`}
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                autoComplete="off"
+                error={deleteError}
+              />
+              <div>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  loading={deleting}
+                  disabled={confirmText.trim() !== DELETE_CONFIRMATION_WORD}
+                >
+                  Delete my account
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
       </div>
     </AppShell>
   );

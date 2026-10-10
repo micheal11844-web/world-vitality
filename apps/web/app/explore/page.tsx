@@ -1,4 +1,5 @@
 import { logTelemetry } from "../../lib/logger";
+import { parseExploreLocation } from "../../lib/explore-link";
 import { ExploreView } from "./explore-view";
 
 // Same reasoning as every other page in this app that logs telemetry
@@ -20,7 +21,14 @@ export const dynamic = "force-dynamic";
  * Explorer's PRD mission requires genuinely anonymous access, not an
  * exception carved into an existing gate.
  */
-export default async function ExplorePage() {
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   logTelemetry.event("workspace_viewed", { workspace: "public-explorer" });
-  return <ExploreView />;
+  // A Global Search place result deep-links here with the coordinates it
+  // already resolved (`?lat&lon&name…`). Validated, never trusted.
+  const initialLocation = parseExploreLocation(await searchParams);
+  return <ExploreView initialLocation={initialLocation} />;
 }

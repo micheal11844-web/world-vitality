@@ -25,6 +25,8 @@ const GEOCODING_API_BASE = "https://geocoding-api.open-meteo.com/v1/search";
 export interface GeocodedLocation {
   name: string;
   country: string | null;
+  /** First-level admin region (state/province) — disambiguates the many Parises. Optional. */
+  region?: string | null;
   latitude: number;
   longitude: number;
 }
@@ -33,6 +35,7 @@ interface GeocodingApiResponse {
   results?: {
     name: string;
     country?: string;
+    admin1?: string;
     latitude: number;
     longitude: number;
   }[];
@@ -70,7 +73,44 @@ export async function geocodeLocation(query: string): Promise<GeocodedLocation |
   return {
     name: first.name,
     country: first.country ?? null,
+    region: first.admin1 ?? null,
     latitude: first.latitude,
     longitude: first.longitude,
   };
+}
+
+/**
+ * Up to `count` candidate places for a free-text query — for search
+ * suggestions and the results page, where a person needs to pick the
+ * right "Paris" rather than be handed the geocoder's first guess.
+ * `geocodeLocation` (best single match) stays as the Explorer's
+ * original one-shot path.
+ *
+ * Same contract as `geocodeLocation`: an empty array means "no match"
+ * (normal); it throws only on a real network/API failure, left for the
+ * caller to present.
+ */
+export async function geocodeCandidates(query: string, count = 5): Promise<GeocodedLocation[]> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const url = new URL(GEOCODING_API_BASE);
+  url.searchParams.set("name", trimmed);
+  url.searchParams.set("count", String(Math.min(Math.max(count, 1), 10)));
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    throw new Error(`Open-Meteo Geocoding API returned ${response.status}`);
+  }
+
+  const data = (await response.json()) as GeocodingApiResponse;
+  return (data.results ?? []).map((r) => ({
+    name: r.name,
+    country: r.country ?? null,
+    region: r.admin1 ?? null,
+    latitude: r.latitude,
+    longitude: r.longitude,
+  }));
 }

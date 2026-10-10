@@ -60,6 +60,51 @@ export async function exploreLocationAction(query: string): Promise<ExploreLocat
     };
   }
 
+  return interpretLocation(location);
+}
+
+/**
+ * Explorer for a place the visitor already picked (a Global Search
+ * result opens `/explore?lat=…&lon=…&name=…`). Still fully anonymous,
+ * like `exploreLocationAction`. Coordinates arrive from a URL, so they
+ * are re-validated here — a Server Action is a public endpoint and its
+ * argument is never trusted just because the UI normally sends good
+ * data.
+ */
+export async function exploreResolvedLocationAction(
+  location: GeocodedLocation,
+): Promise<ExploreLocationResult> {
+  const latitude = Number(location?.latitude);
+  const longitude = Number(location?.longitude);
+  const name = typeof location?.name === "string" ? location.name.trim() : "";
+  if (
+    !name ||
+    name.length > 120 ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return { ok: false, error: "That place link isn't valid. Try searching for it again." };
+  }
+  return interpretLocation({
+    name,
+    country: typeof location.country === "string" ? location.country.slice(0, 120) : null,
+    region: typeof location.region === "string" ? location.region.slice(0, 120) : null,
+    latitude,
+    longitude,
+  });
+}
+
+/**
+ * Fetches and interprets current conditions for an already-resolved
+ * place. Shared by the text search above and by deep links from Global
+ * Search (`exploreResolvedLocationAction`), so both go through exactly
+ * the same ingestion + interpretation path.
+ */
+async function interpretLocation(location: GeocodedLocation): Promise<ExploreLocationResult> {
   try {
     const connector = new NasaPowerConnector({
       locations: [

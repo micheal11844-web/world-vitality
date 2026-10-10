@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Card,
   Text,
@@ -9,7 +9,13 @@ import {
   ConfidenceBadge,
   StateDisplay,
 } from "@world-vitality/ui-components";
-import { exploreLocationAction, type ExploreLocationResult } from "../../lib/explore-actions";
+import {
+  exploreLocationAction,
+  exploreResolvedLocationAction,
+  type ExploreLocationResult,
+} from "../../lib/explore-actions";
+import type { GeocodedLocation } from "../../lib/geocode";
+import { placeLabel } from "../../lib/explore-link";
 import { ExploreShell } from "./explore-shell";
 
 /**
@@ -40,10 +46,22 @@ import { ExploreShell } from "./explore-shell";
  * network-dependent code path in this app (this sandbox has no
  * outbound access to power.larc.nasa.gov or geocoding-api.open-meteo.com).
  */
-export function ExploreView() {
-  const [query, setQuery] = useState("");
-  const [pending, setPending] = useState(false);
+export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLocation | null }) {
+  const [query, setQuery] = useState(initialLocation?.name ?? "");
+  const [pending, setPending] = useState(Boolean(initialLocation));
   const [result, setResult] = useState<ExploreLocationResult | null>(null);
+
+  // A Global Search place result arrives as `initialLocation`: explore
+  // exactly that place once on mount. The ref keeps React Strict Mode's
+  // dev double-invoke from firing the lookup twice.
+  const startedInitial = useRef(false);
+  useEffect(() => {
+    if (!initialLocation || startedInitial.current) return;
+    startedInitial.current = true;
+    exploreResolvedLocationAction(initialLocation)
+      .then(setResult)
+      .finally(() => setPending(false));
+  }, [initialLocation]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -105,10 +123,7 @@ export function ExploreView() {
 
         {result && result.ok && result.location && result.interpretation && (
           <Card>
-            <Text variant="caption">
-              {result.location.name}
-              {result.location.country ? `, ${result.location.country}` : ""}
-            </Text>
+            <Text variant="caption">{placeLabel(result.location)}</Text>
             <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
               Current Conditions
             </Text>

@@ -5,6 +5,7 @@ import { Header, type HeaderProps } from "./Header.js";
 import { Sidebar, type SidebarSection } from "./Sidebar.js";
 import { AIPanel } from "./AIPanel.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
+import { GlobalSearch } from "../search/GlobalSearch.js";
 
 export interface AppShellProps {
   brand: HeaderProps["brand"];
@@ -62,6 +63,13 @@ export interface AppShellProps {
    * through every workspace shell.
    */
   showAccountMenu?: boolean;
+  /**
+   * Shows the global search box (PRD B.4) in the header. Default
+   * `true` for the same reason as `showAccountMenu`: it's app-level
+   * chrome, so every shell gets it without opting in. Search points at
+   * fixed app routes (`/search`, `/api/search/*`).
+   */
+  showSearch?: boolean;
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
@@ -197,6 +205,7 @@ export function AppShell({
   showGuide = true,
   guideCharacter,
   showAccountMenu = true,
+  showSearch = true,
 }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -240,6 +249,7 @@ export function AppShell({
           brand={brand}
           actions={
             <>
+              {showSearch && <GlobalSearch />}
               <GlobeToggleLink />
               {headerActions}
               {showAccountMenu && <AccountControls />}
