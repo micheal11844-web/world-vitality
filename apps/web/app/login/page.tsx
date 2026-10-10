@@ -100,6 +100,7 @@ function LoginForm() {
     window.location.href = "/dashboard";
   }
   const resetSuccess = searchParams.get("reset") === "success";
+  const accountDeleted = searchParams.get("deleted") === "1";
 
   // Surfaces a failure from the /auth/callback redirect — previously
   // this silently landed back on a blank login form with zero
@@ -208,6 +209,19 @@ function LoginForm() {
         {passwordSubMode === "signup" ? "Create your account" : "Sign in"}
       </Text>
 
+      {accountDeleted && (
+        <Text
+          variant="body"
+          role="status"
+          style={{
+            color: "var(--wv-text-secondary)",
+            textAlign: "center",
+            marginBottom: "var(--wv-space-md)",
+          }}
+        >
+          Your account has been deleted.
+        </Text>
+      )}
       {resetSuccess && (
         <Text
           variant="body"

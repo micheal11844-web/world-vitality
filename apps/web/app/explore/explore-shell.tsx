@@ -39,6 +39,8 @@ export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) 
   return (
     <AppShell
       brand={<AppBrand />}
+      // Public Explorer is anonymous-capable — never show "Sign out".
+      showAccountMenu={false}
       sidebarSections={[
         {
           key: "workspaces",

@@ -49,6 +49,19 @@ export interface AppShellProps {
    * to the flat-SVG character when omitted.
    */
   guideCharacter?: ReactNode;
+  /**
+   * Shows the built-in account controls (Settings link + Sign out) in
+   * the header. Default `true`: every signed-in page wants them, so
+   * the ~13 shells don't each need to opt in. The one anonymous-capable
+   * page (Public Explorer) passes `false` — "Sign out" must never
+   * appear for someone who isn't signed in.
+   *
+   * Like `GlobeToggleLink`, these point at fixed app routes
+   * (`/settings`, `POST /auth/signout`) — a deliberate coupling of this
+   * shell to the host app's routes, chosen over threading two props
+   * through every workspace shell.
+   */
+  showAccountMenu?: boolean;
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
@@ -138,6 +151,40 @@ function GlobeToggleLink() {
   );
 }
 
+const accountControlStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "0.375rem 0.75rem",
+  borderRadius: "var(--wv-radius-sm)",
+  border: "1px solid var(--wv-border)",
+  backgroundColor: "transparent",
+  color: "var(--wv-text-primary)",
+  textDecoration: "none",
+  fontSize: "0.875rem",
+  fontFamily: "var(--wv-font-sans)",
+  cursor: "pointer",
+} as const;
+
+/**
+ * Settings link + Sign out. Sign out is a real `<form method="post">`
+ * (works without JavaScript, and a POST can't be triggered by a stray
+ * link or image — see `app/auth/signout/route.ts`).
+ */
+function AccountControls() {
+  return (
+    <>
+      <a href="/settings" style={accountControlStyle}>
+        Settings
+      </a>
+      <form method="post" action="/auth/signout" style={{ margin: 0 }}>
+        <button type="submit" style={accountControlStyle}>
+          Sign out
+        </button>
+      </form>
+    </>
+  );
+}
+
 export function AppShell({
   brand,
   headerActions,
@@ -149,6 +196,7 @@ export function AppShell({
   children,
   showGuide = true,
   guideCharacter,
+  showAccountMenu = true,
 }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -194,6 +242,7 @@ export function AppShell({
             <>
               <GlobeToggleLink />
               {headerActions}
+              {showAccountMenu && <AccountControls />}
             </>
           }
         />

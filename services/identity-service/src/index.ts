@@ -14,3 +14,4 @@ export {
   type InsuranceProperty,
   type GovernmentNgosLocation,
 } from "./account.js";
+export { buildUserDataExport, type UserDataExport } from "./data-export.js";
