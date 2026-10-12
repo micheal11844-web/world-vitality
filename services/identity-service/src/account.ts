@@ -1,11 +1,28 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Role } from "./roles.js";
+import type { HomePlace } from "./personas.js";
 
 export interface Profile {
   userId: string;
   email: string;
   displayName: string | null;
   createdAt: string;
+}
+
+/**
+ * Per-user application preferences (`user_preferences`, migration
+ * 0013). Today: the answers from Adaptive Onboarding (PRD B.1). A user
+ * with no row yet is represented as all-null — "never onboarded" is
+ * `onboardedAt === null`, which is distinct from "onboarded but chose
+ * not to say" (`onboardedAt` set, `persona`/`homePlace` null).
+ */
+export interface UserPreferences {
+  userId: string;
+  /** A `PERSONAS` id, or `null` (never chosen, or skipped). */
+  persona: string | null;
+  homePlace: HomePlace | null;
+  /** Set when onboarding was finished OR skipped. */
+  onboardedAt: string | null;
 }
 
 /** A user's role within one specific workspace — roles are workspace-
@@ -175,6 +192,29 @@ export interface AccountService {
   updateProfile(userId: string, updates: Partial<Pick<Profile, "displayName">>): Promise<Profile>;
 
   getWorkspaceMemberships(userId: string): Promise<WorkspaceMembership[]>;
+
+  /**
+   * The user's preferences. Never throws for "no row" — returns the
+   * all-null default, so a brand-new user simply reads as "not
+   * onboarded". Throws on a real database error (the caller decides
+   * whether to fail open; the Dashboard does, so a preferences outage
+   * can never lock someone out of the app).
+   */
+  getPreferences(userId: string): Promise<UserPreferences>;
+
+  /**
+   * Upserts onboarding answers and stamps `onboardedAt` (finishing or
+   * skipping both count). Passing `persona`/`homePlace` as `null`
+   * clears them — "skip" and "redo without a place" are both just
+   * saves. Callers must validate `homePlace` with `parseHomePlace`
+   * first; the table's CHECK constraints are a backstop, not the
+   * validation.
+   */
+  saveOnboarding(
+    userId: string,
+    answers: { persona: string | null; homePlace: HomePlace | null },
+    now?: Date,
+  ): Promise<UserPreferences>;
 
   /**
    * Creates (or updates, if one already exists) a workspace membership
@@ -428,7 +468,11 @@ export interface AccountService {
    * `removeMember`'s last-`admin_owner` refusal uses: don't leak which
    * failure occurred.
    */
-  updateFieldComment(commentId: string, requestingUserId: string, body: string): Promise<FieldComment>;
+  updateFieldComment(
+    commentId: string,
+    requestingUserId: string,
+    body: string,
+  ): Promise<FieldComment>;
 
   /**
    * Deletes a comment. Same author-only enforcement and error-shape
@@ -721,7 +765,9 @@ export class SupabaseAccountService implements AccountService {
   async listProperties(workspaceId: string): Promise<InsuranceProperty[]> {
     const { data, error } = await this.client
       .from("insurance_properties")
-      .select("id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at")
+      .select(
+        "id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at",
+      )
       .eq("workspace_id", workspaceId)
       .order("created_at", { ascending: true });
     if (error) {
@@ -757,7 +803,9 @@ export class SupabaseAccountService implements AccountService {
         longitude: property.longitude,
         created_by: property.createdBy,
       })
-      .select("id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at")
+      .select(
+        "id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at",
+      )
       .single();
     if (error || !data) {
       throw new Error(
@@ -795,7 +843,9 @@ export class SupabaseAccountService implements AccountService {
       .from("insurance_properties")
       .update(patch)
       .eq("id", propertyId)
-      .select("id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at")
+      .select(
+        "id, workspace_id, policy_number, property_address, latitude, longitude, created_by, created_at",
+      )
       .single();
     if (error || !data) {
       throw new Error(`Failed to update insured property ${propertyId}: ${error?.message}`);
@@ -965,7 +1015,10 @@ export class SupabaseAccountService implements AccountService {
       }
     }
 
-    const { error } = await this.client.from("government_ngos_locations").delete().eq("id", locationId);
+    const { error } = await this.client
+      .from("government_ngos_locations")
+      .delete()
+      .eq("id", locationId);
     if (error) {
       throw new Error(`Failed to delete monitored location ${locationId}: ${error.message}`);
     }
@@ -1160,7 +1213,85 @@ export class SupabaseAccountService implements AccountService {
       throw new Error(`Failed to delete comment ${commentId}: ${error.message}`);
     }
     if (!data) {
-      throw new Error(`Failed to delete comment ${commentId}: not found, or requester is not the author.`);
+      throw new Error(
+        `Failed to delete comment ${commentId}: not found, or requester is not the author.`,
+      );
     }
   }
+
+  async getPreferences(userId: string): Promise<UserPreferences> {
+    const { data, error } = await this.client
+      .from("user_preferences")
+      .select(
+        "persona, home_name, home_region, home_country, home_latitude, home_longitude, onboarded_at",
+      )
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Failed to load preferences for ${userId}: ${error.message}`);
+    }
+    return rowToPreferences(userId, data);
+  }
+
+  async saveOnboarding(
+    userId: string,
+    answers: { persona: string | null; homePlace: HomePlace | null },
+    now: Date = new Date(),
+  ): Promise<UserPreferences> {
+    const place = answers.homePlace;
+    const { data, error } = await this.client
+      .from("user_preferences")
+      .upsert(
+        {
+          user_id: userId,
+          persona: answers.persona,
+          home_name: place?.name ?? null,
+          home_region: place?.region ?? null,
+          home_country: place?.country ?? null,
+          home_latitude: place?.latitude ?? null,
+          home_longitude: place?.longitude ?? null,
+          onboarded_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        },
+        { onConflict: "user_id" },
+      )
+      .select(
+        "persona, home_name, home_region, home_country, home_latitude, home_longitude, onboarded_at",
+      )
+      .single();
+    if (error || !data) {
+      throw new Error(`Failed to save preferences for ${userId}: ${error?.message ?? "no row"}`);
+    }
+    return rowToPreferences(userId, data);
+  }
+}
+
+interface PreferencesRow {
+  persona: string | null;
+  home_name: string | null;
+  home_region: string | null;
+  home_country: string | null;
+  home_latitude: number | null;
+  home_longitude: number | null;
+  onboarded_at: string | null;
+}
+
+function rowToPreferences(userId: string, row: PreferencesRow | null): UserPreferences {
+  if (!row) return { userId, persona: null, homePlace: null, onboardedAt: null };
+  const hasPlace =
+    row.home_name !== null && row.home_latitude !== null && row.home_longitude !== null;
+  return {
+    userId,
+    persona: row.persona,
+    homePlace: hasPlace
+      ? {
+          name: row.home_name as string,
+          region: row.home_region,
+          country: row.home_country,
+          latitude: row.home_latitude as number,
+          longitude: row.home_longitude as number,
+        }
+      : null,
+    onboardedAt: row.onboarded_at,
+  };
 }

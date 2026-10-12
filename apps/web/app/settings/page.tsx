@@ -1,6 +1,8 @@
 import { getAccountService } from "../../lib/account";
 import { requireSession } from "../../lib/require-session";
 import { logTelemetry } from "../../lib/logger";
+import { homePlaceLabel, personaById } from "@world-vitality/identity-service";
+import { getMyPreferences } from "../../lib/preferences";
 import { WORKSPACE_LINKS } from "../workspaces/workspace-nav";
 import { SettingsView } from "./settings-view";
 
@@ -19,16 +21,19 @@ const ROLE_LABELS: Record<string, string> = {
  * deletion. Server wrapper loads the real profile and memberships; the
  * interactive forms live in `SettingsView`.
  *
- * Not built, honestly: notification preferences, language/accessibility
- * preferences and organization management (the other B.7 items) — none
- * has a back-end to configure yet (no notification center, no i18n).
+ * Also shows the role and home place chosen in onboarding, with
+ * change/remove. Not built, honestly: notification preferences,
+ * language/accessibility preferences and organization management (the
+ * other B.7 items).
  */
 export default async function SettingsPage() {
   const session = await requireSession();
   const account = getAccountService();
-  const [profile, memberships] = await Promise.all([
+  const [profile, memberships, prefs] = await Promise.all([
     account.getProfile(session.userId),
     account.getWorkspaceMemberships(session.userId),
+    // Fails open (null): a preferences outage must not take Settings down.
+    getMyPreferences(),
   ]);
   logTelemetry.event("workspace_viewed", { workspace: "settings" });
 
@@ -39,6 +44,9 @@ export default async function SettingsPage() {
       email={profile.email}
       initialDisplayName={profile.displayName ?? ""}
       memberSince={profile.createdAt}
+      personaLabel={personaById(prefs?.persona)?.label ?? null}
+      homeLabel={prefs?.homePlace ? homePlaceLabel(prefs.homePlace) : null}
+      onboarded={Boolean(prefs?.onboardedAt)}
       memberships={memberships.map((m) => ({
         workspaceId: m.workspaceId,
         workspaceName: workspaceNames.get(m.workspaceId) ?? m.workspaceId,

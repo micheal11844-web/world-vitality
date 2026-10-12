@@ -8,6 +8,8 @@ import {
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
+import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
+import { LocationNote } from "../location-note";
 
 // Same reasoning as Agriculture and Weather & Climate: environmental
 // data must be fetched fresh on every request, never baked in at build
@@ -19,7 +21,14 @@ export const dynamic = "force-dynamic";
 // "sign-up captures site location(s) and project timeline/phase" isn't
 // built). Reusing the same coordinates for consistency, not because
 // Construction is scoped to this specific site.
-const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
+// Fallback only: a user with a home place from onboarding sees that instead
+// (`resolveWorkspaceLocation`), and the page says which one it is.
+const DEMO_LOCATION = {
+  id: "demo-location-1",
+  latitude: 7.3775,
+  longitude: 3.947,
+  label: "Ibadan, Nigeria",
+};
 
 const ACTIVITY_STATUS_COLOR: Record<string, string> = {
   go: "var(--wv-accent)",
@@ -27,9 +36,9 @@ const ACTIVITY_STATUS_COLOR: Record<string, string> = {
   "no-go": "#b3401f",
 };
 
-async function getSiteRiskStatus() {
+async function getSiteRiskStatus(location: WorkspaceLocation) {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     parameters: ["T2M", "WS2M", "PRECTOTCORR"],
     community: "AG",
     lookbackDays: 7,
@@ -56,9 +65,9 @@ async function getSiteRiskStatus() {
  * wind speed so this provider can assess crane/roofing risk, not just
  * concrete pour, over the forecast window.
  */
-async function getSiteRiskTimeline() {
+async function getSiteRiskTimeline(location: WorkspaceLocation) {
   const connector = new OpenMeteoConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     forecastDays: 7,
   });
 
@@ -113,14 +122,16 @@ async function getSiteRiskTimeline() {
  */
 export default async function ConstructionWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "construction" });
+  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   const [{ result, ingestionGaps }, { result: timelineResult, ingestionGaps: timelineGaps }] =
-    await Promise.all([getSiteRiskStatus(), getSiteRiskTimeline()]);
+    await Promise.all([getSiteRiskStatus(location), getSiteRiskTimeline(location)]);
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
         Today's Activity Status
       </Text>
+      <LocationNote location={location} />
 
       <div
         style={{

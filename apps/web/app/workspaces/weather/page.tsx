@@ -8,6 +8,8 @@ import {
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
+import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
+import { LocationNote } from "../location-note";
 
 // Same reasoning as the Agriculture workspace: environmental data must
 // be fetched fresh on every request, never baked in at build time.
@@ -18,11 +20,18 @@ export const dynamic = "force-dynamic";
 // locations of interest" isn't built). Reusing the same coordinates as
 // the Agriculture demo field for consistency, not because Weather &
 // Climate is scoped to farms specifically.
-const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
+// Fallback only: a user with a home place from onboarding sees that instead
+// (`resolveWorkspaceLocation`), and the page says which one it is.
+const DEMO_LOCATION = {
+  id: "demo-location-1",
+  latitude: 7.3775,
+  longitude: 3.947,
+  label: "Ibadan, Nigeria",
+};
 
-async function getTemperatureStatus() {
+async function getTemperatureStatus(location: WorkspaceLocation) {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     parameters: ["T2M"],
     community: "AG",
     lookbackDays: 7,
@@ -50,9 +59,9 @@ async function getTemperatureStatus() {
  * `WeatherForecastProvider`'s deliberate separation from
  * `WeatherStatusProvider` at the interpretation layer.
  */
-async function getForecastTrend() {
+async function getForecastTrend(location: WorkspaceLocation) {
   const connector = new OpenMeteoConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     forecastDays: 7,
   });
 
@@ -101,14 +110,16 @@ async function getForecastTrend() {
  */
 export default async function WeatherWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "weather" });
+  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   const [{ result, ingestionGaps }, { result: forecastResult, ingestionGaps: forecastGaps }] =
-    await Promise.all([getTemperatureStatus(), getForecastTrend()]);
+    await Promise.all([getTemperatureStatus(location), getForecastTrend(location)]);
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
         Current Conditions
       </Text>
+      <LocationNote location={location} />
 
       <div
         style={{

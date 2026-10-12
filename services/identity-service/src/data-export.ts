@@ -5,6 +5,7 @@ import type {
   GovernmentNgosLocation,
   InsuranceProperty,
   Profile,
+  UserPreferences,
   WorkspaceMembership,
 } from "./account.js";
 
@@ -17,7 +18,8 @@ import type {
  * recorded a "pending" row nothing ever completed.
  *
  * **Scope, stated plainly:**
- * - The user's profile and every workspace membership they hold.
+ * - The user's profile, their preferences (role and home place chosen
+ *   in onboarding) and every workspace membership they hold.
  * - Resources they *created* (fields, insured properties, monitored
  *   locations) — by `createdBy`, regardless of any resource scoping on
  *   their membership today.
@@ -32,6 +34,8 @@ export interface UserDataExport {
   exportedAt: string;
   format: "world-vitality-data-export/v1";
   profile: Profile;
+  /** Onboarding answers: role, home place, when onboarding was completed. */
+  preferences: UserPreferences;
   memberships: WorkspaceMembership[];
   createdResources: {
     fields: Field[];
@@ -57,9 +61,10 @@ export async function buildUserDataExport(
   userId: string,
   now: Date = new Date(),
 ): Promise<UserDataExport> {
-  const [profile, memberships] = await Promise.all([
+  const [profile, memberships, preferences] = await Promise.all([
     account.getProfile(userId),
     account.getWorkspaceMemberships(userId),
+    account.getPreferences(userId),
   ]);
   const workspaceIds = new Set(memberships.map((m) => m.workspaceId));
 
@@ -85,6 +90,7 @@ export async function buildUserDataExport(
     exportedAt: now.toISOString(),
     format: "world-vitality-data-export/v1",
     profile,
+    preferences,
     memberships,
     createdResources: { fields, insuredProperties, monitoredLocations },
     commentsWritten,

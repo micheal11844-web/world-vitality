@@ -14,6 +14,18 @@ function fakeAccount(): AccountService {
       displayName: "Me",
       createdAt: "2026-01-01T00:00:00Z",
     }),
+    getPreferences: async () => ({
+      userId: ME,
+      persona: "farmer",
+      homePlace: {
+        name: "Ibadan",
+        region: "Oyo",
+        country: "Nigeria",
+        latitude: 7.37,
+        longitude: 3.94,
+      },
+      onboardedAt: "2026-10-01T00:00:00Z",
+    }),
     getWorkspaceMemberships: async () => [
       { workspaceId: "agriculture", role: "operational_user" },
       { workspaceId: "insurance", role: "viewer_external" },
@@ -61,6 +73,8 @@ test("exports only what the user created or wrote, scoped to their memberships",
   assert.equal(out.exportedAt, "2026-10-10T00:00:00.000Z");
   assert.equal(out.profile.email, "me@example.com");
   assert.equal(out.memberships.length, 2);
+  assert.equal(out.preferences.persona, "farmer");
+  assert.equal(out.preferences.homePlace?.name, "Ibadan");
   assert.deepEqual(
     out.createdResources.fields.map((f) => f.id),
     ["f1"],

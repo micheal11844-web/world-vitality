@@ -10,11 +10,15 @@ import { WorkspaceShell } from "./workspace-shell";
 import { ExplainThisDataClient } from "./explain-this-data-client";
 import { getWorkspaceRole } from "../../../lib/get-workspace-role";
 import { logTelemetry } from "../../../lib/logger";
+import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
+import { LocationNote } from "../location-note";
 
 export const dynamic = "force-dynamic";
 
 const WORKSPACE_ID = "education";
 
+// Fallback only: an educator with a home place from onboarding sees that
+// instead (`resolveWorkspaceLocation`), and the page says which one it is.
 const DEMO_LOCATION = {
   id: "demo-classroom-location-1",
   latitude: 7.3775,
@@ -22,9 +26,9 @@ const DEMO_LOCATION = {
   label: "Demo Classroom Location",
 };
 
-async function getExplainableData() {
+async function getExplainableData(location: WorkspaceLocation) {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     parameters: ["T2M", "GWETROOT"],
     community: "AG",
     lookbackDays: 7,
@@ -98,7 +102,8 @@ async function getExplainableData() {
 export default async function EducationWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: WORKSPACE_ID });
   const role = await getWorkspaceRole(WORKSPACE_ID);
-  const { weather, soilMoisture } = await getExplainableData();
+  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
+  const { weather, soilMoisture } = await getExplainableData(location);
 
   return (
     <WorkspaceShell activeKey="home" role={role}>
@@ -109,10 +114,10 @@ export default async function EducationWorkspaceHome() {
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        {DEMO_LOCATION.label} — real current data, explained at the grade level you pick. For
-        educators to use in class; no student accounts or data are collected anywhere in this
-        workspace.
+        Real current data, explained at the grade level you pick. For educators to use in class; no
+        student accounts or data are collected anywhere in this workspace.
       </Text>
+      <LocationNote location={location} />
 
       <ExplainThisDataClient
         weather={{

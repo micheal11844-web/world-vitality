@@ -1,4 +1,8 @@
-import { NasaPowerConnector, OpenMeteoConnector, UsgsStreamflowConnector } from "@world-vitality/data-ingestion";
+import {
+  NasaPowerConnector,
+  OpenMeteoConnector,
+  UsgsStreamflowConnector,
+} from "@world-vitality/data-ingestion";
 import {
   WindGenerationStatusProvider,
   WIND_GENERATION_STATUS_CAPABILITY_ID,
@@ -14,13 +18,22 @@ import {
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
+import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
+import { LocationNote } from "../location-note";
 
 export const dynamic = "force-dynamic";
 
 // Same demo-location approach as every other workspace — see
 // Agriculture's home page comment for why (no real user-configured
 // saved asset locations exist yet).
-const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
+// Fallback only: a user with a home place from onboarding sees that instead
+// (`resolveWorkspaceLocation`), and the page says which one it is.
+const DEMO_LOCATION = {
+  id: "demo-location-1",
+  latitude: 7.3775,
+  longitude: 3.947,
+  label: "Ibadan, Nigeria",
+};
 
 // Hydro's demo site is deliberately different from every other demo
 // location in this workspace (and this app): streamflow is only
@@ -35,9 +48,9 @@ const DEMO_GAUGE_STATION = {
   longitude: -77.12786,
 };
 
-async function getCurrentGenerationStatus() {
+async function getCurrentGenerationStatus(location: WorkspaceLocation) {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     parameters: ["WS2M"],
     community: "AG",
     lookbackDays: 7,
@@ -62,9 +75,9 @@ async function getCurrentGenerationStatus() {
  * grouping for `ALLSKY_SFC_SW_DWN` — rather than reusing the wind
  * pipeline's `community: "AG"` call.
  */
-async function getCurrentSolarStatus() {
+async function getCurrentSolarStatus(location: WorkspaceLocation) {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     parameters: ["ALLSKY_SFC_SW_DWN"],
     community: "RE",
     lookbackDays: 7,
@@ -81,8 +94,8 @@ async function getCurrentSolarStatus() {
   return { result, ingestionGaps: gaps };
 }
 
-async function getGenerationOutlook() {
-  const connector = new OpenMeteoConnector({ locations: [DEMO_LOCATION], forecastDays: 7 });
+async function getGenerationOutlook(location: WorkspaceLocation) {
+  const connector = new OpenMeteoConnector({ locations: [location], forecastDays: 7 });
   const { records, gaps } = await connector.ingest({
     type: "manual",
     requestedBy: "renewable-energy-workspace-home-page",
@@ -106,8 +119,8 @@ async function getGenerationOutlook() {
  * rather than introducing a shared-fetch refactor as a side effect of
  * this addition.
  */
-async function getSolarOutlook() {
-  const connector = new OpenMeteoConnector({ locations: [DEMO_LOCATION], forecastDays: 7 });
+async function getSolarOutlook(location: WorkspaceLocation) {
+  const connector = new OpenMeteoConnector({ locations: [location], forecastDays: 7 });
   const { records, gaps } = await connector.ingest({
     type: "manual",
     requestedBy: "renewable-energy-workspace-home-page",
@@ -201,6 +214,7 @@ async function getCurrentHydroStatus() {
  */
 export default async function RenewableEnergyWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "renewable-energy" });
+  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   const [
     { result, ingestionGaps },
     { result: outlookResult, ingestionGaps: outlookGaps },
@@ -208,10 +222,10 @@ export default async function RenewableEnergyWorkspaceHome() {
     { result: solarOutlookResult, ingestionGaps: solarOutlookGaps },
     { result: hydroResult, ingestionGaps: hydroGaps },
   ] = await Promise.all([
-    getCurrentGenerationStatus(),
-    getGenerationOutlook(),
-    getCurrentSolarStatus(),
-    getSolarOutlook(),
+    getCurrentGenerationStatus(location),
+    getGenerationOutlook(location),
+    getCurrentSolarStatus(location),
+    getSolarOutlook(location),
     getCurrentHydroStatus(),
   ]);
 
@@ -220,6 +234,10 @@ export default async function RenewableEnergyWorkspaceHome() {
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
         Asset Generation Outlook
       </Text>
+      <LocationNote
+        location={location}
+        note="The hydro widget always reads a fixed USGS river gauge, not this place."
+      />
 
       <div
         style={{

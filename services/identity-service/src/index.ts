@@ -5,6 +5,7 @@ export {
   SupabaseAccountService,
   type AccountService,
   type Profile,
+  type UserPreferences,
   type WorkspaceMembership,
   type DataExportRequest,
   type AuditLogEntry,
@@ -15,3 +16,14 @@ export {
   type GovernmentNgosLocation,
 } from "./account.js";
 export { buildUserDataExport, type UserDataExport } from "./data-export.js";
+export {
+  PERSONAS,
+  isPersonaId,
+  personaById,
+  personaDestination,
+  parseHomePlace,
+  homePlaceLabel,
+  type Persona,
+  type InsightKind,
+  type HomePlace,
+} from "./personas.js";

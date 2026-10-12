@@ -10,10 +10,12 @@ import { Text, StateDisplay } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "../workspace-shell";
 import { LessonPlanClient } from "./lesson-plan-client";
 import { getWorkspaceRole } from "../../../../lib/get-workspace-role";
+import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../../lib/home-location";
 
 export const dynamic = "force-dynamic";
 
 const WORKSPACE_ID = "education";
+// Fallback only — see `education/page.tsx`.
 const DEMO_LOCATION = {
   id: "demo-classroom-location-1",
   latitude: 7.3775,
@@ -21,9 +23,9 @@ const DEMO_LOCATION = {
   label: "Demo Classroom Location",
 };
 
-async function getLessonData() {
+async function getLessonData(location: WorkspaceLocation) {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     parameters: ["T2M", "GWETROOT"],
     community: "AG",
     lookbackDays: 7,
@@ -69,7 +71,8 @@ export default async function EducationLessonPlanPage() {
     );
   }
 
-  const { weather, soilMoisture } = await getLessonData();
+  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
+  const { weather, soilMoisture } = await getLessonData(location);
   const generatedAt = new Date().toISOString();
 
   return (
@@ -85,7 +88,7 @@ export default async function EducationLessonPlanPage() {
         adapt it for your own class.
       </Text>
       <LessonPlanClient
-        locationLabel={DEMO_LOCATION.label}
+        locationLabel={location.label}
         generatedAt={generatedAt}
         weather={{
           summary: weather.summary,

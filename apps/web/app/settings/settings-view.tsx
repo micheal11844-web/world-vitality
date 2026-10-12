@@ -6,12 +6,18 @@ import { Button, Card, Input, Text, AppShell } from "@world-vitality/ui-componen
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 import { updateDisplayNameAction, deleteAccountAction } from "../../lib/account-actions";
+import { clearHomePlaceAction } from "../../lib/onboarding-actions";
 import { MAX_DISPLAY_NAME_LENGTH, DELETE_CONFIRMATION_WORD } from "../../lib/account-constants";
 
 export interface SettingsViewProps {
   email: string;
   initialDisplayName: string;
   memberSince: string;
+  /** Role chosen in onboarding, if any. */
+  personaLabel: string | null;
+  /** Home place chosen in onboarding, if any. */
+  homeLabel: string | null;
+  onboarded: boolean;
   memberships: Array<{
     workspaceId: string;
     workspaceName: string;
@@ -26,6 +32,9 @@ export function SettingsView({
   email,
   initialDisplayName,
   memberSince,
+  personaLabel,
+  homeLabel,
+  onboarded,
   memberships,
 }: SettingsViewProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
@@ -33,6 +42,19 @@ export function SettingsView({
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [nameStatus, setNameStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [nameError, setNameError] = useState<string | undefined>();
+
+  const [removingPlace, setRemovingPlace] = useState(false);
+  const [placeRemoved, setPlaceRemoved] = useState(false);
+  const [placeError, setPlaceError] = useState<string | undefined>();
+
+  async function removePlace() {
+    setRemovingPlace(true);
+    setPlaceError(undefined);
+    const result = await clearHomePlaceAction();
+    setRemovingPlace(false);
+    if (result.ok) setPlaceRemoved(true);
+    else setPlaceError(result.error);
+  }
 
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -122,6 +144,57 @@ export function SettingsView({
               Member since {new Date(memberSince).toLocaleDateString()}.
             </Text>
           </form>
+        </Card>
+
+        <Card>
+          <div style={sectionGap}>
+            <Text variant="sectionTitle" as="h2">
+              Your role and place
+            </Text>
+            {!onboarded ? (
+              <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                You haven’t set these up yet. Tell me who you are and the place you care about, and
+                I’ll show live conditions for it on your dashboard and in your workspaces.
+              </Text>
+            ) : (
+              <Text variant="body">
+                Role: <strong>{personaLabel ?? "not set"}</strong>
+                <br />
+                Home place: <strong>{placeRemoved ? "removed" : (homeLabel ?? "not set")}</strong>
+              </Text>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
+              <a
+                href="/welcome?redo=1"
+                style={{
+                  display: "inline-block",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "var(--wv-radius-sm)",
+                  border: "1px solid var(--wv-border)",
+                  color: "var(--wv-text-primary)",
+                  textDecoration: "none",
+                  fontFamily: "var(--wv-font-sans)",
+                  fontSize: "0.875rem",
+                }}
+              >
+                {onboarded ? "Change" : "Set up"}
+              </a>
+              {onboarded && homeLabel && !placeRemoved && (
+                <Button variant="secondary" onClick={removePlace} loading={removingPlace}>
+                  Remove my place
+                </Button>
+              )}
+            </div>
+            {placeError && (
+              <Text
+                variant="caption"
+                role="alert"
+                style={{ color: "var(--wv-color-critical-500)" }}
+              >
+                {placeError}
+              </Text>
+            )}
+          </div>
         </Card>
 
         <Card>

@@ -99,5 +99,5 @@ export async function middleware(request: NextRequest) {
 // this the header would wrongly show them as signed out until their
 // next gated page.
 export const config = {
-  matcher: ["/dashboard/:path*", "/workspaces/:path*", "/settings/:path*", "/search"],
+  matcher: ["/dashboard/:path*", "/workspaces/:path*", "/settings/:path*", "/search", "/welcome"],
 };

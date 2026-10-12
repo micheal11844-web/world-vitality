@@ -8,6 +8,8 @@ import {
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
+import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
+import { LocationNote } from "../location-note";
 
 // Same reasoning as every other workspace: environmental data must be
 // fetched fresh on every request, never baked in at build time.
@@ -18,11 +20,18 @@ export const dynamic = "force-dynamic";
 // captures typical routes/regions of operation" isn't built). This
 // evaluates one point, not an actual multi-waypoint route — see this
 // page's own doc comment for what that means honestly.
-const DEMO_LOCATION = { id: "demo-location-1", latitude: 7.3775, longitude: 3.947 };
+// Fallback only: a user with a home place from onboarding sees that instead
+// (`resolveWorkspaceLocation`), and the page says which one it is.
+const DEMO_LOCATION = {
+  id: "demo-location-1",
+  latitude: 7.3775,
+  longitude: 3.947,
+  label: "Ibadan, Nigeria",
+};
 
-async function getRouteRiskStatus() {
+async function getRouteRiskStatus(location: WorkspaceLocation) {
   const connector = new NasaPowerConnector({
-    locations: [DEMO_LOCATION],
+    locations: [location],
     parameters: ["WS2M"],
     community: "AG",
     lookbackDays: 7,
@@ -51,8 +60,8 @@ async function getRouteRiskStatus() {
  * Construction's Site Risk Timeline and Renewable Energy's Wind/Solar
  * outlooks already validated, reused unchanged here.
  */
-async function getRouteRiskOutlook() {
-  const connector = new OpenMeteoConnector({ locations: [DEMO_LOCATION], forecastDays: 7 });
+async function getRouteRiskOutlook(location: WorkspaceLocation) {
+  const connector = new OpenMeteoConnector({ locations: [location], forecastDays: 7 });
   const { records, gaps } = await connector.ingest({
     type: "manual",
     requestedBy: "logistics-workspace-home-page",
@@ -99,14 +108,16 @@ async function getRouteRiskOutlook() {
  */
 export default async function LogisticsWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "logistics" });
-  const { result, ingestionGaps } = await getRouteRiskStatus();
-  const { result: outlookResult, ingestionGaps: outlookGaps } = await getRouteRiskOutlook();
+  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
+  const { result, ingestionGaps } = await getRouteRiskStatus(location);
+  const { result: outlookResult, ingestionGaps: outlookGaps } = await getRouteRiskOutlook(location);
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
         Route Risk Status
       </Text>
+      <LocationNote location={location} />
 
       <div
         style={{
