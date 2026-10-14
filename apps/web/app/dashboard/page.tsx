@@ -5,6 +5,7 @@ import { homePlaceLabel, personaById } from "@world-vitality/identity-service";
 import { logTelemetry } from "../../lib/logger";
 import { getMyPreferences } from "../../lib/preferences";
 import { DashboardView } from "./dashboard-view";
+import { CriticalNotice } from "./critical-notice";
 import { HomeInsightCard } from "./home-insight-card";
 
 // Required so this page is server-rendered per request, not cached as
@@ -43,6 +44,13 @@ export default async function DashboardPage() {
       personaLabel={persona?.label ?? null}
       homeLabel={place ? homePlaceLabel(place) : null}
       onboarded={Boolean(prefs?.onboardedAt)}
+      criticalNotice={
+        // Streams in after the page: checking official alerts calls out
+        // to the weather service and must never hold the dashboard up.
+        <Suspense fallback={null}>
+          <CriticalNotice />
+        </Suspense>
+      }
       homeInsight={
         place ? (
           <Suspense

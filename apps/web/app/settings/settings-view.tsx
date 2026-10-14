@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button, Card, Input, Text, AppShell } from "@world-vitality/ui-components";
+import { Button, Card, Checkbox, Input, Text, AppShell } from "@world-vitality/ui-components";
+import type { OfficialMinTier } from "@world-vitality/identity-service";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 import { updateDisplayNameAction, deleteAccountAction } from "../../lib/account-actions";
 import { clearHomePlaceAction } from "../../lib/onboarding-actions";
+import { saveNotificationSettingsAction } from "../../lib/notification-actions";
 import { MAX_DISPLAY_NAME_LENGTH, DELETE_CONFIRMATION_WORD } from "../../lib/account-constants";
 
 export interface SettingsViewProps {
@@ -18,6 +20,8 @@ export interface SettingsViewProps {
   /** Home place chosen in onboarding, if any. */
   homeLabel: string | null;
   onboarded: boolean;
+  /** `null` when the settings couldn't be loaded — the card then says so instead of guessing. */
+  notificationSettings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean } | null;
   memberships: Array<{
     workspaceId: string;
     workspaceName: string;
@@ -35,6 +39,7 @@ export function SettingsView({
   personaLabel,
   homeLabel,
   onboarded,
+  notificationSettings,
   memberships,
 }: SettingsViewProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
@@ -54,6 +59,28 @@ export function SettingsView({
     setRemovingPlace(false);
     if (result.ok) setPlaceRemoved(true);
     else setPlaceError(result.error);
+  }
+
+  const [officialMinTier, setOfficialMinTier] = useState<OfficialMinTier>(
+    notificationSettings?.officialMinTier ?? "info",
+  );
+  const [collaborationEnabled, setCollaborationEnabled] = useState(
+    notificationSettings?.collaborationEnabled ?? true,
+  );
+  const [notifStatus, setNotifStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [notifError, setNotifError] = useState<string | undefined>();
+
+  async function saveNotifications(e: React.FormEvent) {
+    e.preventDefault();
+    setNotifStatus("saving");
+    setNotifError(undefined);
+    const result = await saveNotificationSettingsAction({ officialMinTier, collaborationEnabled });
+    if (result.ok) {
+      setNotifStatus("saved");
+    } else {
+      setNotifStatus("error");
+      setNotifError(result.error);
+    }
   }
 
   const [confirmText, setConfirmText] = useState("");
@@ -102,7 +129,10 @@ export function SettingsView({
         {
           key: "account",
           label: "Account",
-          items: [{ key: "settings", label: "Settings", href: "/settings", active: true }],
+          items: [
+            { key: "notifications", label: "Notifications", href: "/notifications" },
+            { key: "settings", label: "Settings", href: "/settings", active: true },
+          ],
         },
       ]}
       aiPanelOpen={aiPanelOpen}
@@ -197,6 +227,111 @@ export function SettingsView({
           </div>
         </Card>
 
+        <div id="notifications" style={{ scrollMarginTop: "var(--wv-space-lg)" }}>
+          <Card>
+            <form
+              onSubmit={saveNotifications}
+              style={{ ...sectionGap, fontFamily: "var(--wv-font-sans)" }}
+            >
+              <Text variant="sectionTitle" as="h2">
+                Notifications
+              </Text>
+              {notificationSettings === null ? (
+                <Text variant="body" role="status" style={{ color: "var(--wv-text-secondary)" }}>
+                  We couldn&apos;t load your notification settings just now. Refresh to try again.
+                </Text>
+              ) : (
+                <>
+                  <fieldset
+                    style={{ border: "none", margin: 0, padding: 0, ...sectionGap }}
+                    aria-describedby="official-alerts-help"
+                  >
+                    <legend
+                      style={{
+                        padding: 0,
+                        marginBottom: "var(--wv-space-xs)",
+                        fontFamily: "var(--wv-font-sans)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Official weather alerts for your home place
+                    </legend>
+                    <label style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
+                      <input
+                        type="radio"
+                        name="official-min-tier"
+                        value="info"
+                        checked={officialMinTier === "info"}
+                        onChange={() => {
+                          setOfficialMinTier("info");
+                          setNotifStatus("idle");
+                        }}
+                      />
+                      <span>Show all of them, including minor advisories and statements</span>
+                    </label>
+                    <label style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
+                      <input
+                        type="radio"
+                        name="official-min-tier"
+                        value="alert"
+                        checked={officialMinTier === "alert"}
+                        onChange={() => {
+                          setOfficialMinTier("alert");
+                          setNotifStatus("idle");
+                        }}
+                      />
+                      <span>Only alerts and critical ones — skip minor advisories</span>
+                    </label>
+                    <Text
+                      variant="caption"
+                      id="official-alerts-help"
+                      style={{ color: "var(--wv-text-secondary)" }}
+                    >
+                      Critical, life-safety alerts are always shown and can&apos;t be turned off.
+                    </Text>
+                  </fieldset>
+                  <Checkbox
+                    label="Tell me when a teammate comments on a field I created"
+                    checked={collaborationEnabled}
+                    onChange={(e) => {
+                      setCollaborationEnabled(e.target.checked);
+                      setNotifStatus("idle");
+                    }}
+                  />
+                  <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+                    Notifications appear in the app only — World Vitality doesn&apos;t send push,
+                    SMS or email yet, and checks for official alerts only while it&apos;s open. See
+                    your <Link href="/notifications">Notification Center</Link>.
+                  </Text>
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
+                    <Button type="submit" loading={notifStatus === "saving"}>
+                      Save notification settings
+                    </Button>
+                    {notifStatus === "saved" && (
+                      <Text
+                        variant="caption"
+                        role="status"
+                        style={{ color: "var(--wv-text-secondary)" }}
+                      >
+                        Saved.
+                      </Text>
+                    )}
+                  </div>
+                  {notifStatus === "error" && notifError && (
+                    <Text
+                      variant="caption"
+                      role="alert"
+                      style={{ color: "var(--wv-color-critical-500)" }}
+                    >
+                      {notifError}
+                    </Text>
+                  )}
+                </>
+              )}
+            </form>
+          </Card>
+        </div>
+
         <Card>
           <div style={sectionGap}>
             <Text variant="sectionTitle" as="h2">
@@ -227,10 +362,10 @@ export function SettingsView({
                 Download your data
               </Text>
               <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                One click, no waiting: a JSON file with your profile, your workspace memberships,
-                everything you created (fields, properties, locations) and the comments you wrote.
-                It doesn&apos;t include other people&apos;s data or public environmental readings,
-                and the file says so.
+                One click, no waiting: a JSON file with your profile, your role and home place, your
+                notification settings and inbox, your workspace memberships, everything you created
+                (fields, properties, locations) and the comments you wrote. It doesn&apos;t include
+                other people&apos;s data or public environmental readings, and the file says so.
               </Text>
               <div>
                 <a
@@ -261,10 +396,10 @@ export function SettingsView({
                 Delete your account
               </Text>
               <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                This permanently deletes your account, memberships and the comments you wrote, right
-                away. Fields, properties and locations you added belong to the workspace, so they
-                stay — without your name on them. This can&apos;t be undone; download your data
-                first if you want a copy.
+                This permanently deletes your account, memberships, notifications and the comments
+                you wrote, right away. Fields, properties and locations you added belong to the
+                workspace, so they stay — without your name on them. This can&apos;t be undone;
+                download your data first if you want a copy.
               </Text>
               <Input
                 label={`Type ${DELETE_CONFIRMATION_WORD} to confirm`}

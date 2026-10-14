@@ -7,6 +7,7 @@ import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getAccountService } from "../../../lib/account";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
+import { notifyFieldCommentOwner } from "../../../lib/notification-events";
 
 export interface CreateFieldResult {
   ok: boolean;
@@ -168,7 +169,21 @@ export async function createFieldCommentAction(
   }
 
   try {
-    await getAccountService().createFieldComment({ fieldId, userId, body: body.trim() });
+    const comment = await getAccountService().createFieldComment({
+      fieldId,
+      userId,
+      body: body.trim(),
+    });
+    // Best-effort: tells the field's creator (never throws, never fails the comment).
+    await notifyFieldCommentOwner({
+      workspaceId: WORKSPACE_ID,
+      fieldId,
+      commentId: comment.id,
+      commenterId: userId,
+      commenterDisplayName: comment.displayName,
+      commenterEmail: comment.email,
+      body: comment.body,
+    });
     revalidatePath("/workspaces/agriculture");
     return { ok: true };
   } catch (err) {

@@ -4,6 +4,7 @@ import { getAccountService } from "../../../lib/account";
 import { getOAuthClient } from "../../../lib/supabase-ssr";
 import { setSessionCookies } from "../../../lib/session-cookies";
 import { logSecurity, logTelemetry } from "../../../lib/logger";
+import { notifyMembershipAdded } from "../../../lib/notification-events";
 
 /**
  * The route both the magic-link email, the password-reset email, AND
@@ -129,6 +130,12 @@ export async function GET(request: NextRequest) {
           userId: session.userId,
           role: pendingRole,
           scopedResourceIds: pendingScopedResourceIds,
+        });
+        // Best-effort and never throws — see `notification-events.ts`.
+        await notifyMembershipAdded({
+          userId: session.userId,
+          workspaceId: pendingWorkspaceId,
+          role: pendingRole,
         });
         try {
           await getAccountService().recordAuditEvent({

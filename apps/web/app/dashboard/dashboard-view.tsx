@@ -119,14 +119,13 @@ const TUTORIAL_STEPS: GuideTutorialStep[] = [
  * across all their workspaces... then lets them enter a specific
  * workspace for depth."
  *
- * **Honest scope note:** this repo only has one real workspace built
- * (Agriculture, ticket 6.3) and no alerts/urgency data model exists yet
- * (that's Section B.6, Notification Center — unbuilt). So this renders
- * the correct *shape* — a workspace-card grid, ready to surface an
- * urgent-item banner once alerts exist — but the "surfaces the most
- * urgent item" behavior itself isn't implemented, because there's
- * nothing real to surface yet. Don't mistake the empty alert banner for
- * that feature being done.
+ * **Urgent-item banner:** the Notification Center (PRD B.6) now supplies
+ * one real urgent item — an unread *critical* official alert for the
+ * user's home place — shown above everything else via `criticalNotice`.
+ * Nothing else is promoted here: routine and collaboration notifications
+ * stay in the Notification Center and the header bell, so this banner
+ * keeps its meaning. It only exists where a source covers the user's
+ * place (U.S. alerts today); an absent banner is not an all-clear.
  */
 export interface DashboardViewProps {
   /** `WORKSPACE_LINKS` key of the workspace the user's onboarding role maps to. */
@@ -139,6 +138,8 @@ export interface DashboardViewProps {
   homeInsight?: ReactNode;
   /** `true` once onboarding is done/skipped, so "add your place" can be offered. */
   onboarded?: boolean;
+  /** Server-rendered, streamed-in banner for an unread critical notification. */
+  criticalNotice?: ReactNode;
 }
 
 export function DashboardView({
@@ -147,6 +148,7 @@ export function DashboardView({
   homeLabel = null,
   homeInsight = null,
   onboarded = false,
+  criticalNotice = null,
 }: DashboardViewProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
@@ -212,6 +214,7 @@ export function DashboardView({
       }
     >
       <GuideTutorial open={tutorialOpen} onDismiss={dismissTutorial} steps={TUTORIAL_STEPS} />
+      {criticalNotice}
       {homeLabel ? (
         <section
           aria-labelledby="home-place-heading"

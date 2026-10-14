@@ -70,6 +70,20 @@ interface NwsAlertsApiResponse {
 }
 
 /**
+ * Thrown when NWS reports that it has no data for the requested point
+ * (HTTP 400/404 — outside its U.S. and territories coverage). Distinct
+ * from a network/API failure so callers (the Notification Center) can
+ * say "outside coverage" instead of "couldn't check". Extends `Error`,
+ * so existing callers that just catch and show a message are unchanged.
+ */
+export class NwsCoverageError extends Error {
+  constructor(status: number) {
+    super(`National Weather Service Alerts API returned ${status}`);
+    this.name = "NwsCoverageError";
+  }
+}
+
+/**
  * Fetches currently active NWS alerts for a point. **U.S. and
  * territories only** — the National Weather Service has no coverage
  * outside U.S. jurisdiction, stated here rather than left implicit,
@@ -90,8 +104,13 @@ export async function fetchActiveAlerts(latitude: number, longitude: number): Pr
         "World-Vitality-Disaster-Monitoring (github.com/micheal11844-web/world-vitality)",
       Accept: "application/geo+json",
     },
+    // A hung NWS response must not hang a page or the notification bell.
+    signal: AbortSignal.timeout(8000),
   });
 
+  if (response.status === 400 || response.status === 404) {
+    throw new NwsCoverageError(response.status);
+  }
   if (!response.ok) {
     throw new Error(`National Weather Service Alerts API returned ${response.status}`);
   }

@@ -6,6 +6,7 @@ import { Sidebar, type SidebarSection } from "./Sidebar.js";
 import { AIPanel } from "./AIPanel.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
 import { GlobalSearch } from "../search/GlobalSearch.js";
+import { NotificationBell } from "../notifications/NotificationBell.js";
 
 export interface AppShellProps {
   brand: HeaderProps["brand"];
@@ -61,6 +62,10 @@ export interface AppShellProps {
    * (`/settings`, `POST /auth/signout`) — a deliberate coupling of this
    * shell to the host app's routes, chosen over threading two props
    * through every workspace shell.
+   *
+   * Also controls the notification bell (PRD B.6): it is account-level
+   * chrome with the same "only for someone signed in" rule, and it hides
+   * itself when the server says there is no session.
    */
   showAccountMenu?: boolean;
   /**
@@ -252,6 +257,7 @@ export function AppShell({
               {showSearch && <GlobalSearch />}
               <GlobeToggleLink />
               {headerActions}
+              {showAccountMenu && <NotificationBell />}
               {showAccountMenu && <AccountControls />}
             </>
           }

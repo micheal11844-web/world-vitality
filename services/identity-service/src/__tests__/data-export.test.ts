@@ -26,6 +26,18 @@ function fakeAccount(): AccountService {
       },
       onboardedAt: "2026-10-01T00:00:00Z",
     }),
+    getNotificationSettings: async () => ({
+      officialMinTier: "alert",
+      collaborationEnabled: false,
+      alertsSyncedAt: null,
+    }),
+    listNotifications: async (_userId: string, options?: { includeInactive?: boolean }) => [
+      {
+        id: "n1",
+        title: "Flash Flood Warning",
+        dismissedAt: options?.includeInactive ? "x" : null,
+      },
+    ],
     getWorkspaceMemberships: async () => [
       { workspaceId: "agriculture", role: "operational_user" },
       { workspaceId: "insurance", role: "viewer_external" },
@@ -75,6 +87,13 @@ test("exports only what the user created or wrote, scoped to their memberships",
   assert.equal(out.memberships.length, 2);
   assert.equal(out.preferences.persona, "farmer");
   assert.equal(out.preferences.homePlace?.name, "Ibadan");
+  // Settings and the whole inbox — including dismissed items — are exported.
+  assert.equal(out.notificationSettings.officialMinTier, "alert");
+  assert.deepEqual(
+    out.notifications.map((n) => n.id),
+    ["n1"],
+  );
+  assert.equal(out.notifications[0]?.dismissedAt, "x");
   assert.deepEqual(
     out.createdResources.fields.map((f) => f.id),
     ["f1"],

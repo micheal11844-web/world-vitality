@@ -1,6 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Role } from "./roles.js";
 import type { HomePlace } from "./personas.js";
+import {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  isNotificationTier,
+  isOfficialMinTier,
+  type NewNotification,
+  type Notification,
+  type NotificationSettings,
+  type NotificationSource,
+  type OfficialMinTier,
+} from "./notifications.js";
 
 export interface Profile {
   userId: string;
@@ -215,6 +225,64 @@ export interface AccountService {
     answers: { persona: string | null; homePlace: HomePlace | null },
     now?: Date,
   ): Promise<UserPreferences>;
+
+  /**
+   * The user's inbox (Notification Center, PRD B.6), newest first. By
+   * default only what is currently relevant: not dismissed and not
+   * past its own expiry. `includeInactive` returns every row (used by
+   * the data export, so a person gets everything held about them).
+   * `limit` defaults to 100.
+   */
+  listNotifications(
+    userId: string,
+    options?: { includeInactive?: boolean; limit?: number; now?: Date },
+  ): Promise<Notification[]>;
+
+  /**
+   * Adds notifications for a user. Idempotent per `dedupeKey`: a row
+   * that already exists for that key is left exactly as it is, so
+   * re-checking the same active alert never duplicates it or resets its
+   * read state. Items without a key always insert.
+   */
+  createNotifications(userId: string, items: NewNotification[], now?: Date): Promise<void>;
+
+  /**
+   * Ends every still-active official alert for this user whose key is
+   * *not* in `activeDedupeKeys` (the agency no longer lists it — it was
+   * cancelled, or the user changed their home place). An empty list ends
+   * them all. Only call this after a *successful* fetch: a failed check
+   * must never make a live alert disappear.
+   */
+  expireOfficialNotificationsExcept(
+    userId: string,
+    activeDedupeKeys: string[],
+    now?: Date,
+  ): Promise<void>;
+
+  /** Marks one notification read. Scoped to the owner in the query itself. */
+  markNotificationRead(userId: string, id: string, now?: Date): Promise<void>;
+
+  /** Marks every unread notification read. */
+  markAllNotificationsRead(userId: string, now?: Date): Promise<void>;
+
+  /** Hides one notification from the inbox. Scoped to the owner in the query itself. */
+  dismissNotification(userId: string, id: string, now?: Date): Promise<void>;
+
+  /** Settings, or the defaults when the user has never saved any. */
+  getNotificationSettings(userId: string): Promise<NotificationSettings>;
+
+  /** Saves the two user-controlled settings (never touches the sync timestamp). */
+  saveNotificationSettings(
+    userId: string,
+    settings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean },
+    now?: Date,
+  ): Promise<NotificationSettings>;
+
+  /** Records that official alerts were just checked (the re-check throttle). */
+  markAlertsSynced(userId: string, now?: Date): Promise<void>;
+
+  /** Deletes notifications created before `olderThan`. */
+  pruneNotifications(userId: string, olderThan: Date): Promise<void>;
 
   /**
    * Creates (or updates, if one already exists) a workspace membership
@@ -1264,6 +1332,172 @@ export class SupabaseAccountService implements AccountService {
     }
     return rowToPreferences(userId, data);
   }
+
+  async listNotifications(
+    userId: string,
+    options: { includeInactive?: boolean; limit?: number; now?: Date } = {},
+  ): Promise<Notification[]> {
+    const now = options.now ?? new Date();
+    let query = this.client
+      .from("notifications")
+      .select(NOTIFICATION_COLUMNS)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(options.limit ?? 100);
+    if (!options.includeInactive) {
+      query = query
+        .is("dismissed_at", null)
+        .or(`expires_at.is.null,expires_at.gt.${now.toISOString()}`);
+    }
+    const { data, error } = await query;
+    if (error) {
+      throw new Error(`Failed to list notifications for ${userId}: ${error.message}`);
+    }
+    return ((data ?? []) as NotificationRow[]).map(rowToNotification);
+  }
+
+  async createNotifications(
+    userId: string,
+    items: NewNotification[],
+    now: Date = new Date(),
+  ): Promise<void> {
+    if (items.length === 0) return;
+    // Every row carries every column: a bulk insert with differing keys
+    // would send NULL for the missing ones and trip NOT NULL on created_at.
+    const rows = items.map((item) => ({
+      user_id: userId,
+      source: item.source,
+      tier: item.tier,
+      title: item.title,
+      body: item.body ?? null,
+      detail: item.detail ?? null,
+      href: item.href ?? null,
+      dedupe_key: item.dedupeKey ?? null,
+      expires_at: item.expiresAt ?? null,
+      created_at: item.createdAt ?? now.toISOString(),
+    }));
+    const { error } = await this.client
+      .from("notifications")
+      .upsert(rows, { onConflict: "user_id,dedupe_key", ignoreDuplicates: true });
+    if (error) {
+      throw new Error(`Failed to create notifications for ${userId}: ${error.message}`);
+    }
+  }
+
+  async expireOfficialNotificationsExcept(
+    userId: string,
+    activeDedupeKeys: string[],
+    now: Date = new Date(),
+  ): Promise<void> {
+    let query = this.client
+      .from("notifications")
+      .update({ expires_at: now.toISOString() })
+      .eq("user_id", userId)
+      .eq("source", "official_alert")
+      .or(`expires_at.is.null,expires_at.gt.${now.toISOString()}`);
+    if (activeDedupeKeys.length > 0) {
+      query = query.not("dedupe_key", "in", `(${activeDedupeKeys.map(quoteForInList).join(",")})`);
+    }
+    const { error } = await query;
+    if (error) {
+      throw new Error(`Failed to end stale alerts for ${userId}: ${error.message}`);
+    }
+  }
+
+  async markNotificationRead(userId: string, id: string, now: Date = new Date()): Promise<void> {
+    const { error } = await this.client
+      .from("notifications")
+      .update({ read_at: now.toISOString() })
+      .eq("id", id)
+      .eq("user_id", userId)
+      .is("read_at", null);
+    if (error) {
+      throw new Error(`Failed to mark notification read for ${userId}: ${error.message}`);
+    }
+  }
+
+  async markAllNotificationsRead(userId: string, now: Date = new Date()): Promise<void> {
+    const { error } = await this.client
+      .from("notifications")
+      .update({ read_at: now.toISOString() })
+      .eq("user_id", userId)
+      .is("read_at", null);
+    if (error) {
+      throw new Error(`Failed to mark notifications read for ${userId}: ${error.message}`);
+    }
+  }
+
+  async dismissNotification(userId: string, id: string, now: Date = new Date()): Promise<void> {
+    const { error } = await this.client
+      .from("notifications")
+      .update({ dismissed_at: now.toISOString() })
+      .eq("id", id)
+      .eq("user_id", userId);
+    if (error) {
+      throw new Error(`Failed to dismiss notification for ${userId}: ${error.message}`);
+    }
+  }
+
+  async getNotificationSettings(userId: string): Promise<NotificationSettings> {
+    const { data, error } = await this.client
+      .from("notification_settings")
+      .select("official_min_tier, collaboration_enabled, alerts_synced_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Failed to load notification settings for ${userId}: ${error.message}`);
+    }
+    return rowToNotificationSettings(data);
+  }
+
+  async saveNotificationSettings(
+    userId: string,
+    settings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean },
+    now: Date = new Date(),
+  ): Promise<NotificationSettings> {
+    const { data, error } = await this.client
+      .from("notification_settings")
+      .upsert(
+        {
+          user_id: userId,
+          official_min_tier: settings.officialMinTier,
+          collaboration_enabled: settings.collaborationEnabled,
+          updated_at: now.toISOString(),
+        },
+        { onConflict: "user_id" },
+      )
+      .select("official_min_tier, collaboration_enabled, alerts_synced_at")
+      .single();
+    if (error || !data) {
+      throw new Error(
+        `Failed to save notification settings for ${userId}: ${error?.message ?? "no row"}`,
+      );
+    }
+    return rowToNotificationSettings(data);
+  }
+
+  async markAlertsSynced(userId: string, now: Date = new Date()): Promise<void> {
+    const { error } = await this.client
+      .from("notification_settings")
+      .upsert(
+        { user_id: userId, alerts_synced_at: now.toISOString(), updated_at: now.toISOString() },
+        { onConflict: "user_id" },
+      );
+    if (error) {
+      throw new Error(`Failed to record alert check for ${userId}: ${error.message}`);
+    }
+  }
+
+  async pruneNotifications(userId: string, olderThan: Date): Promise<void> {
+    const { error } = await this.client
+      .from("notifications")
+      .delete()
+      .eq("user_id", userId)
+      .lt("created_at", olderThan.toISOString());
+    if (error) {
+      throw new Error(`Failed to prune notifications for ${userId}: ${error.message}`);
+    }
+  }
 }
 
 interface PreferencesRow {
@@ -1294,4 +1528,59 @@ function rowToPreferences(userId: string, row: PreferencesRow | null): UserPrefe
       : null,
     onboardedAt: row.onboarded_at,
   };
+}
+
+const NOTIFICATION_COLUMNS =
+  "id, source, tier, title, body, detail, href, created_at, expires_at, read_at, dismissed_at";
+
+interface NotificationRow {
+  id: string;
+  source: string;
+  tier: string;
+  title: string;
+  body: string | null;
+  detail: string | null;
+  href: string | null;
+  created_at: string;
+  expires_at: string | null;
+  read_at: string | null;
+  dismissed_at: string | null;
+}
+
+function rowToNotification(row: NotificationRow): Notification {
+  return {
+    id: row.id,
+    source: row.source as NotificationSource,
+    // The table's CHECK constraint guarantees a valid tier; the fallback
+    // only guards against a future drift, never hides an unknown value as critical.
+    tier: isNotificationTier(row.tier) ? row.tier : "info",
+    title: row.title,
+    body: row.body,
+    detail: row.detail,
+    href: row.href,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    readAt: row.read_at,
+    dismissedAt: row.dismissed_at,
+  };
+}
+
+function rowToNotificationSettings(
+  row: {
+    official_min_tier: string;
+    collaboration_enabled: boolean;
+    alerts_synced_at: string | null;
+  } | null,
+): NotificationSettings {
+  if (!row) return { ...DEFAULT_NOTIFICATION_SETTINGS };
+  return {
+    officialMinTier: isOfficialMinTier(row.official_min_tier) ? row.official_min_tier : "info",
+    collaborationEnabled: row.collaboration_enabled,
+    alertsSyncedAt: row.alerts_synced_at,
+  };
+}
+
+/** Double-quotes a value for a PostgREST `in.(...)` list, escaping quotes and backslashes. */
+function quoteForInList(value: string): string {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }

@@ -8,6 +8,7 @@ import type {
   UserPreferences,
   WorkspaceMembership,
 } from "./account.js";
+import type { Notification, NotificationSettings } from "./notifications.js";
 
 /**
  * Everything World Vitality holds that is *about* or *by* one user, in
@@ -19,7 +20,8 @@ import type {
  *
  * **Scope, stated plainly:**
  * - The user's profile, their preferences (role and home place chosen
- *   in onboarding) and every workspace membership they hold.
+ *   in onboarding), their notification settings and inbox, and every
+ *   workspace membership they hold.
  * - Resources they *created* (fields, insured properties, monitored
  *   locations) — by `createdBy`, regardless of any resource scoping on
  *   their membership today.
@@ -36,6 +38,9 @@ export interface UserDataExport {
   profile: Profile;
   /** Onboarding answers: role, home place, when onboarding was completed. */
   preferences: UserPreferences;
+  /** Notification settings and every inbox item, including dismissed and expired ones. */
+  notificationSettings: NotificationSettings;
+  notifications: Notification[];
   memberships: WorkspaceMembership[];
   createdResources: {
     fields: Field[];
@@ -61,11 +66,14 @@ export async function buildUserDataExport(
   userId: string,
   now: Date = new Date(),
 ): Promise<UserDataExport> {
-  const [profile, memberships, preferences] = await Promise.all([
-    account.getProfile(userId),
-    account.getWorkspaceMemberships(userId),
-    account.getPreferences(userId),
-  ]);
+  const [profile, memberships, preferences, notificationSettings, notifications] =
+    await Promise.all([
+      account.getProfile(userId),
+      account.getWorkspaceMemberships(userId),
+      account.getPreferences(userId),
+      account.getNotificationSettings(userId),
+      account.listNotifications(userId, { includeInactive: true, limit: 1000 }),
+    ]);
   const workspaceIds = new Set(memberships.map((m) => m.workspaceId));
 
   const [allFields, allProperties, allLocations] = await Promise.all([
@@ -91,6 +99,8 @@ export async function buildUserDataExport(
     format: "world-vitality-data-export/v1",
     profile,
     preferences,
+    notificationSettings,
+    notifications,
     memberships,
     createdResources: { fields, insuredProperties, monitoredLocations },
     commentsWritten,
