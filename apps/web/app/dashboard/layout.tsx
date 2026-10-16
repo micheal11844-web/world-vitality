@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { requireSession } from "../../lib/require-session";
 
 // Cookies are read on every request here, so this segment can never be
@@ -17,5 +18,5 @@ export const dynamic = "force-dynamic";
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   await requireSession();
-  return <>{children}</>;
+  return <LocaleBoundary>{children}</LocaleBoundary>;
 }

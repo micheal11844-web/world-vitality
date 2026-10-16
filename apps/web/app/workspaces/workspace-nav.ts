@@ -1,4 +1,5 @@
 import type { SidebarItem } from "@world-vitality/ui-components";
+import { translateOr, type Translate } from "@world-vitality/i18n";
 
 export interface WorkspaceSubLink {
   key: string;
@@ -156,6 +157,51 @@ export const WORKSPACE_LINKS: WorkspaceLink[] = [
 ];
 
 /**
+ * Catalog keys for each sub-page's label, keyed `workspace:sub`. Only
+ * the *home* sub-page differs per workspace ("Field Overview", "Site
+ * Risk"…); Map, Team, Reports and the Lesson Plan share one label each.
+ * A pair missing here falls back to the English label above.
+ */
+const SUB_LABEL_KEYS: Record<string, string> = {
+  "agriculture:home": "nav.fieldOverview",
+  "agriculture:report": "nav.fieldReport",
+  "weather:home": "nav.currentConditions",
+  "construction:home": "nav.siteRisk",
+  "renewable-energy:home": "nav.generationOutlook",
+  "research:home": "nav.datasetExplorer",
+  "logistics:home": "nav.routeRisk",
+  "disaster-monitoring:home": "nav.activeAlerts",
+  "government-ngos:home": "nav.jurisdictionOverview",
+  "government-ngos:report": "nav.formalReport",
+  "insurance:home": "nav.underwritingRiskContext",
+  "insurance:report": "nav.auditableReport",
+  "education:home": "nav.explainThisData",
+  "education:lesson-plan": "nav.lessonPlan",
+};
+
+const SHARED_SUB_LABEL_KEYS: Record<string, string> = {
+  map: "nav.map",
+  team: "nav.team",
+};
+
+/** A workspace's name in the reader's language (English when no translator is given). */
+export function workspaceLabel(workspace: WorkspaceLink, t?: Translate): string {
+  const key = `workspace.${workspace.key}.name`;
+  return t ? translateOr(t, key, workspace.label) : workspace.label;
+}
+
+/** A sub-page's label in the reader's language (English when no translator is given). */
+export function subLinkLabel(
+  workspace: WorkspaceLink,
+  sub: WorkspaceSubLink,
+  t?: Translate,
+): string {
+  if (!t) return sub.label;
+  const key = SUB_LABEL_KEYS[`${workspace.key}:${sub.key}`] ?? SHARED_SUB_LABEL_KEYS[sub.key];
+  return key ? translateOr(t, key, sub.label) : sub.label;
+}
+
+/**
  * Builds the single "Workspaces" `SidebarItem` tree every shell in
  * this app renders (BUILD_PLAN "STAGE — NESTED WORKSPACE SIDEBAR
  * NAVIGATION") — one call site instead of each of the ten workspace
@@ -189,21 +235,22 @@ export const WORKSPACE_LINKS: WorkspaceLink[] = [
 export function buildWorkspaceSidebarItems(
   currentWorkspaceKey?: string,
   activeSubKey?: string,
+  /** Pass the reader's translator to label the tree in their language; omit for English. */
+  t?: Translate,
 ): SidebarItem[] {
   return WORKSPACE_LINKS.map((workspace) => {
     const isCurrentWorkspace = workspace.key === currentWorkspaceKey;
     return {
       key: workspace.key,
-      label: workspace.label,
+      label: workspaceLabel(workspace, t),
       href: workspace.href,
       active: isCurrentWorkspace,
       children: workspace.subLinks.map((sub) => ({
         key: `${workspace.key}-${sub.key}`,
-        label: sub.label,
+        label: subLinkLabel(workspace, sub, t),
         href: sub.href,
         active: isCurrentWorkspace && activeSubKey === sub.key,
       })),
     };
   });
 }
-

@@ -29,7 +29,7 @@ export function Table<T>({ columns, rows, getRowKey, compact = false, caption }:
     <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--wv-font-sans)" }}>
       {caption && (
         <caption
-          style={{ textAlign: "left", color: "var(--wv-text-secondary)", padding: cellPadding }}
+          style={{ textAlign: "start", color: "var(--wv-text-secondary)", padding: cellPadding }}
         >
           {caption}
         </caption>
@@ -41,7 +41,7 @@ export function Table<T>({ columns, rows, getRowKey, compact = false, caption }:
               key={col.key}
               scope="col"
               style={{
-                textAlign: col.align ?? "left",
+                textAlign: col.align ?? "start",
                 padding: cellPadding,
                 borderBottom: "2px solid var(--wv-border)",
                 color: "var(--wv-text-secondary)",
@@ -61,7 +61,7 @@ export function Table<T>({ columns, rows, getRowKey, compact = false, caption }:
               <td
                 key={col.key}
                 style={{
-                  textAlign: col.align ?? "left",
+                  textAlign: col.align ?? "start",
                   padding: cellPadding,
                   borderBottom: "1px solid var(--wv-border)",
                   color: "var(--wv-text-primary)",

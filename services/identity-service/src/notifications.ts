@@ -34,6 +34,21 @@ export const TIER_LABELS: Record<NotificationTier, string> = {
 
 export type NotificationSource = "official_alert" | "collaboration";
 
+/**
+ * What a notification *says*, as data, for the ones the app writes
+ * itself (collaboration events): an internal id plus string parameters.
+ * The inbox renders the sentence in the reader's current language;
+ * `title`/`body` keep the English rendering as the fallback. Official
+ * alerts have none — the agency's own text is never re-worded.
+ */
+export type NotificationMessageKey = "field_comment" | "member_added";
+
+export type NotificationMessageParams = Record<string, string>;
+
+export function isNotificationMessageKey(value: unknown): value is NotificationMessageKey {
+  return value === "field_comment" || value === "member_added";
+}
+
 export interface Notification {
   id: string;
   source: NotificationSource;
@@ -50,6 +65,8 @@ export interface Notification {
   expiresAt: string | null;
   readAt: string | null;
   dismissedAt: string | null;
+  messageKey: NotificationMessageKey | null;
+  messageParams: NotificationMessageParams | null;
 }
 
 /** What goes in when a notification is created (the store assigns the rest). */
@@ -65,6 +82,9 @@ export interface NewNotification {
   expiresAt?: string | null;
   /** Defaults to "now"; official alerts use their own issue time. */
   createdAt?: string | null;
+  /** See `NotificationMessageKey`. Omit for official alerts. */
+  messageKey?: NotificationMessageKey | null;
+  messageParams?: NotificationMessageParams | null;
 }
 
 /** The `official_min_tier` choices: show every official alert, or only alerts and up. */
@@ -349,8 +369,9 @@ export function fieldCommentNotification(input: {
   commenterEmail: string | null;
   commentBody: string;
 }): NewNotification {
-  const who =
-    input.commenterDisplayName?.trim() || input.commenterEmail?.split("@")[0]?.trim() || "Someone";
+  const named =
+    input.commenterDisplayName?.trim() || input.commenterEmail?.split("@")[0]?.trim() || "";
+  const who = named || "Someone";
   return {
     source: "collaboration",
     tier: "info",
@@ -358,6 +379,9 @@ export function fieldCommentNotification(input: {
     body: truncateText(input.commentBody, BODY_MAX),
     href: "/workspaces/agriculture",
     dedupeKey: `comment:${input.commentId}`,
+    messageKey: "field_comment",
+    // `who` is "" when the commenter is unknown, so the reader's language supplies "Someone".
+    messageParams: { who: named, field: input.fieldName },
   };
 }
 
@@ -365,6 +389,8 @@ export function fieldCommentNotification(input: {
 export function membershipAddedNotification(input: {
   workspaceId: string;
   workspaceLabel: string;
+  /** The role id (e.g. `operational_user`) — rendered in the reader's language. */
+  roleId: string;
   roleLabel: string;
   now: Date;
 }): NewNotification {
@@ -375,6 +401,13 @@ export function membershipAddedNotification(input: {
     body: `Your role there: ${input.roleLabel}.`,
     href: safeInternalHref(`/workspaces/${input.workspaceId}`),
     dedupeKey: `member:${input.workspaceId}:${input.now.toISOString().slice(0, 10)}`,
+    messageKey: "member_added",
+    messageParams: {
+      workspaceId: input.workspaceId,
+      workspaceLabel: input.workspaceLabel,
+      roleId: input.roleId,
+      roleLabel: input.roleLabel,
+    },
   };
 }
 

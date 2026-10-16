@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface NotificationBellProps {
   /** JSON endpoint returning `{ signedIn, unread?, criticalUnread? }`. */
@@ -60,6 +61,7 @@ export function NotificationBell({
   href = "/notifications",
   pollMs = 5 * 60 * 1000,
 }: NotificationBellProps) {
+  const ui = useUiStrings();
   const [state, setState] = useState<BellState>({ kind: "loading" });
 
   useEffect(() => {
@@ -103,10 +105,10 @@ export function NotificationBell({
   const unread = state.kind === "ready" ? state.unread : 0;
   const critical = state.kind === "ready" ? state.criticalUnread : 0;
 
-  const parts = ["Notifications"];
-  if (unread > 0) parts.push(`${unread} unread`);
-  if (critical > 0) parts.push(`${critical} critical`);
-  const label = parts.join(", ");
+  const parts = [ui.bell.label];
+  if (unread > 0) parts.push(ui.bell.unread(unread));
+  if (critical > 0) parts.push(ui.bell.critical(critical));
+  const label = parts.join(ui.listSeparator);
 
   return (
     <a
@@ -148,7 +150,7 @@ export function NotificationBell({
           aria-hidden="true"
           data-testid="notification-badge"
           style={{
-            marginLeft: "0.375rem",
+            marginInlineStart: "0.375rem",
             minWidth: "1.125rem",
             padding: "0 0.3rem",
             borderRadius: "999px",
@@ -161,7 +163,7 @@ export function NotificationBell({
           }}
         >
           {critical > 0 ? "! " : ""}
-          {unread > 99 ? "99+" : unread}
+          {unread > 99 ? `${ui.formatNumber(99)}+` : ui.formatNumber(unread)}
         </span>
       )}
     </a>

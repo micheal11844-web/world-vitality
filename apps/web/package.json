@@ -16,6 +16,7 @@
     "@world-vitality/data-ingestion": "workspace:*",
     "@world-vitality/data-schemas": "workspace:*",
     "@world-vitality/design-tokens": "workspace:*",
+    "@world-vitality/i18n": "workspace:*",
     "@world-vitality/identity-service": "workspace:*",
     "@world-vitality/interpretation-engine": "workspace:*",
     "@world-vitality/knowledge-graph": "workspace:*",

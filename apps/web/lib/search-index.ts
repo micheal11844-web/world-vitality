@@ -1,5 +1,6 @@
 import type { SearchEntry } from "@world-vitality/ui-components";
-import { WORKSPACE_LINKS } from "../app/workspaces/workspace-nav";
+import { createTranslator, type LocaleCode, type Translate } from "@world-vitality/i18n";
+import { WORKSPACE_LINKS, subLinkLabel, workspaceLabel } from "../app/workspaces/workspace-nav";
 
 /**
  * The searchable map of the app (PRD B.4's "data-topic queries"),
@@ -202,96 +203,145 @@ const SUB_PAGE_KEYWORDS: Record<string, string[]> = {
   ],
 };
 
-const APP_ENTRIES: SearchEntry[] = [
-  {
-    id: "app-dashboard",
-    kind: "page",
-    label: "Home Dashboard",
-    description: "Your workspaces in one place",
-    href: "/dashboard",
-    keywords: ["home", "dashboard", "overview", "my workspaces", "start"],
-  },
-  {
-    id: "app-explore",
-    kind: "tool",
-    label: "Public Explorer",
-    description: "Look up any place on Earth — no account needed",
-    href: "/explore",
-    keywords: [
-      "explore",
-      "explorer",
-      "place",
-      "city",
-      "town",
-      "location",
-      "anywhere",
-      "public",
-      "lookup",
-    ],
-  },
-  {
-    id: "app-globe",
-    kind: "tool",
-    label: "The Globe",
-    description: "A 3D view of the planet",
-    href: "/globe",
-    keywords: ["globe", "earth", "planet", "3d", "world", "satellite"],
-  },
-  {
-    id: "app-notifications",
-    kind: "page",
-    label: "Notifications",
-    description: "Alerts for your home place and activity in your workspaces",
-    href: "/notifications",
-    keywords: [
-      "notifications",
-      "notification",
-      "alerts",
-      "alert",
-      "inbox",
-      "warnings",
-      "warning",
-      "bell",
-      "unread",
-      "emergency",
-    ],
-  },
-  {
-    id: "app-settings-notifications",
-    kind: "setting",
-    label: "Notification preferences",
-    description: "Choose which alerts and activity you see",
-    href: "/settings#notifications",
-    keywords: ["notification", "notifications", "preferences", "alerts", "mute", "quiet", "email"],
-  },
-  {
-    id: "app-settings",
-    kind: "setting",
-    label: "Settings",
-    description: "Your profile and account",
-    href: "/settings",
-    keywords: ["settings", "profile", "account", "display name", "name", "preferences", "me"],
-  },
-  {
-    id: "app-settings-export",
-    kind: "setting",
-    label: "Download my data",
-    description: "One-click export of everything tied to your account",
-    href: "/settings#download-data",
-    keywords: ["download", "export", "my data", "backup", "gdpr", "privacy", "copy"],
-  },
-  {
-    id: "app-settings-delete",
-    kind: "setting",
-    label: "Delete my account",
-    description: "Permanently remove your account",
-    href: "/settings#delete-account",
-    keywords: ["delete", "remove", "close account", "deactivate", "erase", "privacy"],
-  },
-];
+/**
+ * App-level destinations. Labels and descriptions come from the
+ * catalog (`searchIndex.*`) so they read in the searcher's language;
+ * the keywords stay English on purpose and are matched in every language
+ * (see `buildSearchIndex`).
+ */
+function appEntries(t: Translate): SearchEntry[] {
+  return [
+    {
+      id: "app-dashboard",
+      kind: "page",
+      label: t("searchIndex.dashboard.label"),
+      description: t("searchIndex.dashboard.description"),
+      href: "/dashboard",
+      keywords: ["home", "dashboard", "overview", "my workspaces", "start"],
+    },
+    {
+      id: "app-explore",
+      kind: "tool",
+      label: t("searchIndex.explorer.label"),
+      description: t("searchIndex.explorer.description"),
+      href: "/explore",
+      keywords: [
+        "explore",
+        "explorer",
+        "place",
+        "city",
+        "town",
+        "location",
+        "anywhere",
+        "public",
+        "lookup",
+      ],
+    },
+    {
+      id: "app-globe",
+      kind: "tool",
+      label: t("searchIndex.globe.label"),
+      description: t("searchIndex.globe.description"),
+      href: "/globe",
+      keywords: ["globe", "earth", "planet", "3d", "world", "satellite"],
+    },
+    {
+      id: "app-notifications",
+      kind: "page",
+      label: t("searchIndex.notifications.label"),
+      description: t("searchIndex.notifications.description"),
+      href: "/notifications",
+      keywords: [
+        "notifications",
+        "notification",
+        "alerts",
+        "alert",
+        "inbox",
+        "warnings",
+        "warning",
+        "bell",
+        "unread",
+        "emergency",
+      ],
+    },
+    {
+      id: "app-settings-notifications",
+      kind: "setting",
+      label: t("searchIndex.notificationPrefs.label"),
+      description: t("searchIndex.notificationPrefs.description"),
+      href: "/settings#notifications",
+      keywords: [
+        "notification",
+        "notifications",
+        "preferences",
+        "alerts",
+        "mute",
+        "quiet",
+        "email",
+      ],
+    },
+    {
+      id: "app-settings-language",
+      kind: "setting",
+      label: t("settings.language.title"),
+      description: t("settings.language.label"),
+      href: "/settings#language",
+      keywords: [
+        "language",
+        "languages",
+        "translate",
+        "translation",
+        "spanish",
+        "french",
+        "portuguese",
+        "arabic",
+        "english",
+        "idioma",
+        "langue",
+        "língua",
+      ],
+    },
+    {
+      id: "app-settings",
+      kind: "setting",
+      label: t("searchIndex.settings.label"),
+      description: t("searchIndex.settings.description"),
+      href: "/settings",
+      keywords: ["settings", "profile", "account", "display name", "name", "preferences", "me"],
+    },
+    {
+      id: "app-settings-export",
+      kind: "setting",
+      label: t("searchIndex.export.label"),
+      description: t("searchIndex.export.description"),
+      href: "/settings#download-data",
+      keywords: ["download", "export", "my data", "backup", "gdpr", "privacy", "copy"],
+    },
+    {
+      id: "app-settings-delete",
+      kind: "setting",
+      label: t("searchIndex.delete.label"),
+      description: t("searchIndex.delete.description"),
+      href: "/settings#delete-account",
+      keywords: ["delete", "remove", "close account", "deactivate", "erase", "privacy"],
+    },
+  ];
+}
 
-/** Builds the full index. Cheap (~60 entries); called per request, not cached. */
-export function buildSearchIndex(): SearchEntry[] {
+/**
+ * Builds the full index. Cheap (~60 entries); called per request, not cached.
+ *
+ * Pass the searcher's language to get names and descriptions in it.
+ * What is and isn't translated, stated plainly: *names and descriptions*
+ * are (so "Agricultura" finds Agriculture), but the hand-written topic
+ * *keywords* ("flood", "crop"…) stay English and are matched in every
+ * language — they are synonyms, and translating them is content work
+ * not done yet. English remains the default and is unchanged.
+ */
+export function buildSearchIndex(locale: LocaleCode = "en"): SearchEntry[] {
+  const translator = createTranslator(locale);
+  const t = translator.t;
+  const translated = locale !== "en";
   const entries: SearchEntry[] = [];
 
   for (const workspace of WORKSPACE_LINKS) {
@@ -299,8 +349,10 @@ export function buildSearchIndex(): SearchEntry[] {
     entries.push({
       id: `ws-${workspace.key}`,
       kind: "workspace",
-      label: workspace.label,
-      description: meta?.description,
+      label: workspaceLabel(workspace, translated ? t : undefined),
+      description: translated
+        ? t(`workspace.${workspace.key}.description` as Parameters<Translate>[0])
+        : meta?.description,
       href: workspace.href,
       keywords: [...(meta?.keywords ?? []), workspace.key.replace(/-/g, " ")],
     });
@@ -309,7 +361,7 @@ export function buildSearchIndex(): SearchEntry[] {
       entries.push({
         id: `ws-${workspace.key}-${sub.key}`,
         kind: "page",
-        label: `${workspace.label} — ${sub.label}`,
+        label: `${workspaceLabel(workspace, translated ? t : undefined)} — ${subLinkLabel(workspace, sub, translated ? t : undefined)}`,
         description: undefined,
         href: sub.href,
         keywords: SUB_PAGE_KEYWORDS[sub.key] ?? [],
@@ -320,5 +372,5 @@ export function buildSearchIndex(): SearchEntry[] {
     }
   }
 
-  return [...entries, ...APP_ENTRIES];
+  return [...entries, ...appEntries(t)];
 }

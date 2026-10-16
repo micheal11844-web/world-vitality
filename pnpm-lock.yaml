@@ -62,6 +62,9 @@ importers:
       '@world-vitality/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@world-vitality/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@world-vitality/identity-service':
         specifier: workspace:*
         version: link:../../services/identity-service
@@ -112,6 +115,8 @@ importers:
 
   packages/design-tokens: {}
 
+  packages/i18n: {}
+
   packages/knowledge-graph: {}
 
   packages/ui-components:
@@ -156,6 +161,10 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.111.0
+    devDependencies:
+      '@world-vitality/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
 
   services/interpretation-engine:
     dependencies:

@@ -1,5 +1,6 @@
 import { Card, ConfidenceBadge, Text } from "@world-vitality/ui-components";
 import { personaById, type HomePlace } from "@world-vitality/identity-service";
+import { getTranslator } from "../../lib/i18n/server";
 import { getPlaceInsight } from "../../lib/place-insight";
 
 /**
@@ -13,6 +14,12 @@ import { getPlaceInsight } from "../../lib/place-insight";
  * Which interpretation it shows follows the person's onboarding role
  * (soil moisture for a farmer, wind for energy, …) and falls back to
  * plain current temperature.
+ *
+ * Translation: the card's own sentences (data-gap note, failure notice)
+ * follow the reader's language. The interpretation itself — the
+ * engine's title, summary and confidence wording — is generated in
+ * English and is *not* translated yet, so it is marked `lang="en"` and
+ * left-to-right rather than passed off as the page's language.
  */
 export async function HomeInsightCard({
   personaId,
@@ -21,21 +28,25 @@ export async function HomeInsightCard({
   personaId: string | null;
   place: HomePlace;
 }) {
+  const { t, locale } = await getTranslator();
   const kind = personaById(personaId)?.insight ?? "temperature";
   try {
     const insight = await getPlaceInsight(kind, place);
+    const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
     return (
       <Card>
-        <Text variant="caption">{insight.title.toUpperCase()}</Text>
-        <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-          {insight.result.summary}
-        </Text>
-        {!insight.result.unableToAnswer && (
-          <ConfidenceBadge level={insight.result.confidence} showDescription />
-        )}
+        <div {...englishOnly}>
+          <Text variant="caption">{insight.title.toUpperCase()}</Text>
+          <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+            {insight.result.summary}
+          </Text>
+          {!insight.result.unableToAnswer && (
+            <ConfidenceBadge level={insight.result.confidence} showDescription />
+          )}
+        </div>
         {insight.gapCount > 0 && (
           <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-xs)" }}>
-            {insight.gapCount} day(s) had no data available.
+            {t("dashboard.insightGaps", { count: insight.gapCount })}
           </Text>
         )}
       </Card>
@@ -44,8 +55,7 @@ export async function HomeInsightCard({
     return (
       <Card>
         <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-          Couldn’t load live conditions for your place right now. They’ll be back on your next
-          visit.
+          {t("dashboard.insightFailed")}
         </Text>
       </Card>
     );

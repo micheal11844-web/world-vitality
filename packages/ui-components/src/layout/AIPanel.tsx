@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "../components/Button.js";
+import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface AIPanelProps {
   open: boolean;
@@ -25,12 +26,17 @@ export interface AIPanelProps {
  * before implementation" pattern as Stage 1.
  */
 export function AIPanel({ open, onToggle, children }: AIPanelProps) {
+  const ui = useUiStrings();
+  // The panel docks at the inline-end edge, so "open" points back toward
+  // the content: left in LTR, right in RTL (and the reverse for "collapse").
+  const towardContent = ui.dir === "rtl" ? "▶" : "◀";
+  const towardEdge = ui.dir === "rtl" ? "◀" : "▶";
   if (!open) {
     return (
       <div
         style={{
           width: "2.5rem",
-          borderLeft: "1px solid var(--wv-border)",
+          borderInlineStart: "1px solid var(--wv-border)",
           backgroundColor: "var(--wv-surface)",
           display: "flex",
           alignItems: "flex-start",
@@ -38,8 +44,8 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
           paddingTop: "var(--wv-space-md)",
         }}
       >
-        <Button variant="ghost" size="sm" onClick={onToggle} aria-label="Open AI panel">
-          ◀
+        <Button variant="ghost" size="sm" onClick={onToggle} aria-label={ui.aiPanel.open}>
+          {towardContent}
         </Button>
       </div>
     );
@@ -47,10 +53,10 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
 
   return (
     <aside
-      aria-label="AI assistant"
+      aria-label={ui.aiPanel.region}
       style={{
         width: "22rem",
-        borderLeft: "1px solid var(--wv-border)",
+        borderInlineStart: "1px solid var(--wv-border)",
         backgroundColor: "var(--wv-surface)",
         display: "flex",
         flexDirection: "column",
@@ -66,9 +72,9 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
           borderBottom: "1px solid var(--wv-border)",
         }}
       >
-        <span style={{ fontSize: "0.9375rem", fontWeight: 500 }}>Assistant</span>
-        <Button variant="ghost" size="sm" onClick={onToggle} aria-label="Collapse AI panel">
-          ▶
+        <span style={{ fontSize: "0.9375rem", fontWeight: 500 }}>{ui.aiPanel.title}</span>
+        <Button variant="ghost" size="sm" onClick={onToggle} aria-label={ui.aiPanel.collapse}>
+          {towardEdge}
         </Button>
       </div>
       <div style={{ flex: 1, overflow: "auto", padding: "var(--wv-space-md)" }}>{children}</div>

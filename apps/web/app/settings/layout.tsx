@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { requireSession } from "../../lib/require-session";
 
 export const dynamic = "force-dynamic";
@@ -8,5 +9,5 @@ export const dynamic = "force-dynamic";
  *  the app; it must never render for an unauthenticated visitor. */
 export default async function SettingsLayout({ children }: { children: ReactNode }) {
   await requireSession();
-  return <>{children}</>;
+  return <LocaleBoundary>{children}</LocaleBoundary>;
 }

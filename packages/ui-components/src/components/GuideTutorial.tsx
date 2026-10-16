@@ -5,6 +5,7 @@ import { Modal } from "./Modal.js";
 import { Button } from "./Button.js";
 import { Text } from "./Typography.js";
 import { GuideCharacter, type GuideCharacterMood } from "./GuideCharacter.js";
+import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface GuideTutorialStep {
   title: string;
@@ -60,6 +61,7 @@ export function GuideTutorial({
   characterName = "Orbi",
   renderGuideCharacter,
 }: GuideTutorialProps) {
+  const ui = useUiStrings();
   const [stepIndex, setStepIndex] = useState(0);
   const step = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
@@ -93,7 +95,7 @@ export function GuideTutorial({
           {step.body}
         </Text>
         <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-          Step {stepIndex + 1} of {steps.length}
+          {ui.tutorial.step(stepIndex + 1, steps.length)}
         </Text>
         <div
           style={{
@@ -104,12 +106,12 @@ export function GuideTutorial({
           }}
         >
           <Button variant="ghost" size="sm" onClick={handleClose}>
-            Skip
+            {ui.tutorial.skip}
           </Button>
           <div style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
             {stepIndex > 0 && (
               <Button variant="secondary" size="sm" onClick={() => setStepIndex((i) => i - 1)}>
-                Back
+                {ui.tutorial.back}
               </Button>
             )}
             <Button
@@ -117,7 +119,7 @@ export function GuideTutorial({
               size="sm"
               onClick={() => (isLastStep ? handleClose() : setStepIndex((i) => i + 1))}
             >
-              {isLastStep ? "Get started" : "Next"}
+              {isLastStep ? ui.tutorial.getStarted : ui.tutorial.next}
             </Button>
           </div>
         </div>

@@ -41,7 +41,7 @@ export default async function DashboardPage() {
   return (
     <DashboardView
       recommendedKey={persona?.workspaceKey ?? null}
-      personaLabel={persona?.label ?? null}
+      personaId={persona?.id ?? null}
       homeLabel={place ? homePlaceLabel(place) : null}
       onboarded={Boolean(prefs?.onboardedAt)}
       criticalNotice={

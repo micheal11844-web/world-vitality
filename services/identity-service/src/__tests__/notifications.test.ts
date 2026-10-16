@@ -34,6 +34,8 @@ function n(overrides: Partial<Notification> = {}): Notification {
     expiresAt: null,
     readAt: null,
     dismissedAt: null,
+    messageKey: null,
+    messageParams: null,
     ...overrides,
   };
 }
@@ -309,6 +311,8 @@ test("field comment notification uses display name, else the email's local part 
     commentBody: "Looks dry.",
   });
   assert.equal(withName.title, "Ada commented on North Field");
+  assert.equal(withName.messageKey, "field_comment");
+  assert.deepEqual(withName.messageParams, { who: "Ada", field: "North Field" });
   assert.equal(withName.dedupeKey, "comment:c1");
   assert.equal(withName.tier, "info");
   assert.equal(withName.source, "collaboration");
@@ -322,16 +326,35 @@ test("field comment notification uses display name, else the email's local part 
   });
   assert.equal(noName.title, "ada.lovelace commented on North Field");
   assert.ok(!noName.title.includes("@"));
+
+  const anonymous = fieldCommentNotification({
+    commentId: "c3",
+    fieldName: "North Field",
+    commenterDisplayName: null,
+    commenterEmail: null,
+    commentBody: "x",
+  });
+  assert.equal(anonymous.title, "Someone commented on North Field");
+  assert.equal(anonymous.messageParams?.who, "");
 });
 
 test("membership notification links to the workspace and is idempotent per day", () => {
   const a = membershipAddedNotification({
     workspaceId: "agriculture",
     workspaceLabel: "Agriculture",
+    roleId: "operational_user",
     roleLabel: "Operational user",
     now: NOW,
   });
   assert.equal(a.href, "/workspaces/agriculture");
+  // Stored as data too, so the inbox can re-render it in the reader's language.
+  assert.equal(a.messageKey, "member_added");
+  assert.deepEqual(a.messageParams, {
+    workspaceId: "agriculture",
+    workspaceLabel: "Agriculture",
+    roleId: "operational_user",
+    roleLabel: "Operational user",
+  });
   assert.equal(a.title, "You now have access to Agriculture");
   assert.equal(a.dedupeKey, "member:agriculture:2026-10-13");
 });

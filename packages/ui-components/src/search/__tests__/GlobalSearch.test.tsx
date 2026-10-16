@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { GlobalSearch } from "../GlobalSearch.js";
+import { DEFAULT_UI_STRINGS, UiStringsProvider } from "../../i18n/ui-strings.js";
 
 const realFetch = globalThis.fetch;
 
@@ -126,4 +127,25 @@ test("'/' focuses the search from anywhere but not from another input", () => {
   other.focus();
   fireEvent.keyDown(other, { key: "/" });
   assert.equal(document.activeElement, other);
+});
+
+test("both suggestion requests carry the reader's language in the URL", async () => {
+  const urls: string[] = [];
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    return new Response(JSON.stringify({ suggestions: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }) as typeof fetch;
+  render(
+    <UiStringsProvider value={{ ...DEFAULT_UI_STRINGS, locale: "ar", dir: "rtl" }}>
+      <GlobalSearch />
+    </UiStringsProvider>,
+  );
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "lagos" } });
+  await waitFor(() => {
+    assert.ok(urls.some((u) => u.startsWith("/api/search/suggest?q=lagos&lang=ar")));
+    assert.ok(urls.some((u) => u.startsWith("/api/search/places?q=lagos&lang=ar")));
+  });
 });

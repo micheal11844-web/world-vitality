@@ -11,10 +11,9 @@ import type { ConfidenceLevel } from "@world-vitality/interpretation-engine";
 import { getAccountService } from "./account";
 import { geocodeCandidates } from "./geocode";
 import { getSessionUserId } from "./get-session-user-id";
+import { tServer } from "./i18n/server";
 import { logApplication, logTelemetry } from "./logger";
 import { getPlaceInsight } from "./place-insight";
-
-const SIGN_IN_AGAIN = "Please sign in again to continue.";
 
 export interface SearchPlacesResult {
   ok: boolean;
@@ -28,10 +27,11 @@ export interface SearchPlacesResult {
  * gate (the anonymous equivalent is Public Explorer).
  */
 export async function searchHomePlacesAction(query: string): Promise<SearchPlacesResult> {
-  if (!(await getSessionUserId())) return { ok: false, error: SIGN_IN_AGAIN };
+  if (!(await getSessionUserId()))
+    return { ok: false, error: await tServer("errors.sessionExpired") };
   const trimmed = typeof query === "string" ? query.trim() : "";
   if (trimmed.length < 2 || trimmed.length > 100) {
-    return { ok: false, error: "Type at least two letters of a town, city or region." };
+    return { ok: false, error: await tServer("errors.typeTwoLetters") };
   }
   try {
     const found = await geocodeCandidates(trimmed, 5);
@@ -39,13 +39,13 @@ export async function searchHomePlacesAction(query: string): Promise<SearchPlace
     if (places.length === 0) {
       return {
         ok: false,
-        error: `No place found matching "${trimmed}". Try a different spelling or a nearby city.`,
+        error: await tServer("errors.noPlaceFound", { query: trimmed }),
       };
     }
     return { ok: true, places };
   } catch (err) {
     logApplication.error("onboarding_place_search_failed", err);
-    return { ok: false, error: "Couldn't look up places right now. Please try again." };
+    return { ok: false, error: await tServer("errors.placeLookupFailed") };
   }
 }
 
@@ -65,10 +65,11 @@ export async function previewInsightAction(
   personaId: string,
   place: unknown,
 ): Promise<PreviewInsightResult> {
-  if (!(await getSessionUserId())) return { ok: false, error: SIGN_IN_AGAIN };
+  if (!(await getSessionUserId()))
+    return { ok: false, error: await tServer("errors.sessionExpired") };
   const persona = personaById(personaId);
   const home = parseHomePlace(place);
-  if (!persona || !home) return { ok: false, error: "Pick who you are and a place first." };
+  if (!persona || !home) return { ok: false, error: await tServer("errors.pickRoleAndPlace") };
   try {
     const insight = await getPlaceInsight(persona.insight, home);
     return {
@@ -84,7 +85,7 @@ export async function previewInsightAction(
     logApplication.error("onboarding_insight_failed", err);
     return {
       ok: false,
-      error: `Couldn't fetch live data for ${homePlaceLabel(home)} right now. You can still continue — it will load in your workspace.`,
+      error: await tServer("errors.liveDataFailed", { place: homePlaceLabel(home) }),
     };
   }
 }
@@ -106,13 +107,13 @@ export async function saveOnboardingAction(
   place: unknown,
 ): Promise<SaveOnboardingResult> {
   const userId = await getSessionUserId();
-  if (!userId) return { ok: false, error: SIGN_IN_AGAIN };
+  if (!userId) return { ok: false, error: await tServer("errors.sessionExpired") };
 
   const persona = personaId ? personaById(personaId) : null;
-  if (personaId && !persona) return { ok: false, error: "That role isn't one of the options." };
+  if (personaId && !persona) return { ok: false, error: await tServer("errors.invalidRole") };
   const home = place === null || place === undefined ? null : parseHomePlace(place);
   if (place !== null && place !== undefined && !home) {
-    return { ok: false, error: "That place isn't valid. Please search for it again." };
+    return { ok: false, error: await tServer("errors.invalidPlace") };
   }
 
   try {
@@ -122,7 +123,7 @@ export async function saveOnboardingAction(
     });
   } catch (err) {
     logApplication.error("onboarding_save_failed", err);
-    return { ok: false, error: "Couldn't save that right now. Please try again." };
+    return { ok: false, error: await tServer("errors.saveFailed") };
   }
 
   logTelemetry.event("onboarding_completed", {
@@ -140,7 +141,7 @@ export async function saveOnboardingAction(
  */
 export async function skipOnboardingAction(): Promise<{ ok: boolean; error?: string }> {
   const userId = await getSessionUserId();
-  if (!userId) return { ok: false, error: SIGN_IN_AGAIN };
+  if (!userId) return { ok: false, error: await tServer("errors.sessionExpired") };
   try {
     const account = getAccountService();
     const existing = await account.getPreferences(userId);
@@ -151,7 +152,7 @@ export async function skipOnboardingAction(): Promise<{ ok: boolean; error?: str
     return { ok: true };
   } catch (err) {
     logApplication.error("onboarding_skip_failed", err);
-    return { ok: false, error: "Couldn't save that right now. Please try again." };
+    return { ok: false, error: await tServer("errors.saveFailed") };
   }
 }
 
@@ -162,7 +163,7 @@ export async function skipOnboardingAction(): Promise<{ ok: boolean; error?: str
  */
 export async function clearHomePlaceAction(): Promise<{ ok: boolean; error?: string }> {
   const userId = await getSessionUserId();
-  if (!userId) return { ok: false, error: SIGN_IN_AGAIN };
+  if (!userId) return { ok: false, error: await tServer("errors.sessionExpired") };
   try {
     const account = getAccountService();
     const existing = await account.getPreferences(userId);
@@ -171,6 +172,6 @@ export async function clearHomePlaceAction(): Promise<{ ok: boolean; error?: str
     return { ok: true };
   } catch (err) {
     logApplication.error("onboarding_clear_place_failed", err);
-    return { ok: false, error: "Couldn't remove that right now. Please try again." };
+    return { ok: false, error: await tServer("errors.removeFailed") };
   }
 }

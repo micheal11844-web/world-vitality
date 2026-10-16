@@ -7,6 +7,7 @@ import { AIPanel } from "./AIPanel.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
 import { GlobalSearch } from "../search/GlobalSearch.js";
 import { NotificationBell } from "../notifications/NotificationBell.js";
+import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface AppShellProps {
   brand: HeaderProps["brand"];
@@ -141,6 +142,7 @@ const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
  * frequent in-flow action worth optimizing.
  */
 function GlobeToggleLink() {
+  const ui = useUiStrings();
   return (
     <a
       href="/globe"
@@ -159,7 +161,7 @@ function GlobeToggleLink() {
       }}
     >
       <span aria-hidden="true">🌐</span>
-      View the Globe
+      {ui.viewGlobe}
     </a>
   );
 }
@@ -184,14 +186,15 @@ const accountControlStyle = {
  * link or image — see `app/auth/signout/route.ts`).
  */
 function AccountControls() {
+  const ui = useUiStrings();
   return (
     <>
       <a href="/settings" style={accountControlStyle}>
-        Settings
+        {ui.settings}
       </a>
       <form method="post" action="/auth/signout" style={{ margin: 0 }}>
         <button type="submit" style={accountControlStyle}>
-          Sign out
+          {ui.signOut}
         </button>
       </form>
     </>
@@ -331,7 +334,7 @@ export function AppShell({
           style={{
             position: "fixed",
             bottom: "var(--wv-space-md)",
-            right: "var(--wv-space-md)",
+            insetInlineEnd: "var(--wv-space-md)",
             pointerEvents: "none",
             zIndex: 10,
           }}

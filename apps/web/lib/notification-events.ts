@@ -84,6 +84,7 @@ export async function notifyMembershipAdded(input: {
       membershipAddedNotification({
         workspaceId: input.workspaceId,
         workspaceLabel,
+        roleId: input.role,
         roleLabel: ROLE_LABELS[input.role] ?? input.role,
         now: new Date(),
       }),

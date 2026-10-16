@@ -15,6 +15,8 @@ function fakeClient(opts: { row?: Record<string, unknown> | null; error?: string
     eq: () => chain,
     maybeSingle: async () => result,
     single: async () => result,
+    // Awaiting a bare upsert (no .select()) resolves to the same result.
+    then: (resolve: (value: typeof result) => unknown) => resolve(result),
     upsert: (row: Record<string, unknown>, options: { onConflict: string }) => {
       calls.upsert = row;
       calls.onConflict = options.onConflict;
@@ -28,7 +30,13 @@ function fakeClient(opts: { row?: Record<string, unknown> | null; error?: string
 test("getPreferences returns the all-null default when the user has no row", async () => {
   const { client } = fakeClient({ row: null });
   const prefs = await new SupabaseAccountService(client).getPreferences("u1");
-  assert.deepEqual(prefs, { userId: "u1", persona: null, homePlace: null, onboardedAt: null });
+  assert.deepEqual(prefs, {
+    userId: "u1",
+    persona: null,
+    homePlace: null,
+    onboardedAt: null,
+    language: null,
+  });
 });
 
 test("getPreferences maps a stored row, including the home place", async () => {
@@ -132,6 +140,64 @@ test("saveOnboarding surfaces a database failure instead of pretending it saved"
   await assert.rejects(
     () =>
       new SupabaseAccountService(client).saveOnboarding("u1", { persona: null, homePlace: null }),
+    /boom/,
+  );
+});
+
+test("getPreferences returns the chosen language, and null when none is stored", async () => {
+  const withLanguage = fakeClient({
+    row: {
+      persona: null,
+      home_name: null,
+      home_region: null,
+      home_country: null,
+      home_latitude: null,
+      home_longitude: null,
+      onboarded_at: null,
+      language: "ar",
+    },
+  });
+  assert.equal(
+    (await new SupabaseAccountService(withLanguage.client).getPreferences("u1")).language,
+    "ar",
+  );
+  // A row written before the column existed (or by a fake that omits it) reads as "never chosen".
+  const without = fakeClient({
+    row: {
+      persona: null,
+      home_name: null,
+      home_region: null,
+      home_country: null,
+      home_latitude: null,
+      home_longitude: null,
+      onboarded_at: null,
+    },
+  });
+  assert.equal(
+    (await new SupabaseAccountService(without.client).getPreferences("u1")).language,
+    null,
+  );
+});
+
+test("saveLanguage upserts only the language: it never stamps onboarded_at or touches the place", async () => {
+  const { client, calls } = fakeClient({ row: null });
+  const now = new Date("2026-10-14T09:00:00Z");
+  await new SupabaseAccountService(client).saveLanguage("u1", "es", now);
+  assert.equal(calls.onConflict, "user_id");
+  assert.deepEqual(calls.upsert, {
+    user_id: "u1",
+    language: "es",
+    updated_at: "2026-10-14T09:00:00.000Z",
+  });
+});
+
+test("saveLanguage(null) clears the choice, and a database failure is surfaced", async () => {
+  const cleared = fakeClient({ row: null });
+  await new SupabaseAccountService(cleared.client).saveLanguage("u1", null);
+  assert.equal(cleared.calls.upsert?.language, null);
+  const broken = fakeClient({ error: "boom" });
+  await assert.rejects(
+    () => new SupabaseAccountService(broken.client).saveLanguage("u1", "fr"),
     /boom/,
   );
 });

@@ -63,6 +63,13 @@ export { AppShellSkeleton } from "./layout/AppShellSkeleton.js";
 export { GlobalSearch, type GlobalSearchProps } from "./search/GlobalSearch.js";
 export { NotificationBell, type NotificationBellProps } from "./notifications/NotificationBell.js";
 export {
+  DEFAULT_UI_STRINGS,
+  UiStringsProvider,
+  useUiStrings,
+  type SuggestionKind,
+  type UiStrings,
+} from "./i18n/ui-strings.js";
+export {
   classifyQuery,
   extractPlaceCandidate,
   normalizeQuery,

@@ -3,7 +3,9 @@
 import { useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, Button, Card, Text } from "@world-vitality/ui-components";
-import { TIER_LABELS, TIER_ORDER, type NotificationTier } from "@world-vitality/identity-service";
+import { TIER_ORDER, type NotificationTier } from "@world-vitality/identity-service";
+import type { Translate } from "@world-vitality/i18n";
+import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 import {
@@ -21,7 +23,7 @@ export interface NotificationItemView {
   body: string | null;
   detail: string | null;
   href: string | null;
-  /** Pre-formatted on the server ("5 minutes ago") so server and client render the same text. */
+  /** Pre-formatted on the server ("5 minutes ago", in the reader's language) so server and client render the same text. */
   ago: string;
   unread: boolean;
 }
@@ -77,27 +79,37 @@ function tierCardStyle(tier: NotificationTier, unread: boolean): CSSProperties {
   };
 }
 
-function statusMessage(status: AlertStatusView, hasOfficialAlerts: boolean): string {
+function statusMessage(status: AlertStatusView, hasOfficialAlerts: boolean, t: Translate): string {
   switch (status.kind) {
     case "no_place":
-      return "Official weather alerts are shown for your home place, and you haven’t set one yet.";
+      return t("notifications.status.noPlace");
     case "out_of_coverage":
-      return `Official alerts here come from the U.S. National Weather Service, which covers the U.S. and its territories. ${status.place} is outside that area, so none are shown — that doesn’t mean nothing is happening there.`;
+      return t("notifications.status.outOfCoverage", { place: status.place });
     case "checked": {
-      const when = status.checkedAgo ? ` Last checked ${status.checkedAgo}.` : "";
-      return hasOfficialAlerts
-        ? `Showing official alerts from the National Weather Service for ${status.place}.${when}`
-        : `No official alerts from the National Weather Service are showing for ${status.place}.${when}`;
+      const main = hasOfficialAlerts
+        ? t("notifications.status.showing", { place: status.place })
+        : t("notifications.status.none", { place: status.place });
+      return status.checkedAgo
+        ? `${main} ${t("notifications.status.lastChecked", { ago: status.checkedAgo })}`
+        : main;
     }
     case "failed": {
-      const place = status.place ? ` for ${status.place}` : "";
-      const last = status.lastCheckedAgo ? ` Last successful check: ${status.lastCheckedAgo}.` : "";
-      return `We couldn’t reach the National Weather Service just now, so there may be official alerts${place} that aren’t shown here.${last} For anything urgent, use your local official sources.`;
+      const main = status.place
+        ? t("notifications.status.failedPlace", { place: status.place })
+        : t("notifications.status.failed");
+      return status.lastCheckedAgo
+        ? `${main} ${t("notifications.status.lastSuccess", { ago: status.lastCheckedAgo })}`
+        : main;
     }
   }
 }
 
 function TierLabel({ tier }: { tier: NotificationTier }) {
+  const { t, dir } = useI18n();
+  // Spaced capitals are an English-style emphasis: the capitals come from
+  // CSS (so they only apply where a script has them) and the tracking is
+  // dropped for Arabic, where it would pull joined letters apart.
+  const tracking = dir === "rtl" ? 0 : "0.06em";
   if (tier === "critical") {
     return (
       <span
@@ -107,7 +119,8 @@ function TierLabel({ tier }: { tier: NotificationTier }) {
           gap: "0.375rem",
           fontSize: "0.75rem",
           fontWeight: 700,
-          letterSpacing: "0.06em",
+          letterSpacing: tracking,
+          textTransform: "uppercase",
           color: "var(--wv-critical)",
         }}
       >
@@ -128,7 +141,7 @@ function TierLabel({ tier }: { tier: NotificationTier }) {
         >
           !
         </span>
-        CRITICAL
+        {t("notifications.tag.critical")}
       </span>
     );
   }
@@ -138,11 +151,12 @@ function TierLabel({ tier }: { tier: NotificationTier }) {
         fontFamily: "var(--wv-font-sans)",
         fontSize: "0.75rem",
         fontWeight: 600,
-        letterSpacing: "0.06em",
+        letterSpacing: tracking,
+        textTransform: "uppercase",
         color: "var(--wv-text-secondary)",
       }}
     >
-      {tier === "alert" ? "ALERT" : "INFO"}
+      {tier === "alert" ? t("notifications.tag.alert") : t("notifications.tag.info")}
     </span>
   );
 }
@@ -154,6 +168,7 @@ export function NotificationsView({
   hasOfficialAlerts,
   loadFailed,
 }: NotificationsViewProps) {
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -168,6 +183,14 @@ export function NotificationsView({
     });
   }
 
+  // An agency's alert text is shown exactly as issued, in English, and is
+  // marked as such (language + direction) when the page is in another
+  // language. The app's own notifications follow the page.
+  const textLang = (item: NotificationItemView) =>
+    item.source === "official_alert" && locale !== "en"
+      ? ({ lang: "en", dir: "ltr" } as const)
+      : {};
+
   const total = TIER_ORDER.reduce((sum, tier) => sum + groups[tier].length, 0);
   const showCheckAgain = status.kind === "checked" || status.kind === "failed";
 
@@ -177,18 +200,23 @@ export function NotificationsView({
       sidebarSections={[
         {
           key: "workspaces",
-          label: "Workspaces",
+          label: t("nav.workspaces"),
           items: [
-            { key: "home", label: "Home", href: "/dashboard" },
-            ...buildWorkspaceSidebarItems(),
+            { key: "home", label: t("nav.home"), href: "/dashboard" },
+            ...buildWorkspaceSidebarItems(undefined, undefined, t),
           ],
         },
         {
           key: "account",
-          label: "Account",
+          label: t("nav.account"),
           items: [
-            { key: "notifications", label: "Notifications", href: "/notifications", active: true },
-            { key: "settings", label: "Settings", href: "/settings" },
+            {
+              key: "notifications",
+              label: t("nav.notifications"),
+              href: "/notifications",
+              active: true,
+            },
+            { key: "settings", label: t("nav.settings"), href: "/settings" },
           ],
         },
       ]}
@@ -206,7 +234,7 @@ export function NotificationsView({
           }}
         >
           <Text variant="pageTitle" as="h1">
-            Notifications
+            {t("notifications.title")}
           </Text>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-sm)" }}>
             {unreadCount > 0 && (
@@ -216,30 +244,30 @@ export function NotificationsView({
                 loading={pending}
                 onClick={() => run(markAllNotificationsReadAction)}
               >
-                Mark all as read
+                {t("notifications.markAllRead")}
               </Button>
             )}
             <a href="/settings#notifications" style={linkButton}>
-              Preferences
+              {t("notifications.preferences")}
             </a>
           </div>
         </div>
 
         {loadFailed && (
           <Text variant="body" role="alert" style={{ color: "var(--wv-critical)" }}>
-            We couldn’t load your notifications just now. Please refresh to try again.
+            {t("notifications.loadFailed")}
           </Text>
         )}
 
         <Card>
           <div style={stack}>
             <Text variant="body" role="status">
-              {statusMessage(status, hasOfficialAlerts)}
+              {statusMessage(status, hasOfficialAlerts, t)}
             </Text>
             <div style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap" }}>
               {status.kind === "no_place" && (
                 <a href="/welcome?redo=1" style={linkButton}>
-                  Set your home place
+                  {t("notifications.setHomePlace")}
                 </a>
               )}
               {showCheckAgain && (
@@ -249,7 +277,7 @@ export function NotificationsView({
                   loading={pending}
                   onClick={() => run(checkAlertsNowAction)}
                 >
-                  Check again
+                  {t("notifications.checkAgain")}
                 </Button>
               )}
             </div>
@@ -271,11 +299,11 @@ export function NotificationsView({
           return (
             <section key={tier} aria-labelledby={`tier-${tier}`} style={stack}>
               <Text variant="sectionTitle" as="h2" id={`tier-${tier}`}>
-                {TIER_LABELS[tier]}
+                {t(`notifications.tier.${tier}`)}
               </Text>
               {items.length === 0 ? (
                 <Text variant="body" style={secondary}>
-                  Nothing here.
+                  {t("common.nothingHere")}
                 </Text>
               ) : (
                 <ul style={{ ...stack, listStyle: "none", margin: 0, padding: 0 }}>
@@ -302,20 +330,32 @@ export function NotificationsView({
                       >
                         <TierLabel tier={item.tier} />
                         <Text variant="caption" style={secondary}>
-                          {item.unread && <span style={{ fontWeight: 700 }}>Unread · </span>}
+                          {item.unread && (
+                            <span style={{ fontWeight: 700 }}>{t("notifications.unread")} · </span>
+                          )}
                           {item.ago}
                         </Text>
                       </div>
-                      <Text variant="body" as="h3" style={{ fontWeight: 600, margin: 0 }}>
+                      <Text
+                        variant="body"
+                        as="h3"
+                        style={{ fontWeight: 600, margin: 0 }}
+                        {...textLang(item)}
+                      >
                         {item.title}
                       </Text>
-                      {item.body && <Text variant="body">{item.body}</Text>}
+                      {item.body && (
+                        <Text variant="body" {...textLang(item)}>
+                          {item.body}
+                        </Text>
+                      )}
                       {item.detail && (
                         <details style={{ fontFamily: "var(--wv-font-sans)" }}>
                           <summary style={{ cursor: "pointer", fontSize: "0.875rem" }}>
-                            Full official text
+                            {t("notifications.fullOfficialText")}
                           </summary>
                           <p
+                            {...textLang(item)}
                             style={{
                               whiteSpace: "pre-wrap",
                               margin: "var(--wv-space-sm) 0 0",
@@ -331,7 +371,7 @@ export function NotificationsView({
                       <div style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap" }}>
                         {item.href && (
                           <a href={item.href} style={linkButton}>
-                            View
+                            {t("notifications.view")}
                           </a>
                         )}
                         {item.unread && (
@@ -341,7 +381,7 @@ export function NotificationsView({
                             disabled={pending}
                             onClick={() => run(() => markNotificationReadAction(item.id))}
                           >
-                            Mark as read
+                            {t("notifications.markRead")}
                           </Button>
                         )}
                         <Button
@@ -350,7 +390,7 @@ export function NotificationsView({
                           disabled={pending}
                           onClick={() => run(() => dismissNotificationAction(item.id))}
                         >
-                          Dismiss
+                          {t("notifications.dismiss")}
                         </Button>
                       </div>
                     </li>
@@ -363,13 +403,18 @@ export function NotificationsView({
 
         {total === 0 && !loadFailed && (
           <Text variant="body" style={secondary}>
-            Your inbox is empty.
+            {t("notifications.inboxEmpty")}
+          </Text>
+        )}
+
+        {locale !== "en" && hasOfficialAlerts && (
+          <Text variant="caption" style={secondary}>
+            {t("notifications.officialEnglishNote")}
           </Text>
         )}
 
         <Text variant="caption" style={secondary}>
-          World Vitality shows official alerts only while you have it open — it doesn’t send push,
-          SMS or email notifications yet. For emergencies, follow your local authorities.
+          {t("notifications.footnote")}
         </Text>
       </div>
     </AppShell>

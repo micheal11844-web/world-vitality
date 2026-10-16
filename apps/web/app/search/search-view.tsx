@@ -10,6 +10,7 @@ import {
   type QueryKind,
   type SearchSuggestion,
 } from "@world-vitality/ui-components";
+import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 
@@ -24,18 +25,21 @@ export interface SearchViewProps {
   signedIn: boolean;
 }
 
-const KIND_LABEL: Record<SearchSuggestion["kind"], string> = {
-  workspace: "Workspace",
-  page: "Page",
-  setting: "Setting",
-  tool: "Tool",
-  place: "Place",
-};
-
+// These are queries that work today (the topic keywords are English), so
+// they stay English even on a translated page.
 const EXAMPLES = ["flood", "Lagos", "soil moisture", "invite a teammate", "solar"];
 
-function ResultList({ heading, items }: { heading: string; items: SearchSuggestion[] }) {
-  const headingId = `search-${heading.toLowerCase().replace(/[^a-z]+/g, "-")}`;
+function ResultList({
+  id,
+  heading,
+  items,
+}: {
+  id: string;
+  heading: string;
+  items: SearchSuggestion[];
+}) {
+  const { t } = useI18n();
+  const headingId = `search-${id}`;
   return (
     <section aria-labelledby={headingId} style={{ display: "grid", gap: "var(--wv-space-sm)" }}>
       <Text variant="sectionTitle" as="h2" id={headingId}>
@@ -66,7 +70,7 @@ function ResultList({ heading, items }: { heading: string; items: SearchSuggesti
                 {item.label}
               </Link>{" "}
               <Text variant="caption" as="span" style={{ color: "var(--wv-text-secondary)" }}>
-                · {KIND_LABEL[item.kind]}
+                · {t(`chrome.search.kind.${item.kind}`)}
               </Text>
               {item.description && (
                 <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
@@ -95,9 +99,10 @@ export function SearchView({
   placesFailed,
   signedIn,
 }: SearchViewProps) {
+  const { t } = useI18n();
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const hasResults = topics.length > 0 || places.length > 0;
-  const hasGatedResults = topics.some((t) => t.kind === "workspace" || t.kind === "page");
+  const hasGatedResults = topics.some((item) => item.kind === "workspace" || item.kind === "page");
 
   return (
     <AppShell
@@ -106,10 +111,10 @@ export function SearchView({
       sidebarSections={[
         {
           key: "workspaces",
-          label: "Workspaces",
+          label: t("nav.workspaces"),
           items: [
-            ...(signedIn ? [{ key: "home", label: "Home", href: "/dashboard" }] : []),
-            ...buildWorkspaceSidebarItems(),
+            ...(signedIn ? [{ key: "home", label: t("nav.home"), href: "/dashboard" }] : []),
+            ...buildWorkspaceSidebarItems(undefined, undefined, t),
           ],
         },
       ]}
@@ -119,11 +124,11 @@ export function SearchView({
       <div style={{ display: "grid", gap: "var(--wv-space-lg)", maxWidth: "44rem" }}>
         <div>
           <Text variant="pageTitle" as="h1">
-            Search
+            {t("search.title")}
           </Text>
           {query && (
             <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              Results for “{query}”
+              {t("search.resultsFor", { query })}
             </Text>
           )}
         </div>
@@ -131,29 +136,36 @@ export function SearchView({
         {!query && (
           <StateDisplay
             status="empty"
-            title="Search anything"
-            description={`Try a place, a topic or a page — for example: ${EXAMPLES.join(", ")}. Press / anywhere to jump to the search box.`}
+            title={t("search.empty.title")}
+            description={t("search.empty.description", {
+              examples: EXAMPLES.join(t("common.listSeparator")),
+            })}
           />
         )}
 
         {query && kind === "question" && (
           <Card>
             <Text variant="sectionTitle" as="h2">
-              I can’t answer that question directly
+              {t("search.question.title")}
             </Text>
             <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              Search finds workspaces, pages and places. I don’t have a reliable source for
-              open-ended questions, so I won’t guess. Here’s where the parts of your question live
-              {placeQuery ? `, including “${placeQuery}”` : ""}.
+              {placeQuery
+                ? t("search.question.bodyWithPlace", { place: placeQuery })
+                : t("search.question.body")}
             </Text>
           </Card>
         )}
 
-        {topics.length > 0 && <ResultList heading="Workspaces and pages" items={topics} />}
+        {topics.length > 0 && (
+          <ResultList id="topics" heading={t("search.workspacesAndPages")} items={topics} />
+        )}
 
         {places.length > 0 && (
           <ResultList
-            heading={placeQuery ? `Places matching “${placeQuery}”` : "Places"}
+            id="places"
+            heading={
+              placeQuery ? t("search.placesMatching", { place: placeQuery }) : t("search.places")
+            }
             items={places}
           />
         )}
@@ -161,22 +173,20 @@ export function SearchView({
         {query && !hasResults && (
           <StateDisplay
             status="empty"
-            title={`Nothing matched “${query}”`}
-            description="Try a place name, a topic like flood or solar, or a page like team or settings."
+            title={t("search.nothingMatched", { query })}
+            description={t("search.nothingMatchedHelp")}
           />
         )}
 
         {placesFailed && (
           <Text variant="caption" role="status" style={{ color: "var(--wv-text-secondary)" }}>
-            Place lookup isn’t available right now, so only workspaces and pages are shown. Try
-            again in a moment.
+            {t("search.placesFailed")}
           </Text>
         )}
 
         {!signedIn && hasGatedResults && (
           <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            Workspaces need an account — <Link href="/login">sign in</Link> to open them. Places
-            open in Public Explorer with no account.
+            {t("search.signedOutNote")} <Link href="/login">{t("search.signIn")}</Link>
           </Text>
         )}
       </div>

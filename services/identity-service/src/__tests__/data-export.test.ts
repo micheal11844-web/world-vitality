@@ -25,6 +25,7 @@ function fakeAccount(): AccountService {
         longitude: 3.94,
       },
       onboardedAt: "2026-10-01T00:00:00Z",
+      language: "es",
     }),
     getNotificationSettings: async () => ({
       officialMinTier: "alert",

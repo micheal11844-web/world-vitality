@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { getAccountService } from "./account";
 import { getSessionUserId } from "./get-session-user-id";
+import { tServer } from "./i18n/server";
 import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
 import { logSecurity, logTelemetry } from "./logger";
 import { MAX_DISPLAY_NAME_LENGTH, DELETE_CONFIRMATION_WORD } from "./account-constants";
@@ -21,11 +22,14 @@ export interface AccountActionResult {
 export async function updateDisplayNameAction(displayName: string): Promise<AccountActionResult> {
   const trimmed = displayName.trim();
   if (trimmed.length > MAX_DISPLAY_NAME_LENGTH) {
-    return { ok: false, error: `Keep your name under ${MAX_DISPLAY_NAME_LENGTH} characters.` };
+    return {
+      ok: false,
+      error: await tServer("errors.nameTooLong", { max: MAX_DISPLAY_NAME_LENGTH }),
+    };
   }
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session has expired. Please sign in again." };
+    return { ok: false, error: await tServer("errors.sessionExpired") };
   }
   try {
     await getAccountService().updateProfile(userId, {
@@ -34,7 +38,7 @@ export async function updateDisplayNameAction(displayName: string): Promise<Acco
     return { ok: true };
   } catch (err) {
     logSecurity.error("profile_update_failed", err, { userId });
-    return { ok: false, error: "Couldn't save your name. Please try again." };
+    return { ok: false, error: await tServer("errors.nameSaveFailed") };
   }
 }
 
@@ -54,17 +58,20 @@ export async function updateDisplayNameAction(displayName: string): Promise<Acco
  */
 export async function deleteAccountAction(confirmation: string): Promise<AccountActionResult> {
   if (confirmation.trim() !== DELETE_CONFIRMATION_WORD) {
-    return { ok: false, error: `Type ${DELETE_CONFIRMATION_WORD} to confirm.` };
+    return {
+      ok: false,
+      error: await tServer("errors.typeToConfirm", { word: DELETE_CONFIRMATION_WORD }),
+    };
   }
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session has expired. Please sign in again." };
+    return { ok: false, error: await tServer("errors.sessionExpired") };
   }
   try {
     await getAccountService().deleteAccount(userId);
   } catch (err) {
     logSecurity.error("account_delete_failed", err, { userId });
-    return { ok: false, error: "Couldn't delete your account. Please try again." };
+    return { ok: false, error: await tServer("errors.deleteFailed") };
   }
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);

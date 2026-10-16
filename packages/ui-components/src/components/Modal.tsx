@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface ModalProps {
   open: boolean;
@@ -30,6 +31,7 @@ const FOCUSABLE_SELECTOR =
  *   the title.
  */
 export function Modal({ open, onClose, title, children }: ModalProps) {
+  const ui = useUiStrings();
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useRef(`wv-modal-title-${Math.random().toString(36).slice(2)}`).current;
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -77,6 +79,10 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     // keyboard equivalent is Escape, handled above via keydown listener.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
+      // A portal lands in `document.body`, outside whatever wrapper set the
+      // page's language and direction — so the dialog re-states them.
+      dir={ui.dir}
+      lang={ui.locale}
       style={{
         position: "fixed",
         inset: 0,

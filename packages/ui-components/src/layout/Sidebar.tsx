@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Button } from "../components/Button.js";
+import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface SidebarItem {
   key: string;
@@ -132,6 +133,7 @@ function SidebarRow({
   isExpanded: boolean;
   onToggleExpand: () => void;
 }) {
+  const ui = useUiStrings();
   const hasChildren = Boolean(item.children && item.children.length > 0);
   const isSubItem = depth > 0;
 
@@ -141,7 +143,9 @@ function SidebarRow({
         <a
           href={item.href}
           aria-current={item.active ? "page" : undefined}
-          title={collapsed ? item.label : undefined}
+          // Always set: in a longer translation the label may be clipped
+          // with an ellipsis, and the full name is then one hover away.
+          title={item.label}
           style={{
             display: "flex",
             alignItems: "center",
@@ -149,7 +153,7 @@ function SidebarRow({
             flex: 1,
             minWidth: 0,
             padding: isSubItem ? "0.375rem 0.75rem" : "0.5rem 0.75rem",
-            paddingLeft: isSubItem ? `${0.75 + depth * 1}rem` : "0.75rem",
+            paddingInlineStart: isSubItem ? `${0.75 + depth * 1}rem` : "0.75rem",
             borderRadius: "var(--wv-radius-sm)",
             textDecoration: "none",
             color: item.active
@@ -171,14 +175,20 @@ function SidebarRow({
           ) : (
             collapsed && <CollapsedFallbackIcon label={item.label} active={item.active} />
           )}
-          {!collapsed && <span>{item.label}</span>}
+          {!collapsed && (
+            <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+              {item.label}
+            </span>
+          )}
         </a>
         {hasChildren && !collapsed && (
           <button
             type="button"
             onClick={onToggleExpand}
             aria-expanded={isExpanded}
-            aria-label={`${isExpanded ? "Collapse" : "Expand"} ${item.label}`}
+            aria-label={
+              isExpanded ? ui.sidebar.collapseItem(item.label) : ui.sidebar.expandItem(item.label)
+            }
             style={{
               flexShrink: 0,
               display: "flex",
@@ -186,13 +196,18 @@ function SidebarRow({
               justifyContent: "center",
               width: "1.75rem",
               height: "1.75rem",
-              marginRight: "0.25rem",
+              marginInlineEnd: "0.25rem",
               border: "none",
               background: "transparent",
               cursor: "pointer",
               color: "var(--wv-text-secondary)",
               fontSize: "0.625rem",
-              transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+              // Collapsed chevrons point toward the reading direction: right in LTR, left in RTL.
+              transform: isExpanded
+                ? "rotate(0deg)"
+                : ui.dir === "rtl"
+                  ? "rotate(90deg)"
+                  : "rotate(-90deg)",
               transition: "transform 0.15s ease",
             }}
           >
@@ -235,6 +250,7 @@ export function Sidebar({
   onToggleCollapse,
   defaultExpandedKeys = [],
 }: SidebarProps) {
+  const ui = useUiStrings();
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(defaultExpandedKeys));
 
   function toggleExpanded(key: string) {
@@ -251,10 +267,10 @@ export function Sidebar({
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label={ui.sidebar.primary}
       style={{
         width: collapsed ? "3.5rem" : "14rem",
-        borderRight: "1px solid var(--wv-border)",
+        borderInlineEnd: "1px solid var(--wv-border)",
         backgroundColor: "var(--wv-surface)",
         padding: "var(--wv-space-md) var(--wv-space-sm)",
         display: "flex",
@@ -295,7 +311,8 @@ export function Sidebar({
               style={{
                 fontSize: "0.6875rem",
                 fontWeight: 600,
-                letterSpacing: "0.04em",
+                // Tracking breaks the joined letters of cursive scripts such as Arabic.
+                letterSpacing: ui.dir === "rtl" ? 0 : "0.04em",
                 textTransform: "uppercase",
                 color: "var(--wv-text-secondary)",
                 padding: "0 0.75rem",
@@ -328,10 +345,10 @@ export function Sidebar({
             variant="ghost"
             size="sm"
             onClick={onToggleCollapse}
-            aria-label={collapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
-            title={collapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
+            aria-label={collapsed ? ui.sidebar.expand : ui.sidebar.collapse}
+            title={collapsed ? ui.sidebar.expand : ui.sidebar.collapse}
           >
-            {collapsed ? "▶" : "◀"}
+            {(collapsed ? ui.dir !== "rtl" : ui.dir === "rtl") ? "▶" : "◀"}
           </Button>
         </div>
       )}

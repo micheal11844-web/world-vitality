@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createTranslator, matchLocale } from "@world-vitality/i18n";
 import { geocodeCandidates } from "../../../../lib/geocode";
 import { exploreHref, placeLabel } from "../../../../lib/explore-link";
 import { logSecurity } from "../../../../lib/logger";
@@ -25,7 +26,11 @@ const MAX_QUERY_LENGTH = 100;
  * happened. Neither the query nor any place name is logged.
  */
 export async function GET(request: Request) {
-  const q = (new URL(request.url).searchParams.get("q") ?? "").trim();
+  const params = new URL(request.url).searchParams;
+  const q = (params.get("q") ?? "").trim();
+  // Language from the URL (not a cookie): this response is shared-cached
+  // by URL, so the language has to be part of it.
+  const { t } = createTranslator(matchLocale(params.get("lang")) ?? "en");
   if (q.length < MIN_QUERY_LENGTH || q.length > MAX_QUERY_LENGTH) {
     return NextResponse.json({ suggestions: [] });
   }
@@ -36,7 +41,7 @@ export async function GET(request: Request) {
       id: `place-${index}-${place.latitude}-${place.longitude}`,
       kind: "place" as const,
       label: placeLabel(place),
-      description: "See current conditions",
+      description: t("search.placeDescription"),
       href: exploreHref(place),
     }));
     return NextResponse.json(

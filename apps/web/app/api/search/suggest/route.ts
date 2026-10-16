@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { matchLocale } from "@world-vitality/i18n";
 import { suggestionsFromEntries } from "@world-vitality/ui-components";
 import { buildSearchIndex } from "../../../../lib/search-index";
 
@@ -16,11 +17,15 @@ const MAX_QUERY_LENGTH = 200;
  * into search, and nothing here needs to know what.
  */
 export async function GET(request: Request) {
-  const q = new URL(request.url).searchParams.get("q") ?? "";
+  const params = new URL(request.url).searchParams;
+  const q = params.get("q") ?? "";
   if (!q.trim() || q.length > MAX_QUERY_LENGTH) {
     return NextResponse.json({ suggestions: [] });
   }
-  const suggestions = suggestionsFromEntries(buildSearchIndex(), q, 6);
+  // The language comes from the URL, not a cookie, so the cached response
+  // is correct for whoever asks for that URL. An unknown value is English.
+  const locale = matchLocale(params.get("lang")) ?? "en";
+  const suggestions = suggestionsFromEntries(buildSearchIndex(locale), q, 6);
   return NextResponse.json(
     { suggestions },
     { headers: { "Cache-Control": "private, max-age=60" } },

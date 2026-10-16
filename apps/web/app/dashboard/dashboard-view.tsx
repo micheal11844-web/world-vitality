@@ -10,6 +10,9 @@ import {
   AppShell,
   type GuideTutorialStep,
 } from "@world-vitality/ui-components";
+import type { MessageKey } from "@world-vitality/i18n";
+import { useI18n } from "../../lib/i18n/i18n-provider";
+import { personaLabel as personaLabelFor } from "../../lib/i18n/labels";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 
@@ -18,99 +21,99 @@ const TUTORIAL_SEEN_KEY = "wv_guide_tutorial_seen";
 interface WorkspaceCard {
   /** Matches `WORKSPACE_LINKS` keys and `Persona.workspaceKey`. */
   key: string;
-  title: string;
-  description: string;
+  /** Catalog keys, so the name and description follow the reader's language. */
+  nameKey: MessageKey;
+  descriptionKey: MessageKey;
   href: string;
 }
 
 const WORKSPACE_CARDS: WorkspaceCard[] = [
   {
     key: "agriculture",
-    title: "Agriculture",
-    description: "Soil moisture, weather, and field conditions.",
+    nameKey: "workspace.agriculture.name",
+    descriptionKey: "workspace.agriculture.description",
     href: "/workspaces/agriculture",
   },
   {
     key: "weather",
-    title: "Weather & Climate",
-    description: "Current conditions and temperature status for your locations.",
+    nameKey: "workspace.weather.name",
+    descriptionKey: "workspace.weather.description",
     href: "/workspaces/weather",
   },
   {
     key: "construction",
-    title: "Construction",
-    description: "Site risk status for weather-sensitive activities.",
+    nameKey: "workspace.construction.name",
+    descriptionKey: "workspace.construction.description",
     href: "/workspaces/construction",
   },
   {
     key: "renewable-energy",
-    title: "Renewable Energy",
-    description: "Wind generation outlook for your assets.",
+    nameKey: "workspace.renewable-energy.name",
+    descriptionKey: "workspace.renewable-energy.description",
     href: "/workspaces/renewable-energy",
   },
   {
     key: "research",
-    title: "Research",
-    description: "Explore raw environmental data with full provenance.",
+    nameKey: "workspace.research.name",
+    descriptionKey: "workspace.research.description",
     href: "/workspaces/research",
   },
   {
     key: "logistics",
-    title: "Logistics & Shipping",
-    description: "Route risk status for weather-sensitive shipments.",
+    nameKey: "workspace.logistics.name",
+    descriptionKey: "workspace.logistics.description",
     href: "/workspaces/logistics",
   },
   {
     key: "disaster-monitoring",
-    title: "Disaster Monitoring",
-    description: "Live official National Weather Service alerts (U.S. only).",
+    nameKey: "workspace.disaster-monitoring.name",
+    descriptionKey: "workspace.disaster-monitoring.description",
     href: "/workspaces/disaster-monitoring",
   },
   {
     key: "government-ngos",
-    title: "Government & NGOs",
-    description: "Multi-domain jurisdiction overview and reports.",
+    nameKey: "workspace.government-ngos.name",
+    descriptionKey: "workspace.government-ngos.description",
     href: "/workspaces/government-ngos",
   },
   {
     key: "insurance",
-    title: "Insurance",
-    description: "Underwriting risk context and auditable reports.",
+    nameKey: "workspace.insurance.name",
+    descriptionKey: "workspace.insurance.description",
     href: "/workspaces/insurance",
   },
   {
     key: "education",
-    title: "Education",
-    description: "Grade-level data explanations and sample lesson plans for educators.",
+    nameKey: "workspace.education.name",
+    descriptionKey: "workspace.education.description",
     href: "/workspaces/education",
   },
 ];
 
 /**
  * First-use tutorial content (Stage 9, ticket 9.4). App-specific copy
- * lives here, in apps/web, not in the reusable GuideTutorial shell —
- * same packages-vs-apps split as everything else in this codebase.
- * Deliberately short (3 steps) and scoped to what's actually real
- * today (workspaces, the AI panel) — not describing features (alerts,
- * notifications) that don't exist yet, per this project's honesty
- * norm.
+ * lives in apps/web (as catalog keys), not in the reusable GuideTutorial
+ * shell — same packages-vs-apps split as everything else in this
+ * codebase. Deliberately short (3 steps) and scoped to what's actually
+ * real today (workspaces, the AI panel) — not describing features that
+ * don't exist yet, per this project's honesty norm.
  */
-const TUTORIAL_STEPS: GuideTutorialStep[] = [
+const TUTORIAL_STEP_KEYS: {
+  title: MessageKey;
+  body: MessageKey;
+  mood: GuideTutorialStep["mood"];
+}[] = [
   {
-    title: "Hi, I'm Orbi",
-    body: "I'll be around to help you get oriented. Let's take a quick look around.",
+    title: "dashboard.tutorial.welcomeTitle",
+    body: "dashboard.tutorial.welcomeBody",
     mood: "happy",
   },
   {
-    title: "Your workspaces",
-    body: "Each card below is a workspace — a focused set of data and tools for one domain, like Agriculture. Click one to dive in.",
+    title: "dashboard.tutorial.workspacesTitle",
+    body: "dashboard.tutorial.workspacesBody",
     mood: "idle",
   },
-  {
-    title: "The AI panel",
-    body: "Inside any workspace, open the AI panel to ask questions about its data. It always tells you how confident it is — never a guess dressed up as fact.",
-    mood: "thinking",
-  },
+  { title: "dashboard.tutorial.aiTitle", body: "dashboard.tutorial.aiBody", mood: "thinking" },
 ];
 
 /**
@@ -130,8 +133,8 @@ const TUTORIAL_STEPS: GuideTutorialStep[] = [
 export interface DashboardViewProps {
   /** `WORKSPACE_LINKS` key of the workspace the user's onboarding role maps to. */
   recommendedKey?: string | null;
-  /** The user's onboarding role label, e.g. "Farmer". */
-  personaLabel?: string | null;
+  /** The user's onboarding role id, e.g. `"farmer"` — labelled in their language here. */
+  personaId?: string | null;
   /** The user's home place, e.g. "Ibadan, Oyo, Nigeria". */
   homeLabel?: string | null;
   /** Live conditions for the home place — a server-rendered node, streamed in. */
@@ -144,16 +147,23 @@ export interface DashboardViewProps {
 
 export function DashboardView({
   recommendedKey = null,
-  personaLabel = null,
+  personaId = null,
   homeLabel = null,
   homeInsight = null,
   onboarded = false,
   criticalNotice = null,
 }: DashboardViewProps) {
+  const { t } = useI18n();
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   // The user's own workspace first (PRD B.1: "never a generic empty
   // dashboard"); everyone else keeps the standard order.
+  const tutorialSteps: GuideTutorialStep[] = TUTORIAL_STEP_KEYS.map((step) => ({
+    title: t(step.title),
+    body: t(step.body),
+    mood: step.mood,
+  }));
+  const personaLabel = personaId ? personaLabelFor(personaId, t) : null;
   const orderedCards = [
     ...WORKSPACE_CARDS.filter((c) => c.key === recommendedKey),
     ...WORKSPACE_CARDS.filter((c) => c.key !== recommendedKey),
@@ -190,16 +200,16 @@ export function DashboardView({
       sidebarSections={[
         {
           key: "workspaces",
-          label: "Workspaces",
+          label: t("nav.workspaces"),
           items: [
-            { key: "home", label: "Home", href: "/dashboard", active: true },
+            { key: "home", label: t("nav.home"), href: "/dashboard", active: true },
             // No `currentWorkspaceKey` here (BUILD_PLAN "STAGE — NESTED
             // WORKSPACE SIDEBAR NAVIGATION") — nothing is "the current
             // workspace" from the cross-workspace Dashboard, so every
             // workspace starts collapsed and none is marked active,
             // same as before this stage (the flat list never marked
             // any workspace active from here either).
-            ...buildWorkspaceSidebarItems(),
+            ...buildWorkspaceSidebarItems(undefined, undefined, t),
           ],
         },
       ]}
@@ -208,20 +218,29 @@ export function DashboardView({
       aiPanelContent={
         <StateDisplay
           status="empty"
-          title="No active conversation"
-          description="Open a workspace to ask about its data."
+          title={t("chrome.aiPanel.emptyTitle")}
+          description={t("chrome.aiPanel.emptyBody")}
         />
       }
     >
-      <GuideTutorial open={tutorialOpen} onDismiss={dismissTutorial} steps={TUTORIAL_STEPS} />
+      <GuideTutorial open={tutorialOpen} onDismiss={dismissTutorial} steps={tutorialSteps} />
       {criticalNotice}
       {homeLabel ? (
         <section
           aria-labelledby="home-place-heading"
           style={{ marginBottom: "var(--wv-space-lg)", maxWidth: "36rem" }}
         >
-          <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            {personaLabel ? `${personaLabel.toUpperCase()} · ` : ""}YOUR PLACE
+          <Text
+            variant="caption"
+            style={{
+              color: "var(--wv-text-secondary)",
+              // CSS, not `.toUpperCase()`: it's a no-op for scripts without
+              // case (Arabic) and can't corrupt a language's own casing rules.
+              textTransform: "uppercase",
+            }}
+          >
+            {personaLabel ? `${personaLabel} · ` : ""}
+            {t("dashboard.yourPlace")}
           </Text>
           <Text variant="pageTitle" as="h1" id="home-place-heading">
             {homeLabel}
@@ -231,28 +250,28 @@ export function DashboardView({
             href="/welcome?redo=1"
             style={{ color: "var(--wv-text-secondary)", fontFamily: "var(--wv-font-sans)" }}
           >
-            Change your role or place
+            {t("dashboard.changeRoleOrPlace")}
           </Link>
         </section>
       ) : (
         <>
           <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-sm)" }}>
-            Your workspaces
+            {t("dashboard.yourWorkspaces")}
           </Text>
           {onboarded && (
             <Text
               variant="body"
               style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
             >
-              Add your place to see live conditions for it right here.{" "}
-              <Link href="/welcome?redo=1">Set it up</Link>
+              {t("dashboard.addPlacePrompt")}{" "}
+              <Link href="/welcome?redo=1">{t("dashboard.setItUp")}</Link>
             </Text>
           )}
         </>
       )}
       {homeLabel && (
         <Text variant="sectionTitle" as="h2" style={{ marginBottom: "var(--wv-space-sm)" }}>
-          Your workspaces
+          {t("dashboard.yourWorkspaces")}
         </Text>
       )}
       <div
@@ -272,18 +291,21 @@ export function DashboardView({
             >
               <Card>
                 {recommended && (
-                  <Text variant="caption" style={{ color: "var(--wv-accent)" }}>
-                    RECOMMENDED FOR YOU
+                  <Text
+                    variant="caption"
+                    style={{ color: "var(--wv-accent)", textTransform: "uppercase" }}
+                  >
+                    {t("dashboard.recommended")}
                   </Text>
                 )}
                 <Text variant="sectionTitle" as="h2">
-                  {card.title}
+                  {t(card.nameKey)}
                 </Text>
                 <Text
                   variant="body"
                   style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
                 >
-                  {card.description}
+                  {t(card.descriptionKey)}
                 </Text>
               </Card>
             </Link>

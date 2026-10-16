@@ -38,7 +38,7 @@ export function AppShellSkeleton() {
         style={{
           width: "14rem",
           flexShrink: 0,
-          borderRight: "1px solid var(--wv-border)",
+          borderInlineEnd: "1px solid var(--wv-border)",
           padding: "var(--wv-space-lg) var(--wv-space-md)",
           display: "flex",
           flexDirection: "column",

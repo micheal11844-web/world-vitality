@@ -4,6 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button, Card, Checkbox, Input, Text, AppShell } from "@world-vitality/ui-components";
 import type { OfficialMinTier } from "@world-vitality/identity-service";
+import { useI18n } from "../../lib/i18n/i18n-provider";
+import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
+import { personaLabel, roleLabel, workspaceName } from "../../lib/i18n/labels";
 import { AppBrand } from "../app-brand";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 import { updateDisplayNameAction, deleteAccountAction } from "../../lib/account-actions";
@@ -15,8 +18,8 @@ export interface SettingsViewProps {
   email: string;
   initialDisplayName: string;
   memberSince: string;
-  /** Role chosen in onboarding, if any. */
-  personaLabel: string | null;
+  /** Role chosen in onboarding (a persona id), if any — labelled in the reader's language here. */
+  personaId: string | null;
   /** Home place chosen in onboarding, if any. */
   homeLabel: string | null;
   onboarded: boolean;
@@ -24,8 +27,8 @@ export interface SettingsViewProps {
   notificationSettings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean } | null;
   memberships: Array<{
     workspaceId: string;
-    workspaceName: string;
-    roleLabel: string;
+    /** The workspace role id (e.g. `operational_user`), labelled here. */
+    role: string;
     scoped: boolean;
   }>;
 }
@@ -36,12 +39,14 @@ export function SettingsView({
   email,
   initialDisplayName,
   memberSince,
-  personaLabel,
+  personaId,
   homeLabel,
   onboarded,
   notificationSettings,
   memberships,
 }: SettingsViewProps) {
+  const translator = useI18n();
+  const { t } = translator;
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const [displayName, setDisplayName] = useState(initialDisplayName);
@@ -120,18 +125,18 @@ export function SettingsView({
       sidebarSections={[
         {
           key: "workspaces",
-          label: "Workspaces",
+          label: t("nav.workspaces"),
           items: [
-            { key: "home", label: "Home", href: "/dashboard" },
-            ...buildWorkspaceSidebarItems(),
+            { key: "home", label: t("nav.home"), href: "/dashboard" },
+            ...buildWorkspaceSidebarItems(undefined, undefined, t),
           ],
         },
         {
           key: "account",
-          label: "Account",
+          label: t("nav.account"),
           items: [
-            { key: "notifications", label: "Notifications", href: "/notifications" },
-            { key: "settings", label: "Settings", href: "/settings", active: true },
+            { key: "notifications", label: t("nav.notifications"), href: "/notifications" },
+            { key: "settings", label: t("nav.settings"), href: "/settings", active: true },
           ],
         },
       ]}
@@ -140,17 +145,18 @@ export function SettingsView({
     >
       <div style={{ ...sectionGap, maxWidth: "40rem" }}>
         <Text variant="pageTitle" as="h1">
-          Settings
+          {t("settings.title")}
         </Text>
 
         <Card>
           <form onSubmit={saveName} style={sectionGap}>
             <Text variant="sectionTitle" as="h2">
-              Profile
+              {t("settings.profile.title")}
             </Text>
-            <Input label="Email address" value={email} readOnly disabled />
+            {/* An email address is always left-to-right, even on an RTL page. */}
+            <Input label={t("settings.profile.email")} value={email} readOnly disabled dir="ltr" />
             <Input
-              label="Display name"
+              label={t("settings.profile.displayName")}
               value={displayName}
               maxLength={MAX_DISPLAY_NAME_LENGTH}
               onChange={(e) => {
@@ -158,20 +164,22 @@ export function SettingsView({
                 setNameStatus("idle");
               }}
               error={nameStatus === "error" ? nameError : undefined}
-              helperText="Shown to teammates in your workspaces."
+              helperText={t("settings.profile.displayNameHelp")}
             />
             <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
               <Button type="submit" loading={nameStatus === "saving"}>
-                Save name
+                {t("settings.profile.save")}
               </Button>
               {nameStatus === "saved" && (
                 <Text variant="caption" role="status" style={{ color: "var(--wv-text-secondary)" }}>
-                  Saved.
+                  {t("common.saved")}
                 </Text>
               )}
             </div>
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              Member since {new Date(memberSince).toLocaleDateString()}.
+              {t("settings.profile.memberSince", {
+                date: translator.date(memberSince, { dateStyle: "long" }),
+              })}
             </Text>
           </form>
         </Card>
@@ -179,18 +187,25 @@ export function SettingsView({
         <Card>
           <div style={sectionGap}>
             <Text variant="sectionTitle" as="h2">
-              Your role and place
+              {t("settings.roleAndPlace.title")}
             </Text>
             {!onboarded ? (
               <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                You haven’t set these up yet. Tell me who you are and the place you care about, and
-                I’ll show live conditions for it on your dashboard and in your workspaces.
+                {t("settings.roleAndPlace.notSetUp")}
               </Text>
             ) : (
               <Text variant="body">
-                Role: <strong>{personaLabel ?? "not set"}</strong>
+                {t("settings.roleAndPlace.role")}{" "}
+                <strong>
+                  {personaId ? personaLabel(personaId, t) : t("settings.roleAndPlace.notSet")}
+                </strong>
                 <br />
-                Home place: <strong>{placeRemoved ? "removed" : (homeLabel ?? "not set")}</strong>
+                {t("settings.roleAndPlace.homePlace")}{" "}
+                <strong>
+                  {placeRemoved
+                    ? t("settings.roleAndPlace.removed")
+                    : (homeLabel ?? t("settings.roleAndPlace.notSet"))}
+                </strong>
               </Text>
             )}
             <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
@@ -207,11 +222,11 @@ export function SettingsView({
                   fontSize: "0.875rem",
                 }}
               >
-                {onboarded ? "Change" : "Set up"}
+                {onboarded ? t("common.change") : t("settings.roleAndPlace.setUp")}
               </a>
               {onboarded && homeLabel && !placeRemoved && (
                 <Button variant="secondary" onClick={removePlace} loading={removingPlace}>
-                  Remove my place
+                  {t("settings.roleAndPlace.remove")}
                 </Button>
               )}
             </div>
@@ -227,6 +242,23 @@ export function SettingsView({
           </div>
         </Card>
 
+        <div id="language" style={{ scrollMarginTop: "var(--wv-space-lg)" }}>
+          <Card>
+            <div style={sectionGap}>
+              <Text variant="sectionTitle" as="h2">
+                {t("settings.language.title")}
+              </Text>
+              <LanguageSwitcher />
+              <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+                {t("settings.language.draftNote")}
+              </Text>
+              <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+                {t("settings.language.scopeNote")}
+              </Text>
+            </div>
+          </Card>
+        </div>
+
         <div id="notifications" style={{ scrollMarginTop: "var(--wv-space-lg)" }}>
           <Card>
             <form
@@ -234,11 +266,11 @@ export function SettingsView({
               style={{ ...sectionGap, fontFamily: "var(--wv-font-sans)" }}
             >
               <Text variant="sectionTitle" as="h2">
-                Notifications
+                {t("settings.notifications.title")}
               </Text>
               {notificationSettings === null ? (
                 <Text variant="body" role="status" style={{ color: "var(--wv-text-secondary)" }}>
-                  We couldn&apos;t load your notification settings just now. Refresh to try again.
+                  {t("settings.notifications.loadFailed")}
                 </Text>
               ) : (
                 <>
@@ -254,7 +286,7 @@ export function SettingsView({
                         fontWeight: 600,
                       }}
                     >
-                      Official weather alerts for your home place
+                      {t("settings.notifications.officialLegend")}
                     </legend>
                     <label style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
                       <input
@@ -267,7 +299,7 @@ export function SettingsView({
                           setNotifStatus("idle");
                         }}
                       />
-                      <span>Show all of them, including minor advisories and statements</span>
+                      <span>{t("settings.notifications.showAll")}</span>
                     </label>
                     <label style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
                       <input
@@ -280,18 +312,18 @@ export function SettingsView({
                           setNotifStatus("idle");
                         }}
                       />
-                      <span>Only alerts and critical ones — skip minor advisories</span>
+                      <span>{t("settings.notifications.alertsOnly")}</span>
                     </label>
                     <Text
                       variant="caption"
                       id="official-alerts-help"
                       style={{ color: "var(--wv-text-secondary)" }}
                     >
-                      Critical, life-safety alerts are always shown and can&apos;t be turned off.
+                      {t("settings.notifications.criticalAlways")}
                     </Text>
                   </fieldset>
                   <Checkbox
-                    label="Tell me when a teammate comments on a field I created"
+                    label={t("settings.notifications.collaboration")}
                     checked={collaborationEnabled}
                     onChange={(e) => {
                       setCollaborationEnabled(e.target.checked);
@@ -299,13 +331,12 @@ export function SettingsView({
                     }}
                   />
                   <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-                    Notifications appear in the app only — World Vitality doesn&apos;t send push,
-                    SMS or email yet, and checks for official alerts only while it&apos;s open. See
-                    your <Link href="/notifications">Notification Center</Link>.
+                    {t("settings.notifications.inAppNote")}{" "}
+                    <Link href="/notifications">{t("settings.notifications.center")}</Link>.
                   </Text>
                   <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
                     <Button type="submit" loading={notifStatus === "saving"}>
-                      Save notification settings
+                      {t("settings.notifications.save")}
                     </Button>
                     {notifStatus === "saved" && (
                       <Text
@@ -313,7 +344,7 @@ export function SettingsView({
                         role="status"
                         style={{ color: "var(--wv-text-secondary)" }}
                       >
-                        Saved.
+                        {t("common.saved")}
                       </Text>
                     )}
                   </div>
@@ -335,19 +366,27 @@ export function SettingsView({
         <Card>
           <div style={sectionGap}>
             <Text variant="sectionTitle" as="h2">
-              Your workspaces
+              {t("settings.workspaces.title")}
             </Text>
             {memberships.length === 0 ? (
               <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                You aren&apos;t a member of any workspace yet.
+                {t("settings.workspaces.none")}
               </Text>
             ) : (
-              <ul style={{ margin: 0, paddingLeft: "1.25rem", fontFamily: "var(--wv-font-sans)" }}>
+              <ul
+                style={{
+                  margin: 0,
+                  paddingInlineStart: "1.25rem",
+                  fontFamily: "var(--wv-font-sans)",
+                }}
+              >
                 {memberships.map((m) => (
                   <li key={m.workspaceId}>
-                    <Link href={`/workspaces/${m.workspaceId}`}>{m.workspaceName}</Link> —{" "}
-                    {m.roleLabel}
-                    {m.scoped ? " (limited to specific items)" : ""}
+                    <Link href={`/workspaces/${m.workspaceId}`}>
+                      {workspaceName(m.workspaceId, t)}
+                    </Link>{" "}
+                    — {roleLabel(m.role, t)}
+                    {m.scoped ? ` ${t("settings.workspaces.limited")}` : ""}
                   </li>
                 ))}
               </ul>
@@ -359,13 +398,10 @@ export function SettingsView({
           <Card>
             <div style={sectionGap}>
               <Text variant="sectionTitle" as="h2">
-                Download your data
+                {t("settings.download.title")}
               </Text>
               <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                One click, no waiting: a JSON file with your profile, your role and home place, your
-                notification settings and inbox, your workspace memberships, everything you created
-                (fields, properties, locations) and the comments you wrote. It doesn&apos;t include
-                other people&apos;s data or public environmental readings, and the file says so.
+                {t("settings.download.body")}
               </Text>
               <div>
                 <a
@@ -382,7 +418,7 @@ export function SettingsView({
                     fontSize: "0.875rem",
                   }}
                 >
-                  Download my data
+                  {t("settings.download.button")}
                 </a>
               </div>
             </div>
@@ -393,16 +429,13 @@ export function SettingsView({
           <Card>
             <form onSubmit={deleteAccount} style={sectionGap}>
               <Text variant="sectionTitle" as="h2">
-                Delete your account
+                {t("settings.delete.title")}
               </Text>
               <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                This permanently deletes your account, memberships, notifications and the comments
-                you wrote, right away. Fields, properties and locations you added belong to the
-                workspace, so they stay — without your name on them. This can&apos;t be undone;
-                download your data first if you want a copy.
+                {t("settings.delete.body")}
               </Text>
               <Input
-                label={`Type ${DELETE_CONFIRMATION_WORD} to confirm`}
+                label={t("settings.delete.confirmLabel", { word: DELETE_CONFIRMATION_WORD })}
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 autoComplete="off"
@@ -415,7 +448,7 @@ export function SettingsView({
                   loading={deleting}
                   disabled={confirmText.trim() !== DELETE_CONFIRMATION_WORD}
                 >
-                  Delete my account
+                  {t("settings.delete.button")}
                 </Button>
               </div>
             </form>

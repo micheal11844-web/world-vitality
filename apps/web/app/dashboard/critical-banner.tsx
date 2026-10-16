@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslator } from "../../lib/i18n/server";
 
 /**
  * Presentation of the Dashboard's urgent-item banner (see
@@ -9,8 +10,15 @@ import Link from "next/link";
  * CRITICAL label, which the design reserves for the critical tier alone.
  * Wording is the agency's own title with a calm pointer to the full
  * text — no extra urgency copy added.
+ *
+ * Translation: the chrome around the alert (the "Critical" label, the
+ * link) follows the reader's language, but the agency's own title and
+ * text are **never translated** — they are marked `lang="en"` (and
+ * left-to-right) so a screen reader pronounces them correctly and an
+ * RTL page doesn't reorder an English sentence. A wrong or softened
+ * translation of an emergency instruction is worse than English.
  */
-export function CriticalBanner({
+export async function CriticalBanner({
   title,
   body,
   othersCount,
@@ -20,9 +28,12 @@ export function CriticalBanner({
   /** How many *other* unread critical notifications exist. */
   othersCount: number;
 }) {
+  const { t, locale, dir } = await getTranslator();
+  // Only mark the alert text as a different language when the page isn't English.
+  const alertLang = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   return (
     <section
-      aria-label="Critical alert"
+      aria-label={t("dashboard.critical.region")}
       style={{
         border: "2px solid var(--wv-critical)",
         backgroundColor: "var(--wv-color-critical-50)",
@@ -42,7 +53,9 @@ export function CriticalBanner({
           gap: "0.375rem",
           fontSize: "0.75rem",
           fontWeight: 700,
-          letterSpacing: "0.06em",
+          // Letter-spacing breaks the joined letterforms of Arabic script.
+          letterSpacing: dir === "rtl" ? 0 : "0.06em",
+          textTransform: "uppercase",
           color: "var(--wv-critical)",
         }}
       >
@@ -62,15 +75,21 @@ export function CriticalBanner({
         >
           !
         </span>
-        CRITICAL
+        {t("dashboard.critical.label")}
       </span>
-      <strong style={{ color: "var(--wv-text-primary)" }}>{title}</strong>
-      {body && <span style={{ color: "var(--wv-text-primary)" }}>{body}</span>}
+      <strong {...alertLang} style={{ color: "var(--wv-text-primary)" }}>
+        {title}
+      </strong>
+      {body && (
+        <span {...alertLang} style={{ color: "var(--wv-text-primary)" }}>
+          {body}
+        </span>
+      )}
       <span>
         <Link href="/notifications" style={{ color: "var(--wv-critical)", fontWeight: 600 }}>
           {othersCount > 0
-            ? `Open Notifications — ${othersCount} more critical`
-            : "Open Notifications for the full text"}
+            ? t("dashboard.critical.openMore", { count: othersCount })
+            : t("dashboard.critical.openFull")}
         </Link>
       </span>
     </section>

@@ -3,10 +3,12 @@ import type { Role } from "./roles.js";
 import type { HomePlace } from "./personas.js";
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
+  isNotificationMessageKey,
   isNotificationTier,
   isOfficialMinTier,
   type NewNotification,
   type Notification,
+  type NotificationMessageParams,
   type NotificationSettings,
   type NotificationSource,
   type OfficialMinTier,
@@ -33,6 +35,12 @@ export interface UserPreferences {
   homePlace: HomePlace | null;
   /** Set when onboarding was finished OR skipped. */
   onboardedAt: string | null;
+  /**
+   * The language the person chose (a supported language code), or `null`
+   * (never chosen). Stored as a string here — which codes are valid is
+   * the app's i18n catalog, validated at the edge, not this service.
+   */
+  language: string | null;
 }
 
 /** A user's role within one specific workspace — roles are workspace-
@@ -225,6 +233,15 @@ export interface AccountService {
     answers: { persona: string | null; homePlace: HomePlace | null },
     now?: Date,
   ): Promise<UserPreferences>;
+
+  /**
+   * Saves the chosen language (`null` clears it). Touches only that
+   * column: if the user has never onboarded, the row it creates still
+   * reads as "not onboarded" (`onboardedAt` stays null), and an existing
+   * persona/home place is left alone. Callers must validate the code
+   * against the supported list first.
+   */
+  saveLanguage(userId: string, language: string | null, now?: Date): Promise<void>;
 
   /**
    * The user's inbox (Notification Center, PRD B.6), newest first. By
@@ -1291,7 +1308,7 @@ export class SupabaseAccountService implements AccountService {
     const { data, error } = await this.client
       .from("user_preferences")
       .select(
-        "persona, home_name, home_region, home_country, home_latitude, home_longitude, onboarded_at",
+        "persona, home_name, home_region, home_country, home_latitude, home_longitude, onboarded_at, language",
       )
       .eq("user_id", userId)
       .maybeSingle();
@@ -1324,13 +1341,29 @@ export class SupabaseAccountService implements AccountService {
         { onConflict: "user_id" },
       )
       .select(
-        "persona, home_name, home_region, home_country, home_latitude, home_longitude, onboarded_at",
+        "persona, home_name, home_region, home_country, home_latitude, home_longitude, onboarded_at, language",
       )
       .single();
     if (error || !data) {
       throw new Error(`Failed to save preferences for ${userId}: ${error?.message ?? "no row"}`);
     }
     return rowToPreferences(userId, data);
+  }
+
+  async saveLanguage(
+    userId: string,
+    language: string | null,
+    now: Date = new Date(),
+  ): Promise<void> {
+    const { error } = await this.client
+      .from("user_preferences")
+      .upsert(
+        { user_id: userId, language, updated_at: now.toISOString() },
+        { onConflict: "user_id" },
+      );
+    if (error) {
+      throw new Error(`Failed to save language for ${userId}: ${error.message}`);
+    }
   }
 
   async listNotifications(
@@ -1375,6 +1408,8 @@ export class SupabaseAccountService implements AccountService {
       dedupe_key: item.dedupeKey ?? null,
       expires_at: item.expiresAt ?? null,
       created_at: item.createdAt ?? now.toISOString(),
+      message_key: item.messageKey ?? null,
+      message_params: item.messageParams ?? null,
     }));
     const { error } = await this.client
       .from("notifications")
@@ -1508,10 +1543,11 @@ interface PreferencesRow {
   home_latitude: number | null;
   home_longitude: number | null;
   onboarded_at: string | null;
+  language?: string | null;
 }
 
 function rowToPreferences(userId: string, row: PreferencesRow | null): UserPreferences {
-  if (!row) return { userId, persona: null, homePlace: null, onboardedAt: null };
+  if (!row) return { userId, persona: null, homePlace: null, onboardedAt: null, language: null };
   const hasPlace =
     row.home_name !== null && row.home_latitude !== null && row.home_longitude !== null;
   return {
@@ -1527,11 +1563,12 @@ function rowToPreferences(userId: string, row: PreferencesRow | null): UserPrefe
         }
       : null,
     onboardedAt: row.onboarded_at,
+    language: row.language ?? null,
   };
 }
 
 const NOTIFICATION_COLUMNS =
-  "id, source, tier, title, body, detail, href, created_at, expires_at, read_at, dismissed_at";
+  "id, source, tier, title, body, detail, href, created_at, expires_at, read_at, dismissed_at, message_key, message_params";
 
 interface NotificationRow {
   id: string;
@@ -1545,6 +1582,8 @@ interface NotificationRow {
   expires_at: string | null;
   read_at: string | null;
   dismissed_at: string | null;
+  message_key?: string | null;
+  message_params?: unknown;
 }
 
 function rowToNotification(row: NotificationRow): Notification {
@@ -1562,7 +1601,19 @@ function rowToNotification(row: NotificationRow): Notification {
     expiresAt: row.expires_at,
     readAt: row.read_at,
     dismissedAt: row.dismissed_at,
+    messageKey: isNotificationMessageKey(row.message_key) ? row.message_key : null,
+    messageParams: toMessageParams(row.message_params),
   };
+}
+
+/** Keeps only string values — a stored object is data, never trusted to be well-shaped. */
+function toMessageParams(value: unknown): NotificationMessageParams | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const out: NotificationMessageParams = {};
+  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === "string") out[key] = v;
+  }
+  return out;
 }
 
 function rowToNotificationSettings(

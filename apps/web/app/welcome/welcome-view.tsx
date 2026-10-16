@@ -16,6 +16,9 @@ import {
   personaById,
   type HomePlace,
 } from "@world-vitality/identity-service";
+import { useI18n } from "../../lib/i18n/i18n-provider";
+import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
+import { personaDescription, personaLabel, workspaceName } from "../../lib/i18n/labels";
 import {
   previewInsightAction,
   saveOnboardingAction,
@@ -48,6 +51,7 @@ const stack = { display: "flex", flexDirection: "column", gap: "var(--wv-space-m
  * run) is remembered so the person is never asked twice.
  */
 export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeViewProps) {
+  const { t, locale } = useI18n();
   const [step, setStep] = useState<Step>("role");
   const [personaId, setPersonaId] = useState<string | null>(initialPersonaId);
   const [place, setPlace] = useState<HomePlace | null>(initialPlace);
@@ -64,7 +68,9 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
   const [saveError, setSaveError] = useState<string | undefined>();
 
   const persona = personaById(personaId);
-  const destinationName = persona?.workspaceKey ? persona.label : null;
+  // Where "Take me to …" goes: the role's *workspace* (not the role's
+  // own name), or the Explorer for a role with no workspace of its own.
+  const destinationName = persona?.workspaceKey ? workspaceName(persona.workspaceKey, t) : null;
 
   // Move focus to the new step's heading so keyboard and screen-reader
   // users land at the top of what changed.
@@ -83,7 +89,7 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
         if (!cancelled) setInsight(next);
       })
       .catch(() => {
-        if (!cancelled) setInsight({ ok: false, error: "Couldn't load live data right now." });
+        if (!cancelled) setInsight({ ok: false, error: t("welcome.insight.failed") });
       })
       .finally(() => {
         if (!cancelled) setInsightLoading(false);
@@ -91,6 +97,9 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
     return () => {
       cancelled = true;
     };
+    // `t` is deliberately not a dependency: changing language mid-step
+    // must not refetch live data, only re-word what's already shown.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, personaId, place]);
 
   async function searchPlaces(event: FormEvent) {
@@ -133,6 +142,7 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
     setSaveError(result.error);
   }
 
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   const orbiMood = searching || insightLoading ? "thinking" : step === "insight" ? "happy" : "idle";
 
   return (
@@ -147,25 +157,33 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
       }}
     >
       <div style={{ ...stack, width: "100%", maxWidth: "40rem" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <LanguageSwitcher compact />
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
           <GuideCharacter mood={orbiMood} wave={step === "role"} size={110} />
           <div style={{ flex: 1 }}>
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              Step {step === "role" ? 1 : step === "place" ? 2 : 3} of 3
+              {t("welcome.step", {
+                current: step === "role" ? 1 : step === "place" ? 2 : 3,
+                total: 3,
+              })}
             </Text>
             {step === "role" && (
               <Text variant="pageTitle" as="h1" tabIndex={-1} id="welcome-heading">
-                Who are you here as?
+                {t("welcome.role.title")}
               </Text>
             )}
             {step === "place" && (
               <Text variant="pageTitle" as="h1" tabIndex={-1} id="welcome-heading">
-                Which place matters most?
+                {t("welcome.place.title")}
               </Text>
             )}
             {step === "insight" && (
               <Text variant="pageTitle" as="h1" tabIndex={-1} id="welcome-heading">
-                {place ? homePlaceLabel(place) : "Your place"}, right now
+                {place
+                  ? t("welcome.insight.title", { place: homePlaceLabel(place) })
+                  : t("welcome.insight.titleFallback")}
               </Text>
             )}
           </div>
@@ -174,11 +192,26 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
         {step === "role" && (
           <div style={stack}>
             <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              I’m Orbi. Pick the one that fits best and I’ll start you in the right place — you can
-              change it any time in Settings.
+              {t("welcome.role.intro")}
             </Text>
             <fieldset style={{ border: "none", margin: 0, padding: 0 }}>
-              <legend style={{ position: "absolute", left: "-9999px" }}>Your role</legend>
+              <legend
+                style={{
+                  // Visually hidden but still read aloud. (Not an off-screen
+                  // offset: in a right-to-left page that pushes the page wider.)
+                  position: "absolute",
+                  width: 1,
+                  height: 1,
+                  padding: 0,
+                  margin: -1,
+                  overflow: "hidden",
+                  clip: "rect(0, 0, 0, 0)",
+                  whiteSpace: "nowrap",
+                  border: 0,
+                }}
+              >
+                {t("welcome.role.legend")}
+              </legend>
               <div
                 style={{
                   display: "grid",
@@ -206,18 +239,18 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
                         value={p.id}
                         checked={selected}
                         onChange={() => setPersonaId(p.id)}
-                        style={{ marginRight: "0.5rem", accentColor: "var(--wv-accent)" }}
+                        style={{ marginInlineEnd: "0.5rem", accentColor: "var(--wv-accent)" }}
                       />
-                      <strong>{p.label}</strong>
+                      <strong>{personaLabel(p.id, t, p.label)}</strong>
                       <span
                         style={{
                           display: "block",
                           color: "var(--wv-text-secondary)",
                           fontSize: "0.875rem",
-                          marginLeft: "1.4rem",
+                          marginInlineStart: "1.4rem",
                         }}
                       >
-                        {p.description}
+                        {personaDescription(p.id, t, p.description)}
                       </span>
                     </label>
                   );
@@ -226,15 +259,15 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
             </fieldset>
             <div style={{ display: "flex", gap: "var(--wv-space-sm)", alignItems: "center" }}>
               <Button onClick={() => setStep("place")} disabled={!personaId}>
-                Continue
+                {t("common.continue")}
               </Button>
               {isRedo ? (
                 <a href="/settings" style={{ color: "var(--wv-text-secondary)" }}>
-                  Cancel
+                  {t("common.cancel")}
                 </a>
               ) : (
                 <Button variant="secondary" onClick={skipAll} loading={saving}>
-                  Skip for now
+                  {t("common.skipForNow")}
                 </Button>
               )}
             </div>
@@ -244,27 +277,28 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
         {step === "place" && (
           <div style={stack}>
             <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              I’ll show you real conditions for it right away. It’s the only thing I ask, and it
-              stays on your account — you can change or remove it in Settings.
+              {t("welcome.place.intro")}
             </Text>
             <form onSubmit={searchPlaces} style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
               <div style={{ flex: 1 }}>
                 <Input
-                  label="Town, city or region"
-                  placeholder="e.g. Ibadan"
+                  label={t("welcome.place.inputLabel")}
+                  placeholder={t("welcome.place.inputPlaceholder")}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   error={searchError}
                 />
               </div>
               <Button type="submit" loading={searching} disabled={query.trim().length < 2}>
-                Search
+                {t("welcome.place.search")}
               </Button>
             </form>
 
             {candidates.length > 0 && (
               <fieldset style={{ border: "none", margin: 0, padding: 0 }}>
-                <legend style={{ marginBottom: "var(--wv-space-xs)" }}>Choose the right one</legend>
+                <legend style={{ marginBottom: "var(--wv-space-xs)" }}>
+                  {t("welcome.place.choose")}
+                </legend>
                 <div style={{ display: "grid", gap: "var(--wv-space-xs)" }}>
                   {candidates.map((c) => (
                     <label
@@ -286,7 +320,7 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
                         name="place"
                         checked={place?.latitude === c.latitude && place?.longitude === c.longitude}
                         onChange={() => setPlace(c)}
-                        style={{ marginRight: "0.5rem", accentColor: "var(--wv-accent)" }}
+                        style={{ marginInlineEnd: "0.5rem", accentColor: "var(--wv-accent)" }}
                       />
                       {homePlaceLabel(c)}
                     </label>
@@ -297,19 +331,19 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
 
             {candidates.length === 0 && place && (
               <Text variant="body">
-                Currently: <strong>{homePlaceLabel(place)}</strong>. Search above to change it.
+                {t("welcome.place.current", { place: homePlaceLabel(place) })}
               </Text>
             )}
 
             <div style={{ display: "flex", gap: "var(--wv-space-sm)", alignItems: "center" }}>
               <Button variant="secondary" onClick={() => setStep("role")}>
-                Back
+                {t("common.back")}
               </Button>
               <Button onClick={() => setStep("insight")} disabled={!place}>
-                Show me
+                {t("welcome.place.showMe")}
               </Button>
               <Button variant="secondary" onClick={() => finish(null)} loading={saving}>
-                Skip the place
+                {t("welcome.place.skipPlace")}
               </Button>
             </div>
             {saveError && (
@@ -331,37 +365,42 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
                 <Card>
                   <Skeleton />
                   <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-                    Fetching live data…
+                    {t("welcome.insight.fetching")}
                   </Text>
                 </Card>
               )}
               {!insightLoading && insight && insight.ok && (
                 <Card>
-                  <Text variant="caption">{insight.title?.toUpperCase()}</Text>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                    {insight.summary}
-                  </Text>
-                  {!insight.unableToAnswer && insight.confidence && (
-                    <ConfidenceBadge level={insight.confidence} showDescription />
-                  )}
-                  {insight.explanation && (
-                    <Text
-                      variant="caption"
-                      style={{
-                        display: "block",
-                        color: "var(--wv-text-secondary)",
-                        marginTop: "var(--wv-space-sm)",
-                      }}
-                    >
-                      {insight.explanation}
+                  {/* The interpretation is generated in English and not
+                      translated yet, so it says so rather than posing as
+                      the page's language (and keeps its own direction). */}
+                  <div {...englishOnly}>
+                    <Text variant="caption">{insight.title?.toUpperCase()}</Text>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {insight.summary}
                     </Text>
-                  )}
+                    {!insight.unableToAnswer && insight.confidence && (
+                      <ConfidenceBadge level={insight.confidence} showDescription />
+                    )}
+                    {insight.explanation && (
+                      <Text
+                        variant="caption"
+                        style={{
+                          display: "block",
+                          color: "var(--wv-text-secondary)",
+                          marginTop: "var(--wv-space-sm)",
+                        }}
+                      >
+                        {insight.explanation}
+                      </Text>
+                    )}
+                  </div>
                   {typeof insight.gapCount === "number" && insight.gapCount > 0 && (
                     <Text
                       variant="caption"
                       style={{ display: "block", marginTop: "var(--wv-space-xs)" }}
                     >
-                      {insight.gapCount} day(s) had no data available.
+                      {t("dashboard.insightGaps", { count: insight.gapCount })}
                     </Text>
                   )}
                 </Card>
@@ -384,10 +423,12 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
               }}
             >
               <Button variant="secondary" onClick={() => setStep("place")}>
-                Back
+                {t("common.back")}
               </Button>
               <Button onClick={() => finish(place)} loading={saving}>
-                {destinationName ? `Take me to ${destinationName}` : "Take me to Explorer"}
+                {destinationName
+                  ? t("welcome.insight.takeMeTo", { destination: destinationName })
+                  : t("welcome.insight.takeMeToExplorer")}
               </Button>
             </div>
             {saveError && (

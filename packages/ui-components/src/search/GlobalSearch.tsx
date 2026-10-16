@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { classifyQuery, extractPlaceCandidate, type SearchSuggestion } from "./search-core.js";
+import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface GlobalSearchProps {
   /**
@@ -17,14 +18,6 @@ export interface GlobalSearchProps {
   placesEndpoint?: string;
 }
 
-const KIND_LABEL: Record<SearchSuggestion["kind"], string> = {
-  workspace: "Workspace",
-  page: "Page",
-  setting: "Setting",
-  tool: "Tool",
-  place: "Place",
-};
-
 const TOPIC_DEBOUNCE_MS = 120;
 const PLACE_DEBOUNCE_MS = 350;
 const MIN_PLACE_CHARS = 3;
@@ -32,9 +25,12 @@ const MIN_PLACE_CHARS = 3;
 async function fetchSuggestions(
   endpoint: string,
   query: string,
+  locale: string,
   signal: AbortSignal,
 ): Promise<SearchSuggestion[]> {
-  const url = `${endpoint}?q=${encodeURIComponent(query)}`;
+  // The language rides in the URL (not a header or cookie) so a shared
+  // cache keys on it: one language's labels can't be served to another.
+  const url = `${endpoint}?q=${encodeURIComponent(query)}&lang=${encodeURIComponent(locale)}`;
   const response = await fetch(url, { signal, headers: { accept: "application/json" } });
   if (!response.ok) return [];
   const data = (await response.json()) as { suggestions?: SearchSuggestion[] };
@@ -79,6 +75,7 @@ export function GlobalSearch({
   suggestEndpoint = "/api/search/suggest",
   placesEndpoint = "/api/search/places",
 }: GlobalSearchProps) {
+  const ui = useUiStrings();
   const [query, setQuery] = useState("");
   const [topics, setTopics] = useState<SearchSuggestion[]>([]);
   const [places, setPlaces] = useState<SearchSuggestion[]>([]);
@@ -125,7 +122,7 @@ export function GlobalSearch({
     }
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetchSuggestions(suggestEndpoint, trimmed, controller.signal)
+      fetchSuggestions(suggestEndpoint, trimmed, ui.locale, controller.signal)
         .then((next) => {
           setTopics(next);
           setActiveIndex(-1);
@@ -138,7 +135,7 @@ export function GlobalSearch({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [trimmed, suggestEndpoint]);
+  }, [trimmed, suggestEndpoint, ui.locale]);
 
   // Place suggestions — a geocoder lookup, debounced harder. For a
   // question ("will it flood near Lagos?") look up the place it names.
@@ -151,7 +148,7 @@ export function GlobalSearch({
     }
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetchSuggestions(placesEndpoint, placeQuery, controller.signal)
+      fetchSuggestions(placesEndpoint, placeQuery, ui.locale, controller.signal)
         .then((next) => setPlaces(next))
         .catch(() => {
           // Same: best-effort only.
@@ -161,7 +158,7 @@ export function GlobalSearch({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [trimmed, placesEndpoint]);
+  }, [trimmed, placesEndpoint, ui.locale]);
 
   function openItem(item: SearchSuggestion) {
     setOpen(false);
@@ -220,15 +217,15 @@ export function GlobalSearch({
           type="search"
           name="q"
           role="combobox"
-          aria-label="Search World Vitality"
+          aria-label={ui.search.label}
           aria-expanded={showList}
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
           autoComplete="off"
           maxLength={200}
-          placeholder="Search places, topics…"
-          title="Search (press / to focus)"
+          placeholder={ui.search.placeholder}
+          title={ui.search.hint}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -256,8 +253,8 @@ export function GlobalSearch({
         style={{
           position: "absolute",
           top: "calc(100% + 0.25rem)",
-          left: 0,
-          right: 0,
+          insetInlineStart: 0,
+          insetInlineEnd: 0,
           minWidth: "18rem",
           zIndex: 30,
           borderRadius: "var(--wv-radius-sm)",
@@ -269,7 +266,7 @@ export function GlobalSearch({
         <ul
           id={listId}
           role="listbox"
-          aria-label="Search suggestions"
+          aria-label={ui.search.suggestions}
           style={{
             margin: 0,
             padding: "0.25rem",
@@ -303,7 +300,7 @@ export function GlobalSearch({
                 <span style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}>
                   <span>{item.label}</span>
                   <span style={{ color: "var(--wv-text-secondary)", fontSize: "0.75rem" }}>
-                    {KIND_LABEL[item.kind]}
+                    {ui.search.kind[item.kind]}
                   </span>
                 </span>
                 {item.description && (
@@ -329,9 +326,7 @@ export function GlobalSearch({
             fontSize: "0.75rem",
           }}
         >
-          {items.length === 0
-            ? `No quick matches — press Enter to search for “${trimmed}”`
-            : `Press Enter for all results for “${trimmed}”`}
+          {items.length === 0 ? ui.search.noQuickMatches(trimmed) : ui.search.pressEnter(trimmed)}
         </div>
       </div>
     </div>

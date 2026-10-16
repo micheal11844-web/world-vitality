@@ -7,6 +7,7 @@ import {
 } from "@world-vitality/ui-components";
 import { geocodeCandidates } from "../../lib/geocode";
 import { exploreHref, placeLabel } from "../../lib/explore-link";
+import { getTranslator } from "../../lib/i18n/server";
 import { buildSearchIndex } from "../../lib/search-index";
 import { getSessionUserId } from "../../lib/get-session-user-id";
 import { logSecurity, logTelemetry } from "../../lib/logger";
@@ -54,9 +55,13 @@ export default async function SearchPage({
 
   const kind = classifyQuery(query);
   const signedIn = (await getSessionUserId()) !== null;
+  const { t, locale } = await getTranslator();
 
+  // Page names and descriptions are in the reader's language; the topic
+  // keywords they're matched against are English-only for now (the
+  // examples on the empty state are English for the same reason).
   const topics: SearchSuggestion[] = query
-    ? suggestionsFromEntries(buildSearchIndex(), query, 10)
+    ? suggestionsFromEntries(buildSearchIndex(locale), query, 10)
     : [];
 
   // For a question, geocode the place it names ("…near Lagos") — never
@@ -71,7 +76,7 @@ export default async function SearchPage({
         id: `place-${index}-${place.latitude}-${place.longitude}`,
         kind: "place" as const,
         label: placeLabel(place),
-        description: "See current conditions",
+        description: t("search.placeDescription"),
         href: exploreHref(place),
       }));
     } catch (err) {

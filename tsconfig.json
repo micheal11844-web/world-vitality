@@ -12,6 +12,7 @@
     { "path": "./packages/ai-evaluation" },
     { "path": "./packages/ui-components" },
     { "path": "./packages/design-tokens" },
-    { "path": "./packages/knowledge-graph" }
+    { "path": "./packages/knowledge-graph" },
+    { "path": "./packages/i18n" }
   ]
 }
