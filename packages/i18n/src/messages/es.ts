@@ -349,4 +349,13 @@ export const es: Messages = {
   "chrome.tutorial.back": "Atrás",
   "chrome.tutorial.next": "Siguiente",
   "chrome.tutorial.getStarted": "Empezar",
+  // ---- phone layout: menu button and bottom bar
+  "chrome.nav.menu": "Menú",
+  "chrome.nav.closeMenu": "Cerrar menú",
+  "chrome.nav.quickNav": "Navegación rápida",
+  "chrome.nav.home": "Inicio",
+  "chrome.nav.map": "Mapa",
+  "chrome.nav.alerts": "Alertas",
+  "chrome.nav.search": "Buscar",
+  "chrome.nav.ai": "IA",
 };

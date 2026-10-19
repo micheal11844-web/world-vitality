@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUiStrings } from "../i18n/ui-strings.js";
+import { useUiStrings, type UiStrings } from "../i18n/ui-strings.js";
 
 export interface NotificationBellProps {
   /** JSON endpoint returning `{ signedIn, unread?, criticalUnread? }`. */
@@ -12,7 +12,7 @@ export interface NotificationBellProps {
   pollMs?: number;
 }
 
-type BellState =
+export type BellState =
   | { kind: "loading" }
   | { kind: "signed-out" }
   | { kind: "unknown" }
@@ -38,33 +38,27 @@ async function fetchSummary(endpoint: string, signal: AbortSignal): Promise<Bell
   };
 }
 
+const DEFAULT_ENDPOINT = "/api/notifications/summary";
+const DEFAULT_POLL_MS = 5 * 60 * 1000;
+const SIGNED_OUT: BellState = { kind: "signed-out" };
+
 /**
- * The header's notification bell (PRD B.6). Shows an unread count and
- * links to the Notification Center. Like `GlobalSearch` and the account
- * controls it points at fixed app routes by default, so every shell
- * gets it without opting in.
- *
- * **The critical look is reserved.** Only an unread *critical*
- * notification changes the bell to the critical colour and adds the "!"
- * mark; an ordinary unread count uses the neutral accent. That keeps the
- * emergency treatment meaningful (Experience Blueprint Section 12:
- * "never reused for … lower-stakes alerts"). Colour is never the only
- * signal — the accessible name spells out the critical count too.
- *
- * Renders nothing for an anonymous visitor. If the count can't be
- * fetched it shows a plain bell (still a working link) rather than
- * hiding — a missing badge is never mistaken for "nothing unread" in
- * the accessible name, which then simply says "Notifications".
+ * Fetches the unread summary and keeps it fresh: once on mount, again
+ * whenever the tab becomes visible, and on a slow timer while it is.
+ * Split out of the bell so the app shell can fetch it **once** and hand
+ * the result to both places that show it (the header bell on wide
+ * screens, the "Alerts" tab on phones) rather than polling twice.
+ * `enabled: false` makes no request and reports "signed out".
  */
-export function NotificationBell({
-  endpoint = "/api/notifications/summary",
-  href = "/notifications",
-  pollMs = 5 * 60 * 1000,
-}: NotificationBellProps) {
-  const ui = useUiStrings();
+export function useNotificationSummary({
+  endpoint = DEFAULT_ENDPOINT,
+  pollMs = DEFAULT_POLL_MS,
+  enabled = true,
+}: { endpoint?: string; pollMs?: number; enabled?: boolean } = {}): BellState {
   const [state, setState] = useState<BellState>({ kind: "loading" });
 
   useEffect(() => {
+    if (!enabled) return;
     let controller = new AbortController();
     let cancelled = false;
 
@@ -98,21 +92,50 @@ export function NotificationBell({
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [endpoint, pollMs]);
+  }, [endpoint, pollMs, enabled]);
 
-  if (state.kind === "signed-out") return null;
+  return enabled ? state : SIGNED_OUT;
+}
 
-  const unread = state.kind === "ready" ? state.unread : 0;
-  const critical = state.kind === "ready" ? state.criticalUnread : 0;
+/** How many are unread, and how many of those are critical (0 when unknown). */
+export function bellCounts(state: BellState): { unread: number; critical: number } {
+  return state.kind === "ready"
+    ? { unread: state.unread, critical: state.criticalUnread }
+    : { unread: 0, critical: 0 };
+}
 
-  const parts = [ui.bell.label];
+/** The spoken name: the label, then each count that is non-zero. */
+export function bellLabel(ui: UiStrings, state: BellState, label = ui.bell.label): string {
+  const { unread, critical } = bellCounts(state);
+  const parts = [label];
   if (unread > 0) parts.push(ui.bell.unread(unread));
   if (critical > 0) parts.push(ui.bell.critical(critical));
-  const label = parts.join(ui.listSeparator);
+  return parts.join(ui.listSeparator);
+}
+
+/**
+ * The bell itself, given a state. `NotificationBell` is this plus the
+ * fetching; the app shell uses it directly with its own shared state.
+ */
+export function NotificationBellView({
+  state,
+  href = "/notifications",
+  className,
+}: {
+  state: BellState;
+  href?: string;
+  className?: string;
+}) {
+  const ui = useUiStrings();
+  if (state.kind === "signed-out") return null;
+
+  const { unread, critical } = bellCounts(state);
+  const label = bellLabel(ui, state);
 
   return (
     <a
       href={href}
+      className={className}
       aria-label={label}
       data-critical={critical > 0 ? "true" : undefined}
       style={{
@@ -168,4 +191,31 @@ export function NotificationBell({
       )}
     </a>
   );
+}
+
+/**
+ * The header's notification bell (PRD B.6). Shows an unread count and
+ * links to the Notification Center. Like `GlobalSearch` and the account
+ * controls it points at fixed app routes by default, so every shell
+ * gets it without opting in.
+ *
+ * **The critical look is reserved.** Only an unread *critical*
+ * notification changes the bell to the critical colour and adds the "!"
+ * mark; an ordinary unread count uses the neutral accent. That keeps the
+ * emergency treatment meaningful (Experience Blueprint Section 12:
+ * "never reused for … lower-stakes alerts"). Colour is never the only
+ * signal — the accessible name spells out the critical count too.
+ *
+ * Renders nothing for an anonymous visitor. If the count can't be
+ * fetched it shows a plain bell (still a working link) rather than
+ * hiding — a missing badge is never mistaken for "nothing unread" in
+ * the accessible name, which then simply says "Notifications".
+ */
+export function NotificationBell({
+  endpoint = DEFAULT_ENDPOINT,
+  href = "/notifications",
+  pollMs = DEFAULT_POLL_MS,
+}: NotificationBellProps) {
+  const state = useNotificationSummary({ endpoint, pollMs });
+  return <NotificationBellView state={state} href={href} />;
 }

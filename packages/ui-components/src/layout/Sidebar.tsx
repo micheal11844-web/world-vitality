@@ -335,6 +335,9 @@ export function Sidebar({
       ))}
       {onToggleCollapse && (
         <div
+          // The icon-rail collapse button means nothing in the phone
+          // layout's drawer; `shell-styles.ts` hides it there.
+          className="wv-sidebar-toggle"
           style={{
             marginTop: "auto",
             display: "flex",

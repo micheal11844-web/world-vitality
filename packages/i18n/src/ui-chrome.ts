@@ -45,6 +45,16 @@ export interface ChromeStrings {
     next: string;
     getStarted: string;
   };
+  nav: {
+    menu: string;
+    closeMenu: string;
+    quickNav: string;
+    home: string;
+    map: string;
+    alerts: string;
+    search: string;
+    ai: string;
+  };
 }
 
 export function buildChromeStrings(translator: Translator): ChromeStrings {
@@ -96,6 +106,16 @@ export function buildChromeStrings(translator: Translator): ChromeStrings {
       back: t("chrome.tutorial.back"),
       next: t("chrome.tutorial.next"),
       getStarted: t("chrome.tutorial.getStarted"),
+    },
+    nav: {
+      menu: t("chrome.nav.menu"),
+      closeMenu: t("chrome.nav.closeMenu"),
+      quickNav: t("chrome.nav.quickNav"),
+      home: t("chrome.nav.home"),
+      map: t("chrome.nav.map"),
+      alerts: t("chrome.nav.alerts"),
+      search: t("chrome.nav.search"),
+      ai: t("chrome.nav.ai"),
     },
   };
 }

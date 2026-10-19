@@ -358,4 +358,13 @@ export const fr: Messages = {
   "chrome.tutorial.back": "Retour",
   "chrome.tutorial.next": "Suivant",
   "chrome.tutorial.getStarted": "Commencer",
+  // ---- phone layout: menu button and bottom bar
+  "chrome.nav.menu": "Menu",
+  "chrome.nav.closeMenu": "Fermer le menu",
+  "chrome.nav.quickNav": "Navigation rapide",
+  "chrome.nav.home": "Accueil",
+  "chrome.nav.map": "Carte",
+  "chrome.nav.alerts": "Alertes",
+  "chrome.nav.search": "Rechercher",
+  "chrome.nav.ai": "IA",
 };

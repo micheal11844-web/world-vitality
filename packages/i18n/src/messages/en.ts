@@ -347,6 +347,15 @@ export const en = {
   "chrome.tutorial.back": "Back",
   "chrome.tutorial.next": "Next",
   "chrome.tutorial.getStarted": "Get started",
+  // ---- phone layout: menu button and bottom bar
+  "chrome.nav.menu": "Menu",
+  "chrome.nav.closeMenu": "Close menu",
+  "chrome.nav.quickNav": "Quick navigation",
+  "chrome.nav.home": "Home",
+  "chrome.nav.map": "Map",
+  "chrome.nav.alerts": "Alerts",
+  "chrome.nav.search": "Search",
+  "chrome.nav.ai": "AI",
 } as const;
 
 export type MessageKey = keyof typeof en;

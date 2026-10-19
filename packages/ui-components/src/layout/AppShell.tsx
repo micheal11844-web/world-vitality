@@ -1,12 +1,24 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Header, type HeaderProps } from "./Header.js";
 import { Sidebar, type SidebarSection } from "./Sidebar.js";
 import { AIPanel } from "./AIPanel.js";
+import { BottomNav, findMapHref } from "./BottomNav.js";
+import { COMPACT_MAX_WIDTH, MEDIUM_MAX_WIDTH, SHELL_CSS } from "./shell-styles.js";
+import { useMediaQuery } from "./useMediaQuery.js";
+import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
 import { GlobalSearch } from "../search/GlobalSearch.js";
-import { NotificationBell } from "../notifications/NotificationBell.js";
+import { NotificationBellView, useNotificationSummary } from "../notifications/NotificationBell.js";
 import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface AppShellProps {
@@ -79,6 +91,25 @@ export interface AppShellProps {
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
+const COMPACT_QUERY = `(max-width: ${COMPACT_MAX_WIDTH})`;
+/** Where an open AI panel floats over the page instead of docking beside it. */
+const OVERLAY_QUERY = `(max-width: ${MEDIUM_MAX_WIDTH})`;
+
+/**
+ * `inert` takes a page region out of focus order and the accessibility
+ * tree while something modal (the menu drawer, the AI sheet) is over it.
+ *
+ * The value is the string `"true"` on purpose, because this package is
+ * rendered by two different Reacts: its tests and any React 18 host
+ * render an unknown attribute verbatim, while the React 19 that Next's
+ * App Router bundles knows `inert` as a boolean attribute and treats an
+ * empty string as *false* (which silently dropped the attribute here
+ * until it was caught in a real browser). A non-empty string is "on" to
+ * both. React 18's types don't list the attribute, hence the loose type.
+ */
+function inertWhen(on: boolean): object {
+  return on ? { inert: "true" } : {};
+}
 
 /**
  * The full app shell (ticket 5.4), composing Header + Sidebar + Main
@@ -125,6 +156,22 @@ const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
  * additive: no visual or behavioral change for any existing page,
  * confirmed against `layout.test.tsx`'s existing assertions (all
  * ARIA-role-based, none depend on exact DOM nesting).
+ *
+ * **Phones and tablets (Experience Blueprint §16).** The same component
+ * renders every layout; CSS (`shell-styles.ts`) picks which one shows, so
+ * the server's HTML is already right at any width. At phone width the
+ * sidebar becomes a drawer opened by a menu button (☰) in a compact
+ * header, search drops into a row under that header, Home / Map / Alerts
+ * / AI move to a bottom bar, and the AI panel becomes a bottom sheet.
+ * Controls that exist only in one layout (the menu button, the bottom
+ * bar, the drawer's own Settings/Sign out) are always in the DOM but
+ * `display: none` outside it, so they are neither visible nor reachable
+ * by keyboard or screen reader where they don't belong.
+ *
+ * JavaScript only handles behaviour CSS can't: opening and closing the
+ * drawer, moving focus into whatever just opened and back out again,
+ * Escape, Ctrl/Cmd+B (the drawer on phones, the icon rail elsewhere),
+ * and marking the page behind a drawer or sheet `inert`.
  */
 
 /**
@@ -146,6 +193,7 @@ function GlobeToggleLink() {
   return (
     <a
       href="/globe"
+      className="wv-desktop-only"
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -189,15 +237,50 @@ function AccountControls() {
   const ui = useUiStrings();
   return (
     <>
-      <a href="/settings" style={accountControlStyle}>
+      <a href="/settings" className="wv-desktop-only" style={accountControlStyle}>
         {ui.settings}
       </a>
-      <form method="post" action="/auth/signout" style={{ margin: 0 }}>
+      <form method="post" action="/auth/signout" className="wv-desktop-only" style={{ margin: 0 }}>
         <button type="submit" style={accountControlStyle}>
           {ui.signOut}
         </button>
       </form>
     </>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
   );
 }
 
@@ -215,7 +298,27 @@ export function AppShell({
   showAccountMenu = true,
   showSearch = true,
 }: AppShellProps) {
+  const ui = useUiStrings();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const compact = useMediaQuery(COMPACT_QUERY);
+  const overlay = useMediaQuery(OVERLAY_QUERY);
+  const [mounted, setMounted] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [pathname, setPathname] = useState("");
+  // One fetch of the unread summary, shown by the header bell on wide
+  // screens and by the bottom bar's Alerts tab on phones.
+  const bell = useNotificationSummary({ enabled: showAccountMenu });
+
+  const drawerId = useId();
+  const searchId = useId();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
+  const aiButtonRef = useRef<HTMLButtonElement>(null);
+  const aiWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -227,7 +330,11 @@ export function AppShell({
     }
   }, []);
 
-  const toggleSidebar = () => {
+  useEffect(() => {
+    setPathname(window.location.pathname);
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => {
       const next = !prev;
       try {
@@ -237,30 +344,173 @@ export function AppShell({
       }
       return next;
     });
-  };
+  }, []);
+
+  // Growing the window past the phone width (rotating a tablet, resizing
+  // a desktop window) leaves nothing to dismiss: drop the drawer and the
+  // search row rather than have them reappear on the way back down.
+  useEffect(() => {
+    if (!compact) {
+      setDrawerOpen(false);
+      setSearchOpen(false);
+    }
+  }, [compact]);
+
+  // Tapping any link in the menu gets the menu out of the way. (Links
+  // navigate away, but one to the page you're already on wouldn't.) One
+  // listener on the drawer rather than a handler on each link — the links
+  // belong to `Sidebar` and the drawer foot, and the drawer itself is just
+  // a container, not something to click.
+  useEffect(() => {
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+    function handleClick(event: MouseEvent) {
+      if ((event.target as HTMLElement).closest("a")) setDrawerOpen(false);
+    }
+    drawer.addEventListener("click", handleClick);
+    return () => drawer.removeEventListener("click", handleClick);
+  }, []);
+
+  // The keyboard handler is registered once and reads the latest state
+  // through a ref, so it never re-subscribes (or reads stale state).
+  const latest = useRef({ compact, overlay, drawerOpen, searchOpen, aiPanelOpen, onToggleAiPanel });
+  useIsomorphicLayoutEffect(() => {
+    latest.current = { compact, overlay, drawerOpen, searchOpen, aiPanelOpen, onToggleAiPanel };
+  });
+
+  // Until this has run, the stylesheet keeps the floating AI panel out of
+  // sight (see `shell-styles.ts`): the server can't know the page is being
+  // opened on a phone, and a page whose shell opens the panel by default
+  // must not paint it over the content in the moment before this decides.
+  useIsomorphicLayoutEffect(() => setMounted(true), []);
+
+  // Where the panel floats over the page (phones and tablets) it is
+  // something you ask for, not something that greets you: a workspace page
+  // that docks it open on a desktop opens with it closed here. Runs before
+  // paint, on first load and whenever the window narrows into that range.
+  useIsomorphicLayoutEffect(() => {
+    if (overlay && latest.current.aiPanelOpen) latest.current.onToggleAiPanel();
+  }, [overlay]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      const state = latest.current;
       const isToggleCombo = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b";
-      if (!isToggleCombo) return;
-      event.preventDefault();
-      toggleSidebar();
+      if (isToggleCombo) {
+        event.preventDefault();
+        // Same "wrap and unwrap the sidebar" shortcut, but a phone has no
+        // rail to wrap into: there it opens and closes the drawer.
+        if (state.compact) setDrawerOpen((open) => !open);
+        else toggleSidebar();
+        return;
+      }
+      // Escape peels back one layer at a time, topmost first. A key a
+      // widget already used (the search box closing its suggestions)
+      // arrives with `defaultPrevented` set and is left alone.
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        if (state.compact && state.drawerOpen) setDrawerOpen(false);
+        else if (state.compact && state.searchOpen) setSearchOpen(false);
+        else if (state.overlay && state.aiPanelOpen) state.onToggleAiPanel();
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [toggleSidebar]);
+
+  // Focus follows what opens and returns to what opened it. Skipped on
+  // the first render so a page never grabs focus just by loading.
+  const previous = useRef({ drawerOpen, searchOpen, aiPanelOpen });
+  useEffect(() => {
+    const was = previous.current;
+    previous.current = { drawerOpen, searchOpen, aiPanelOpen };
+
+    if (drawerOpen !== was.drawerOpen) {
+      if (drawerOpen) drawerCloseRef.current?.focus();
+      else menuButtonRef.current?.focus();
+    }
+    if (searchOpen !== was.searchOpen) {
+      if (searchOpen) searchWrapRef.current?.querySelector("input")?.focus();
+      else searchButtonRef.current?.focus();
+    }
+    if (overlay && aiPanelOpen !== was.aiPanelOpen) {
+      if (aiPanelOpen) {
+        aiWrapRef.current?.querySelector("aside")?.focus();
+      } else {
+        // Only pull focus back if it was inside the panel it just left
+        // (✕ or Escape) or nowhere (a tap on the dimmed page). It goes to
+        // whatever opens the panel here: the bottom bar's AI tab on a
+        // phone, the slim rail's button on a tablet.
+        const active = document.activeElement;
+        if (!active || active === document.body || aiWrapRef.current?.contains(active)) {
+          const opener = compact
+            ? aiButtonRef.current
+            : aiWrapRef.current?.querySelector<HTMLElement>(".wv-ai-rail button");
+          opener?.focus();
+        }
+      }
+    }
+  }, [drawerOpen, searchOpen, aiPanelOpen, compact, overlay]);
+
+  const closeDrawer = () => setDrawerOpen(false);
+  const modalOpen = (compact && drawerOpen) || (overlay && aiPanelOpen);
+  const rtl = ui.dir === "rtl";
+
+  const rootStyle = {
+    display: "flex",
+    flexDirection: "column",
+    // Which way the drawer slides off-screen, and which corner the guide
+    // character anchors to, depend on the reading direction.
+    "--wv-shell-off": rtl ? 1 : -1,
+    "--wv-shell-origin": rtl ? "0% 100%" : "100% 100%",
+  } as CSSProperties;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div data-app-shell-chrome>
+    <div className="wv-shell-root" data-mounted={mounted ? "true" : "false"} style={rootStyle}>
+      <style dangerouslySetInnerHTML={{ __html: SHELL_CSS }} />
+      <div data-app-shell-chrome {...inertWhen(modalOpen)}>
         <Header
+          leading={
+            <button
+              ref={menuButtonRef}
+              type="button"
+              className="wv-shell-menu-btn wv-shell-iconbtn"
+              aria-label={ui.nav.menu}
+              aria-expanded={drawerOpen}
+              aria-controls={drawerId}
+              onClick={() => setDrawerOpen(true)}
+            >
+              <MenuIcon />
+            </button>
+          }
           brand={brand}
           actions={
             <>
-              {showSearch && <GlobalSearch />}
+              {showSearch && (
+                <button
+                  ref={searchButtonRef}
+                  type="button"
+                  className="wv-shell-search-btn wv-shell-iconbtn"
+                  aria-label={ui.nav.search}
+                  aria-expanded={searchOpen}
+                  aria-controls={searchId}
+                  onClick={() => setSearchOpen((open) => !open)}
+                >
+                  <SearchIcon />
+                </button>
+              )}
+              {showSearch && (
+                <div
+                  id={searchId}
+                  ref={searchWrapRef}
+                  className="wv-shell-search"
+                  data-open={searchOpen ? "true" : "false"}
+                >
+                  <GlobalSearch />
+                </div>
+              )}
               <GlobeToggleLink />
               {headerActions}
-              {showAccountMenu && <NotificationBell />}
+              {showAccountMenu && <NotificationBellView state={bell} className="wv-desktop-only" />}
               {showAccountMenu && <AccountControls />}
             </>
           }
@@ -290,16 +540,60 @@ export function AppShell({
           default rather than relying on a percentage-height-through-
           a-stretched-block-ancestor spec corner case — confirmed via
           real before/after image renders, not assumed.
+
+          In the phone layout this same wrapper is the menu drawer
+          (`.wv-shell-drawer`, see `shell-styles.ts`): fixed to the
+          reading-start edge, slid off-screen until `data-open`.
         */}
-        <div data-app-shell-chrome style={{ display: "flex", minHeight: 0 }}>
+        <div
+          id={drawerId}
+          ref={drawerRef}
+          className="wv-shell-drawer"
+          data-app-shell-chrome=""
+          data-open={drawerOpen ? "true" : "false"}
+          style={{ display: "flex", minHeight: 0 }}
+        >
+          <div className="wv-shell-drawer-head">
+            <span>{ui.nav.menu}</span>
+            <button
+              ref={drawerCloseRef}
+              type="button"
+              className="wv-shell-iconbtn"
+              style={{ display: "inline-flex" }}
+              aria-label={ui.nav.closeMenu}
+              onClick={closeDrawer}
+            >
+              <span aria-hidden="true">✕</span>
+            </button>
+          </div>
           <Sidebar
             sections={sidebarSections}
-            collapsed={sidebarCollapsed}
+            collapsed={sidebarCollapsed && !compact}
             onToggleCollapse={toggleSidebar}
             defaultExpandedKeys={sidebarDefaultExpandedKeys}
           />
+          <div className="wv-shell-drawer-foot">
+            <a className="wv-drawer-link" href="/globe">
+              <span aria-hidden="true">🌐</span>
+              {ui.viewGlobe}
+            </a>
+            {showAccountMenu && (
+              <>
+                <a className="wv-drawer-link" href="/settings">
+                  {ui.settings}
+                </a>
+                <form method="post" action="/auth/signout">
+                  <button type="submit" className="wv-drawer-link">
+                    {ui.signOut}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
         <main
+          className="wv-shell-main"
+          {...inertWhen(modalOpen)}
           style={{
             flex: 1,
             minWidth: 0,
@@ -317,20 +611,53 @@ export function AppShell({
             // SCROLL REGIONS)".
             minHeight: 0,
             overflow: "auto",
-            padding: "var(--wv-space-lg)",
+            // Padding lives in `.wv-shell-main` (it shrinks on phones).
             backgroundColor: "var(--wv-bg)",
           }}
         >
           {children}
         </main>
-        <div data-app-shell-chrome>
+        <div
+          ref={aiWrapRef}
+          className="wv-shell-ai"
+          data-app-shell-chrome=""
+          {...inertWhen(compact && drawerOpen)}
+        >
           <AIPanel open={aiPanelOpen} onToggle={onToggleAiPanel}>
             {aiPanelContent}
           </AIPanel>
         </div>
       </div>
+      <div {...inertWhen(compact && drawerOpen)} style={{ display: "contents" }}>
+        <BottomNav
+          homeHref={showAccountMenu ? "/dashboard" : "/"}
+          mapHref={findMapHref(sidebarSections)}
+          pathname={pathname}
+          alerts={showAccountMenu && bell.kind !== "signed-out" ? bell : null}
+          aiOpen={aiPanelOpen}
+          onToggleAi={onToggleAiPanel}
+          aiButtonRef={aiButtonRef}
+        />
+      </div>
+      {drawerOpen && (
+        <div
+          className="wv-shell-scrim wv-shell-scrim--drawer"
+          data-app-shell-chrome=""
+          aria-hidden="true"
+          onClick={closeDrawer}
+        />
+      )}
+      {aiPanelOpen && (
+        <div
+          className="wv-shell-scrim wv-shell-scrim--ai"
+          data-app-shell-chrome=""
+          aria-hidden="true"
+          onClick={onToggleAiPanel}
+        />
+      )}
       {showGuide && (
         <div
+          className="wv-shell-guide"
           style={{
             position: "fixed",
             bottom: "var(--wv-space-md)",

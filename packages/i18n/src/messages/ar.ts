@@ -341,4 +341,13 @@ export const ar: Messages = {
   "chrome.tutorial.back": "رجوع",
   "chrome.tutorial.next": "التالي",
   "chrome.tutorial.getStarted": "ابدأ",
+  // ---- phone layout: menu button and bottom bar
+  "chrome.nav.menu": "القائمة",
+  "chrome.nav.closeMenu": "إغلاق القائمة",
+  "chrome.nav.quickNav": "تنقّل سريع",
+  "chrome.nav.home": "الرئيسية",
+  "chrome.nav.map": "الخريطة",
+  "chrome.nav.alerts": "التنبيهات",
+  "chrome.nav.search": "بحث",
+  "chrome.nav.ai": "المساعد",
 };

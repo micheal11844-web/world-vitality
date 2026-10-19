@@ -68,6 +68,16 @@ const FAKE: UiStrings = {
     next: "SIGUIENTE",
     getStarted: "EMPEZAR",
   },
+  nav: {
+    menu: "MENU-X",
+    closeMenu: "CERRAR-MENU-X",
+    quickNav: "NAV-RAPIDA-X",
+    home: "INICIO-X",
+    map: "MAPA-X",
+    alerts: "ALERTAS-X",
+    search: "BUSCAR-X",
+    ai: "IA-X",
+  },
 };
 
 test("without a provider the chrome is English (the default every other test relies on)", () => {
@@ -170,7 +180,11 @@ test("right-to-left flips the glyphs that point somewhere", () => {
       <AIPanel open={true} onToggle={() => {}} />
     </UiStringsProvider>,
   );
-  assert.equal(screen.getByRole("button", { name: "Collapse AI panel" }).textContent, "◀");
+  // Open panel: the docked glyph (the phone sheet's ✕ is a separate, CSS-swapped span).
+  const docked = screen
+    .getByRole("button", { name: "Collapse AI panel" })
+    .querySelector(".wv-ai-side-glyph");
+  assert.equal(docked?.textContent, "◀");
 });
 
 test("the bell stays a plain 'Notifications' link when counts are unknown, in any language", async () => {

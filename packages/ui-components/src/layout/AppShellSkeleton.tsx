@@ -1,4 +1,5 @@
 import { Skeleton } from "../components/Skeleton.js";
+import { SKELETON_CSS } from "./shell-styles.js";
 
 /**
  * The "modern loading screen" ask, built with what the app already
@@ -33,8 +34,10 @@ import { Skeleton } from "../components/Skeleton.js";
  */
 export function AppShellSkeleton() {
   return (
-    <div style={{ display: "flex", height: "100vh", backgroundColor: "var(--wv-bg)" }}>
+    <div className="wv-skeleton-root" style={{ display: "flex", backgroundColor: "var(--wv-bg)" }}>
+      <style dangerouslySetInnerHTML={{ __html: SKELETON_CSS }} />
       <div
+        className="wv-skeleton-sidebar"
         style={{
           width: "14rem",
           flexShrink: 0,
@@ -56,7 +59,10 @@ export function AppShellSkeleton() {
         </div>
       </div>
 
-      <div style={{ flex: 1, padding: "var(--wv-space-lg)", overflow: "hidden" }}>
+      <div
+        className="wv-skeleton-content"
+        style={{ flex: 1, padding: "var(--wv-space-lg)", overflow: "hidden" }}
+      >
         <Skeleton width="12rem" height="1.75rem" />
         <div style={{ height: "var(--wv-space-lg)" }} />
         <div

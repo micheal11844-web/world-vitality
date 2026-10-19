@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@world-vitality/design-tokens/theme.css";
 
 export const metadata: Metadata = {
@@ -14,6 +14,21 @@ export const metadata: Metadata = {
     description: "World Vitality — See. Understand. Act.",
     images: ["/brand/world-vitality-logo.png"],
   },
+};
+
+/**
+ * `device-width` is what makes the phone layout (see `AppShell`) apply
+ * at all — and the theme colour tints a phone browser's toolbar to the
+ * page background in both colour schemes (the two values are `--wv-bg`'s
+ * light and dark values in `theme.css`).
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
+    { media: "(prefers-color-scheme: dark)", color: "#14171a" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

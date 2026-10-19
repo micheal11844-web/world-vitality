@@ -5,6 +5,11 @@ export interface HeaderProps {
   brand: ReactNode;
   /** Search, notifications, profile menu, etc. — right-aligned. */
   actions?: ReactNode;
+  /**
+   * A control that sits before the brand — the phone layout's menu
+   * button. Rendered as-is; it decides for itself when to show.
+   */
+  leading?: ReactNode;
 }
 
 /**
@@ -13,10 +18,14 @@ export interface HeaderProps {
  * the left and global actions on the right. Deliberately just a layout
  * shell with slots — the actual search/notification/profile components
  * are Stage 6+ (once there's a real app to wire them to real data).
+ *
+ * The `wv-shell-*` class names are hooks for the responsive rules in
+ * `shell-styles.ts`; they change nothing on their own.
  */
-export function Header({ brand, actions }: HeaderProps) {
+export function Header({ brand, actions, leading }: HeaderProps) {
   return (
     <header
+      className="wv-shell-header"
       style={{
         display: "flex",
         alignItems: "center",
@@ -28,11 +37,18 @@ export function Header({ brand, actions }: HeaderProps) {
         fontFamily: "var(--wv-font-sans)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
+      <div
+        className="wv-shell-brand"
+        style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}
+      >
+        {leading}
         {brand}
       </div>
       {actions && (
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-sm)" }}>
+        <div
+          className="wv-shell-actions"
+          style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-sm)" }}
+        >
           {actions}
         </div>
       )}

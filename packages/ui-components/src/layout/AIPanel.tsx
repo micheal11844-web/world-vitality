@@ -34,8 +34,13 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
   if (!open) {
     return (
       <div
+        className="wv-ai-rail"
         style={{
-          width: "2.5rem",
+          // Wide enough for the toggle's 44px minimum touch target plus the
+          // rail's own 1px border (it was 2.5rem, so the button poked out and
+          // made the whole page scroll sideways whenever the panel was closed).
+          width: "3rem",
+          boxSizing: "border-box",
           borderInlineStart: "1px solid var(--wv-border)",
           backgroundColor: "var(--wv-surface)",
           display: "flex",
@@ -54,6 +59,9 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
   return (
     <aside
       aria-label={ui.aiPanel.region}
+      // Focusable by script only, so opening the phone-layout sheet can
+      // move keyboard and screen-reader focus into it.
+      tabIndex={-1}
       style={{
         width: "22rem",
         borderInlineStart: "1px solid var(--wv-border)",
@@ -74,7 +82,14 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
       >
         <span style={{ fontSize: "0.9375rem", fontWeight: 500 }}>{ui.aiPanel.title}</span>
         <Button variant="ghost" size="sm" onClick={onToggle} aria-label={ui.aiPanel.collapse}>
-          {towardEdge}
+          {/* Docked: an arrow toward the edge. As a phone bottom sheet (see
+              `shell-styles.ts`): a plain close mark. Only one shows. */}
+          <span className="wv-ai-side-glyph" aria-hidden="true">
+            {towardEdge}
+          </span>
+          <span className="wv-ai-sheet-glyph" aria-hidden="true">
+            ✕
+          </span>
         </Button>
       </div>
       <div style={{ flex: 1, overflow: "auto", padding: "var(--wv-space-md)" }}>{children}</div>

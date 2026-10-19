@@ -58,6 +58,19 @@ export interface UiStrings {
     next: string;
     getStarted: string;
   };
+  /** The phone layout's menu button, drawer and bottom bar. */
+  nav: {
+    menu: string;
+    closeMenu: string;
+    /** Name of the bottom bar's navigation landmark. */
+    quickNav: string;
+    home: string;
+    map: string;
+    alerts: string;
+    /** The magnifier that reveals the search row. */
+    search: string;
+    ai: string;
+  };
 }
 
 export const DEFAULT_UI_STRINGS: UiStrings = {
@@ -107,6 +120,16 @@ export const DEFAULT_UI_STRINGS: UiStrings = {
     back: "Back",
     next: "Next",
     getStarted: "Get started",
+  },
+  nav: {
+    menu: "Menu",
+    closeMenu: "Close menu",
+    quickNav: "Quick navigation",
+    home: "Home",
+    map: "Map",
+    alerts: "Alerts",
+    search: "Search",
+    ai: "AI",
   },
 };
 
