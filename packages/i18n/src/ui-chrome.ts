@@ -13,6 +13,8 @@ export interface ChromeStrings {
   locale: string;
   listSeparator: string;
   formatNumber: (value: number) => string;
+  /** "5 minutes ago" for an ISO timestamp, in this language. */
+  formatRelativeTime: (iso: string) => string;
   viewGlobe: string;
   settings: string;
   signOut: string;
@@ -55,6 +57,12 @@ export interface ChromeStrings {
     search: string;
     ai: string;
   };
+  /** The note shown while offline or viewing a copy saved on this device. */
+  offline: {
+    offline: string;
+    savedCopy: (ago: string) => string;
+    reload: string;
+  };
 }
 
 export function buildChromeStrings(translator: Translator): ChromeStrings {
@@ -64,6 +72,7 @@ export function buildChromeStrings(translator: Translator): ChromeStrings {
     locale: translator.locale,
     listSeparator: t("common.listSeparator"),
     formatNumber: translator.number,
+    formatRelativeTime: (iso) => translator.relativeTime(iso),
     viewGlobe: t("chrome.viewGlobe"),
     settings: t("chrome.settings"),
     signOut: t("chrome.signOut"),
@@ -116,6 +125,11 @@ export function buildChromeStrings(translator: Translator): ChromeStrings {
       alerts: t("chrome.nav.alerts"),
       search: t("chrome.nav.search"),
       ai: t("chrome.nav.ai"),
+    },
+    offline: {
+      offline: t("chrome.offline.offline"),
+      savedCopy: (ago) => t("chrome.offline.savedCopy", { ago }),
+      reload: t("chrome.offline.reload"),
     },
   };
 }

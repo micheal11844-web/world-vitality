@@ -356,6 +356,25 @@ export const en = {
   "chrome.nav.alerts": "Alerts",
   "chrome.nav.search": "Search",
   "chrome.nav.ai": "AI",
+
+  // ---- offline use and installing the app
+  "chrome.offline.offline": "You’re offline. What you see may be out of date.",
+  "chrome.offline.savedCopy":
+    "You’re viewing the copy you last opened, saved {ago}. Reconnect and reload for current information.",
+  "chrome.offline.reload": "Reload",
+  "offline.title": "You’re offline",
+  "offline.body":
+    "World Vitality can’t reach the internet right now. Pages you opened recently are saved on this device and open with a note showing when they were saved. Everything else needs a connection.",
+  "offline.retry": "Try again",
+  "offline.dashboard": "Open the dashboard",
+  "offline.privacy": "Saved pages stay on this device and are removed when you sign out.",
+  "settings.install.title": "Install on this device",
+  "settings.install.body":
+    "Add World Vitality to your home screen or desktop so it opens like an app. Pages you opened recently stay available offline — saved on this device only, and removed when you sign out.",
+  "settings.install.button": "Install app",
+  "settings.install.installed": "World Vitality is installed on this device.",
+  "settings.install.hint":
+    "To install, open your browser’s share or menu button and choose “Add to Home Screen” or “Install app”.",
 } as const;
 
 export type MessageKey = keyof typeof en;

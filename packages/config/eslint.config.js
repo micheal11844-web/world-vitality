@@ -34,6 +34,27 @@ export default tseslint.config(
     },
   },
   {
+    // The service worker (apps/web/public/sw.js) is served as-is, as a
+    // classic script, and runs in a ServiceWorkerGlobalScope — not a window
+    // and not Node — so it gets that scope's globals and nothing else.
+    files: ["apps/web/public/sw.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: {
+        self: "readonly",
+        caches: "readonly",
+        fetch: "readonly",
+        Response: "readonly",
+        Headers: "readonly",
+        URL: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        Promise: "readonly",
+        Date: "readonly",
+      },
+    },
+  },
+  {
     // Node.js-executed config files (next.config.mjs, etc.) run in the
     // build/server process, not the browser — they need Node globals,
     // not the browser/React globals the rest of the app code gets.

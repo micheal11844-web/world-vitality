@@ -19,6 +19,7 @@ import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
 import { GlobalSearch } from "../search/GlobalSearch.js";
 import { NotificationBellView, useNotificationSummary } from "../notifications/NotificationBell.js";
+import { OfflineNotice } from "./OfflineNotice.js";
 import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface AppShellProps {
@@ -388,8 +389,15 @@ export function AppShell({
   // something you ask for, not something that greets you: a workspace page
   // that docks it open on a desktop opens with it closed here. Runs before
   // paint, on first load and whenever the window narrows into that range.
+  const closedByShell = useRef(false);
   useIsomorphicLayoutEffect(() => {
-    if (overlay && latest.current.aiPanelOpen) latest.current.onToggleAiPanel();
+    if (overlay && latest.current.aiPanelOpen) {
+      // Remembered so the focus handling below can tell this apart from the
+      // person closing the panel: a page must never grab focus just by
+      // loading (or by the window being resized).
+      closedByShell.current = true;
+      latest.current.onToggleAiPanel();
+    }
   }, [overlay]);
 
   useEffect(() => {
@@ -435,7 +443,7 @@ export function AppShell({
     if (overlay && aiPanelOpen !== was.aiPanelOpen) {
       if (aiPanelOpen) {
         aiWrapRef.current?.querySelector("aside")?.focus();
-      } else {
+      } else if (!closedByShell.current) {
         // Only pull focus back if it was inside the panel it just left
         // (✕ or Escape) or nowhere (a tap on the dimmed page). It goes to
         // whatever opens the panel here: the bottom bar's AI tab on a
@@ -448,6 +456,8 @@ export function AppShell({
           opener?.focus();
         }
       }
+      // Each close is judged on its own: the shell's doesn't excuse the next.
+      closedByShell.current = false;
     }
   }, [drawerOpen, searchOpen, aiPanelOpen, compact, overlay]);
 
@@ -615,6 +625,7 @@ export function AppShell({
             backgroundColor: "var(--wv-bg)",
           }}
         >
+          <OfflineNotice />
           {children}
         </main>
         <div

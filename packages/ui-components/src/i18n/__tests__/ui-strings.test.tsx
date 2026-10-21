@@ -30,6 +30,7 @@ const FAKE: UiStrings = {
   locale: "xx",
   listSeparator: " / ",
   formatNumber: (n) => `#${n}`,
+  formatRelativeTime: (iso) => `HACE(${iso})`,
   viewGlobe: "VER-GLOBO",
   settings: "AJUSTES",
   signOut: "SALIR",
@@ -77,6 +78,11 @@ const FAKE: UiStrings = {
     alerts: "ALERTAS-X",
     search: "BUSCAR-X",
     ai: "IA-X",
+  },
+  offline: {
+    offline: "SIN-RED-X",
+    savedCopy: (ago) => `COPIA-GUARDADA-X ${ago}`,
+    reload: "RECARGAR-X",
   },
 };
 

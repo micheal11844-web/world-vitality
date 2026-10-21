@@ -350,4 +350,23 @@ export const ar: Messages = {
   "chrome.nav.alerts": "التنبيهات",
   "chrome.nav.search": "بحث",
   "chrome.nav.ai": "المساعد",
+
+  // ---- offline use and installing the app
+  "chrome.offline.offline": "أنت غير متصل بالإنترنت. قد يكون ما تراه قديمًا.",
+  "chrome.offline.savedCopy":
+    "تعرض الآن النسخة التي فتحتها آخر مرة، وقد حُفظت {ago}. أعد الاتصال ثم أعد التحميل لعرض المعلومات الحالية.",
+  "chrome.offline.reload": "إعادة التحميل",
+  "offline.title": "أنت غير متصل بالإنترنت",
+  "offline.body":
+    "لا يستطيع World Vitality الوصول إلى الإنترنت الآن. الصفحات التي فتحتها مؤخرًا محفوظة على هذا الجهاز وتُفتح مع ملاحظة توضح وقت حفظها. وكل ما عدا ذلك يحتاج إلى اتصال.",
+  "offline.retry": "حاول مرة أخرى",
+  "offline.dashboard": "افتح لوحة المعلومات",
+  "offline.privacy": "تبقى الصفحات المحفوظة على هذا الجهاز وتُحذف عند تسجيل الخروج.",
+  "settings.install.title": "التثبيت على هذا الجهاز",
+  "settings.install.body":
+    "أضف World Vitality إلى الشاشة الرئيسية أو سطح المكتب ليُفتح كتطبيق. تبقى الصفحات التي فتحتها مؤخرًا متاحة دون اتصال، وهي محفوظة على هذا الجهاز فقط وتُحذف عند تسجيل الخروج.",
+  "settings.install.button": "تثبيت التطبيق",
+  "settings.install.installed": "World Vitality مثبّت على هذا الجهاز.",
+  "settings.install.hint":
+    "للتثبيت، افتح زر المشاركة أو قائمة المتصفح واختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».",
 };

@@ -367,4 +367,24 @@ export const fr: Messages = {
   "chrome.nav.alerts": "Alertes",
   "chrome.nav.search": "Rechercher",
   "chrome.nav.ai": "IA",
+
+  // ---- offline use and installing the app
+  "chrome.offline.offline": "Vous êtes hors ligne. Ce que vous voyez peut ne pas être à jour.",
+  "chrome.offline.savedCopy":
+    "Vous consultez la copie que vous avez ouverte en dernier, enregistrée {ago}. Reconnectez-vous et rechargez pour voir les informations actuelles.",
+  "chrome.offline.reload": "Recharger",
+  "offline.title": "Vous êtes hors ligne",
+  "offline.body":
+    "World Vitality n’a pas accès à Internet pour le moment. Les pages que vous avez ouvertes récemment sont enregistrées sur cet appareil et s’ouvrent avec une note indiquant quand elles ont été enregistrées. Tout le reste nécessite une connexion.",
+  "offline.retry": "Réessayer",
+  "offline.dashboard": "Ouvrir le tableau de bord",
+  "offline.privacy":
+    "Les pages enregistrées restent sur cet appareil et sont supprimées à la déconnexion.",
+  "settings.install.title": "Installer sur cet appareil",
+  "settings.install.body":
+    "Ajoutez World Vitality à votre écran d’accueil ou à votre bureau pour l’ouvrir comme une application. Les pages que vous avez ouvertes récemment restent disponibles hors ligne : elles sont enregistrées uniquement sur cet appareil et supprimées à la déconnexion.",
+  "settings.install.button": "Installer l’application",
+  "settings.install.installed": "World Vitality est installée sur cet appareil.",
+  "settings.install.hint":
+    "Pour l’installer, ouvrez le bouton de partage ou le menu de votre navigateur et choisissez « Ajouter à l’écran d’accueil » ou « Installer l’application ».",
 };

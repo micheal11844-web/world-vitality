@@ -358,4 +358,24 @@ export const es: Messages = {
   "chrome.nav.alerts": "Alertas",
   "chrome.nav.search": "Buscar",
   "chrome.nav.ai": "IA",
+
+  // ---- offline use and installing the app
+  "chrome.offline.offline": "No tienes conexión. Lo que ves puede estar desactualizado.",
+  "chrome.offline.savedCopy":
+    "Estás viendo la copia que abriste por última vez, guardada {ago}. Vuelve a conectarte y recarga para ver la información actual.",
+  "chrome.offline.reload": "Recargar",
+  "offline.title": "No tienes conexión",
+  "offline.body":
+    "World Vitality no puede acceder a internet ahora mismo. Las páginas que abriste hace poco se guardan en este dispositivo y se abren con una nota que indica cuándo se guardaron. Todo lo demás necesita conexión.",
+  "offline.retry": "Intentar de nuevo",
+  "offline.dashboard": "Abrir el panel",
+  "offline.privacy":
+    "Las páginas guardadas se quedan en este dispositivo y se eliminan al cerrar sesión.",
+  "settings.install.title": "Instalar en este dispositivo",
+  "settings.install.body":
+    "Añade World Vitality a tu pantalla de inicio o a tu escritorio para abrirlo como una aplicación. Las páginas que abriste hace poco siguen disponibles sin conexión: se guardan solo en este dispositivo y se eliminan al cerrar sesión.",
+  "settings.install.button": "Instalar la aplicación",
+  "settings.install.installed": "World Vitality está instalado en este dispositivo.",
+  "settings.install.hint":
+    "Para instalarlo, abre el botón de compartir o el menú de tu navegador y elige “Añadir a la pantalla de inicio” o “Instalar aplicación”.",
 };

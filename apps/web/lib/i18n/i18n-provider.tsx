@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import {
   buildChromeStrings,
   buildTranslator,
@@ -9,6 +9,7 @@ import {
   type Translator,
 } from "@world-vitality/i18n";
 import { UiStringsProvider } from "@world-vitality/ui-components";
+import { rememberLanguage } from "../pwa/remember-language";
 
 const I18nContext = createContext<Translator | null>(null);
 
@@ -29,6 +30,8 @@ export function I18nProvider({
 }) {
   const translator = useMemo(() => buildTranslator(locale, messages), [locale, messages]);
   const chrome = useMemo(() => buildChromeStrings(translator), [translator]);
+  // The offline page is shown in the language last used here.
+  useEffect(() => rememberLanguage(locale), [locale]);
   return (
     <I18nContext.Provider value={translator}>
       <UiStringsProvider value={chrome}>{children}</UiStringsProvider>

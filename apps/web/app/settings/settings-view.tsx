@@ -8,6 +8,7 @@ import { useI18n } from "../../lib/i18n/i18n-provider";
 import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 import { personaLabel, roleLabel, workspaceName } from "../../lib/i18n/labels";
 import { AppBrand } from "../app-brand";
+import { InstallCard } from "./install-card";
 import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
 import { updateDisplayNameAction, deleteAccountAction } from "../../lib/account-actions";
 import { clearHomePlaceAction } from "../../lib/onboarding-actions";
@@ -393,6 +394,10 @@ export function SettingsView({
             )}
           </div>
         </Card>
+
+        <div id="install" style={{ scrollMarginTop: "var(--wv-space-lg)" }}>
+          <InstallCard />
+        </div>
 
         <div id="download-data" style={{ scrollMarginTop: "var(--wv-space-lg)" }}>
           <Card>

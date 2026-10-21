@@ -173,6 +173,18 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // The service worker script (`public/sw.js`): browsers re-check it
+        // on their own schedule, but a copy held by the HTTP cache or a CDN
+        // would delay a fix reaching phones that already have the old one.
+        // Different header key from the rules above, so it adds to them
+        // (security headers and CSP still apply) rather than replacing.
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
     ];
   },
   // Fixes a real production crash (BUILD_PLAN "STAGE — GLOBE VIEW

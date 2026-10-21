@@ -60,6 +60,7 @@ export {
 export { AIPanel, type AIPanelProps } from "./layout/AIPanel.js";
 export { AppShell, type AppShellProps } from "./layout/AppShell.js";
 export { AppShellSkeleton } from "./layout/AppShellSkeleton.js";
+export { OfflineNotice, SAVED_COPY_META } from "./layout/OfflineNotice.js";
 export { GlobalSearch, type GlobalSearchProps } from "./search/GlobalSearch.js";
 export { NotificationBell, type NotificationBellProps } from "./notifications/NotificationBell.js";
 export {

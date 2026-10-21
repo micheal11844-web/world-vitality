@@ -26,6 +26,8 @@ export interface UiStrings {
   listSeparator: string;
   /** A count in the reader's numerals ("12" or "١٢"). */
   formatNumber: (value: number) => string;
+  /** "5 minutes ago" for an ISO timestamp, in the reader's language. */
+  formatRelativeTime: (iso: string) => string;
   viewGlobe: string;
   settings: string;
   signOut: string;
@@ -71,6 +73,12 @@ export interface UiStrings {
     search: string;
     ai: string;
   };
+  /** The note shown while offline, or when a page is a copy saved on this device. */
+  offline: {
+    offline: string;
+    savedCopy: (ago: string) => string;
+    reload: string;
+  };
 }
 
 export const DEFAULT_UI_STRINGS: UiStrings = {
@@ -78,6 +86,17 @@ export const DEFAULT_UI_STRINGS: UiStrings = {
   locale: "en",
   listSeparator: ", ",
   formatNumber: (value) => String(value),
+  formatRelativeTime: (iso) => {
+    const seconds = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
+    if (Number.isNaN(seconds)) return "";
+    if (seconds < 45) return "just now";
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    const days = Math.round(hours / 24);
+    return `${days} day${days === 1 ? "" : "s"} ago`;
+  },
   viewGlobe: "View the Globe",
   settings: "Settings",
   signOut: "Sign out",
@@ -130,6 +149,12 @@ export const DEFAULT_UI_STRINGS: UiStrings = {
     alerts: "Alerts",
     search: "Search",
     ai: "AI",
+  },
+  offline: {
+    offline: "You’re offline. What you see may be out of date.",
+    savedCopy: (ago) =>
+      `You’re viewing the copy you last opened, saved ${ago}. Reconnect and reload for current information.`,
+    reload: "Reload",
   },
 };
 

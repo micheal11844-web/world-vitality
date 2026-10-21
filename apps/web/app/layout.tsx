@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import "@world-vitality/design-tokens/theme.css";
+import { PwaSupport } from "../lib/pwa/pwa-support";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://world-vitality.vercel.app"),
@@ -8,6 +9,14 @@ export const metadata: Metadata = {
   description: "World Vitality — See. Understand. Act.",
   icons: {
     icon: "/icon.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  // When added to an iPhone/iPad home screen, open like an app. (The
+  // manifest, `app/manifest.ts`, covers Android and desktop.)
+  appleWebApp: {
+    capable: true,
+    title: "World Vitality",
+    statusBarStyle: "default",
   },
   openGraph: {
     title: "World Vitality",
@@ -35,6 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body style={{ margin: 0, backgroundColor: "var(--wv-bg)", color: "var(--wv-text-primary)" }}>
+        <PwaSupport />
         {children}
       </body>
     </html>

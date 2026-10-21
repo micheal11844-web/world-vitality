@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { useState } from "react";
 import assert from "node:assert/strict";
 import { render, screen, fireEvent, cleanup, waitFor, within } from "@testing-library/react";
 import { AppShell } from "../AppShell.js";
@@ -575,6 +576,47 @@ test("a panel the page docks open on a desktop is closed when the page loads at 
     container.querySelector(".wv-shell-root")!.getAttribute("data-mounted"),
     "true",
     "the stylesheet hides the floating panel until this has run",
+  );
+});
+
+/** A page that owns its panel's open/closed state, as the workspace pages do. */
+function Page({ initiallyOpen }: { initiallyOpen: boolean }) {
+  const [open, setOpen] = useState(initiallyOpen);
+  return (
+    <AppShell
+      brand={<span>World Vitality</span>}
+      sidebarSections={SECTIONS}
+      aiPanelOpen={open}
+      onToggleAiPanel={() => setOpen((o) => !o)}
+      showGuide={false}
+    >
+      <p>Page content</p>
+    </AppShell>
+  );
+}
+
+test("closing a docked-open panel for the phone layout does not move focus (a page never grabs it by loading)", () => {
+  phone();
+  mount(<Page initiallyOpen={true} />);
+  assert.ok(
+    screen.queryByRole("complementary", { name: "AI assistant" }) === null,
+    "the panel is closed",
+  );
+  assert.ok(
+    document.activeElement === document.body,
+    "focus is where it was — nowhere, not the AI tab",
+  );
+});
+
+test("a close the person makes still returns focus to the AI tab, after the shell's own close", () => {
+  phone();
+  mount(<Page initiallyOpen={true} />);
+  fireEvent.click(screen.getByRole("button", { name: "AI" })); // open it
+  assert.ok(document.activeElement === screen.getByRole("complementary", { name: "AI assistant" }));
+  fireEvent.keyDown(window, { key: "Escape" }); // and close it
+  assert.ok(
+    document.activeElement === screen.getByRole("button", { name: "AI" }),
+    "the shell's earlier automatic close doesn't excuse this one",
   );
 });
 
