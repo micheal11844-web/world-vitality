@@ -302,3 +302,51 @@ was updated with a scope note pointing to this entry, rather than left
 silently describing a flow that's no longer the front door.
 
 **Status:** Accepted.
+
+## Decision #017 — The admin console is a staff-only section of the web app, not a separate app
+
+**Context:** The PRD and Engineering Blueprint call for an internal admin
+console. The repository layout reserved a possible `apps/admin`. The first
+version needs only four read-mostly screens (overview, one-user lookup,
+data-source health and licensing, the staff audit log) for a team of one,
+and has to share the app's sign-in, database access, design system and
+deployment.
+
+**Chosen:** Build it inside `apps/web` under `/admin`. Access is a
+`platform_staff` allow-list (three roles: support, operations, platform
+admin), checked twice — once in the `/admin` layout (any active staff),
+once in every page and every Server Action (the specific permission). A
+visitor who is not allowed gets the ordinary "not found" page, and the
+page title is withheld from them so even that does not mention the
+console. Staff are granted only by SQL (`docs/runbooks/admin-console.md`);
+no screen creates staff. Every action that touches a person's data or
+calls out to a provider is written to an append-only `staff_audit_log`
+**before** it happens, and fails closed if it cannot be written. Searches
+are exact-match only, are posted rather than put in the URL, and the log
+records the account found, never what was typed.
+
+**Alternatives considered:**
+
+- _A separate `apps/admin` deployment._ Cleaner blast radius and its own
+  domain/IP rules, but a second deployment, a second sign-in surface and a
+  second copy of the identity plumbing to keep in step — cost with no
+  benefit for a team of one.
+- _A hosted admin tool (a database GUI or low-code admin panel)._ Fast, but
+  it would sit on the service-role key with no per-role limits and no
+  audit trail of its own, which is the opposite of what this console is for.
+- _The Supabase dashboard alone._ Remains the break-glass tool (and is how
+  staff are granted), but gives support no minimised view and records
+  nothing about who looked at whom.
+
+**Trade-offs, stated honestly:** the console shares a deployment, a
+service-role key and a process with the customer app, so a bug in the
+customer app is closer to staff screens than it would be across a deploy
+boundary. The mitigations are the gates above and the fact that the
+console has no write action on customer data. There is no second factor
+for staff yet (listed in the runbook as the first thing to add). **Extraction
+path:** every staff screen reads through `SupabaseStaffService` and the
+`lib/staff.ts` gate, and its pages sit under one route segment, so moving
+it into `apps/admin` later is a lift of that segment plus its gate, not a
+rewrite.
+
+**Status:** Accepted.

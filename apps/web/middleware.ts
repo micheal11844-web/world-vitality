@@ -107,5 +107,6 @@ export const config = {
     "/welcome",
     "/notifications",
     "/api/notifications/:path*",
+    "/admin/:path*",
   ],
 };

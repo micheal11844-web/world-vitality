@@ -19,8 +19,11 @@
  *   wired up. Logs below go to Vercel's runtime log capture (visible via
  *   the Vercel dashboard/API) as a baseline, not a dashboard or an
  *   alert.
- * - **Audit logs** (immutable who-changed-what) — no admin/config
- *   mutation surface exists yet to audit.
+ * - **Audit logs** (immutable who-changed-what) — these are database
+ *   tables, not log lines: `audit_log` (Insurance report access) and the
+ *   append-only `staff_audit_log` (admin console, see
+ *   `docs/runbooks/admin-console.md`). There is still no general audit
+ *   trail for customers' own changes inside workspaces.
  *
  * **Telemetry** (`logTelemetry`, added later — see its own doc comment
  * below) reuses this same `write()` pipeline under a third category,

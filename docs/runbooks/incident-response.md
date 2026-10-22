@@ -138,6 +138,34 @@ is broken" for one doesn't mean all three are.
    doc comment), so a missing-env-var failure should be loud and
    specific in the logs, not a silent 500.
 
+### Database paused (SEV-1)
+
+Found for real on 2026-10-22: the Supabase project had been left idle
+and showed status `INACTIVE`. On the free plan Supabase pauses a project
+after about a week with no activity. While paused, every request that
+needs the database fails — sign-in, the dashboard, notifications,
+settings, every workspace's team page — while static pages and the
+public Explorer's non-database parts may still load, so it can look like
+"half the app is broken" rather than "the database is off".
+
+1. **Look at the project's status** in the Supabase dashboard (or ask for
+   it through the connected Supabase tool). `INACTIVE` means paused;
+   `COMING_UP` means it is restarting; `ACTIVE_HEALTHY` is normal. SQL
+   tools against a paused project fail with "connection timeout" — that
+   error is itself the hint.
+2. **Restore it.** Dashboard → the project → Restore project (a few
+   minutes). Nothing is lost: pausing keeps the data. On the free plan
+   restoring costs nothing.
+3. **Check it came back:** wait for `ACTIVE_HEALTHY`, then sign in and
+   open the dashboard. Nothing in Vercel needs changing — the project URL
+   and keys are the same after a restore.
+4. **Prevent a repeat.** Any real traffic (someone using the app, or an
+   uptime check calling a page that reads the database) keeps the project
+   awake; a project nobody opens for a week pauses again. Moving to a
+   paid Supabase plan removes auto-pause. Decide this before the limited
+   beta: an app that is paused when the first tester arrives is a bad
+   first impression.
+
 ### Suspected credential/key leak (SEV-1, security)
 
 `SUPABASE_SERVICE_ROLE_KEY` is the highest-value secret in this system

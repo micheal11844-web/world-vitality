@@ -185,6 +185,16 @@ const nextConfig = {
           { key: "Service-Worker-Allowed", value: "/" },
         ],
       },
+      {
+        // The staff console: never stored by a browser, proxy or CDN, never
+        // indexed. (Pages are already dynamic; this makes it explicit for
+        // the staff screens specifically, which show people's details.)
+        source: "/admin/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
     ];
   },
   // Fixes a real production crash (BUILD_PLAN "STAGE — GLOBE VIEW
