@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { can } from "@world-vitality/identity-service";
-import { Card, Text, StateDisplay, ConfidenceBadge, Button } from "@world-vitality/ui-components";
+import {
+  Card,
+  Text,
+  StateDisplay,
+  ConfidenceBadge,
+  buttonStyle,
+} from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { AddPropertyForm } from "./add-property-form";
 import { PropertyManageControls } from "./property-manage-controls";
@@ -94,13 +100,19 @@ export default async function InsuranceWorkspaceHome() {
     }),
   );
 
-  const statuses = await Promise.all(visibleProperties.map((property) => getPropertyStatus(property)));
+  const statuses = await Promise.all(
+    visibleProperties.map((property) => getPropertyStatus(property)),
+  );
   const canEdit = can(membership.role, "data:edit");
   const canCreateReports = can(membership.role, "reports:create");
   const headlineInterpretation = statuses[0]?.soilMoisture;
 
   return (
-    <WorkspaceShell activeKey="home" role={membership.role} aiInterpretation={headlineInterpretation}>
+    <WorkspaceShell
+      activeKey="home"
+      role={membership.role}
+      aiInterpretation={headlineInterpretation}
+    >
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
         Underwriting Risk Context
       </Text>
@@ -108,9 +120,9 @@ export default async function InsuranceWorkspaceHome() {
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        Real insured portfolio ({allProperties.length} propert{allProperties.length === 1 ? "y" : "ies"}). Individual
-        hazard signals only; no synthesized multi-hazard risk score (see this page&apos;s
-        honest-scope notes).
+        Real insured portfolio ({allProperties.length} propert
+        {allProperties.length === 1 ? "y" : "ies"}). Individual hazard signals only; no synthesized
+        multi-hazard risk score (see this page&apos;s honest-scope notes).
       </Text>
 
       {canEdit && <AddPropertyForm />}
@@ -118,7 +130,11 @@ export default async function InsuranceWorkspaceHome() {
       {statuses.length === 0 ? (
         <StateDisplay
           status="empty"
-          title={allProperties.length === 0 ? "No insured properties yet" : "No properties visible for your role"}
+          title={
+            allProperties.length === 0
+              ? "No insured properties yet"
+              : "No properties visible for your role"
+          }
           description={
             allProperties.length === 0
               ? "Add an insured property above to get started."
@@ -141,7 +157,11 @@ export default async function InsuranceWorkspaceHome() {
               </Text>
               <Text
                 variant="caption"
-                style={{ display: "block", color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
+                style={{
+                  display: "block",
+                  color: "var(--wv-text-secondary)",
+                  marginBottom: "var(--wv-space-sm)",
+                }}
               >
                 {property.propertyAddress}
               </Text>
@@ -177,7 +197,10 @@ export default async function InsuranceWorkspaceHome() {
               )}
 
               {ingestionGaps > 0 && (
-                <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
                   {ingestionGaps} day(s) had no data available.
                 </Text>
               )}
@@ -212,8 +235,8 @@ export default async function InsuranceWorkspaceHome() {
               Generate a print-ready underwriting report, with sources, timestamps, and a logged
               audit trail entry.
             </Text>
-            <Link href="/workspaces/insurance/report" style={{ textDecoration: "none" }}>
-              <Button variant="secondary">Open Report</Button>
+            <Link href="/workspaces/insurance/report" style={buttonStyle("secondary")}>
+              Open Report
             </Link>
           </>
         ) : (

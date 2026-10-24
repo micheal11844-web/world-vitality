@@ -143,8 +143,10 @@ export function NotificationBellView({
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        minWidth: "2.25rem",
-        height: "2.25rem",
+        // Same height as the other header controls (see AppShell).
+        boxSizing: "border-box",
+        minWidth: "2.5rem",
+        minHeight: "2.5rem",
         padding: "0 0.5rem",
         borderRadius: "var(--wv-radius-sm)",
         border: `1px solid ${critical > 0 ? "var(--wv-critical)" : "var(--wv-border)"}`,

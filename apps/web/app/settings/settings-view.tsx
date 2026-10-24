@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button, Card, Checkbox, Input, Text, AppShell } from "@world-vitality/ui-components";
+import {
+  Button,
+  ButtonLink,
+  Card,
+  Checkbox,
+  Input,
+  Text,
+  AppShell,
+} from "@world-vitality/ui-components";
 import type { OfficialMinTier } from "@world-vitality/identity-service";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
@@ -210,21 +218,9 @@ export function SettingsView({
               </Text>
             )}
             <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
-              <a
-                href="/welcome?redo=1"
-                style={{
-                  display: "inline-block",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "var(--wv-radius-sm)",
-                  border: "1px solid var(--wv-border)",
-                  color: "var(--wv-text-primary)",
-                  textDecoration: "none",
-                  fontFamily: "var(--wv-font-sans)",
-                  fontSize: "0.875rem",
-                }}
-              >
+              <ButtonLink href="/welcome?redo=1">
                 {onboarded ? t("common.change") : t("settings.roleAndPlace.setUp")}
-              </a>
+              </ButtonLink>
               {onboarded && homeLabel && !placeRemoved && (
                 <Button variant="secondary" onClick={removePlace} loading={removingPlace}>
                   {t("settings.roleAndPlace.remove")}
@@ -409,22 +405,9 @@ export function SettingsView({
                 {t("settings.download.body")}
               </Text>
               <div>
-                <a
-                  href="/settings/export"
-                  download
-                  style={{
-                    display: "inline-block",
-                    padding: "0.5rem 1rem",
-                    borderRadius: "var(--wv-radius-sm)",
-                    border: "1px solid var(--wv-border)",
-                    color: "var(--wv-text-primary)",
-                    textDecoration: "none",
-                    fontFamily: "var(--wv-font-sans)",
-                    fontSize: "0.875rem",
-                  }}
-                >
+                <ButtonLink href="/settings/export" download>
                   {t("settings.download.button")}
-                </a>
+                </ButtonLink>
               </div>
             </div>
           </Card>

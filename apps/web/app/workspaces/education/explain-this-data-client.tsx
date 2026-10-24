@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Text } from "@world-vitality/ui-components";
+import { Card, Select, Text } from "@world-vitality/ui-components";
 import type { ConfidenceLevel } from "@world-vitality/interpretation-engine";
 import { GRADE_BANDS, simplifyExplanation, type GradeBand } from "./lib/simplify-explanation";
 
@@ -23,30 +23,18 @@ export function ExplainThisDataClient({ weather, soilMoisture }: ExplainThisData
   return (
     <div>
       <div style={{ marginBottom: "var(--wv-space-md)" }}>
-        <Text
-          variant="caption"
-          style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}
-        >
-          <label htmlFor="grade-band-select">Explain for:</label>
-        </Text>
-        <select
+        <Select
           id="grade-band-select"
+          label="Explain for"
           value={gradeBand}
           onChange={(e) => setGradeBand(e.target.value as GradeBand)}
-          style={{
-            padding: "var(--wv-space-xs) var(--wv-space-sm)",
-            borderRadius: "var(--wv-radius-sm)",
-            border: "1px solid var(--wv-border)",
-            fontFamily: "var(--wv-font-sans)",
-            fontSize: "0.9375rem",
-          }}
         >
           {GRADE_BANDS.map((g) => (
             <option key={g.value} value={g.value}>
               {g.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div
@@ -112,7 +100,11 @@ function ExplanationCard({
       </Text>
       <Text
         variant="caption"
-        style={{ display: "block", color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
+        style={{
+          display: "block",
+          color: "var(--wv-text-secondary)",
+          marginBottom: "var(--wv-space-sm)",
+        }}
       >
         {explanation.confidencePhrase}
       </Text>

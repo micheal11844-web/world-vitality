@@ -7,13 +7,16 @@ export {
 export { ConfidenceBadge, type ConfidenceBadgeProps } from "./components/ConfidenceBadge.js";
 export {
   Button,
+  buttonStyle,
   type ButtonProps,
   type ButtonVariant,
   type ButtonSize,
 } from "./components/Button.js";
+export { ButtonLink, type ButtonLinkProps } from "./components/ButtonLink.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { Text, type TextProps } from "./components/Typography.js";
 export { Input, type InputProps } from "./components/Input.js";
+export { Select, type SelectProps } from "./components/Select.js";
 export { Modal, type ModalProps } from "./components/Modal.js";
 export { Table, type TableProps, type TableColumn } from "./components/Table.js";
 export { Skeleton, type SkeletonProps } from "./components/Skeleton.js";

@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Button } from "../components/Button.js";
+import { Chevron } from "./Chevron.js";
 import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface SidebarItem {
@@ -139,7 +140,17 @@ function SidebarRow({
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center" }}>
+      <div
+        // The highlight belongs to the whole row (label and disclosure
+        // arrow together). It used to sit on the label alone, so an active
+        // workspace's pill stopped short of its own arrow.
+        style={{
+          display: "flex",
+          alignItems: "center",
+          borderRadius: "var(--wv-radius-sm)",
+          backgroundColor: item.active ? "var(--wv-color-accent-50)" : "transparent",
+        }}
+      >
         <a
           href={item.href}
           aria-current={item.active ? "page" : undefined}
@@ -161,7 +172,6 @@ function SidebarRow({
               : isSubItem
                 ? "var(--wv-text-secondary)"
                 : "var(--wv-text-primary)",
-            backgroundColor: item.active ? "var(--wv-color-accent-50)" : "transparent",
             fontSize: isSubItem ? "0.8125rem" : "0.9375rem",
             fontWeight: item.active ? 500 : 400,
             overflow: "hidden",
@@ -198,20 +208,18 @@ function SidebarRow({
               height: "1.75rem",
               marginInlineEnd: "0.25rem",
               border: "none",
+              borderRadius: "var(--wv-radius-sm)",
               background: "transparent",
               cursor: "pointer",
-              color: "var(--wv-text-secondary)",
-              fontSize: "0.625rem",
-              // Collapsed chevrons point toward the reading direction: right in LTR, left in RTL.
-              transform: isExpanded
-                ? "rotate(0deg)"
-                : ui.dir === "rtl"
-                  ? "rotate(90deg)"
-                  : "rotate(-90deg)",
-              transition: "transform 0.15s ease",
+              color: item.active ? "var(--wv-color-accent-700)" : "var(--wv-text-secondary)",
             }}
           >
-            ▼
+            {/* Open: down. Closed: toward the reading direction (right in
+                LTR, left in RTL). */}
+            <Chevron
+              pointing={isExpanded ? "down" : ui.dir === "rtl" ? "left" : "right"}
+              size={14}
+            />
           </button>
         )}
       </div>
@@ -351,7 +359,9 @@ export function Sidebar({
             aria-label={collapsed ? ui.sidebar.expand : ui.sidebar.collapse}
             title={collapsed ? ui.sidebar.expand : ui.sidebar.collapse}
           >
-            {(collapsed ? ui.dir !== "rtl" : ui.dir === "rtl") ? "▶" : "◀"}
+            <Chevron
+              pointing={(collapsed ? ui.dir !== "rtl" : ui.dir === "rtl") ? "right" : "left"}
+            />
           </Button>
         </div>
       )}

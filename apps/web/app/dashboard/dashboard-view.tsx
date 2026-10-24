@@ -287,9 +287,11 @@ export function DashboardView({
             <Link
               key={card.key}
               href={card.href}
-              style={{ textDecoration: "none", color: "inherit" }}
+              // block + full height, with the card filling it: otherwise each card is only
+              // as tall as its own text and a row of cards ends at ragged heights.
+              style={{ display: "block", height: "100%", textDecoration: "none", color: "inherit" }}
             >
-              <Card>
+              <Card style={{ height: "100%", boxSizing: "border-box" }}>
                 {recommended && (
                   <Text
                     variant="caption"

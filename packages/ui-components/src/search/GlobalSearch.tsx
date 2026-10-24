@@ -237,6 +237,8 @@ export function GlobalSearch({
           style={{
             width: "100%",
             boxSizing: "border-box",
+            // Same height as the other header controls (see AppShell).
+            minHeight: "2.5rem",
             padding: "0.375rem 0.75rem",
             borderRadius: "var(--wv-radius-sm)",
             border: "1px solid var(--wv-border)",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Card, Text } from "@world-vitality/ui-components";
+import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createFieldAction } from "./field-actions";
 
 /**
@@ -9,6 +9,10 @@ import { createFieldAction } from "./field-actions";
  * rendered by `page.tsx` when `can(role, "data:edit")` is already true
  * server-side — the Server Action re-checks independently regardless,
  * same defense-in-depth pattern as the Team page's invite form.
+ *
+ * Uses the shared `Input` so the fields are the same 44px height as the
+ * submit button beside them (hand-styled inputs were ~28px next to a 44px
+ * button, which looked broken on a desktop screen).
  */
 export function AddFieldForm() {
   const [name, setName] = useState("");
@@ -44,67 +48,42 @@ export function AddFieldForm() {
       </Text>
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap", alignItems: "flex-end" }}
+        style={{
+          display: "flex",
+          gap: "var(--wv-space-sm)",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+        }}
       >
-        <div>
-          <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-            <label htmlFor="field-name">Name</label>
-          </Text>
-          <input
+        <div style={{ flex: "1 1 10rem", maxWidth: "16rem" }}>
+          <Input
             id="field-name"
+            label="Name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            style={{
-              padding: "var(--wv-space-xs) var(--wv-space-sm)",
-              borderRadius: "var(--wv-radius-sm)",
-              border: "1px solid var(--wv-border)",
-              fontFamily: "var(--wv-font-sans)",
-              fontSize: "0.9375rem",
-              minWidth: "10rem",
-            }}
           />
         </div>
-        <div>
-          <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-            <label htmlFor="field-lat">Latitude</label>
-          </Text>
-          <input
+        <div style={{ width: "8rem" }}>
+          <Input
             id="field-lat"
+            label="Latitude"
             type="number"
             step="any"
             required
             value={latitude}
             onChange={(e) => setLatitude(e.target.value)}
-            style={{
-              padding: "var(--wv-space-xs) var(--wv-space-sm)",
-              borderRadius: "var(--wv-radius-sm)",
-              border: "1px solid var(--wv-border)",
-              fontFamily: "var(--wv-font-sans)",
-              fontSize: "0.9375rem",
-              width: "8rem",
-            }}
           />
         </div>
-        <div>
-          <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-            <label htmlFor="field-lon">Longitude</label>
-          </Text>
-          <input
+        <div style={{ width: "8rem" }}>
+          <Input
             id="field-lon"
+            label="Longitude"
             type="number"
             step="any"
             required
             value={longitude}
             onChange={(e) => setLongitude(e.target.value)}
-            style={{
-              padding: "var(--wv-space-xs) var(--wv-space-sm)",
-              borderRadius: "var(--wv-radius-sm)",
-              border: "1px solid var(--wv-border)",
-              fontFamily: "var(--wv-font-sans)",
-              fontSize: "0.9375rem",
-              width: "8rem",
-            }}
           />
         </div>
         <Button type="submit" loading={isPending}>
@@ -112,12 +91,18 @@ export function AddFieldForm() {
         </Button>
       </form>
       {error && (
-        <Text variant="caption" style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}>
+        <Text
+          variant="caption"
+          style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}
+        >
           {error}
         </Text>
       )}
       {success && (
-        <Text variant="caption" style={{ display: "block", color: "var(--wv-accent)", marginTop: "var(--wv-space-sm)" }}>
+        <Text
+          variant="caption"
+          style={{ display: "block", color: "var(--wv-accent)", marginTop: "var(--wv-space-sm)" }}
+        >
           {success}
         </Text>
       )}

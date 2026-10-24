@@ -92,6 +92,15 @@ export interface AppShellProps {
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
+
+/**
+ * Every control in the header's right-hand cluster (the globe link, the
+ * bell, Settings, Sign out, and the search box) is at least this tall and
+ * measured the same way (border-box), so they sit as one row. They were
+ * 31px, 31px, 31px and 38px before, which showed on a wide screen as a
+ * bell taller than its neighbours.
+ */
+const HEADER_CONTROL_MIN_HEIGHT = "2.5rem";
 const COMPACT_QUERY = `(max-width: ${COMPACT_MAX_WIDTH})`;
 /** Where an open AI panel floats over the page instead of docking beside it. */
 const OVERLAY_QUERY = `(max-width: ${MEDIUM_MAX_WIDTH})`;
@@ -199,7 +208,9 @@ function GlobeToggleLink() {
         display: "inline-flex",
         alignItems: "center",
         gap: "0.375rem",
-        padding: "0.375rem 0.75rem",
+        boxSizing: "border-box",
+        minHeight: HEADER_CONTROL_MIN_HEIGHT,
+        padding: "0 0.75rem",
         borderRadius: "var(--wv-radius-sm)",
         border: "1px solid var(--wv-border)",
         backgroundColor: "transparent",
@@ -218,7 +229,9 @@ function GlobeToggleLink() {
 const accountControlStyle = {
   display: "inline-flex",
   alignItems: "center",
-  padding: "0.375rem 0.75rem",
+  boxSizing: "border-box",
+  minHeight: HEADER_CONTROL_MIN_HEIGHT,
+  padding: "0 0.75rem",
   borderRadius: "var(--wv-radius-sm)",
   border: "1px solid var(--wv-border)",
   backgroundColor: "transparent",
@@ -633,6 +646,10 @@ export function AppShell({
           className="wv-shell-ai"
           data-app-shell-chrome=""
           {...inertWhen(compact && drawerOpen)}
+          // A flex container, like the drawer wrapper beside it, so the panel
+          // (or its slim rail) stretches the full height of the row instead of
+          // stopping at its own content and floating as a small box.
+          style={{ display: "flex", minHeight: 0 }}
         >
           <AIPanel open={aiPanelOpen} onToggle={onToggleAiPanel}>
             {aiPanelContent}

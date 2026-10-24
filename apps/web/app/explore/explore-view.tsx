@@ -89,7 +89,14 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", gap: "var(--wv-space-sm)", maxWidth: "28rem" }}
+        // flex-end: the label sits above the field, so the button lines up with
+        // the field itself rather than stretching to the label's full height.
+        style={{
+          display: "flex",
+          alignItems: "flex-end",
+          gap: "var(--wv-space-sm)",
+          maxWidth: "28rem",
+        }}
       >
         <div style={{ flex: 1 }}>
           <Input

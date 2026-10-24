@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { can } from "@world-vitality/identity-service";
-import { Card, Text, StateDisplay, ConfidenceBadge, Button } from "@world-vitality/ui-components";
+import {
+  Card,
+  Text,
+  StateDisplay,
+  ConfidenceBadge,
+  buttonStyle,
+} from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { AddLocationForm } from "./add-location-form";
 import { LocationManageControls } from "./location-manage-controls";
@@ -83,13 +89,19 @@ export default async function GovernmentNgosWorkspaceHome() {
     }),
   );
 
-  const statuses = await Promise.all(visibleLocations.map((location) => getLocationStatus(location)));
+  const statuses = await Promise.all(
+    visibleLocations.map((location) => getLocationStatus(location)),
+  );
   const canEdit = can(membership.role, "data:edit");
   const canCreateReports = can(membership.role, "reports:create");
   const headlineInterpretation = statuses[0]?.soilMoisture;
 
   return (
-    <WorkspaceShell activeKey="home" role={membership.role} aiInterpretation={headlineInterpretation}>
+    <WorkspaceShell
+      activeKey="home"
+      role={membership.role}
+      aiInterpretation={headlineInterpretation}
+    >
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
         Jurisdiction Overview
       </Text>
@@ -97,8 +109,9 @@ export default async function GovernmentNgosWorkspaceHome() {
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        Real monitored locations ({allLocations.length} location{allLocations.length === 1 ? "" : "s"}),
-        not real jurisdiction boundaries (see this page&apos;s honest-scope notes).
+        Real monitored locations ({allLocations.length} location
+        {allLocations.length === 1 ? "" : "s"}), not real jurisdiction boundaries (see this
+        page&apos;s honest-scope notes).
       </Text>
 
       {canEdit && <AddLocationForm />}
@@ -106,7 +119,11 @@ export default async function GovernmentNgosWorkspaceHome() {
       {statuses.length === 0 ? (
         <StateDisplay
           status="empty"
-          title={allLocations.length === 0 ? "No monitored locations yet" : "No locations visible for your role"}
+          title={
+            allLocations.length === 0
+              ? "No monitored locations yet"
+              : "No locations visible for your role"
+          }
           description={
             allLocations.length === 0
               ? "Add a monitored location above to get started."
@@ -159,7 +176,10 @@ export default async function GovernmentNgosWorkspaceHome() {
               )}
 
               {ingestionGaps > 0 && (
-                <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
                   {ingestionGaps} day(s) had no data available.
                 </Text>
               )}
@@ -192,8 +212,8 @@ export default async function GovernmentNgosWorkspaceHome() {
             >
               Generate a print-ready report of this overview, with sources and timestamps.
             </Text>
-            <Link href="/workspaces/government-ngos/report" style={{ textDecoration: "none" }}>
-              <Button variant="secondary">Open Report</Button>
+            <Link href="/workspaces/government-ngos/report" style={buttonStyle("secondary")}>
+              Open Report
             </Link>
           </>
         ) : (

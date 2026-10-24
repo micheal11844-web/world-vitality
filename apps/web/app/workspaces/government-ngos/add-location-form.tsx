@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Card, Text } from "@world-vitality/ui-components";
+import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createLocationAction } from "./location-actions";
 
 /**
@@ -11,6 +11,9 @@ import { createLocationAction } from "./location-actions";
  * `page.tsx` when `can(role, "data:edit")` is already true server-side
  * — the Server Action re-checks independently regardless, same
  * defense-in-depth pattern as every other write path in this app.
+ *
+ * Uses the shared `Input`, so the fields match the submit button's 44px
+ * height instead of sitting short beside it.
  */
 export function AddLocationForm() {
   const [label, setLabel] = useState("");
@@ -39,14 +42,6 @@ export function AddLocationForm() {
     });
   }
 
-  const inputStyle = {
-    padding: "var(--wv-space-xs) var(--wv-space-sm)",
-    borderRadius: "var(--wv-radius-sm)",
-    border: "1px solid var(--wv-border)",
-    fontFamily: "var(--wv-font-sans)",
-    fontSize: "0.9375rem",
-  };
-
   return (
     <Card style={{ marginBottom: "var(--wv-space-lg)" }}>
       <Text variant="sectionTitle" as="h2" style={{ marginBottom: "var(--wv-space-sm)" }}>
@@ -54,46 +49,42 @@ export function AddLocationForm() {
       </Text>
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap", alignItems: "flex-end" }}
+        style={{
+          display: "flex",
+          gap: "var(--wv-space-sm)",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+        }}
       >
-        <div>
-          <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-            <label htmlFor="location-label">Label</label>
-          </Text>
-          <input
+        <div style={{ flex: "1 1 12rem", maxWidth: "20rem" }}>
+          <Input
             id="location-label"
+            label="Label"
             required
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            style={{ ...inputStyle, minWidth: "12rem" }}
           />
         </div>
-        <div>
-          <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-            <label htmlFor="location-lat">Latitude</label>
-          </Text>
-          <input
+        <div style={{ width: "8rem" }}>
+          <Input
             id="location-lat"
+            label="Latitude"
             type="number"
             step="any"
             required
             value={latitude}
             onChange={(e) => setLatitude(e.target.value)}
-            style={{ ...inputStyle, width: "8rem" }}
           />
         </div>
-        <div>
-          <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-            <label htmlFor="location-lon">Longitude</label>
-          </Text>
-          <input
+        <div style={{ width: "8rem" }}>
+          <Input
             id="location-lon"
+            label="Longitude"
             type="number"
             step="any"
             required
             value={longitude}
             onChange={(e) => setLongitude(e.target.value)}
-            style={{ ...inputStyle, width: "8rem" }}
           />
         </div>
         <Button type="submit" loading={isPending}>
@@ -101,12 +92,18 @@ export function AddLocationForm() {
         </Button>
       </form>
       {error && (
-        <Text variant="caption" style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}>
+        <Text
+          variant="caption"
+          style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}
+        >
           {error}
         </Text>
       )}
       {success && (
-        <Text variant="caption" style={{ display: "block", color: "var(--wv-accent)", marginTop: "var(--wv-space-sm)" }}>
+        <Text
+          variant="caption"
+          style={{ display: "block", color: "var(--wv-accent)", marginTop: "var(--wv-space-sm)" }}
+        >
           {success}
         </Text>
       )}

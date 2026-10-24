@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { AppShell, Button, Card, Text } from "@world-vitality/ui-components";
+import { AppShell, Button, ButtonLink, Card, Text } from "@world-vitality/ui-components";
 import { TIER_ORDER, type NotificationTier } from "@world-vitality/identity-service";
 import type { Translate } from "@world-vitality/i18n";
 import { useI18n } from "../../lib/i18n/i18n-provider";
@@ -45,19 +45,6 @@ export interface NotificationsViewProps {
 const stack = { display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" } as const;
 
 const secondary = { color: "var(--wv-text-secondary)" } as const;
-
-const linkButton: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: "2.75rem",
-  padding: "0 0.875rem",
-  borderRadius: "var(--wv-radius-sm)",
-  border: "1px solid var(--wv-border)",
-  color: "var(--wv-text-primary)",
-  textDecoration: "none",
-  fontFamily: "var(--wv-font-sans)",
-  fontSize: "0.875rem",
-};
 
 /**
  * Tier styling. The critical treatment — heavy border, tinted ground,
@@ -247,9 +234,9 @@ export function NotificationsView({
                 {t("notifications.markAllRead")}
               </Button>
             )}
-            <a href="/settings#notifications" style={linkButton}>
+            <ButtonLink href="/settings#notifications" size="sm">
               {t("notifications.preferences")}
-            </a>
+            </ButtonLink>
           </div>
         </div>
 
@@ -264,23 +251,28 @@ export function NotificationsView({
             <Text variant="body" role="status">
               {statusMessage(status, hasOfficialAlerts, t)}
             </Text>
-            <div style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap" }}>
-              {status.kind === "no_place" && (
-                <a href="/welcome?redo=1" style={linkButton}>
-                  {t("notifications.setHomePlace")}
-                </a>
-              )}
-              {showCheckAgain && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  loading={pending}
-                  onClick={() => run(checkAlertsNowAction)}
-                >
-                  {t("notifications.checkAgain")}
-                </Button>
-              )}
-            </div>
+            {/* Only rendered when there is something to put in it: an empty
+                row still takes a flex gap and left a hollow strip at the foot of
+                this card. */}
+            {(status.kind === "no_place" || showCheckAgain) && (
+              <div style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap" }}>
+                {status.kind === "no_place" && (
+                  <ButtonLink href="/welcome?redo=1" size="sm">
+                    {t("notifications.setHomePlace")}
+                  </ButtonLink>
+                )}
+                {showCheckAgain && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    loading={pending}
+                    onClick={() => run(checkAlertsNowAction)}
+                  >
+                    {t("notifications.checkAgain")}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </Card>
 
@@ -370,9 +362,9 @@ export function NotificationsView({
                       )}
                       <div style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap" }}>
                         {item.href && (
-                          <a href={item.href} style={linkButton}>
+                          <ButtonLink href={item.href} size="sm">
                             {t("notifications.view")}
-                          </a>
+                          </ButtonLink>
                         )}
                         {item.unread && (
                           <Button

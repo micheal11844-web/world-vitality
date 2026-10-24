@@ -90,8 +90,7 @@ export default async function AgricultureWorkspaceHome() {
   const commentsByField = new Map(
     await Promise.all(
       visibleFields.map(
-        async (field) =>
-          [field.id, await getAccountService().listFieldComments(field.id)] as const,
+        async (field) => [field.id, await getAccountService().listFieldComments(field.id)] as const,
       ),
     ),
   );
@@ -173,7 +172,10 @@ export default async function AgricultureWorkspaceHome() {
               )}
 
               {ingestionGaps > 0 && (
-                <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
                   {ingestionGaps} day(s) had no data available.
                 </Text>
               )}
@@ -219,9 +221,9 @@ export default async function AgricultureWorkspaceHome() {
 
         <Link
           href="/workspaces/agriculture/map"
-          style={{ textDecoration: "none", color: "inherit" }}
+          style={{ display: "block", height: "100%", textDecoration: "none", color: "inherit" }}
         >
-          <Card>
+          <Card style={{ height: "100%", boxSizing: "border-box" }}>
             <Text variant="caption">MAP</Text>
             <div
               style={{
@@ -242,16 +244,15 @@ export default async function AgricultureWorkspaceHome() {
         {canCreateReports && (
           <Link
             href="/workspaces/agriculture/report"
-            style={{ textDecoration: "none", color: "inherit" }}
+            style={{ display: "block", height: "100%", textDecoration: "none", color: "inherit" }}
           >
-            <Card>
+            <Card style={{ height: "100%", boxSizing: "border-box" }}>
               <Text variant="caption">FIELD REPORT</Text>
               <Text
                 variant="body"
                 style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-sm)" }}
               >
-                Current-conditions snapshot for every field you can see, exportable as CSV or
-                PDF →
+                Current-conditions snapshot for every field you can see, exportable as CSV or PDF →
               </Text>
             </Card>
           </Link>

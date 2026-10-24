@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "../components/Button.js";
+import { Chevron, type ChevronPointing } from "./Chevron.js";
 import { useUiStrings } from "../i18n/ui-strings.js";
 
 export interface AIPanelProps {
@@ -29,8 +30,8 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
   const ui = useUiStrings();
   // The panel docks at the inline-end edge, so "open" points back toward
   // the content: left in LTR, right in RTL (and the reverse for "collapse").
-  const towardContent = ui.dir === "rtl" ? "▶" : "◀";
-  const towardEdge = ui.dir === "rtl" ? "◀" : "▶";
+  const towardContent: ChevronPointing = ui.dir === "rtl" ? "right" : "left";
+  const towardEdge: ChevronPointing = ui.dir === "rtl" ? "left" : "right";
   if (!open) {
     return (
       <div
@@ -50,7 +51,7 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
         }}
       >
         <Button variant="ghost" size="sm" onClick={onToggle} aria-label={ui.aiPanel.open}>
-          {towardContent}
+          <Chevron pointing={towardContent} />
         </Button>
       </div>
     );
@@ -85,7 +86,7 @@ export function AIPanel({ open, onToggle, children }: AIPanelProps) {
           {/* Docked: an arrow toward the edge. As a phone bottom sheet (see
               `shell-styles.ts`): a plain close mark. Only one shows. */}
           <span className="wv-ai-side-glyph" aria-hidden="true">
-            {towardEdge}
+            <Chevron pointing={towardEdge} />
           </span>
           <span className="wv-ai-sheet-glyph" aria-hidden="true">
             ✕

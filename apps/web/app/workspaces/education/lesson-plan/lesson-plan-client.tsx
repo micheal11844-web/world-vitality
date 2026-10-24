@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Text } from "@world-vitality/ui-components";
+import { Card, Select } from "@world-vitality/ui-components";
 import type { ConfidenceLevel } from "@world-vitality/interpretation-engine";
 import { GRADE_BANDS, type GradeBand } from "../lib/simplify-explanation";
 import { generateLessonPlan, type LessonPlanInput } from "../lib/generate-lesson-plan";
@@ -36,32 +36,18 @@ export function LessonPlanClient(props: LessonPlanClientProps) {
           marginBottom: "var(--wv-space-md)",
         }}
       >
-        <div>
-          <Text
-            variant="caption"
-            style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}
-          >
-            <label htmlFor="lesson-grade-band-select">Grade level:</label>
-          </Text>
-          <select
-            id="lesson-grade-band-select"
-            value={gradeBand}
-            onChange={(e) => setGradeBand(e.target.value as GradeBand)}
-            style={{
-              padding: "var(--wv-space-xs) var(--wv-space-sm)",
-              borderRadius: "var(--wv-radius-sm)",
-              border: "1px solid var(--wv-border)",
-              fontFamily: "var(--wv-font-sans)",
-              fontSize: "0.9375rem",
-            }}
-          >
-            {GRADE_BANDS.map((g) => (
-              <option key={g.value} value={g.value}>
-                {g.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          id="lesson-grade-band-select"
+          label="Grade level"
+          value={gradeBand}
+          onChange={(e) => setGradeBand(e.target.value as GradeBand)}
+        >
+          {GRADE_BANDS.map((g) => (
+            <option key={g.value} value={g.value}>
+              {g.label}
+            </option>
+          ))}
+        </Select>
         <LessonPlanDownloadButton gradeBand={gradeBand} content={planText} />
       </div>
 

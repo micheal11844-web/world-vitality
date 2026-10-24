@@ -173,24 +173,28 @@ test("right-to-left flips the glyphs that point somewhere", () => {
       <AIPanel open={false} onToggle={() => {}} />
     </UiStringsProvider>,
   );
+  // The arrows are drawn icons (not text glyphs), each tagged with the way it points.
+  const pointing = (el: Element | null | undefined) =>
+    el?.querySelector("svg[data-pointing]")?.getAttribute("data-pointing");
   // Closed rail: the arrow points toward the content — left in LTR, right in RTL.
-  assert.equal(screen.getByRole("button", { name: "Open AI panel" }).textContent, "◀");
+  assert.equal(pointing(screen.getByRole("button", { name: "Open AI panel" })), "left");
   rerender(
     <UiStringsProvider value={RTL}>
       <AIPanel open={false} onToggle={() => {}} />
     </UiStringsProvider>,
   );
-  assert.equal(screen.getByRole("button", { name: "Open AI panel" }).textContent, "▶");
+  assert.equal(pointing(screen.getByRole("button", { name: "Open AI panel" })), "right");
   rerender(
     <UiStringsProvider value={RTL}>
       <AIPanel open={true} onToggle={() => {}} />
     </UiStringsProvider>,
   );
-  // Open panel: the docked glyph (the phone sheet's ✕ is a separate, CSS-swapped span).
+  // Open panel: the docked arrow points toward the screen edge it collapses to — right in
+  // LTR, left in RTL (the phone sheet's ✕ is a separate, CSS-swapped span).
   const docked = screen
     .getByRole("button", { name: "Collapse AI panel" })
     .querySelector(".wv-ai-side-glyph");
-  assert.equal(docked?.textContent, "◀");
+  assert.equal(pointing(docked), "left");
 });
 
 test("the bell stays a plain 'Notifications' link when counts are unknown, in any language", async () => {

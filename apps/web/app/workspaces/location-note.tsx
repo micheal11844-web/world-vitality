@@ -11,6 +11,9 @@ import type { WorkspaceLocation } from "../../lib/home-location";
  * that reads a fixed station regardless of the chosen place).
  */
 export function LocationNote({ location, note }: { location: WorkspaceLocation; note?: string }) {
+  // The browser's default link blue clashes with the palette; keep the
+  // underline (a link inside a sentence must not rely on colour alone).
+  const link = { color: "var(--wv-accent)" } as const;
   return (
     <Text
       variant="caption"
@@ -23,12 +26,17 @@ export function LocationNote({ location, note }: { location: WorkspaceLocation; 
       {location.isHome ? (
         <>
           Showing <strong>{location.label}</strong>, your home place.{" "}
-          <Link href="/welcome?redo=1">Change</Link>
+          <Link href="/welcome?redo=1" style={link}>
+            Change
+          </Link>
         </>
       ) : (
         <>
           Showing a demo location ({location.label}).{" "}
-          <Link href="/welcome?redo=1">Set your own place</Link> to see your conditions here.
+          <Link href="/welcome?redo=1" style={link}>
+            Set your own place
+          </Link>{" "}
+          to see your conditions here.
         </>
       )}
       {note ? ` ${note}` : ""}

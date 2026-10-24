@@ -21,20 +21,15 @@ export const dynamic = "force-dynamic";
  * level, so `/workspaces/agriculture` still resolves to its own
  * `page.tsx` exactly as before.
  *
- * Deliberately minimal, workspace-agnostic chrome — a plain `AppShell`
- * with no AI panel and no per-workspace sidebar richness, not each
- * workspace's own bespoke `workspace-shell.tsx`. Dynamically importing
- * one of 11 different shell components by a runtime `workspaceId`
- * string would need its own non-trivial (and easy to get subtly wrong)
- * mapping; this page is used occasionally, not as a primary workspace
- * view, so simpler and honestly-less-polished chrome here is a
- * reasonable trade, not a corner cut silently.
+ * Workspace-agnostic chrome — one `TeamShell` for every workspace, not
+ * each workspace's own bespoke `workspace-shell.tsx` (dynamically
+ * importing one of 11 different shell components by a runtime
+ * `workspaceId` string would need its own non-trivial mapping). It does
+ * show the shared sidebar tree, expanded to the current workspace with
+ * Team marked active, so you are never left without navigation; it has
+ * no AI-panel content, since there is nothing here to interpret.
  */
-export default async function TeamPage({
-  params,
-}: {
-  params: Promise<{ workspaceId: string }>;
-}) {
+export default async function TeamPage({ params }: { params: Promise<{ workspaceId: string }> }) {
   const { workspaceId } = await params;
   const workspace = WORKSPACE_LINKS.find((w) => w.key === workspaceId);
   if (!workspace) {
@@ -45,7 +40,7 @@ export default async function TeamPage({
 
   if (!can(role, "workspace:manage_team")) {
     return (
-      <TeamShell>
+      <TeamShell workspaceId={workspaceId}>
         <StateDisplay
           status="error"
           title="Access denied"
@@ -74,7 +69,10 @@ export default async function TeamPage({
   // invented for workspaces that don't have one.
   const availableResources: ScopableResource[] =
     workspaceId === "agriculture"
-      ? (await getAccountService().listFields(workspaceId)).map((f) => ({ id: f.id, label: f.name }))
+      ? (await getAccountService().listFields(workspaceId)).map((f) => ({
+          id: f.id,
+          label: f.name,
+        }))
       : workspaceId === "insurance"
         ? (await getAccountService().listProperties(workspaceId)).map((p) => ({
             id: p.id,
@@ -88,7 +86,7 @@ export default async function TeamPage({
           : [];
 
   return (
-    <TeamShell>
+    <TeamShell workspaceId={workspaceId}>
       <div>
         <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
           Team — {workspace.label}

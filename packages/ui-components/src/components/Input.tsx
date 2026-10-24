@@ -40,6 +40,10 @@ export function Input({ label, error, helperText, id, style, ...rest }: InputPro
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? errorId : helperText ? helperId : undefined}
         style={{
+          // 44px, the same as Button and Select, so a field and a button on one
+          // row line up exactly rather than differing by a couple of pixels.
+          boxSizing: "border-box",
+          minHeight: "2.75rem",
           fontFamily: "var(--wv-font-sans)",
           fontSize: "1rem",
           padding: "0.625rem 0.75rem",
@@ -55,13 +59,24 @@ export function Input({ label, error, helperText, id, style, ...rest }: InputPro
         <span
           id={errorId}
           role="alert"
-          style={{ fontSize: "0.8125rem", color: "var(--wv-color-critical-500)" }}
+          style={{
+            fontFamily: "var(--wv-font-sans)",
+            fontSize: "0.8125rem",
+            color: "var(--wv-color-critical-500)",
+          }}
         >
           {error}
         </span>
       )}
       {!error && helperText && (
-        <span id={helperId} style={{ fontSize: "0.8125rem", color: "var(--wv-text-secondary)" }}>
+        <span
+          id={helperId}
+          style={{
+            fontFamily: "var(--wv-font-sans)",
+            fontSize: "0.8125rem",
+            color: "var(--wv-text-secondary)",
+          }}
+        >
           {helperText}
         </span>
       )}

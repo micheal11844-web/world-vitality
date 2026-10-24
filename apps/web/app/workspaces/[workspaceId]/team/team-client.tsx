@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Card, StateDisplay, Table, Text, type TableColumn } from "@world-vitality/ui-components";
+import {
+  Button,
+  Card,
+  Input,
+  Select,
+  StateDisplay,
+  Table,
+  Text,
+  type TableColumn,
+} from "@world-vitality/ui-components";
 import type { Role, WorkspaceMemberSummary } from "@world-vitality/identity-service";
 import { inviteMemberAction, removeMemberAction } from "./team-actions";
 
@@ -72,7 +81,9 @@ export function TeamClient({
     setFormError(null);
     setFormSuccess(null);
     const scopedResourceIds =
-      role === "scoped_field_user" && selectedResourceIds.length > 0 ? selectedResourceIds : undefined;
+      role === "scoped_field_user" && selectedResourceIds.length > 0
+        ? selectedResourceIds
+        : undefined;
     startTransition(async () => {
       const result = await inviteMemberAction(workspaceId, email, role, scopedResourceIds);
       if (result.ok) {
@@ -132,58 +143,45 @@ export function TeamClient({
         </Text>
         <form
           onSubmit={handleInvite}
-          style={{ display: "flex", gap: "var(--wv-space-sm)", flexWrap: "wrap", alignItems: "flex-end" }}
+          style={{
+            display: "flex",
+            gap: "var(--wv-space-sm)",
+            flexWrap: "wrap",
+            alignItems: "flex-end",
+          }}
         >
-          <div>
-            <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-              <label htmlFor="invite-email">Email</label>
-            </Text>
-            <input
+          <div style={{ flex: "1 1 16rem", maxWidth: "24rem" }}>
+            <Input
               id="invite-email"
+              label="Email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{
-                padding: "var(--wv-space-xs) var(--wv-space-sm)",
-                borderRadius: "var(--wv-radius-sm)",
-                border: "1px solid var(--wv-border)",
-                fontFamily: "var(--wv-font-sans)",
-                fontSize: "0.9375rem",
-                minWidth: "16rem",
-              }}
             />
           </div>
-          <div>
-            <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
-              <label htmlFor="invite-role">Role</label>
-            </Text>
-            <select
-              id="invite-role"
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              style={{
-                padding: "var(--wv-space-xs) var(--wv-space-sm)",
-                borderRadius: "var(--wv-radius-sm)",
-                border: "1px solid var(--wv-border)",
-                fontFamily: "var(--wv-font-sans)",
-                fontSize: "0.9375rem",
-              }}
-            >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            id="invite-role"
+            label="Role"
+            value={role}
+            onChange={(e) => setRole(e.target.value as Role)}
+          >
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </Select>
           <Button type="submit" loading={isPending}>
             Send Invite
           </Button>
         </form>
         {role === "scoped_field_user" && availableResources.length > 0 && (
           <div style={{ marginTop: "var(--wv-space-sm)" }}>
-            <Text variant="caption" style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}>
+            <Text
+              variant="caption"
+              style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}
+            >
               Scope to specific resources (optional — leave unchecked for workspace-wide access):
             </Text>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--wv-space-sm)" }}>
@@ -204,19 +202,36 @@ export function TeamClient({
           </div>
         )}
         {formError && (
-          <Text variant="caption" style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}>
+          <Text
+            variant="caption"
+            style={{
+              display: "block",
+              color: "var(--wv-critical)",
+              marginTop: "var(--wv-space-sm)",
+            }}
+          >
             {formError}
           </Text>
         )}
         {formSuccess && (
-          <Text variant="caption" style={{ display: "block", color: "var(--wv-accent)", marginTop: "var(--wv-space-sm)" }}>
+          <Text
+            variant="caption"
+            style={{ display: "block", color: "var(--wv-accent)", marginTop: "var(--wv-space-sm)" }}
+          >
             {formSuccess}
           </Text>
         )}
       </Card>
 
       {removeError && (
-        <Text variant="caption" style={{ display: "block", color: "var(--wv-critical)", marginBottom: "var(--wv-space-sm)" }}>
+        <Text
+          variant="caption"
+          style={{
+            display: "block",
+            color: "var(--wv-critical)",
+            marginBottom: "var(--wv-space-sm)",
+          }}
+        >
           {removeError}
         </Text>
       )}

@@ -55,6 +55,40 @@ const SIZE_STYLE: Record<ButtonSize, React.CSSProperties> = {
 };
 
 /**
+ * The one look every button-shaped control shares. `Button` uses it for
+ * real buttons, `ButtonLink` for links that navigate, and pages that must
+ * keep a framework link component (Next's `Link`) can spread it into their
+ * own `style`. Keeping this in one place is what stops a "Change" link and
+ * a "Remove" button sitting side by side at two different sizes — the
+ * mismatch that made some desktop buttons look odd.
+ *
+ * Links also get `textDecoration: "none"`, which is a no-op on a button.
+ */
+export function buttonStyle(
+  variant: ButtonVariant = "primary",
+  size: ButtonSize = "md",
+  inactive = false,
+): React.CSSProperties {
+  return {
+    boxSizing: "border-box",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "var(--wv-space-xs)",
+    fontFamily: "var(--wv-font-sans)",
+    fontWeight: 500,
+    lineHeight: 1.25,
+    textDecoration: "none",
+    borderRadius: "var(--wv-radius-sm)",
+    cursor: inactive ? "not-allowed" : "pointer",
+    opacity: inactive ? 0.6 : 1,
+    transition: "opacity 0.15s ease",
+    ...VARIANT_STYLE[variant],
+    ...SIZE_STYLE[size],
+  };
+}
+
+/**
  * Base Button (BUILD_PLAN ticket 5.2). Every other interactive component
  * in this package that needs a button (Modal's close/confirm actions,
  * etc.) uses this one, per Section 13: "Cards, buttons, inputs... all
@@ -70,18 +104,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "var(--wv-space-xs)",
-        fontFamily: "var(--wv-font-sans)",
-        fontWeight: 500,
-        borderRadius: "var(--wv-radius-sm)",
-        cursor: disabled || loading ? "not-allowed" : "pointer",
-        opacity: disabled || loading ? 0.6 : 1,
-        transition: "opacity 0.15s ease",
-        ...VARIANT_STYLE[variant],
-        ...SIZE_STYLE[size],
+        ...buttonStyle(variant, size, disabled || loading),
         ...style,
       }}
       {...rest}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Button, Text } from "@world-vitality/ui-components";
+import { buttonStyle, Text } from "@world-vitality/ui-components";
 
 export default function LandingPage() {
   return (
@@ -35,11 +35,11 @@ export default function LandingPage() {
           Real-time environmental intelligence, interpreted plainly.
         </Text>
         <div style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
-          <Link href="/explore" style={{ textDecoration: "none" }}>
-            <Button variant="secondary">Explore the planet</Button>
+          <Link href="/explore" style={buttonStyle("secondary")}>
+            Explore the planet
           </Link>
-          <Link href="/login" style={{ textDecoration: "none" }}>
-            <Button>Sign in</Button>
+          <Link href="/login" style={buttonStyle("primary")}>
+            Sign in
           </Link>
         </div>
       </div>
