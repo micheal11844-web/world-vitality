@@ -12,7 +12,7 @@ import {
 } from "@world-vitality/ui-components";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
+import { buildAppSidebar } from "../workspaces/workspace-nav";
 
 export interface SearchViewProps {
   query: string;
@@ -104,20 +104,14 @@ export function SearchView({
   const hasResults = topics.length > 0 || places.length > 0;
   const hasGatedResults = topics.some((item) => item.kind === "workspace" || item.kind === "page");
 
+  const sidebar = buildAppSidebar({ signedIn, t });
+
   return (
     <AppShell
       brand={<AppBrand />}
       showAccountMenu={signedIn}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: t("nav.workspaces"),
-          items: [
-            ...(signedIn ? [{ key: "home", label: t("nav.home"), href: "/dashboard" }] : []),
-            ...buildWorkspaceSidebarItems(undefined, undefined, t),
-          ],
-        },
-      ]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
     >

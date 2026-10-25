@@ -102,7 +102,11 @@ test("Sidebar with children starts collapsed by default and expands on chevron c
               label: "Agriculture",
               href: "/workspaces/agriculture",
               children: [
-                { key: "agriculture-home", label: "Field Overview", href: "/workspaces/agriculture" },
+                {
+                  key: "agriculture-home",
+                  label: "Field Overview",
+                  href: "/workspaces/agriculture",
+                },
                 { key: "agriculture-map", label: "Map", href: "/workspaces/agriculture/map" },
               ],
             },
@@ -130,7 +134,11 @@ test("Sidebar honors defaultExpandedKeys so the current workspace's sub-pages ar
               label: "Agriculture",
               href: "/workspaces/agriculture",
               children: [
-                { key: "agriculture-home", label: "Field Overview", href: "/workspaces/agriculture" },
+                {
+                  key: "agriculture-home",
+                  label: "Field Overview",
+                  href: "/workspaces/agriculture",
+                },
               ],
             },
           ],
@@ -153,7 +161,11 @@ test("Sidebar's parent label and chevron are independent controls — clicking t
               label: "Agriculture",
               href: "/workspaces/agriculture",
               children: [
-                { key: "agriculture-home", label: "Field Overview", href: "/workspaces/agriculture" },
+                {
+                  key: "agriculture-home",
+                  label: "Field Overview",
+                  href: "/workspaces/agriculture",
+                },
               ],
             },
           ],
@@ -184,8 +196,18 @@ test("Sidebar's collapsed fallback icon is only colored for the active item, not
         {
           key: "workspaces",
           items: [
-            { key: "agriculture", label: "Agriculture", href: "/workspaces/agriculture", active: false },
-            { key: "construction", label: "Construction", href: "/workspaces/construction", active: true },
+            {
+              key: "agriculture",
+              label: "Agriculture",
+              href: "/workspaces/agriculture",
+              active: false,
+            },
+            {
+              key: "construction",
+              label: "Construction",
+              href: "/workspaces/construction",
+              active: true,
+            },
           ],
         },
       ]}
@@ -193,10 +215,15 @@ test("Sidebar's collapsed fallback icon is only colored for the active item, not
   );
   const links = screen.getAllByRole("link");
   const agricultureLink = links.find((l) => l.getAttribute("href") === "/workspaces/agriculture")!;
-  const constructionLink = links.find((l) => l.getAttribute("href") === "/workspaces/construction")!;
+  const constructionLink = links.find(
+    (l) => l.getAttribute("href") === "/workspaces/construction",
+  )!;
   const agricultureCircle = agricultureLink.querySelector("span");
   const constructionCircle = constructionLink.querySelector("span");
-  assert.notEqual(constructionCircle?.getAttribute("style"), agricultureCircle?.getAttribute("style"));
+  assert.notEqual(
+    constructionCircle?.getAttribute("style"),
+    agricultureCircle?.getAttribute("style"),
+  );
   assert.match(constructionCircle?.getAttribute("style") ?? "", /background-color/);
 });
 
@@ -320,4 +347,78 @@ test("AppShell reads a previously persisted collapsed state from localStorage on
     </AppShell>,
   );
   assert.equal(screen.queryByText("Dashboard"), null);
+});
+
+// ---- a group that holds expandable rows ("Workspaces" → a workspace → its pages) ----
+
+const GROUPED = [
+  {
+    key: "main",
+    items: [
+      { key: "home", label: "Home", href: "/dashboard" },
+      {
+        key: "workspaces",
+        label: "Workspaces",
+        href: "/workspaces",
+        children: [
+          {
+            key: "agriculture",
+            label: "Agriculture",
+            href: "/workspaces/agriculture",
+            active: true,
+            children: [
+              {
+                key: "agriculture-home",
+                label: "Field Overview",
+                href: "/workspaces/agriculture",
+                active: true,
+              },
+              { key: "agriculture-map", label: "Map", href: "/workspaces/agriculture/map" },
+            ],
+          },
+          { key: "weather", label: "Weather", href: "/workspaces/weather" },
+        ],
+      },
+    ],
+  },
+];
+
+test("a group starts folded: only its own row shows until its arrow is pressed", () => {
+  render(<Sidebar sections={GROUPED} />);
+  assert.ok(screen.getByRole("link", { name: "Workspaces" }));
+  assert.equal(screen.queryByRole("link", { name: "Agriculture" }), null);
+  fireEvent.click(screen.getByRole("button", { name: /Expand Workspaces/i }));
+  assert.ok(screen.getByRole("link", { name: "Agriculture" }));
+  assert.ok(screen.getByRole("link", { name: "Weather" }));
+  // The workspace inside the group is itself folded until its own arrow is pressed.
+  assert.equal(screen.queryByRole("link", { name: "Field Overview" }), null);
+  fireEvent.click(screen.getByRole("button", { name: /Expand Agriculture/i }));
+  assert.ok(screen.getByRole("link", { name: "Field Overview" }));
+  assert.ok(screen.getByRole("link", { name: "Map" }));
+});
+
+test("opening a group by default also opens the workspace inside it", () => {
+  render(<Sidebar sections={GROUPED} defaultExpandedKeys={["workspaces", "agriculture"]} />);
+  assert.ok(screen.getByRole("link", { name: "Field Overview" }));
+  assert.ok(screen.getByRole("link", { name: "Map" }));
+});
+
+test("a group that contains the current page is marked as the way there, without claiming to be the page", () => {
+  render(<Sidebar sections={GROUPED} />);
+  const group = screen.getByRole("link", { name: "Workspaces" });
+  const home = screen.getByRole("link", { name: "Home" });
+  assert.equal(group.getAttribute("aria-current"), null);
+  // Coloured as "you are in here"; a row that does not contain the page is not.
+  assert.notEqual(group.style.color, home.style.color);
+});
+
+test("in the collapsed rail the group's letter shows that you are inside it", () => {
+  render(<Sidebar collapsed sections={GROUPED} />);
+  const letter = (href: string) =>
+    screen
+      .getAllByRole("link")
+      .find((l) => l.getAttribute("href") === href)!
+      .querySelector("span");
+  assert.match(letter("/workspaces")?.getAttribute("style") ?? "", /background-color/);
+  assert.equal(letter("/dashboard")?.style.backgroundColor, "transparent");
 });

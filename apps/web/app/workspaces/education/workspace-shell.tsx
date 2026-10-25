@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import type { Role } from "@world-vitality/identity-service";
 import { AppBrand } from "../../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspace-nav";
+import { buildAppSidebar } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map" | "lesson-plan";
@@ -36,18 +36,13 @@ const ROLE_LABEL: Record<Role, string> = {
  */
 export function WorkspaceShell({ activeKey, children, role }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const sidebar = buildAppSidebar({ workspaceKey: "education", subKey: activeKey });
 
   return (
     <AppShell
       brand={<AppBrand />}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: "Workspaces",
-          items: buildWorkspaceSidebarItems("education", activeKey),
-        },
-      ]}
-      sidebarDefaultExpandedKeys={["education"]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

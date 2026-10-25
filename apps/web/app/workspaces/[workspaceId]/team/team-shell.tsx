@@ -3,7 +3,7 @@
 import { AppShell } from "@world-vitality/ui-components";
 import { useState, type ReactNode } from "react";
 import { AppBrand } from "../../../app-brand";
-import { buildWorkspaceSidebarItems } from "../../workspace-nav";
+import { buildAppSidebar } from "../../workspace-nav";
 
 export interface TeamShellProps {
   /** The workspace whose team this is, so the sidebar can show where you are. */
@@ -30,18 +30,13 @@ export interface TeamShellProps {
  */
 export function TeamShell({ workspaceId, children }: TeamShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const sidebar = buildAppSidebar({ workspaceKey: workspaceId, subKey: "team" });
 
   return (
     <AppShell
       brand={<AppBrand />}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: "Workspaces",
-          items: buildWorkspaceSidebarItems(workspaceId, "team"),
-        },
-      ]}
-      sidebarDefaultExpandedKeys={[workspaceId]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
     >

@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { ConfidenceBadge, StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import { AppBrand } from "../../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspace-nav";
+import { buildAppSidebar } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -35,18 +35,13 @@ export interface WorkspaceShellProps {
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  const sidebar = buildAppSidebar({ workspaceKey: "weather", subKey: activeKey });
 
   return (
     <AppShell
       brand={<AppBrand />}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: "Workspaces",
-          items: buildWorkspaceSidebarItems("weather", activeKey),
-        },
-      ]}
-      sidebarDefaultExpandedKeys={["weather"]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

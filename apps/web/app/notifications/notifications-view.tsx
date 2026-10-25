@@ -7,7 +7,7 @@ import { TIER_ORDER, type NotificationTier } from "@world-vitality/identity-serv
 import type { Translate } from "@world-vitality/i18n";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
+import { buildAppSidebar } from "../workspaces/workspace-nav";
 import {
   checkAlertsNowAction,
   dismissNotificationAction,
@@ -181,32 +181,13 @@ export function NotificationsView({
   const total = TIER_ORDER.reduce((sum, tier) => sum + groups[tier].length, 0);
   const showCheckAgain = status.kind === "checked" || status.kind === "failed";
 
+  const sidebar = buildAppSidebar({ current: "notifications", t });
+
   return (
     <AppShell
       brand={<AppBrand />}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: t("nav.workspaces"),
-          items: [
-            { key: "home", label: t("nav.home"), href: "/dashboard" },
-            ...buildWorkspaceSidebarItems(undefined, undefined, t),
-          ],
-        },
-        {
-          key: "account",
-          label: t("nav.account"),
-          items: [
-            {
-              key: "notifications",
-              label: t("nav.notifications"),
-              href: "/notifications",
-              active: true,
-            },
-            { key: "settings", label: t("nav.settings"), href: "/settings" },
-          ],
-        },
-      ]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
     >

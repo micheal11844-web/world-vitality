@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import { AppBrand } from "../../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspace-nav";
+import { buildAppSidebar } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map";
@@ -32,18 +32,13 @@ export interface WorkspaceShellProps {
  */
 export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  const sidebar = buildAppSidebar({ workspaceKey: "disaster-monitoring", subKey: activeKey });
 
   return (
     <AppShell
       brand={<AppBrand />}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: "Workspaces",
-          items: buildWorkspaceSidebarItems("disaster-monitoring", activeKey),
-        },
-      ]}
-      sidebarDefaultExpandedKeys={["disaster-monitoring"]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

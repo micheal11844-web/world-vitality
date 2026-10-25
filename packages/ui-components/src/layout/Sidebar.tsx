@@ -105,9 +105,17 @@ function CollapsedFallbackIcon({ label, active }: { label: string; active?: bool
   );
 }
 
+/** True when any item below this one (at any depth) is the current page. */
+function hasActiveDescendant(item: SidebarItem): boolean {
+  return (item.children ?? []).some((child) => child.active || hasActiveDescendant(child));
+}
+
 /**
  * One navigable row, optionally with a disclosure chevron and nested
  * children (BUILD_PLAN "STAGE — NESTED WORKSPACE SIDEBAR NAVIGATION").
+ * Nesting is recursive, so a group ("Workspaces") can hold rows that
+ * themselves expand (a workspace, holding its own pages); expansion state
+ * for every level lives in `Sidebar`, keyed by item key.
  *
  * **The label and the chevron are two independent interactive
  * targets, deliberately, not one overloaded click handler.** The row
@@ -125,18 +133,26 @@ function SidebarRow({
   item,
   depth,
   collapsed,
-  isExpanded,
+  expandedKeys,
   onToggleExpand,
 }: {
   item: SidebarItem;
   depth: number;
   collapsed: boolean;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
+  expandedKeys: ReadonlySet<string>;
+  onToggleExpand: (key: string) => void;
 }) {
   const ui = useUiStrings();
   const hasChildren = Boolean(item.children && item.children.length > 0);
+  const isExpanded = expandedKeys.has(item.key);
   const isSubItem = depth > 0;
+  // A row that is not the current page but contains it ("Workspaces" while
+  // you are inside Agriculture) is coloured as "you are in here" without
+  // getting the filled pill, which stays on the exact page. In the
+  // collapsed rail, where children are never shown, this is the only
+  // "where am I" signal the top-level letter can give.
+  const onPath = !item.active && hasActiveDescendant(item);
+  const current = item.active || onPath;
 
   return (
     <div>
@@ -164,16 +180,16 @@ function SidebarRow({
             flex: 1,
             minWidth: 0,
             padding: isSubItem ? "0.375rem 0.75rem" : "0.5rem 0.75rem",
-            paddingInlineStart: isSubItem ? `${0.75 + depth * 1}rem` : "0.75rem",
+            paddingInlineStart: isSubItem ? `${0.75 + depth * 0.875}rem` : "0.75rem",
             borderRadius: "var(--wv-radius-sm)",
             textDecoration: "none",
-            color: item.active
+            color: current
               ? "var(--wv-color-accent-700)"
               : isSubItem
                 ? "var(--wv-text-secondary)"
                 : "var(--wv-text-primary)",
-            fontSize: isSubItem ? "0.8125rem" : "0.9375rem",
-            fontWeight: item.active ? 500 : 400,
+            fontSize: depth === 0 ? "0.9375rem" : depth === 1 ? "0.875rem" : "0.8125rem",
+            fontWeight: current ? 500 : 400,
             overflow: "hidden",
             whiteSpace: "nowrap",
           }}
@@ -183,7 +199,7 @@ function SidebarRow({
               {item.icon}
             </span>
           ) : (
-            collapsed && <CollapsedFallbackIcon label={item.label} active={item.active} />
+            collapsed && <CollapsedFallbackIcon label={item.label} active={current} />
           )}
           {!collapsed && (
             <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -194,7 +210,7 @@ function SidebarRow({
         {hasChildren && !collapsed && (
           <button
             type="button"
-            onClick={onToggleExpand}
+            onClick={() => onToggleExpand(item.key)}
             aria-expanded={isExpanded}
             aria-label={
               isExpanded ? ui.sidebar.collapseItem(item.label) : ui.sidebar.expandItem(item.label)
@@ -211,7 +227,7 @@ function SidebarRow({
               borderRadius: "var(--wv-radius-sm)",
               background: "transparent",
               cursor: "pointer",
-              color: item.active ? "var(--wv-color-accent-700)" : "var(--wv-text-secondary)",
+              color: current ? "var(--wv-color-accent-700)" : "var(--wv-text-secondary)",
             }}
           >
             {/* Open: down. Closed: toward the reading direction (right in
@@ -231,8 +247,8 @@ function SidebarRow({
               item={child}
               depth={depth + 1}
               collapsed={collapsed}
-              isExpanded={false}
-              onToggleExpand={() => {}}
+              expandedKeys={expandedKeys}
+              onToggleExpand={onToggleExpand}
             />
           ))}
         </div>
@@ -335,8 +351,8 @@ export function Sidebar({
               item={item}
               depth={0}
               collapsed={collapsed}
-              isExpanded={expandedKeys.has(item.key)}
-              onToggleExpand={() => toggleExpanded(item.key)}
+              expandedKeys={expandedKeys}
+              onToggleExpand={toggleExpanded}
             />
           ))}
         </div>

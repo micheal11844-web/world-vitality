@@ -5,7 +5,7 @@ import { ConfidenceBadge, StateDisplay, Text, AppShell } from "@world-vitality/u
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import type { Role } from "@world-vitality/identity-service";
 import { AppBrand } from "../../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspace-nav";
+import { buildAppSidebar } from "../workspace-nav";
 
 export interface WorkspaceShellProps {
   activeKey: "home" | "map" | "report";
@@ -49,18 +49,13 @@ export function WorkspaceShell({
   aiInterpretation,
 }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  const sidebar = buildAppSidebar({ workspaceKey: "insurance", subKey: activeKey });
 
   return (
     <AppShell
       brand={<AppBrand />}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: "Workspaces",
-          items: buildWorkspaceSidebarItems("insurance", activeKey),
-        },
-      ]}
-      sidebarDefaultExpandedKeys={["insurance"]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

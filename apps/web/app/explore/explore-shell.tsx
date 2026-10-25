@@ -4,7 +4,7 @@ import { type ReactNode, useState } from "react";
 import { ConfidenceBadge, StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import { AppBrand } from "../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
+import { buildAppSidebar } from "../workspaces/workspace-nav";
 
 export interface ExploreShellProps {
   children: ReactNode;
@@ -35,19 +35,16 @@ export interface ExploreShellProps {
  */
 export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  // Anonymous-capable: only the Workspaces group, no Home/Notifications/Settings.
+  const sidebar = buildAppSidebar({ signedIn: false });
 
   return (
     <AppShell
       brand={<AppBrand />}
       // Public Explorer is anonymous-capable — never show "Sign out".
       showAccountMenu={false}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: "Workspaces",
-          items: buildWorkspaceSidebarItems(),
-        },
-      ]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={

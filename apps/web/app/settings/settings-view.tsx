@@ -17,7 +17,7 @@ import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 import { personaLabel, roleLabel, workspaceName } from "../../lib/i18n/labels";
 import { AppBrand } from "../app-brand";
 import { InstallCard } from "./install-card";
-import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
+import { buildAppSidebar } from "../workspaces/workspace-nav";
 import { updateDisplayNameAction, deleteAccountAction } from "../../lib/account-actions";
 import { clearHomePlaceAction } from "../../lib/onboarding-actions";
 import { saveNotificationSettingsAction } from "../../lib/notification-actions";
@@ -128,27 +128,13 @@ export function SettingsView({
     }
   }
 
+  const sidebar = buildAppSidebar({ current: "settings", t });
+
   return (
     <AppShell
       brand={<AppBrand />}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: t("nav.workspaces"),
-          items: [
-            { key: "home", label: t("nav.home"), href: "/dashboard" },
-            ...buildWorkspaceSidebarItems(undefined, undefined, t),
-          ],
-        },
-        {
-          key: "account",
-          label: t("nav.account"),
-          items: [
-            { key: "notifications", label: t("nav.notifications"), href: "/notifications" },
-            { key: "settings", label: t("nav.settings"), href: "/settings", active: true },
-          ],
-        },
-      ]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
     >

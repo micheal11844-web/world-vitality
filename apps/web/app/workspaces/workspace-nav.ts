@@ -1,4 +1,4 @@
-import type { SidebarItem } from "@world-vitality/ui-components";
+import type { SidebarItem, SidebarSection } from "@world-vitality/ui-components";
 import { translateOr, type Translate } from "@world-vitality/i18n";
 
 export interface WorkspaceSubLink {
@@ -253,4 +253,102 @@ export function buildWorkspaceSidebarItems(
       })),
     };
   });
+}
+
+/** The top-level pages the sidebar can mark as current. */
+export type AppNavPage = "home" | "workspaces" | "notifications" | "settings";
+
+export interface AppSidebarOptions {
+  /** Which top-level page this is, when it is one of them. */
+  current?: AppNavPage;
+  /** Set on a workspace's own pages: that workspace opens and is marked current. */
+  workspaceKey?: string;
+  /** Which of that workspace's pages is open (`home`, `map`, `report`, `team`…). */
+  subKey?: string;
+  /** The reader's translator; omit for English. */
+  t?: Translate;
+  /**
+   * `false` for the anonymous Public Explorer: it shows only the Workspaces
+   * group (Home, Notifications and Settings all need an account), and
+   * following a workspace from there sends a visitor to sign in — the
+   * upgrade path the PRD describes.
+   */
+  signedIn?: boolean;
+}
+
+export interface AppSidebar {
+  sections: SidebarSection[];
+  /** Pass to `AppShell` as `sidebarDefaultExpandedKeys`. */
+  defaultExpandedKeys: string[];
+}
+
+/**
+ * The one sidebar every signed-in page shows: **Home**, **Workspaces**,
+ * then **Notifications** and **Settings** under Account.
+ *
+ * The eleven workspaces used to be listed at the top level, each with its
+ * own pages beneath it, which filled the whole rail and pushed
+ * Notifications and Settings out of sight. They now sit inside a single
+ * "Workspaces" row — its label opens the Workspaces page, its arrow
+ * expands the list — so the rail stays four rows long until you ask for
+ * more. On a workspace's own pages the group and that workspace open
+ * automatically, so you can see where you are and move around without an
+ * extra click. Everything is built here so no page hand-rolls its own
+ * sidebar, as each one used to.
+ */
+export function buildAppSidebar(options: AppSidebarOptions = {}): AppSidebar {
+  const { current, workspaceKey, subKey, t, signedIn = true } = options;
+  const label = (key: string, fallback: string) => (t ? translateOr(t, key, fallback) : fallback);
+
+  const workspacesItem: SidebarItem = {
+    key: "workspaces",
+    label: label("nav.workspaces", "Workspaces"),
+    href: "/workspaces",
+    active: current === "workspaces",
+    children: buildWorkspaceSidebarItems(workspaceKey, subKey, t),
+  };
+
+  const defaultExpandedKeys: string[] = [];
+  if (workspaceKey) defaultExpandedKeys.push("workspaces", workspaceKey);
+  else if (current === "workspaces") defaultExpandedKeys.push("workspaces");
+
+  if (!signedIn) {
+    return { sections: [{ key: "main", items: [workspacesItem] }], defaultExpandedKeys };
+  }
+
+  return {
+    sections: [
+      {
+        key: "main",
+        items: [
+          {
+            key: "home",
+            label: label("nav.home", "Home"),
+            href: "/dashboard",
+            active: current === "home",
+          },
+          workspacesItem,
+        ],
+      },
+      {
+        key: "account",
+        label: label("nav.account", "Account"),
+        items: [
+          {
+            key: "notifications",
+            label: label("nav.notifications", "Notifications"),
+            href: "/notifications",
+            active: current === "notifications",
+          },
+          {
+            key: "settings",
+            label: label("nav.settings", "Settings"),
+            href: "/settings",
+            active: current === "settings",
+          },
+        ],
+      },
+    ],
+    defaultExpandedKeys,
+  };
 }

@@ -648,3 +648,38 @@ test("until the script has run, the floating panel and its backdrop are hidden b
   );
   assert.match(rules, /\[data-mounted="false"\][^{]*\.wv-shell-scrim--ai/);
 });
+
+test("findMapHref finds the open workspace's map even when workspaces sit inside a group", () => {
+  const grouped: SidebarSection[] = [
+    {
+      key: "p",
+      items: [
+        {
+          key: "workspaces",
+          label: "Workspaces",
+          href: "/workspaces",
+          children: [
+            {
+              key: "weather",
+              label: "Weather",
+              href: "/workspaces/weather",
+              active: true,
+              children: [{ key: "weather-map", label: "Map", href: "/workspaces/weather/map" }],
+            },
+            { key: "research", label: "Research", href: "/workspaces/research" },
+          ],
+        },
+      ],
+    },
+  ];
+  assert.equal(findMapHref(grouped), "/workspaces/weather/map");
+  // On the Workspaces page itself no workspace is open, so the public Explorer is the map.
+  const onIndex: SidebarSection[] = [
+    { key: "p", items: [{ ...grouped[0]!.items[0]!, active: true }] },
+  ];
+  onIndex[0]!.items[0]!.children = onIndex[0]!.items[0]!.children!.map((c) => ({
+    ...c,
+    active: false,
+  }));
+  assert.equal(findMapHref(onIndex), DEFAULT_MAP_HREF);
+});

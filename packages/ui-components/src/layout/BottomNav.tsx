@@ -3,7 +3,7 @@
 import type { ReactNode, Ref } from "react";
 import { useUiStrings } from "../i18n/ui-strings.js";
 import { bellCounts, bellLabel, type BellState } from "../notifications/NotificationBell.js";
-import type { SidebarSection } from "./Sidebar.js";
+import type { SidebarItem, SidebarSection } from "./Sidebar.js";
 
 /** Where the Map tab goes when no workspace is open: the public map explorer. */
 export const DEFAULT_MAP_HREF = "/explore";
@@ -18,13 +18,23 @@ export const DEFAULT_MAP_HREF = "/explore";
  */
 export function findMapHref(sections: SidebarSection[]): string {
   for (const section of sections) {
-    for (const item of section.items) {
-      if (!item.active) continue;
+    const found = findMapIn(section.items);
+    if (found) return found;
+  }
+  return DEFAULT_MAP_HREF;
+}
+
+/** Searches at any depth: workspaces now sit inside a "Workspaces" group. */
+function findMapIn(items: SidebarItem[]): string | null {
+  for (const item of items) {
+    if (item.active) {
       const map = item.children?.find((child) => child.href.endsWith("/map"));
       if (map) return map.href;
     }
+    const nested = item.children ? findMapIn(item.children) : null;
+    if (nested) return nested;
   }
-  return DEFAULT_MAP_HREF;
+  return null;
 }
 
 export interface BottomNavProps {

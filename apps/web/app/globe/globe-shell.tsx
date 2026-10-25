@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Text, StateDisplay, AppShell } from "@world-vitality/ui-components";
 import { AppBrand } from "../app-brand";
-import { buildWorkspaceSidebarItems } from "../workspaces/workspace-nav";
+import { buildAppSidebar } from "../workspaces/workspace-nav";
 import type { GlobePin } from "./globe-viewer";
 
 // `ssr: false` is required, not a performance nicety — Cesium needs
@@ -46,19 +46,15 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
   // globe is a visualization, not an interpretation result to
   // summarize.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const sidebar = buildAppSidebar();
 
   return (
     <AppShell
       brand={<AppBrand />}
       aiPanelOpen={aiPanelOpen}
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
-      sidebarSections={[
-        {
-          key: "workspaces",
-          label: "Workspaces",
-          items: buildWorkspaceSidebarItems(),
-        },
-      ]}
+      sidebarSections={sidebar.sections}
+      sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
     >
       <div
         style={{
