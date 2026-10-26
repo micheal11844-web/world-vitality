@@ -53,6 +53,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.111.0
+      '@world-vitality/billing-service':
+        specifier: workspace:*
+        version: link:../../services/billing-service
       '@world-vitality/data-ingestion':
         specifier: workspace:*
         version: link:../../services/data-ingestion
@@ -149,6 +152,12 @@ importers:
       '@types/three':
         specifier: ^0.185.4
         version: 0.185.4
+
+  services/billing-service:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.45.0
+        version: 2.111.0
 
   services/data-ingestion:
     dependencies:

@@ -9,6 +9,7 @@
     { "path": "./services/data-ingestion" },
     { "path": "./services/interpretation-engine" },
     { "path": "./services/identity-service" },
+    { "path": "./services/billing-service" },
     { "path": "./packages/ai-evaluation" },
     { "path": "./packages/ui-components" },
     { "path": "./packages/design-tokens" },

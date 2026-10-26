@@ -350,3 +350,68 @@ it into `apps/admin` later is a lift of that segment plus its gate, not a
 rewrite.
 
 **Status:** Accepted.
+
+---
+
+## Decision #018 — Four plan tiers on Paystack, built switched off; limits wait for customer-owned workspaces
+
+**Context:** The owner chose Paystack as the payment provider and asked what
+each plan should limit. Billing had to be built without changing anything
+anyone can do today, before prices are known (they depend on the cost of a
+commercial weather-data licence), and while the data model has no customer
+to attach a limit to: every workspace is one shared copy, keyed by its name
+(`agriculture`, `insurance`, …), so fields, properties, locations and field
+comments are visible to every signed-in user.
+
+**Chosen:**
+
+- **Tiers:** Basic (free), Standard, Premium (both self-serve through
+  Paystack) and Enterprise (contact us, invoiced outside Paystack, set by
+  hand). Limits are workspaces / seats / saved items, plus on-or-off
+  features. The catalogue is one file, `services/billing-service/src/plans.ts`;
+  the table is in `docs/runbooks/billing.md`.
+- **Rules on every plan, which no tier can switch off:** official
+  life-safety alerts are never paywalled; the Public Explorer is always
+  free; people can always export and delete their data; cancelling is one
+  click. A downgrade past a limit makes the extra items read-only and never
+  deletes them.
+- **Switched off by default.** `BILLING_ENABLED` must be exactly `true`.
+  Until then the webhook route answers 404, nothing reads the billing
+  tables, and everyone gets unlimited entitlements.
+- **Fail open.** If a subscription cannot be read, the person is treated as
+  unlimited and the error is logged: a payment-system fault must never lock
+  someone out of their own data. Failing open can briefly give a feature
+  away; failing closed can take someone's work away.
+- **Webhooks:** signature checked on the raw body (HMAC-SHA512, constant
+  time) before anything is read; applied idempotently, then recorded; a
+  storage failure returns 500 so Paystack retries, anything merely
+  unrecognised returns 200. Only identifiers and outcomes are stored — never
+  the payload, card or bank details.
+- **Limits are not wired into the write paths yet.** Counting seats or saved
+  items against a shared workspace would count everyone's together. They
+  wait for an organisation (account-owned workspace) layer, which is also a
+  privacy fix in its own right.
+
+**Alternatives considered:**
+
+- _Wire limits now, counting per creator._ Would work for saved items but
+  not seats or workspaces, would need rewriting when organisations arrive,
+  and would suggest the tenancy gap is closed when it is not.
+- _Price per workspace instead of per tier._ Matches the PRD's per-workspace
+  "future premium features", but makes the multi-workspace users (the
+  Unified Billing requirement in PRD B.8) pay several bills; tiers keep one.
+- _A tier between Standard and Enterprise for civic bodies._ The PRD
+  suggests one; Standard roughly covers it for now.
+- _Usage-based pricing._ Postponed: nothing metered exists yet (bulk export
+  and API access are not built).
+
+**Trade-offs, stated honestly:** the plan system exists but cannot limit
+anything yet. Several things a plan lists are not built (email and SMS
+alerts, bulk export, API access, integrations, SSO) and are marked so the
+pricing page never offers them. No Paystack call has been made from this
+build environment — the first test-mode payment is the real check
+(`docs/runbooks/billing.md`, "First test payment"). Paystack's plans fix the
+currency, so Nigerian customers pay in NGN and enterprise customers in USD
+only if a USD settlement account exists.
+
+**Status:** Accepted; enforcement pending the organisation layer.
