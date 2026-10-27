@@ -39,6 +39,17 @@ export function I18nProvider({
   );
 }
 
+/**
+ * The current language's translator, or `null` outside a `LocaleBoundary`.
+ * For a component shared between a translated page and one that is not
+ * translated yet (a workspace shell serves both a workspace's home page and
+ * its map page): it translates when it can and stays English when it cannot,
+ * instead of throwing.
+ */
+export function useOptionalI18n(): Translator | null {
+  return useContext(I18nContext);
+}
+
 /** The current language's translator. Must be used under a `LocaleBoundary`. */
 export function useI18n(): Translator {
   const translator = useContext(I18nContext);

@@ -369,4 +369,27 @@ export const ar: Messages = {
   "settings.install.installed": "World Vitality مثبّت على هذا الجهاز.",
   "settings.install.hint":
     "للتثبيت، افتح زر المشاركة أو قائمة المتصفح واختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».",
+
+  // ---- Weather & Climate workspace (home page) and the location note shared by workspace pages
+  "weather.currentConditions": "الظروف الحالية",
+  "weather.status": "الحالة",
+  "weather.temperature": "درجة الحرارة",
+  "weather.alerts": "التنبيهات",
+  "weather.noActiveAlerts": "لا توجد تنبيهات نشطة",
+  "weather.trend": "الاتجاه",
+  "weather.forecast": "التوقعات",
+  "weather.noForecast": "لا توجد توقعات متاحة",
+  "weather.historicalContext": "السياق التاريخي",
+  "weather.noBenchmark": "لا يوجد بعد مرجع مناخي إقليمي",
+  "weather.gaps":
+    "{count, plural, zero {لا توجد أيام بلا بيانات.} one {يوم واحد لم تتوفر عنه بيانات.} two {يومان لم تتوفر عنهما بيانات.} few {# أيام لم تتوفر عنها بيانات.} many {# يومًا لم تتوفر عنها بيانات.} other {# يوم لم تتوفر عنها بيانات.}}",
+  "weather.forecastGaps":
+    "{count, plural, zero {لا توجد أيام توقعات بلا بيانات.} one {يوم توقعات واحد لم تتوفر عنه بيانات.} two {يوما توقعات لم تتوفر عنهما بيانات.} few {# أيام توقعات لم تتوفر عنها بيانات.} many {# يومًا من التوقعات لم تتوفر عنها بيانات.} other {# يوم من التوقعات لم تتوفر عنها بيانات.}}",
+  "weather.aiPanel.emptyTitle": "لا شيء لتفسيره بعد",
+  "weather.aiPanel.emptyBody": "افتح «الظروف الحالية» لعرض حالة مولَّدة بالذكاء الاصطناعي.",
+  "workspace.locationNote.home": "يُعرض {place}، مكان إقامتك.",
+  "workspace.locationNote.change": "تغيير",
+  "workspace.locationNote.demo": "يُعرض موقع تجريبي ({place}).",
+  "workspace.locationNote.setOwn": "حدّد مكانك الخاص",
+  "workspace.locationNote.demoTail": "لترى ظروفك هنا.",
 };

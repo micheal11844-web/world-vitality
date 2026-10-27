@@ -375,6 +375,29 @@ export const en = {
   "settings.install.installed": "World Vitality is installed on this device.",
   "settings.install.hint":
     "To install, open your browser’s share or menu button and choose “Add to Home Screen” or “Install app”.",
+
+  // ---- Weather & Climate workspace (home page) and the location note shared by workspace pages
+  "weather.currentConditions": "Current Conditions",
+  "weather.status": "Status",
+  "weather.temperature": "Temperature",
+  "weather.alerts": "Alerts",
+  "weather.noActiveAlerts": "No active alerts",
+  "weather.trend": "Trend",
+  "weather.forecast": "Forecast",
+  "weather.noForecast": "No forecast available",
+  "weather.historicalContext": "Historical context",
+  "weather.noBenchmark": "No regional climate benchmark yet",
+  "weather.gaps":
+    "{count, plural, one {# day had no data available.} other {# days had no data available.}}",
+  "weather.forecastGaps":
+    "{count, plural, one {# forecast day had no data available.} other {# forecast days had no data available.}}",
+  "weather.aiPanel.emptyTitle": "Nothing to interpret yet",
+  "weather.aiPanel.emptyBody": "Open Current Conditions to see an AI-generated status.",
+  "workspace.locationNote.home": "Showing {place}, your home place.",
+  "workspace.locationNote.change": "Change",
+  "workspace.locationNote.demo": "Showing a demo location ({place}).",
+  "workspace.locationNote.setOwn": "Set your own place",
+  "workspace.locationNote.demoTail": "to see your conditions here.",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -9,8 +9,9 @@ import { getRequestLocale } from "./request-locale";
  * client components their translator.
  *
  * Applied per route tree — Dashboard, Welcome, Settings, Notifications,
- * Search — rather than on `<html>`, on purpose. Pages that are not
- * translated yet (the workspaces, login, the landing page) stay fully
+ * Search, the Workspaces index and the Weather & Climate home page —
+ * rather than on `<html>`, on purpose. Pages that are not translated yet
+ * (the other workspace pages, login, the landing page) stay fully
  * English *and say so to assistive technology*, instead of English text
  * sitting under `lang="es"` or being flipped right-to-left. As more
  * pages are translated they gain this wrapper, and once all of them

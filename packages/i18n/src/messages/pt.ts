@@ -377,4 +377,27 @@ export const pt: Messages = {
   "settings.install.installed": "O World Vitality está instalado neste dispositivo.",
   "settings.install.hint":
     "Para instalar, abra o botão de compartilhar ou o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar aplicativo”.",
+
+  // ---- Weather & Climate workspace (home page) and the location note shared by workspace pages
+  "weather.currentConditions": "Condições atuais",
+  "weather.status": "Situação",
+  "weather.temperature": "Temperatura",
+  "weather.alerts": "Alertas",
+  "weather.noActiveAlerts": "Nenhum alerta ativo",
+  "weather.trend": "Tendência",
+  "weather.forecast": "Previsão",
+  "weather.noForecast": "Nenhuma previsão disponível",
+  "weather.historicalContext": "Contexto histórico",
+  "weather.noBenchmark": "Ainda não há uma referência climática regional",
+  "weather.gaps":
+    "{count, plural, one {# dia ficou sem dados disponíveis.} other {# dias ficaram sem dados disponíveis.}}",
+  "weather.forecastGaps":
+    "{count, plural, one {# dia de previsão ficou sem dados disponíveis.} other {# dias de previsão ficaram sem dados disponíveis.}}",
+  "weather.aiPanel.emptyTitle": "Nada para interpretar ainda",
+  "weather.aiPanel.emptyBody": "Abra Condições atuais para ver uma situação gerada por IA.",
+  "workspace.locationNote.home": "Mostrando {place}, seu lugar principal.",
+  "workspace.locationNote.change": "Alterar",
+  "workspace.locationNote.demo": "Mostrando um local de demonstração ({place}).",
+  "workspace.locationNote.setOwn": "Defina seu próprio lugar",
+  "workspace.locationNote.demoTail": "para ver aqui as suas condições.",
 };

@@ -8,6 +8,8 @@ import {
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
+import { LocaleBoundary } from "../../../lib/i18n/locale-boundary";
+import { getTranslator } from "../../../lib/i18n/server";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
 
@@ -102,6 +104,13 @@ async function getForecastTrend(location: WorkspaceLocation) {
  *   `/workspaces/weather/map` (Stage 10 ticket 10.5), same pattern as
  *   Agriculture's separate map route.
  *
+ * **Translated** (BUILD_PLAN v91) — the first workspace page to be: the
+ * page's own text follows the reader's language. The interpretation
+ * itself (the engine's summary, confidence wording and explanation) is
+ * generated in English and is not translated yet, so it is marked
+ * `lang="en"` and left-to-right rather than passed off as the page's
+ * language — the same convention as the Dashboard's live-conditions card.
+ *
  * **Not verified against the live APIs from this build environment** —
  * same caveat as Agriculture's page: this sandbox cannot reach
  * power.larc.nasa.gov or api.open-meteo.com, so this is written to
@@ -110,91 +119,109 @@ async function getForecastTrend(location: WorkspaceLocation) {
  */
 export default async function WeatherWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "weather" });
+  const { t, locale } = await getTranslator();
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const caption = { textTransform: "uppercase" } as const;
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   const [{ result, ingestionGaps }, { result: forecastResult, ingestionGaps: forecastGaps }] =
     await Promise.all([getTemperatureStatus(location), getForecastTrend(location)]);
 
   return (
-    <WorkspaceShell activeKey="home" aiInterpretation={result}>
-      <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
-        Current Conditions
-      </Text>
-      <LocationNote location={location} />
+    <LocaleBoundary>
+      <WorkspaceShell activeKey="home" aiInterpretation={result}>
+        <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
+          {t("weather.currentConditions")}
+        </Text>
+        <LocationNote location={location} t={t} />
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
-          gap: "var(--wv-space-md)",
-          marginBottom: "var(--wv-space-md)",
-        }}
-      >
-        <Card>
-          <Text variant="caption">STATUS</Text>
-          <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
-            Temperature
-          </Text>
-          {result.unableToAnswer ? (
-            <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              {result.summary}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
+            gap: "var(--wv-space-md)",
+            marginBottom: "var(--wv-space-md)",
+          }}
+        >
+          <Card>
+            <Text variant="caption" style={caption}>
+              {t("weather.status")}
             </Text>
-          ) : (
-            <>
-              <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
-                {result.summary}
-              </Text>
-              <ConfidenceBadge level={result.confidence} />
-            </>
-          )}
-          {ingestionGaps.length > 0 && (
-            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {ingestionGaps.length} day(s) had no data available.
+            <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
+              {t("weather.temperature")}
             </Text>
-          )}
-        </Card>
-
-        <Card>
-          <Text variant="caption">ALERTS</Text>
-          <StateDisplay status="empty" title="No active alerts" />
-        </Card>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
-          gap: "var(--wv-space-md)",
-        }}
-      >
-        <Card>
-          <Text variant="caption">TREND</Text>
-          <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
-            Forecast
-          </Text>
-          {forecastResult.unableToAnswer ? (
-            <StateDisplay status="empty" title="No forecast available" />
-          ) : (
-            <>
-              <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
-                {forecastResult.summary}
-              </Text>
-              <ConfidenceBadge level={forecastResult.confidence} showDescription />
+            <div {...englishOnly}>
+              {result.unableToAnswer ? (
+                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                  {result.summary}
+                </Text>
+              ) : (
+                <>
+                  <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
+                    {result.summary}
+                  </Text>
+                  <ConfidenceBadge level={result.confidence} />
+                </>
+              )}
+            </div>
+            {ingestionGaps.length > 0 && (
               <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {forecastResult.explanation}
+                {t("weather.gaps", { count: ingestionGaps.length })}
               </Text>
-            </>
-          )}
-          {forecastGaps.length > 0 && (
-            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {forecastGaps.length} forecast day(s) had no data available.
+            )}
+          </Card>
+
+          <Card>
+            <Text variant="caption" style={caption}>
+              {t("weather.alerts")}
             </Text>
-          )}
-        </Card>
-        <Card>
-          <Text variant="caption">HISTORICAL CONTEXT</Text>
-          <StateDisplay status="empty" title="No regional climate benchmark yet" />
-        </Card>
-      </div>
-    </WorkspaceShell>
+            <StateDisplay status="empty" title={t("weather.noActiveAlerts")} />
+          </Card>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
+            gap: "var(--wv-space-md)",
+          }}
+        >
+          <Card>
+            <Text variant="caption" style={caption}>
+              {t("weather.trend")}
+            </Text>
+            <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
+              {t("weather.forecast")}
+            </Text>
+            {forecastResult.unableToAnswer ? (
+              <StateDisplay status="empty" title={t("weather.noForecast")} />
+            ) : (
+              <div {...englishOnly}>
+                <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
+                  {forecastResult.summary}
+                </Text>
+                <ConfidenceBadge level={forecastResult.confidence} showDescription />
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
+                  {forecastResult.explanation}
+                </Text>
+              </div>
+            )}
+            {forecastGaps.length > 0 && (
+              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
+                {t("weather.forecastGaps", { count: forecastGaps.length })}
+              </Text>
+            )}
+          </Card>
+          <Card>
+            <Text variant="caption" style={caption}>
+              {t("weather.historicalContext")}
+            </Text>
+            <StateDisplay status="empty" title={t("weather.noBenchmark")} />
+          </Card>
+        </div>
+      </WorkspaceShell>
+    </LocaleBoundary>
   );
 }
