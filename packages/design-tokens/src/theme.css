@@ -287,6 +287,14 @@ select {
   padding: 0.625rem 0.75rem;
 }
 
+/* Checkboxes and radio buttons take the brand colour rather than the
+   browser's default blue; the colour follows the theme because it is the
+   `--wv-accent` token. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--wv-accent);
+}
+
 /* Focus-visible — a real, consistent keyboard-focus ring across every
    interactive element, per Experience Blueprint Section 15's
    accessibility ambitions going beyond baseline WCAG. Browser default

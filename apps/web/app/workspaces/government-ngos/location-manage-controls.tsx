@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Text } from "@world-vitality/ui-components";
+import { Button, Input, Text } from "@world-vitality/ui-components";
 import { updateLocationAction, deleteLocationAction } from "./location-actions";
 
 export interface LocationManageControlsProps {
@@ -70,14 +70,6 @@ export function LocationManageControls({
     });
   }
 
-  const inputStyle = {
-    padding: "var(--wv-space-xs) var(--wv-space-sm)",
-    borderRadius: "var(--wv-radius-sm)",
-    border: "1px solid var(--wv-border)",
-    fontFamily: "var(--wv-font-sans)",
-    fontSize: "0.9375rem",
-  };
-
   if (!editing) {
     return (
       <div style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-sm)" }}>
@@ -97,29 +89,31 @@ export function LocationManageControls({
   }
 
   return (
-    <div style={{ marginTop: "var(--wv-space-sm)", display: "flex", flexDirection: "column", gap: "var(--wv-space-xs)" }}>
-      <input
-        value={label}
-        onChange={(e) => setLabel(e.target.value)}
-        placeholder="Location label"
-        style={inputStyle}
-      />
+    <div
+      style={{
+        marginTop: "var(--wv-space-sm)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--wv-space-xs)",
+      }}
+    >
+      <Input label="Location label" value={label} onChange={(e) => setLabel(e.target.value)} />
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
-        <input
+        <Input
+          label="Latitude"
           type="number"
           step="any"
           value={latitude}
           onChange={(e) => setLatitude(e.target.value)}
-          placeholder="Latitude"
-          style={{ ...inputStyle, width: "7rem" }}
+          style={{ width: "7rem" }}
         />
-        <input
+        <Input
+          label="Longitude"
           type="number"
           step="any"
           value={longitude}
           onChange={(e) => setLongitude(e.target.value)}
-          placeholder="Longitude"
-          style={{ ...inputStyle, width: "7rem" }}
+          style={{ width: "7rem" }}
         />
       </div>
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>

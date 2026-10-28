@@ -22,7 +22,8 @@ export function ExplainThisDataClient({ weather, soilMoisture }: ExplainThisData
 
   return (
     <div>
-      <div style={{ marginBottom: "var(--wv-space-md)" }}>
+      {/* A grade picker needs no more room than its longest option. */}
+      <div style={{ marginBottom: "var(--wv-space-md)", maxWidth: "20rem" }}>
         <Select
           id="grade-band-select"
           label="Explain for"

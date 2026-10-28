@@ -65,7 +65,9 @@ export default async function GovernmentNgosReportPage() {
       scopedResourceIds: membership.scopedResourceIds,
     }),
   );
-  const statuses = await Promise.all(visibleLocations.map((location) => getLocationStatus(location)));
+  const statuses = await Promise.all(
+    visibleLocations.map((location) => getLocationStatus(location)),
+  );
   const generatedAt = new Date().toISOString();
 
   const csvRows: CsvRow[] = statuses.flatMap(({ location, weather, soilMoisture }) => [
@@ -99,6 +101,10 @@ export default async function GovernmentNgosReportPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
+            // A long title (Underwriting Risk Report) must push the buttons onto
+            // their own line, not squeeze them until their labels wrap.
+            flexWrap: "wrap",
+            gap: "var(--wv-space-md)",
             marginBottom: "var(--wv-space-lg)",
           }}
         >
@@ -111,7 +117,14 @@ export default async function GovernmentNgosReportPage() {
               Generated {generatedAt}
             </Text>
           </div>
-          <div style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "var(--wv-space-sm)",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
             <CsvExportButton generatedAt={generatedAt} rows={csvRows} />
             <PrintButton />
           </div>
@@ -126,8 +139,8 @@ export default async function GovernmentNgosReportPage() {
           }}
         >
           This report covers every monitored location you can see, not a real jurisdiction boundary
-          — not suitable for public, policy, or donor documentation as-is. See World
-          Vitality&apos;s data provenance documentation for source details.
+          — not suitable for public, policy, or donor documentation as-is. See World Vitality&apos;s
+          data provenance documentation for source details.
         </Text>
 
         {statuses.length === 0 ? (

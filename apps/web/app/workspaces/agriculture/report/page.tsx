@@ -99,6 +99,10 @@ export default async function AgricultureReportPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
+            // A long title (Underwriting Risk Report) must push the buttons onto
+            // their own line, not squeeze them until their labels wrap.
+            flexWrap: "wrap",
+            gap: "var(--wv-space-md)",
             marginBottom: "var(--wv-space-lg)",
           }}
         >
@@ -110,7 +114,14 @@ export default async function AgricultureReportPage() {
               Generated {generatedAt}
             </Text>
           </div>
-          <div style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "var(--wv-space-sm)",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
             <CsvExportButton generatedAt={generatedAt} rows={csvRows} />
             <PrintButton />
           </div>
@@ -125,8 +136,8 @@ export default async function AgricultureReportPage() {
           }}
         >
           This is a current-conditions snapshot for every field you can see — not a season-end
-          summary and not a comparison against historical norms (no prior-season data exists in
-          this app). See World Vitality&apos;s data provenance documentation for source details.
+          summary and not a comparison against historical norms (no prior-season data exists in this
+          app). See World Vitality&apos;s data provenance documentation for source details.
         </Text>
 
         {statuses.length === 0 ? (

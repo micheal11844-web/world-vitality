@@ -71,7 +71,9 @@ export default async function InsuranceReportPage() {
       scopedResourceIds: membership.scopedResourceIds,
     }),
   );
-  const statuses = await Promise.all(visibleProperties.map((property) => getPropertyStatus(property)));
+  const statuses = await Promise.all(
+    visibleProperties.map((property) => getPropertyStatus(property)),
+  );
   const generatedAt = new Date().toISOString();
 
   const userId = await getSessionUserId();
@@ -126,6 +128,10 @@ export default async function InsuranceReportPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
+            // A long title (Underwriting Risk Report) must push the buttons onto
+            // their own line, not squeeze them until their labels wrap.
+            flexWrap: "wrap",
+            gap: "var(--wv-space-md)",
             marginBottom: "var(--wv-space-lg)",
           }}
         >
@@ -138,7 +144,14 @@ export default async function InsuranceReportPage() {
               Generated {generatedAt}
             </Text>
           </div>
-          <div style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "var(--wv-space-sm)",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
             <CsvExportButton generatedAt={generatedAt} rows={csvRows} />
             <PrintButton />
           </div>
@@ -152,9 +165,9 @@ export default async function InsuranceReportPage() {
             color: "var(--wv-text-secondary)",
           }}
         >
-          This report covers every insured property you can see, and shows individual hazard
-          signals only — not a synthesized multi-hazard risk score. Not suitable for real
-          underwriting, claims, or regulatory documentation as-is. Report access is logged to this
+          This report covers every insured property you can see, and shows individual hazard signals
+          only — not a synthesized multi-hazard risk score. Not suitable for real underwriting,
+          claims, or regulatory documentation as-is. Report access is logged to this
           workspace&apos;s audit trail. See World Vitality&apos;s data provenance documentation for
           source details.
         </Text>
@@ -174,7 +187,11 @@ export default async function InsuranceReportPage() {
                 </Text>
                 <Text
                   variant="caption"
-                  style={{ display: "block", color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-xs)" }}
+                  style={{
+                    display: "block",
+                    color: "var(--wv-text-secondary)",
+                    marginBottom: "var(--wv-space-xs)",
+                  }}
                 >
                   {property.propertyAddress}
                 </Text>

@@ -215,7 +215,7 @@ export function DatasetExplorer() {
                   checked={metrics.includes("T2M")}
                   onChange={() => toggleMetric("T2M")}
                 />
-                Temperature (T2M)
+                <Text variant="body">Temperature (T2M)</Text>
               </label>
               <label style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-xs)" }}>
                 <input
@@ -223,7 +223,7 @@ export function DatasetExplorer() {
                   checked={metrics.includes("WS2M")}
                   onChange={() => toggleMetric("WS2M")}
                 />
-                Wind Speed (WS2M)
+                <Text variant="body">Wind Speed (WS2M)</Text>
               </label>
             </div>
           </>

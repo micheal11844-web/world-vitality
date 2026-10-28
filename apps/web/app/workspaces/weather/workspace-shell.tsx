@@ -20,19 +20,16 @@ export interface WorkspaceShellProps {
  * adding a workspace is "fundamentally a configuration and content
  * exercise."
  *
- * **Sidebar layout (BUILD_PLAN "STAGE — NESTED WORKSPACE SIDEBAR
- * NAVIGATION")** — a single "Workspaces" section, built once by
- * `buildWorkspaceSidebarItems` and shared across every workspace shell,
- * rather than this file hand-rolling its own "Workspaces" + "This
- * Workspace" section pair. Each workspace renders as a collapsible row
- * with a disclosure chevron; Weather & Climate's own sub-pages nest
- * inside its row rather than living in a separate section, and start
- * expanded here since this *is* the current workspace. `brand` is the
- * shared `AppBrand` (app logo + name, clickable back to `/dashboard`)
- * rather than this workspace's own name — that identity lives in the
- * page's own `pageTitle` heading instead, since the header brand slot is
- * app-level chrome that should be the same on every page, not
- * page-specific content.
+ * **Sidebar (BUILD_PLAN v89)** — built by `buildAppSidebar` and shared by
+ * every signed-in page: Home, a "Workspaces" row (its label opens the
+ * Workspaces page, its arrow folds the list of workspaces), then
+ * Notifications and Settings. Weather & Climate's own sub-pages nest inside its
+ * row and start expanded (`sidebar.defaultExpandedKeys`) since this *is*
+ * the current workspace. `brand` is the shared `AppBrand` (app logo +
+ * name, clickable back to `/dashboard`) rather than this workspace's own
+ * name — that identity lives in the page's own `pageTitle` heading
+ * instead, since the header brand slot is app-level chrome that should
+ * be the same on every page, not page-specific content.
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Text } from "@world-vitality/ui-components";
+import { Button, Input, Text } from "@world-vitality/ui-components";
 import { updatePropertyAction, deletePropertyAction } from "./property-actions";
 
 export interface PropertyManageControlsProps {
@@ -45,7 +45,13 @@ export function PropertyManageControls({
     const lat = Number(latitude);
     const lon = Number(longitude);
     startTransition(async () => {
-      const result = await updatePropertyAction(propertyId, policyNumber, propertyAddress, lat, lon);
+      const result = await updatePropertyAction(
+        propertyId,
+        policyNumber,
+        propertyAddress,
+        lat,
+        lon,
+      );
       if (result.ok) {
         setEditing(false);
       } else {
@@ -71,14 +77,6 @@ export function PropertyManageControls({
     });
   }
 
-  const inputStyle = {
-    padding: "var(--wv-space-xs) var(--wv-space-sm)",
-    borderRadius: "var(--wv-radius-sm)",
-    border: "1px solid var(--wv-border)",
-    fontFamily: "var(--wv-font-sans)",
-    fontSize: "0.9375rem",
-  };
-
   if (!editing) {
     return (
       <div style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-sm)" }}>
@@ -98,35 +96,40 @@ export function PropertyManageControls({
   }
 
   return (
-    <div style={{ marginTop: "var(--wv-space-sm)", display: "flex", flexDirection: "column", gap: "var(--wv-space-xs)" }}>
-      <input
+    <div
+      style={{
+        marginTop: "var(--wv-space-sm)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--wv-space-xs)",
+      }}
+    >
+      <Input
+        label="Policy number"
         value={policyNumber}
         onChange={(e) => setPolicyNumber(e.target.value)}
-        placeholder="Policy number"
-        style={inputStyle}
       />
-      <input
+      <Input
+        label="Property address"
         value={propertyAddress}
         onChange={(e) => setPropertyAddress(e.target.value)}
-        placeholder="Property address"
-        style={inputStyle}
       />
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
-        <input
+        <Input
+          label="Latitude"
           type="number"
           step="any"
           value={latitude}
           onChange={(e) => setLatitude(e.target.value)}
-          placeholder="Latitude"
-          style={{ ...inputStyle, width: "7rem" }}
+          style={{ width: "7rem" }}
         />
-        <input
+        <Input
+          label="Longitude"
           type="number"
           step="any"
           value={longitude}
           onChange={(e) => setLongitude(e.target.value)}
-          placeholder="Longitude"
-          style={{ ...inputStyle, width: "7rem" }}
+          style={{ width: "7rem" }}
         />
       </div>
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>

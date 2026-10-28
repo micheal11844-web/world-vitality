@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Text } from "@world-vitality/ui-components";
+import { Button, Input, Text } from "@world-vitality/ui-components";
 import type { FieldComment } from "@world-vitality/identity-service";
-import { createFieldCommentAction, updateFieldCommentAction, deleteFieldCommentAction } from "./field-actions";
+import {
+  createFieldCommentAction,
+  updateFieldCommentAction,
+  deleteFieldCommentAction,
+} from "./field-actions";
 
 export interface FieldCommentsProps {
   fieldId: string;
@@ -70,17 +74,7 @@ function CommentRow({
   if (editing) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-xs)" }}>
-        <input
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          style={{
-            padding: "var(--wv-space-xs) var(--wv-space-sm)",
-            borderRadius: "var(--wv-radius-sm)",
-            border: "1px solid var(--wv-border)",
-            fontFamily: "var(--wv-font-sans)",
-            fontSize: "0.9375rem",
-          }}
-        />
+        <Input label="Comment" value={body} onChange={(e) => setBody(e.target.value)} />
         <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
           <Button onClick={handleSave} loading={isPending}>
             Save
@@ -113,7 +107,9 @@ function CommentRow({
       </Text>
       <Text variant="body">{comment.body}</Text>
       {isOwnComment && (
-        <div style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-xs)" }}>
+        <div
+          style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-xs)" }}
+        >
           <Button variant="secondary" onClick={() => setEditing(true)} disabled={isPending}>
             Edit
           </Button>
@@ -151,7 +147,12 @@ function CommentRow({
  * comment's own author sees them, no admin override, same author-only
  * scope `field-actions.ts`'s Server Actions themselves enforce.
  */
-export function FieldComments({ fieldId, initialComments, canComment, currentUserId }: FieldCommentsProps) {
+export function FieldComments({
+  fieldId,
+  initialComments,
+  canComment,
+  currentUserId,
+}: FieldCommentsProps) {
   const [expanded, setExpanded] = useState(false);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -198,28 +199,35 @@ export function FieldComments({ fieldId, initialComments, canComment, currentUse
           {canComment && (
             <form
               onSubmit={handleSubmit}
-              style={{ marginTop: "var(--wv-space-sm)", display: "flex", gap: "var(--wv-space-xs)" }}
+              style={{
+                marginTop: "var(--wv-space-sm)",
+                display: "flex",
+                gap: "var(--wv-space-xs)",
+                // The button sits level with the field, not with its label.
+                alignItems: "flex-end",
+              }}
             >
-              <input
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Add a comment..."
-                style={{
-                  flex: 1,
-                  padding: "var(--wv-space-xs) var(--wv-space-sm)",
-                  borderRadius: "var(--wv-radius-sm)",
-                  border: "1px solid var(--wv-border)",
-                  fontFamily: "var(--wv-font-sans)",
-                  fontSize: "0.9375rem",
-                }}
-              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Input
+                  label="Add a comment"
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                />
+              </div>
               <Button type="submit" loading={isPending}>
                 Post
               </Button>
             </form>
           )}
           {error && (
-            <Text variant="caption" style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-xs)" }}>
+            <Text
+              variant="caption"
+              style={{
+                display: "block",
+                color: "var(--wv-critical)",
+                marginTop: "var(--wv-space-xs)",
+              }}
+            >
               {error}
             </Text>
           )}

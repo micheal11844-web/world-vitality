@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Text } from "@world-vitality/ui-components";
+import { Button, Input, Text } from "@world-vitality/ui-components";
 import { updateFieldAction, deleteFieldAction } from "./field-actions";
 
 export interface FieldManageControlsProps {
@@ -90,48 +90,31 @@ export function FieldManageControls({
   }
 
   return (
-    <div style={{ marginTop: "var(--wv-space-sm)", display: "flex", flexDirection: "column", gap: "var(--wv-space-xs)" }}>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        style={{
-          padding: "var(--wv-space-xs) var(--wv-space-sm)",
-          borderRadius: "var(--wv-radius-sm)",
-          border: "1px solid var(--wv-border)",
-          fontFamily: "var(--wv-font-sans)",
-          fontSize: "0.9375rem",
-        }}
-      />
+    <div
+      style={{
+        marginTop: "var(--wv-space-sm)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--wv-space-xs)",
+      }}
+    >
+      <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
-        <input
+        <Input
+          label="Latitude"
           type="number"
           step="any"
           value={latitude}
           onChange={(e) => setLatitude(e.target.value)}
-          placeholder="Latitude"
-          style={{
-            padding: "var(--wv-space-xs) var(--wv-space-sm)",
-            borderRadius: "var(--wv-radius-sm)",
-            border: "1px solid var(--wv-border)",
-            fontFamily: "var(--wv-font-sans)",
-            fontSize: "0.9375rem",
-            width: "7rem",
-          }}
+          style={{ width: "7rem" }}
         />
-        <input
+        <Input
+          label="Longitude"
           type="number"
           step="any"
           value={longitude}
           onChange={(e) => setLongitude(e.target.value)}
-          placeholder="Longitude"
-          style={{
-            padding: "var(--wv-space-xs) var(--wv-space-sm)",
-            borderRadius: "var(--wv-radius-sm)",
-            border: "1px solid var(--wv-border)",
-            fontFamily: "var(--wv-font-sans)",
-            fontSize: "0.9375rem",
-            width: "7rem",
-          }}
+          style={{ width: "7rem" }}
         />
       </div>
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
