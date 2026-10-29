@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import { can } from "@world-vitality/identity-service";
 import { StateDisplay, Text } from "@world-vitality/ui-components";
 import { WORKSPACE_LINKS } from "../../workspace-nav";
-import { getWorkspaceRole } from "../../../../lib/get-workspace-role";
-import { getAccountService } from "../../../../lib/account";
-import { getAuthService } from "../../../../lib/auth";
-import { SESSION_COOKIE } from "../../../../lib/constants";
+import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
+import { getOrganizationData } from "../../../../lib/organization-data";
+import { getSessionUserId } from "../../../../lib/get-session-user-id";
 import { TeamShell } from "./team-shell";
 import { TeamClient, type ScopableResource } from "./team-client";
 export const dynamic = "force-dynamic";
@@ -36,9 +34,9 @@ export default async function TeamPage({ params }: { params: Promise<{ workspace
     notFound();
   }
 
-  const role = await getWorkspaceRole(workspaceId);
+  const membership = await getWorkspaceMembership(workspaceId);
 
-  if (!can(role, "workspace:manage_team")) {
+  if (!can(membership.role, "workspace:manage_team")) {
     return (
       <TeamShell workspaceId={workspaceId}>
         <StateDisplay
@@ -50,12 +48,10 @@ export default async function TeamPage({ params }: { params: Promise<{ workspace
     );
   }
 
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
-  const session = sessionToken ? await getAuthService().getSession(sessionToken) : null;
-  const currentUserId = session?.userId ?? "";
+  const currentUserId = (await getSessionUserId()) ?? "";
 
-  const members = await getAccountService().listWorkspaceMembers(workspaceId);
+  const data = getOrganizationData(membership);
+  const members = await data.listWorkspaceMembers(workspaceId);
   // Two workspaces have a real resource type to scope a
   // scoped_field_user invite to today: Agriculture's fields
   // (BUILD_PLAN "STAGE — AGRICULTURE FIELDS"), Insurance's insured
@@ -69,17 +65,17 @@ export default async function TeamPage({ params }: { params: Promise<{ workspace
   // invented for workspaces that don't have one.
   const availableResources: ScopableResource[] =
     workspaceId === "agriculture"
-      ? (await getAccountService().listFields(workspaceId)).map((f) => ({
+      ? (await data.listFields(workspaceId)).map((f) => ({
           id: f.id,
           label: f.name,
         }))
       : workspaceId === "insurance"
-        ? (await getAccountService().listProperties(workspaceId)).map((p) => ({
+        ? (await data.listProperties(workspaceId)).map((p) => ({
             id: p.id,
             label: `${p.policyNumber} — ${p.propertyAddress}`,
           }))
         : workspaceId === "government-ngos"
-          ? (await getAccountService().listLocations(workspaceId)).map((l) => ({
+          ? (await data.listLocations(workspaceId)).map((l) => ({
               id: l.id,
               label: l.label,
             }))

@@ -64,6 +64,7 @@ export async function lookupUserAction(query: string): Promise<LookupActionResul
           role: ROLE_LABELS[m.role] ?? m.role,
           scoped: m.scoped,
         })),
+        organization: u.organization,
       },
     };
   } catch (err) {

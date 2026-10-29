@@ -25,6 +25,7 @@ export {
 export {
   DATA_SOURCES,
   sourcesRestrictingCommercialUse,
+  effectiveCommercialUse,
   type DataSourceInfo,
   type CommercialUse,
 } from "./source-catalog.js";

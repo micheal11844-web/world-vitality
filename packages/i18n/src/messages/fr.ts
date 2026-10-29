@@ -275,7 +275,7 @@ export const fr: Messages = {
   "settings.download.button": "Télécharger mes données",
   "settings.delete.title": "Supprimer votre compte",
   "settings.delete.body":
-    "Cela supprime définitivement et immédiatement votre compte, vos appartenances, vos notifications et les commentaires que vous avez écrits. Les parcelles, propriétés et emplacements que vous avez ajoutés appartiennent à l’espace de travail ; ils restent donc, sans votre nom. Cette action est irréversible ; téléchargez d’abord vos données si vous en voulez une copie.",
+    "Cela supprime définitivement et immédiatement votre compte, vos appartenances, vos notifications et les commentaires que vous avez écrits. Si vous êtes propriétaire de votre organisation, les parcelles, propriétés et emplacements qui y sont enregistrés sont supprimés aussi (possible uniquement lorsqu’il n’y reste plus personne d’autre). Si vous êtes membre de l’organisation de quelqu’un d’autre, ce que vous avez ajouté y reste, sans votre nom. Cette action est irréversible ; téléchargez d’abord vos données si vous en voulez une copie.",
   "settings.delete.confirmLabel": "Saisissez {word} pour confirmer",
   "settings.delete.button": "Supprimer mon compte",
 
@@ -348,6 +348,8 @@ export const fr: Messages = {
   "errors.nameSaveFailed": "Impossible d’enregistrer votre nom. Veuillez réessayer.",
   "errors.typeToConfirm": "Saisissez {word} pour confirmer.",
   "errors.deleteFailed": "Impossible de supprimer votre compte. Veuillez réessayer.",
+  "errors.deleteOrganizationHasMembers":
+    "Votre organisation compte encore d’autres membres ({count}). Retirez-les d’abord depuis la page « Équipe », puis supprimez votre compte.",
 
   // ---- search place result line
   "search.placeDescription": "Voir les conditions actuelles",

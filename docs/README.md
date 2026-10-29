@@ -9,7 +9,7 @@ The source of truth for anything that must stay version-synchronized with code.
 - `Decision-Log.md` — smaller and medium decisions that don't warrant a full ADR, in the order they actually happened, cross-referencing the ADRs above rather than duplicating them.
 - `Glossary.md` — terms as actually used in the codebase, checked against real type names rather than written from a generic template.
 - `reviews/` — point-in-time audit records (what was checked, what was found, what was fixed) from specific BUILD_PLAN stages. Historical snapshots — not updated after the fact even if the reality they describe later changes.
-- `runbooks/` — operational runbooks (incident response, deployment, on-call), started at Stage 7 of BUILD_PLAN.md.
+- `runbooks/` — operational runbooks (incident response, deployment, on-call), started at Stage 7 of BUILD_PLAN.md. Since then: `admin-console.md`, `billing.md`, `paystack-setup.md` (step-by-step Paystack), `organisations.md` and `apply-migrations.md` (paste-it-yourself database changes).
 - `security/` — the auth threat model (updated as new auth flows are added) and a tracked list of known, accepted dependency vulnerabilities.
 - `data-provenance/` — documentation of every data source, its license, and its limitations. Required for every data provider before its connector goes live (Constitution, Section 24).
 - `onboarding/` — new-engineer onboarding guides, including the manual (non-code) setup steps a fresh deployment needs.

@@ -305,11 +305,17 @@ export class SupabaseAuthService implements AuthService {
 
   async inviteUser(
     email: string,
-    pending: { workspaceId: string; role: Role; scopedResourceIds?: string[] },
+    pending: {
+      organizationId: string;
+      workspaceId: string;
+      role: Role;
+      scopedResourceIds?: string[];
+    },
   ): Promise<void> {
     const { error } = await this.client.auth.admin.inviteUserByEmail(email, {
       redirectTo: this.redirectTo,
       data: {
+        pendingOrganizationId: pending.organizationId,
         pendingWorkspaceId: pending.workspaceId,
         pendingRole: pending.role,
         pendingScopedResourceIds: pending.scopedResourceIds ?? null,
@@ -322,6 +328,7 @@ export class SupabaseAuthService implements AuthService {
 
   async verifyInviteCallback(tokenHash: string): Promise<{
     session: Session;
+    pendingOrganizationId?: string;
     pendingWorkspaceId?: string;
     pendingRole?: Role;
     pendingScopedResourceIds?: string[];
@@ -331,13 +338,15 @@ export class SupabaseAuthService implements AuthService {
       type: "invite",
     });
     if (error || !data.session || !data.user?.email) {
-      throw new Error(
-        `Failed to verify invite token: ${error?.message ?? "no session returned"}`,
-      );
+      throw new Error(`Failed to verify invite token: ${error?.message ?? "no session returned"}`);
     }
     const meta = data.user.user_metadata ?? {};
-    const pendingWorkspaceId = typeof meta.pendingWorkspaceId === "string" ? meta.pendingWorkspaceId : undefined;
-    const pendingRole = typeof meta.pendingRole === "string" ? (meta.pendingRole as Role) : undefined;
+    const pendingOrganizationId =
+      typeof meta.pendingOrganizationId === "string" ? meta.pendingOrganizationId : undefined;
+    const pendingWorkspaceId =
+      typeof meta.pendingWorkspaceId === "string" ? meta.pendingWorkspaceId : undefined;
+    const pendingRole =
+      typeof meta.pendingRole === "string" ? (meta.pendingRole as Role) : undefined;
     const pendingScopedResourceIds = Array.isArray(meta.pendingScopedResourceIds)
       ? (meta.pendingScopedResourceIds as string[])
       : undefined;
@@ -348,6 +357,7 @@ export class SupabaseAuthService implements AuthService {
     await this.client.auth.admin.updateUserById(data.user.id, {
       user_metadata: {
         ...meta,
+        pendingOrganizationId: null,
         pendingWorkspaceId: null,
         pendingRole: null,
         pendingScopedResourceIds: null,
@@ -356,6 +366,7 @@ export class SupabaseAuthService implements AuthService {
 
     return {
       session: this.toSession(data.session, data.user.email, data.user.id),
+      pendingOrganizationId,
       pendingWorkspaceId,
       pendingRole,
       pendingScopedResourceIds,

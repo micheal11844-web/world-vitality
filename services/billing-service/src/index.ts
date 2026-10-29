@@ -20,6 +20,7 @@ export {
   effectivePlan,
   loadEntitlements,
   checkLimit,
+  limitReachedMessage,
   isOverLimit,
   hasFeature,
   isFeatureBuilt,
@@ -27,6 +28,13 @@ export {
   type EntitlementDeps,
   type LimitCheck,
 } from "./entitlements.js";
+export {
+  PLAN_PRICES,
+  PRICE_CURRENCIES,
+  ANNUAL_MONTHS_CHARGED,
+  priceMinor,
+  formatPrice,
+} from "./prices.js";
 export {
   applyPaystackEvent,
   type SubscriptionState,

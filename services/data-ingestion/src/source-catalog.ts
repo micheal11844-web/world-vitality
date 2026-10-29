@@ -32,6 +32,13 @@ export interface DataSourceInfo {
   /** An environment variable that must be set for the source to work. */
   requiresKeyEnv?: string;
   /**
+   * An environment variable that, once set, means a paid plan with a
+   * commercial licence is in use, lifting `commercialUse: "restricted"`.
+   * `commercialUse` itself keeps describing the free tier, which is what the
+   * provenance document argues about.
+   */
+  commercialKeyEnv?: string;
+  /**
    * The id of a `DataIngestionConnector` whose `checkHealth()` can probe
    * this source, or `null` when the source is read directly by the app and
    * has no probe yet.
@@ -56,7 +63,8 @@ export const DATA_SOURCES: readonly DataSourceInfo[] = [
     licence: "CC BY 4.0 (attribution required)",
     commercialUse: "restricted",
     commercialNote:
-      "The free tier is for non-commercial use only. Before charging for access, move to a paid Open-Meteo plan or replace this source.",
+      "The free tier is for non-commercial use only. Before charging for access, move to a paid Open-Meteo plan (and set OPEN_METEO_API_KEY) or replace this source.",
+    commercialKeyEnv: "OPEN_METEO_API_KEY",
     connectorId: "open-meteo",
   },
   {
@@ -102,7 +110,24 @@ export const DATA_SOURCES: readonly DataSourceInfo[] = [
   },
 ];
 
+/**
+ * May we charge while using this source, given how the app is configured?
+ * A restricted source is lifted when its paid-plan key is present. Only
+ * whether the key is set is looked at — never its value.
+ */
+export function effectiveCommercialUse(
+  source: DataSourceInfo,
+  env: Record<string, string | undefined> = process.env,
+): CommercialUse {
+  if (source.commercialUse === "permitted") return "permitted";
+  return source.commercialKeyEnv && env[source.commercialKeyEnv]?.trim()
+    ? "permitted"
+    : "restricted";
+}
+
 /** Sources that must be dealt with before the product starts charging. */
-export function sourcesRestrictingCommercialUse(): DataSourceInfo[] {
-  return DATA_SOURCES.filter((s) => s.commercialUse === "restricted");
+export function sourcesRestrictingCommercialUse(
+  env: Record<string, string | undefined> = process.env,
+): DataSourceInfo[] {
+  return DATA_SOURCES.filter((s) => effectiveCommercialUse(s, env) === "restricted");
 }

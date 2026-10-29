@@ -3,7 +3,7 @@ import { StateDisplay } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "../workspace-shell";
 import { getFieldStatus } from "../field-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../../lib/account";
+import { getOrganizationData } from "../../../../lib/organization-data";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +54,7 @@ const WORKSPACE_ID = "agriculture";
 export default async function AgricultureMapPage() {
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
-  const allFields = await getAccountService().listFields(WORKSPACE_ID);
+  const allFields = await getOrganizationData(membership).listFields(WORKSPACE_ID);
   const visibleFields = allFields.filter((field) =>
     can(membership.role, "data:view", {
       resourceId: field.id,

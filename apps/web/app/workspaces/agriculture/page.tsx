@@ -8,7 +8,7 @@ import { FieldComments } from "./field-comments";
 import { getFieldStatus } from "./field-status";
 import { logTelemetry } from "../../../lib/logger";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../lib/account";
+import { getOrganizationData } from "../../../lib/organization-data";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 
 // Environmental data must be fetched fresh on every request, never
@@ -78,7 +78,8 @@ export default async function AgricultureWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "agriculture" });
 
   const membership = await getWorkspaceMembership("agriculture");
-  const allFields = await getAccountService().listFields("agriculture");
+  const data = getOrganizationData(membership);
+  const allFields = await data.listFields("agriculture");
   const visibleFields = allFields.filter((field) =>
     can(membership.role, "data:view", {
       resourceId: field.id,
@@ -90,7 +91,7 @@ export default async function AgricultureWorkspaceHome() {
   const commentsByField = new Map(
     await Promise.all(
       visibleFields.map(
-        async (field) => [field.id, await getAccountService().listFieldComments(field.id)] as const,
+        async (field) => [field.id, await data.listFieldComments(field.id)] as const,
       ),
     ),
   );

@@ -8,6 +8,7 @@ import {
   hasFeature,
   isFeatureBuilt,
   isOverLimit,
+  limitReachedMessage,
   loadEntitlements,
   unlimitedEntitlements,
 } from "../entitlements.js";
@@ -157,4 +158,21 @@ test("features follow the plan when enforced, and are all on when not", () => {
 test("features that are not built are reported as such", () => {
   assert.equal(isFeatureBuilt("emailAlerts"), false);
   assert.equal(isFeatureBuilt("csvExport"), true);
+});
+
+test("the limit message names the plan and the number, and gets singular and plural right", () => {
+  const basic = entitlementsFor("basic");
+  assert.equal(
+    limitReachedMessage(basic, "seats", 1),
+    "Your Basic plan includes up to 1 person. Upgrade your plan to add more.",
+  );
+  assert.equal(
+    limitReachedMessage(entitlementsFor("standard"), "seats", 5),
+    "Your Standard plan includes up to 5 people. Upgrade your plan to add more.",
+  );
+  assert.match(
+    limitReachedMessage(basic, "savedItems", 3),
+    /^Your Basic plan includes up to 3 saved items \(/,
+  );
+  assert.match(limitReachedMessage(basic, "savedItems", 1), /up to 1 saved item \(/);
 });

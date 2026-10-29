@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
-import { DATA_SOURCES, sourcesRestrictingCommercialUse } from "../source-catalog.js";
+import {
+  DATA_SOURCES,
+  effectiveCommercialUse,
+  sourcesRestrictingCommercialUse,
+} from "../source-catalog.js";
 import { NasaPowerConnector } from "../connectors/nasa-power-connector.js";
 import { OpenMeteoConnector } from "../connectors/open-meteo-connector.js";
 import { UsgsStreamflowConnector } from "../connectors/usgs-streamflow-connector.js";
@@ -45,9 +49,24 @@ test("a source documented as non-commercial is catalogued as restricted, with a 
 
 test("Open-Meteo is the one source that blocks charging today", () => {
   assert.deepEqual(
-    sourcesRestrictingCommercialUse().map((s) => s.id),
+    sourcesRestrictingCommercialUse({}).map((s) => s.id),
     ["open-meteo"],
   );
+});
+
+test("a paid plan's key lifts the restriction; a blank or missing one does not", () => {
+  const openMeteo = DATA_SOURCES.find((s) => s.id === "open-meteo")!;
+  assert.equal(effectiveCommercialUse(openMeteo, {}), "restricted");
+  assert.equal(effectiveCommercialUse(openMeteo, { OPEN_METEO_API_KEY: "" }), "restricted");
+  assert.equal(effectiveCommercialUse(openMeteo, { OPEN_METEO_API_KEY: "   " }), "restricted");
+  assert.equal(effectiveCommercialUse(openMeteo, { OPEN_METEO_API_KEY: "abc" }), "permitted");
+  assert.deepEqual(
+    sourcesRestrictingCommercialUse({ OPEN_METEO_API_KEY: "abc" }).map((s) => s.id),
+    [],
+  );
+  // a source that is permitted stays permitted whatever the environment says
+  const nasa = DATA_SOURCES.find((s) => s.id === "nasa-power")!;
+  assert.equal(effectiveCommercialUse(nasa, {}), "permitted");
 });
 
 test("a catalogued connector id is the id the real connector reports", () => {

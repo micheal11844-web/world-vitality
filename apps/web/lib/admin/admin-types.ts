@@ -15,6 +15,7 @@ export interface LookupUserView {
   onboarded: boolean;
   language: string | null;
   memberships: { workspace: string; role: string; scoped: boolean }[];
+  organization: { name: string; role: "owner" | "member" } | null;
 }
 
 export type LookupActionResult =

@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { can } from "@world-vitality/identity-service";
-import { getWorkspaceRole } from "../../../lib/get-workspace-role";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../lib/account";
+import { getOrganizationData } from "../../../lib/organization-data";
+import { savedItemLimitMessage } from "../../../lib/plan-limits";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
 
@@ -43,8 +43,8 @@ export async function createPropertyAction(
     return { ok: false, error: "Longitude must be a number between -180 and 180." };
   }
 
-  const role = await getWorkspaceRole(WORKSPACE_ID);
-  if (!can(role, "data:edit")) {
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (!can(membership.role, "data:edit")) {
     return {
       ok: false,
       error: "You do not have permission to add insured properties in this workspace.",
@@ -56,8 +56,16 @@ export async function createPropertyAction(
     return { ok: false, error: "Your session could not be verified. Please sign in again." };
   }
 
+  const data = getOrganizationData(membership);
+  const limitMessage = membership.organizationId
+    ? await savedItemLimitMessage(membership.organizationId, data)
+    : null;
+  if (limitMessage) {
+    return { ok: false, error: limitMessage };
+  }
+
   try {
-    await getAccountService().createProperty({
+    await data.createProperty({
       workspaceId: WORKSPACE_ID,
       policyNumber: policyNumber.trim(),
       propertyAddress: propertyAddress.trim(),
@@ -112,7 +120,7 @@ export async function updatePropertyAction(
   }
 
   try {
-    await getAccountService().updateProperty(propertyId, {
+    await getOrganizationData(membership).updateProperty(propertyId, {
       policyNumber: policyNumber.trim(),
       propertyAddress: propertyAddress.trim(),
       latitude,
@@ -144,7 +152,7 @@ export async function deletePropertyAction(propertyId: string): Promise<CreatePr
   }
 
   try {
-    await getAccountService().deleteProperty(propertyId);
+    await getOrganizationData(membership).deleteProperty(propertyId);
     revalidatePath("/workspaces/insurance");
     return { ok: true };
   } catch (err) {

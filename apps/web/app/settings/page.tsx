@@ -3,6 +3,8 @@ import { requireSession } from "../../lib/require-session";
 import { logApplication, logTelemetry } from "../../lib/logger";
 import { homePlaceLabel, type NotificationSettings } from "@world-vitality/identity-service";
 import { getMyPreferences } from "../../lib/preferences";
+import { getAccessContext } from "../../lib/get-access-context";
+import { WORKSPACE_LINKS } from "../workspaces/workspace-nav";
 import { SettingsView } from "./settings-view";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +24,7 @@ export const dynamic = "force-dynamic";
 export default async function SettingsPage() {
   const session = await requireSession();
   const account = getAccountService();
-  const [profile, memberships, prefs, notificationSettings] = await Promise.all([
+  const [profile, roleRows, prefs, notificationSettings, access] = await Promise.all([
     account.getProfile(session.userId),
     account.getWorkspaceMemberships(session.userId),
     // Fails open (null): a preferences outage must not take Settings down.
@@ -31,8 +33,25 @@ export default async function SettingsPage() {
       logApplication.error("settings_notification_settings_failed", err);
       return null;
     }),
+    // Fails open (null) as well: only decides how the roles are listed below.
+    getAccessContext().catch((err) => {
+      logApplication.error("settings_access_context_failed", err);
+      return null;
+    }),
   ]);
   logTelemetry.event("workspace_viewed", { workspace: "settings" });
+
+  // The owner of an organisation is admin in every workspace without having
+  // a role row for each, so list them all; a member sees the roles they were
+  // given.
+  const memberships =
+    access?.organization.role === "owner"
+      ? WORKSPACE_LINKS.map((w) => ({
+          workspaceId: w.key,
+          role: "admin_owner" as const,
+          scopedResourceIds: undefined,
+        }))
+      : roleRows;
 
   return (
     <SettingsView

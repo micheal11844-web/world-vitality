@@ -3,7 +3,7 @@ import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-co
 import { WorkspaceShell } from "../workspace-shell";
 import { getFieldStatus } from "../field-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../../lib/account";
+import { getOrganizationData } from "../../../../lib/organization-data";
 import { PrintButton } from "./print-button";
 import { CsvExportButton, type CsvRow } from "./csv-export-button";
 
@@ -58,7 +58,7 @@ export default async function AgricultureReportPage() {
     );
   }
 
-  const allFields = await getAccountService().listFields(WORKSPACE_ID);
+  const allFields = await getOrganizationData(membership).listFields(WORKSPACE_ID);
   const visibleFields = allFields.filter((field) =>
     can(membership.role, "data:view", {
       resourceId: field.id,

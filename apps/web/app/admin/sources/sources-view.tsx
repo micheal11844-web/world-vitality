@@ -14,7 +14,8 @@ export interface SourceRow {
   commercialNote: string | null;
   hasProbe: boolean;
   provenanceDoc: string;
-  keySetting: { name: string; configured: boolean } | null;
+  /** `optional`: the source works without it (it only unlocks a paid plan). */
+  keySetting: { name: string; configured: boolean; optional?: boolean } | null;
 }
 
 const stack = { display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" } as const;
@@ -127,8 +128,12 @@ export function SourcesView({ rows }: { rows: SourceRow[] }) {
                     <>
                       <dt style={{ color: "var(--wv-text-secondary)" }}>Access key</dt>
                       <dd style={{ margin: 0 }}>
-                        {row.keySetting.configured ? "Set" : "Missing"} (
-                        <code>{row.keySetting.name}</code>)
+                        {row.keySetting.configured
+                          ? "Set"
+                          : row.keySetting.optional
+                            ? "Not set (free tier)"
+                            : "Missing"}{" "}
+                        (<code>{row.keySetting.name}</code>)
                       </dd>
                     </>
                   )}

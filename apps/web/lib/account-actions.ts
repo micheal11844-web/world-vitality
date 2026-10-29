@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { OrganizationHasMembersError } from "@world-vitality/identity-service";
 import { getAccountService } from "./account";
 import { getSessionUserId } from "./get-session-user-id";
 import { tServer } from "./i18n/server";
@@ -48,10 +49,14 @@ export async function updateDisplayNameAction(displayName: string): Promise<Acco
  * piece of friction is a typed confirmation word, so a stray click can
  * never be irreversible; there is no support ticket, approval step or
  * waiting period. Profile, memberships and the user's comments are
- * removed by cascade; resources they created (fields, properties,
- * locations) belong to the workspace and stay, with the creator
- * cleared (`ON DELETE SET NULL`) — the Settings page says so before
- * the user confirms.
+ * removed by cascade. What happens to the fields, properties and
+ * locations they saved depends on whose organisation they are in: as a
+ * MEMBER of someone else's they stay, with the creator cleared (`ON DELETE
+ * SET NULL`); as the OWNER, the organisation goes with the account and so
+ * does everything saved in it — which is why an owner who still has other
+ * people in the organisation is refused until they have removed them
+ * (`OrganizationHasMembersError`). The Settings page says all of this
+ * before the user confirms.
  *
  * No password re-entry — a documented trade-off, see
  * `docs/security/auth-threat-model.md` threat #5.
@@ -70,6 +75,13 @@ export async function deleteAccountAction(confirmation: string): Promise<Account
   try {
     await getAccountService().deleteAccount(userId);
   } catch (err) {
+    if (err instanceof OrganizationHasMembersError) {
+      // Not a failure to retry: the owner has to take the others out first.
+      return {
+        ok: false,
+        error: await tServer("errors.deleteOrganizationHasMembers", { count: err.otherMembers }),
+      };
+    }
     logSecurity.error("account_delete_failed", err, { userId });
     return { ok: false, error: await tServer("errors.deleteFailed") };
   }

@@ -268,7 +268,7 @@ export const en = {
   "settings.download.button": "Download my data",
   "settings.delete.title": "Delete your account",
   "settings.delete.body":
-    "This permanently deletes your account, memberships, notifications and the comments you wrote, right away. Fields, properties and locations you added belong to the workspace, so they stay — without your name on them. This can’t be undone; download your data first if you want a copy.",
+    "This permanently deletes your account, memberships, notifications and the comments you wrote, right away. If you own your organisation, the fields, properties and locations saved in it are deleted too (you can only do this once everyone else has been removed from it). If you are a member of someone else’s organisation, what you added stays there, without your name on it. This can’t be undone; download your data first if you want a copy.",
   "settings.delete.confirmLabel": "Type {word} to confirm",
   "settings.delete.button": "Delete my account",
 
@@ -337,6 +337,8 @@ export const en = {
   "errors.nameSaveFailed": "Couldn’t save your name. Please try again.",
   "errors.typeToConfirm": "Type {word} to confirm.",
   "errors.deleteFailed": "Couldn’t delete your account. Please try again.",
+  "errors.deleteOrganizationHasMembers":
+    "Your organisation still has other members ({count}). Remove them on the Team page first, then delete your account.",
 
   // ---- search place result line
   "search.placeDescription": "See current conditions",

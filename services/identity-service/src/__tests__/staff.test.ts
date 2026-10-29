@@ -277,6 +277,10 @@ test("a lookup is written to the audit log before any of the person's details ar
         order.push("read-prefs");
         return { data: { onboarded_at: "2026-09-02T00:00:00Z", language: "es" } };
       }
+      if (table === "organization_members") {
+        order.push("read-organisation");
+        return { data: { role: "owner", organizations: { name: "Acme Farms" } } };
+      }
       return {};
     },
     {
@@ -297,6 +301,7 @@ test("a lookup is written to the audit log before any of the person's details ar
   assert.ok(order.indexOf("audit") < order.indexOf("read-profile"));
   assert.ok(order.indexOf("audit") < order.indexOf("read-memberships"));
   assert.ok(order.indexOf("audit") < order.indexOf("read-prefs"));
+  assert.ok(order.indexOf("audit") < order.indexOf("read-organisation"));
 
   if (result.kind !== "found") return;
   assert.deepEqual(result.user, {
@@ -309,6 +314,7 @@ test("a lookup is written to the audit log before any of the person's details ar
     onboarded: true,
     language: "es",
     memberships: [{ workspaceId: "agriculture", role: "admin_owner", scoped: false }],
+    organization: { name: "Acme Farms", role: "owner" },
   });
 
   // What was recorded: who, what, and which account — not what was typed.
@@ -424,6 +430,7 @@ test("the support view carries no home place, persona or notification text", asy
     "lastSignInAt",
     "memberships",
     "onboarded",
+    "organization",
     "userId",
   ]);
   assert.ok(!JSON.stringify(result.user).includes("Ibadan"));
@@ -494,4 +501,48 @@ test("the audit log is read newest first, capped, and can page to older entries"
   assert.deepEqual(tableCalls(calls, "staff_audit_log", "limit").at(-1)?.args, [50]);
   await service.listStaffAuditLog({ limit: -5 });
   assert.deepEqual(tableCalls(calls, "staff_audit_log", "limit").at(-1)?.args, [1]);
+});
+
+const organisationFake = (organizationMembers: { data?: unknown; error?: { message: string } }) =>
+  fakeClient((table, mine) => {
+    if (table === "profiles" && mine.some((c) => c.args[0] === "user_id" && c.op === "select")) {
+      return { data: { user_id: TARGET } };
+    }
+    if (table === "profiles") {
+      return { data: { email: "a@b.c", display_name: null, created_at: "t" } };
+    }
+    if (table === "workspace_members") return { data: [] };
+    if (table === "organization_members") return organizationMembers;
+    return {};
+  }).client;
+
+test("the support view shows the organisation (member, or none), tolerating either embedded shape", async () => {
+  const lookup = async (data: unknown) => {
+    const result = await new SupabaseStaffService(organisationFake({ data })).lookupUserForSupport(
+      ACTOR,
+      TARGET,
+    );
+    if (result.kind !== "found") return assert.fail("expected a match");
+    return result.user.organization;
+  };
+  assert.deepEqual(await lookup({ role: "member", organizations: [{ name: "Acme" }] }), {
+    name: "Acme",
+    role: "member",
+  });
+  assert.deepEqual(await lookup({ role: "owner", organizations: { name: "Acme" } }), {
+    name: "Acme",
+    role: "owner",
+  });
+  assert.equal(await lookup(null), null);
+  assert.equal(await lookup({ role: "member", organizations: null }), null);
+});
+
+test("an error reading the organisation fails the lookup rather than showing a half picture", async () => {
+  await assert.rejects(
+    () =>
+      new SupabaseStaffService(
+        organisationFake({ error: { message: "no such table" } }),
+      ).lookupUserForSupport(ACTOR, TARGET),
+    /organisation/,
+  );
 });

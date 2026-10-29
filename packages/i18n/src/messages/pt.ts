@@ -269,7 +269,7 @@ export const pt: Messages = {
   "settings.download.button": "Baixar meus dados",
   "settings.delete.title": "Excluir sua conta",
   "settings.delete.body":
-    "Isso exclui permanentemente e na hora sua conta, suas participações, suas notificações e os comentários que você escreveu. Os campos, propriedades e locais que você adicionou pertencem ao espaço de trabalho, então permanecem — sem o seu nome. Isso não pode ser desfeito; baixe seus dados antes se quiser uma cópia.",
+    "Isso exclui permanentemente e na hora sua conta, suas participações, suas notificações e os comentários que você escreveu. Se você é o proprietário da sua organização, os campos, propriedades e locais salvos nela também são excluídos (só é possível quando não restar mais ninguém nela). Se você é membro da organização de outra pessoa, o que você adicionou permanece lá, sem o seu nome. Isso não pode ser desfeito; baixe seus dados antes se quiser uma cópia.",
   "settings.delete.confirmLabel": "Digite {word} para confirmar",
   "settings.delete.button": "Excluir minha conta",
 
@@ -338,6 +338,8 @@ export const pt: Messages = {
   "errors.nameSaveFailed": "Não foi possível salvar seu nome. Tente novamente.",
   "errors.typeToConfirm": "Digite {word} para confirmar.",
   "errors.deleteFailed": "Não foi possível excluir sua conta. Tente novamente.",
+  "errors.deleteOrganizationHasMembers":
+    "Sua organização ainda tem outros membros ({count}). Remova-os primeiro na página “Equipe” e depois exclua sua conta.",
 
   // ---- search place result line
   "search.placeDescription": "Ver as condições atuais",

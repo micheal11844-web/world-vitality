@@ -8,9 +8,10 @@
  * town" — this resolves a free-text place name into coordinates so
  * that search is real, not another hardcoded demo.
  *
- * Uses Open-Meteo's free Geocoding API — the same provider family this
+ * Uses Open-Meteo's Geocoding API — the same provider family this
  * app already trusts for forecast data (`OpenMeteoConnector`), not a
- * new, unverified dependency. No API key required. Deliberately kept
+ * new, unverified dependency. No API key is required on the free tier;
+ * with `OPEN_METEO_API_KEY` set it uses the paid customer host. Deliberately kept
  * separate from `services/data-ingestion/`'s connectors: this resolves
  * a place name to coordinates, it isn't itself an environmental data
  * series, so it doesn't fit `DataIngestionConnector`'s shape (which
@@ -20,7 +21,20 @@
  * into a layer it doesn't belong in.
  */
 
-const GEOCODING_API_BASE = "https://geocoding-api.open-meteo.com/v1/search";
+const GEOCODING_API_FREE = "https://geocoding-api.open-meteo.com/v1/search";
+/** The paying-customer host (Open-Meteo: "the server URL requires the prefix
+ *  `customer-`"; the key goes in `apikey`). Used only when `OPEN_METEO_API_KEY`
+ *  is set, so the free endpoint is never used for a commercial product. */
+const GEOCODING_API_CUSTOMER = "https://customer-geocoding-api.open-meteo.com/v1/search";
+
+/** The search URL: the free host, or the paying-customer host with the key. */
+function geocodingUrl(name: string): URL {
+  const apiKey = process.env.OPEN_METEO_API_KEY?.trim();
+  const url = new URL(apiKey ? GEOCODING_API_CUSTOMER : GEOCODING_API_FREE);
+  if (apiKey) url.searchParams.set("apikey", apiKey);
+  url.searchParams.set("name", name);
+  return url;
+}
 
 export interface GeocodedLocation {
   name: string;
@@ -55,8 +69,7 @@ export async function geocodeLocation(query: string): Promise<GeocodedLocation |
     return null;
   }
 
-  const url = new URL(GEOCODING_API_BASE);
-  url.searchParams.set("name", trimmed);
+  const url = geocodingUrl(trimmed);
   url.searchParams.set("count", "1");
 
   const response = await fetch(url.toString());
@@ -96,8 +109,7 @@ export async function geocodeCandidates(query: string, count = 5): Promise<Geoco
     return [];
   }
 
-  const url = new URL(GEOCODING_API_BASE);
-  url.searchParams.set("name", trimmed);
+  const url = geocodingUrl(trimmed);
   url.searchParams.set("count", String(Math.min(Math.max(count, 1), 10)));
 
   const response = await fetch(url.toString());

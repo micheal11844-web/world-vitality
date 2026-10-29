@@ -3,7 +3,7 @@ import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-co
 import { WorkspaceShell } from "../workspace-shell";
 import { getLocationStatus } from "../location-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../../lib/account";
+import { getOrganizationData } from "../../../../lib/organization-data";
 import { PrintButton } from "./print-button";
 import { CsvExportButton, type CsvRow } from "./csv-export-button";
 
@@ -58,7 +58,7 @@ export default async function GovernmentNgosReportPage() {
     );
   }
 
-  const allLocations = await getAccountService().listLocations(WORKSPACE_ID);
+  const allLocations = await getOrganizationData(membership).listLocations(WORKSPACE_ID);
   const visibleLocations = allLocations.filter((location) =>
     can(membership.role, "data:view", {
       resourceId: location.id,

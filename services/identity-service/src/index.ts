@@ -15,6 +15,16 @@ export {
   type InsuranceProperty,
   type GovernmentNgosLocation,
 } from "./account.js";
+export {
+  NoOrganizationError,
+  OrganizationHasMembersError,
+  emptyOrganizationData,
+  resolveWorkspaceMembership,
+  type JoinOrganizationResult,
+  type OrganizationData,
+  type OrganizationMembership,
+  type OrganizationRole,
+} from "./organizations.js";
 export { buildUserDataExport, type UserDataExport } from "./data-export.js";
 export {
   PERSONAS,

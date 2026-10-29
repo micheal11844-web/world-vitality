@@ -12,7 +12,7 @@ import { AddLocationForm } from "./add-location-form";
 import { LocationManageControls } from "./location-manage-controls";
 import { getLocationStatus } from "./location-status";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../lib/account";
+import { getOrganizationData } from "../../../lib/organization-data";
 import { logTelemetry } from "../../../lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -81,7 +81,7 @@ const WORKSPACE_ID = "government-ngos";
 export default async function GovernmentNgosWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: WORKSPACE_ID });
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
-  const allLocations = await getAccountService().listLocations(WORKSPACE_ID);
+  const allLocations = await getOrganizationData(membership).listLocations(WORKSPACE_ID);
   const visibleLocations = allLocations.filter((location) =>
     can(membership.role, "data:view", {
       resourceId: location.id,

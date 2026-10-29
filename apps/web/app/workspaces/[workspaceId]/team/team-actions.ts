@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import type { Role } from "@world-vitality/identity-service";
 import { can } from "@world-vitality/identity-service";
-import { getWorkspaceRole } from "../../../../lib/get-workspace-role";
+import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
+import { getOrganizationData } from "../../../../lib/organization-data";
+import { seatLimitMessage } from "../../../../lib/plan-limits";
 import { getAuthService } from "../../../../lib/auth";
-import { getAccountService } from "../../../../lib/account";
 import { logSecurity } from "../../../../lib/logger";
 
 export interface TeamActionResult {
@@ -42,13 +43,24 @@ export async function inviteMemberAction(
     return { ok: false, error: "Choose a valid role." };
   }
 
-  const currentUserRole = await getWorkspaceRole(workspaceId);
-  if (!can(currentUserRole, "workspace:manage_team")) {
+  const membership = await getWorkspaceMembership(workspaceId);
+  if (!can(membership.role, "workspace:manage_team") || !membership.organizationId) {
     return { ok: false, error: "You do not have permission to invite people to this workspace." };
+  }
+
+  // The invitation carries the INVITER's organisation, taken from their own
+  // session here — never from anything the browser sent.
+  const limitMessage = await seatLimitMessage(
+    membership.organizationId,
+    getOrganizationData(membership),
+  );
+  if (limitMessage) {
+    return { ok: false, error: limitMessage };
   }
 
   try {
     await getAuthService().inviteUser(email, {
+      organizationId: membership.organizationId,
       workspaceId,
       role: role as Role,
       scopedResourceIds,
@@ -71,8 +83,8 @@ export async function removeMemberAction(
   workspaceId: string,
   userId: string,
 ): Promise<TeamActionResult> {
-  const currentUserRole = await getWorkspaceRole(workspaceId);
-  if (!can(currentUserRole, "workspace:manage_team")) {
+  const membership = await getWorkspaceMembership(workspaceId);
+  if (!can(membership.role, "workspace:manage_team")) {
     return {
       ok: false,
       error: "You do not have permission to remove people from this workspace.",
@@ -80,7 +92,7 @@ export async function removeMemberAction(
   }
 
   try {
-    await getAccountService().removeMember(workspaceId, userId);
+    await getOrganizationData(membership).removeMember(workspaceId, userId);
     revalidatePath(`/workspaces/${workspaceId}/team`);
     return { ok: true };
   } catch (err) {

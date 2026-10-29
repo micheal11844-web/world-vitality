@@ -133,6 +133,26 @@ export function checkLimit(e: Entitlements, key: LimitKey, current: number): Lim
   return { allowed: true, limit, remaining: limit - current };
 }
 
+const LIMIT_NOUNS: Record<LimitKey, { one: string; many: string }> = {
+  workspaces: { one: "workspace", many: "workspaces" },
+  seats: { one: "person", many: "people" },
+  savedItems: {
+    one: "saved item (fields, insured properties and monitored locations count together)",
+    many: "saved items (fields, insured properties and monitored locations count together)",
+  },
+};
+
+/**
+ * What to tell someone who has hit a limit. Names the plan and the number
+ * and says how to get past it; never blames, never hides data.
+ */
+export function limitReachedMessage(e: Entitlements, key: LimitKey, limit: number): string {
+  const noun = LIMIT_NOUNS[key];
+  const plan = PLANS[e.plan].label;
+  const what = limit === 1 ? noun.one : noun.many;
+  return `Your ${plan} plan includes up to ${limit} ${what}. Upgrade your plan to add more.`;
+}
+
 /**
  * Have they more than the plan now allows (after a downgrade)? Such
  * extras are made read-only — never deleted — so this returns `true` only

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseOpenMeteoResponse } from "../open-meteo-connector.js";
+import { OpenMeteoConnector, parseOpenMeteoResponse } from "../open-meteo-connector.js";
 
 /**
  * A realistic Open-Meteo daily forecast response, shaped per the
@@ -138,4 +138,49 @@ test("does not produce a solar record, and does not report a gap, when solar rad
   });
   assert.equal(records.filter((r) => r.metric === "ALLSKY_SFC_SW_DWN").length, 0);
   assert.equal(gaps.length, 0);
+});
+
+test("with a commercial licence the provenance says so instead of flagging the free tier", () => {
+  const { records } = parseOpenMeteoResponse(
+    "open-meteo",
+    "Open-Meteo",
+    LOCATION,
+    SAMPLE_RESPONSE,
+    true,
+  );
+  const limits = records[0]!.provenance.knownLimitations.join(" | ");
+  assert.ok(limits.includes("commercial licence"));
+  assert.ok(!limits.includes("non-commercial-use license"));
+  assert.equal(records[0]!.provenance.license, "CC-BY-4.0"); // attribution still applies
+});
+
+const TRIGGER = { type: "manual", requestedBy: "test" } as const;
+
+test("without a key requests go to the free endpoint; with one, to the customer endpoint with the key", async () => {
+  const seen: string[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: URL | string) => {
+    seen.push(String(input));
+    return new Response(JSON.stringify(SAMPLE_RESPONSE), { status: 200 });
+  }) as typeof fetch;
+  const saved = process.env.OPEN_METEO_API_KEY;
+  try {
+    delete process.env.OPEN_METEO_API_KEY;
+    await new OpenMeteoConnector({ locations: [LOCATION] }).ingest(TRIGGER);
+    await new OpenMeteoConnector({ locations: [LOCATION], apiKey: "k-123" }).ingest({
+      kind: "manual",
+    } as never);
+    process.env.OPEN_METEO_API_KEY = "env-key";
+    await new OpenMeteoConnector({ locations: [LOCATION] }).ingest(TRIGGER);
+  } finally {
+    globalThis.fetch = realFetch;
+    if (saved === undefined) delete process.env.OPEN_METEO_API_KEY;
+    else process.env.OPEN_METEO_API_KEY = saved;
+  }
+  assert.ok(seen[0]!.startsWith("https://api.open-meteo.com/v1/forecast?"));
+  assert.ok(!seen[0]!.includes("apikey"));
+  assert.ok(seen[1]!.startsWith("https://customer-api.open-meteo.com/v1/forecast?"));
+  assert.equal(new URL(seen[1]!).searchParams.get("apikey"), "k-123");
+  assert.ok(seen[2]!.startsWith("https://customer-api.open-meteo.com/"));
+  assert.equal(new URL(seen[2]!).searchParams.get("apikey"), "env-key");
 });

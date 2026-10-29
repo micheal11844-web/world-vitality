@@ -9,6 +9,7 @@ import type {
   WorkspaceMembership,
 } from "./account.js";
 import type { Notification, NotificationSettings } from "./notifications.js";
+import { emptyOrganizationData, type OrganizationRole } from "./organizations.js";
 
 /**
  * Everything World Vitality holds that is *about* or *by* one user, in
@@ -20,12 +21,13 @@ import type { Notification, NotificationSettings } from "./notifications.js";
  *
  * **Scope, stated plainly:**
  * - The user's profile, their preferences (role and home place chosen
- *   in onboarding), their notification settings and inbox, and every
- *   workspace membership they hold.
+ *   in onboarding), their notification settings and inbox, the
+ *   organisation they belong to (its name and their role in it), and every
+ *   workspace role they hold.
  * - Resources they *created* (fields, insured properties, monitored
- *   locations) — by `createdBy`, regardless of any resource scoping on
- *   their membership today.
- * - Comments they *wrote* on fields.
+ *   locations) — by `createdBy`, within their organisation, regardless of
+ *   any resource scoping on their membership today.
+ * - Comments they *wrote* on fields in their organisation.
  * - NOT included: other people's data (other members, their comments),
  *   public environmental readings (not personal data, and re-fetchable),
  *   and audit-log entries (no read method exists on `AccountService`
@@ -41,6 +43,12 @@ export interface UserDataExport {
   /** Notification settings and every inbox item, including dismissed and expired ones. */
   notificationSettings: NotificationSettings;
   notifications: Notification[];
+  /**
+   * The organisation they belong to and their role in it (an `owner` holds
+   * `admin_owner` in every workspace without a role row), or `null` if they
+   * have never used anything that needed one.
+   */
+  organization: { name: string; role: OrganizationRole } | null;
   memberships: WorkspaceMembership[];
   createdResources: {
     fields: Field[];
@@ -66,22 +74,25 @@ export async function buildUserDataExport(
   userId: string,
   now: Date = new Date(),
 ): Promise<UserDataExport> {
-  const [profile, memberships, preferences, notificationSettings, notifications] =
+  const [profile, memberships, preferences, notificationSettings, notifications, organization] =
     await Promise.all([
       account.getProfile(userId),
       account.getWorkspaceMemberships(userId),
       account.getPreferences(userId),
       account.getNotificationSettings(userId),
       account.listNotifications(userId, { includeInactive: true, limit: 1000 }),
+      account.getOrganizationMembership(userId),
     ]);
-  const workspaceIds = new Set(memberships.map((m) => m.workspaceId));
+  // Everything saved lives in the person's organisation; with none, there
+  // is nothing saved to export.
+  const data = organization
+    ? account.forOrganization(organization.organizationId)
+    : emptyOrganizationData();
 
   const [allFields, allProperties, allLocations] = await Promise.all([
-    workspaceIds.has(AGRICULTURE) ? account.listFields(AGRICULTURE) : Promise.resolve([]),
-    workspaceIds.has(INSURANCE) ? account.listProperties(INSURANCE) : Promise.resolve([]),
-    workspaceIds.has(GOVERNMENT_NGOS)
-      ? account.listLocations(GOVERNMENT_NGOS)
-      : Promise.resolve([]),
+    data.listFields(AGRICULTURE),
+    data.listProperties(INSURANCE),
+    data.listLocations(GOVERNMENT_NGOS),
   ]);
 
   const fields = allFields.filter((f) => f.createdBy === userId);
@@ -89,9 +100,8 @@ export async function buildUserDataExport(
   const monitoredLocations = allLocations.filter((l) => l.createdBy === userId);
 
   // Comments can sit on a field someone else created, so look across
-  // every field in the workspaces the user belongs to, keeping only the
-  // user's own.
-  const commentLists = await Promise.all(allFields.map((f) => account.listFieldComments(f.id)));
+  // every field in the organisation, keeping only the user's own.
+  const commentLists = await Promise.all(allFields.map((f) => data.listFieldComments(f.id)));
   const commentsWritten = commentLists.flat().filter((c) => c.userId === userId);
 
   return {
@@ -101,6 +111,7 @@ export async function buildUserDataExport(
     preferences,
     notificationSettings,
     notifications,
+    organization: organization ? { name: organization.name, role: organization.role } : null,
     memberships,
     createdResources: { fields, insuredProperties, monitoredLocations },
     commentsWritten,

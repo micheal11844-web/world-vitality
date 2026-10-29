@@ -103,8 +103,9 @@ order by created_at;
 The Overview shows a notice when any source is restricted for commercial
 use. Today that is Open-Meteo: its free tier is non-commercial only
 (`docs/data-provenance/open-meteo.md`, Decision #004). **Resolve it before
-the product starts charging** — move to a paid Open-Meteo plan or replace
-the source. The catalogue behind this is
+the product starts charging** — move to a paid Open-Meteo plan (and set
+`OPEN_METEO_API_KEY`; the notice then clears by itself — see
+`billing.md`, "Weather data licence") or replace the source. The catalogue behind this is
 `services/data-ingestion/src/source-catalog.ts`; a test fails if it and
 the provenance documents drift apart.
 

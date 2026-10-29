@@ -3,7 +3,7 @@ import { StateDisplay } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "../workspace-shell";
 import { getLocationStatus } from "../location-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../../lib/account";
+import { getOrganizationData } from "../../../../lib/organization-data";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +47,7 @@ const WORKSPACE_ID = "government-ngos";
 export default async function GovernmentNgosMapPage() {
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
-  const allLocations = await getAccountService().listLocations(WORKSPACE_ID);
+  const allLocations = await getOrganizationData(membership).listLocations(WORKSPACE_ID);
   const visibleLocations = allLocations.filter((location) =>
     can(membership.role, "data:view", {
       resourceId: location.id,

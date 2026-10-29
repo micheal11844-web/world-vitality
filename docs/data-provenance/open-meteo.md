@@ -55,6 +55,15 @@ Stage 8.2, limited beta, hasn't even started — see BUILD_PLAN's own
 current status). Non-commercial use is accurate for the project's actual
 current state.
 
+**Update (BUILD_PLAN v94):** the app can now run on a paid Open-Meteo
+plan. Setting `OPEN_METEO_API_KEY` sends forecast and place-search requests
+to Open-Meteo's `customer-` hosts with the key (the commercial licence),
+marks forecast records as read under it, and clears the admin console's
+"before charging" notice. Without the key nothing has changed — the free,
+non-commercial endpoint is used. Standard ($29/month, 1M calls) covers what
+the app calls (forecast and geocoding only); see `docs/runbooks/billing.md`,
+"Weather data licence". **Not yet run against the real paid service.**
+
 **What this means going forward, stated plainly rather than left to be
 discovered later:** if/when World Vitality begins operating
 commercially — charging for access, running the "Third-Party Workspace

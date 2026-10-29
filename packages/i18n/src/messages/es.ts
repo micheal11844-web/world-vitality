@@ -270,7 +270,7 @@ export const es: Messages = {
   "settings.download.button": "Descargar mis datos",
   "settings.delete.title": "Eliminar tu cuenta",
   "settings.delete.body":
-    "Esto elimina de forma permanente y al instante tu cuenta, tus membresías, tus notificaciones y los comentarios que escribiste. Los campos, propiedades y ubicaciones que añadiste pertenecen al espacio de trabajo, así que se quedan, sin tu nombre. No se puede deshacer; descarga tus datos antes si quieres una copia.",
+    "Esto elimina de forma permanente y al instante tu cuenta, tus membresías, tus notificaciones y los comentarios que escribiste. Si eres propietario de tu organización, los campos, propiedades y ubicaciones guardados en ella también se eliminan (solo puedes hacerlo cuando ya no quede nadie más en ella). Si eres miembro de la organización de otra persona, lo que añadiste se queda allí, sin tu nombre. No se puede deshacer; descarga tus datos antes si quieres una copia.",
   "settings.delete.confirmLabel": "Escribe {word} para confirmar",
   "settings.delete.button": "Eliminar mi cuenta",
 
@@ -339,6 +339,8 @@ export const es: Messages = {
   "errors.nameSaveFailed": "No se pudo guardar tu nombre. Inténtalo de nuevo.",
   "errors.typeToConfirm": "Escribe {word} para confirmar.",
   "errors.deleteFailed": "No se pudo eliminar tu cuenta. Inténtalo de nuevo.",
+  "errors.deleteOrganizationHasMembers":
+    "Tu organización aún tiene otros miembros ({count}). Quítalos primero en la página «Equipo» y luego elimina tu cuenta.",
 
   // ---- search place result line
   "search.placeDescription": "Ver las condiciones actuales",

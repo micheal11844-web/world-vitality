@@ -5,7 +5,21 @@ import type {
   IngestionTrigger,
 } from "../DataIngestionConnector.js";
 
-const FORECAST_API_BASE = "https://api.open-meteo.com/v1/forecast";
+const FORECAST_API_FREE = "https://api.open-meteo.com/v1/forecast";
+/** Open-Meteo's dedicated endpoint for paying (commercial-licence) customers;
+ *  takes the subscription's key as the `apikey` query parameter. */
+const FORECAST_API_CUSTOMER = "https://customer-api.open-meteo.com/v1/forecast";
+
+/**
+ * The subscription key, when one is configured (`OPEN_METEO_API_KEY` — set
+ * in Vercel, never in the repo). Unset means the free, non-commercial
+ * endpoint, exactly as before. Read when needed rather than at import so a
+ * changed environment is honoured and tests can set it.
+ */
+export function openMeteoApiKey(): string | undefined {
+  const key = typeof process !== "undefined" ? process.env.OPEN_METEO_API_KEY?.trim() : undefined;
+  return key ? key : undefined;
+}
 const METRIC = "T2M";
 /** Same metric code NASA POWER uses for wind speed at 2 meters, so any
  *  consumer (e.g. `ConstructionRiskStatusProvider`) can treat wind
@@ -36,6 +50,10 @@ export interface OpenMeteoLocation {
 
 export interface OpenMeteoConnectorConfig {
   locations: OpenMeteoLocation[];
+  /** Open-Meteo subscription key. Defaults to `OPEN_METEO_API_KEY` from the
+   *  environment; with one, requests go to the paid customer endpoint (the
+   *  commercial licence) instead of the free one. */
+  apiKey?: string;
   /** How many days ahead to request, per location. Open-Meteo supports
    *  up to 16; kept far lower by default since the PRD's own gradient
    *  concept ("short/medium/long-range") only needs about a week to be
@@ -77,6 +95,7 @@ export function parseOpenMeteoResponse(
   connectorDisplayName: string,
   location: OpenMeteoLocation,
   response: OpenMeteoApiResponse,
+  commercialLicence = false,
 ): { records: NormalizedDataRecord[]; gaps: IngestionGap[] } {
   const records: NormalizedDataRecord[] = [];
   const gaps: IngestionGap[] = [];
@@ -105,7 +124,9 @@ export function parseOpenMeteoResponse(
   const windUnit = response.daily_units?.wind_speed_10m_max ?? "m/s";
 
   const knownLimitations = [
-    "Free-tier, non-commercial-use license (Open-Meteo Terms of Use) — revisit before any commercial launch; see docs/data-provenance/open-meteo.md.",
+    commercialLicence
+      ? "Read through Open-Meteo's paid customer endpoint (commercial licence); the data is still CC BY 4.0, so attribution is required — see docs/data-provenance/open-meteo.md."
+      : "Free-tier, non-commercial-use license (Open-Meteo Terms of Use) — revisit before any commercial launch; see docs/data-provenance/open-meteo.md.",
     "Model-predicted, not observed — accuracy decreases with lead time (see forecastIssuedAt on this record).",
   ];
 
@@ -213,17 +234,26 @@ export function parseOpenMeteoResponse(
  * represent what NASA POWER's data never needed to: a value that
  * hasn't happened yet.
  *
- * No API key, no signup — matching this project's existing preference
- * for zero-friction data sources (NASA POWER shares this property).
+ * No API key or signup needed to run it (matching this project's
+ * preference for zero-friction sources). With `OPEN_METEO_API_KEY` set it
+ * uses the paid customer endpoint instead — that is the commercial licence.
  */
 export class OpenMeteoConnector implements DataIngestionConnector {
   readonly id = "open-meteo";
   readonly displayName = "Open-Meteo";
 
-  private readonly config: Required<OpenMeteoConnectorConfig>;
+  private readonly config: {
+    locations: OpenMeteoLocation[];
+    forecastDays: number;
+    apiKey: string | undefined;
+  };
 
   constructor(config: OpenMeteoConnectorConfig) {
-    this.config = { forecastDays: 7, ...config };
+    this.config = {
+      forecastDays: 7,
+      ...config,
+      apiKey: config.apiKey?.trim() || openMeteoApiKey(),
+    };
   }
 
   async ingest(trigger: IngestionTrigger): Promise<IngestionResult> {
@@ -238,6 +268,7 @@ export class OpenMeteoConnector implements DataIngestionConnector {
           this.displayName,
           location,
           response,
+          Boolean(this.config.apiKey),
         );
         records.push(...locationRecords);
         gaps.push(...locationGaps);
@@ -271,7 +302,8 @@ export class OpenMeteoConnector implements DataIngestionConnector {
   }
 
   private async fetchLocation(location: OpenMeteoLocation): Promise<OpenMeteoApiResponse> {
-    const url = new URL(FORECAST_API_BASE);
+    const url = new URL(this.config.apiKey ? FORECAST_API_CUSTOMER : FORECAST_API_FREE);
+    if (this.config.apiKey) url.searchParams.set("apikey", this.config.apiKey);
     url.searchParams.set("latitude", String(location.latitude));
     url.searchParams.set("longitude", String(location.longitude));
     url.searchParams.set(

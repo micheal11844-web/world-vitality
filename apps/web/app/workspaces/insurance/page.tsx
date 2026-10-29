@@ -12,7 +12,7 @@ import { AddPropertyForm } from "./add-property-form";
 import { PropertyManageControls } from "./property-manage-controls";
 import { getPropertyStatus } from "./property-status";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../lib/account";
+import { getOrganizationData } from "../../../lib/organization-data";
 import { logTelemetry } from "../../../lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -92,7 +92,7 @@ const WORKSPACE_ID = "insurance";
 export default async function InsuranceWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: WORKSPACE_ID });
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
-  const allProperties = await getAccountService().listProperties(WORKSPACE_ID);
+  const allProperties = await getOrganizationData(membership).listProperties(WORKSPACE_ID);
   const visibleProperties = allProperties.filter((property) =>
     can(membership.role, "data:view", {
       resourceId: property.id,

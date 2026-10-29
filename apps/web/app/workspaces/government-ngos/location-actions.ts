@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { can } from "@world-vitality/identity-service";
-import { getWorkspaceRole } from "../../../lib/get-workspace-role";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../lib/account";
+import { getOrganizationData } from "../../../lib/organization-data";
+import { savedItemLimitMessage } from "../../../lib/plan-limits";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
 
@@ -40,8 +40,8 @@ export async function createLocationAction(
     return { ok: false, error: "Longitude must be a number between -180 and 180." };
   }
 
-  const role = await getWorkspaceRole(WORKSPACE_ID);
-  if (!can(role, "data:edit")) {
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (!can(membership.role, "data:edit")) {
     return {
       ok: false,
       error: "You do not have permission to add monitored locations in this workspace.",
@@ -53,8 +53,16 @@ export async function createLocationAction(
     return { ok: false, error: "Your session could not be verified. Please sign in again." };
   }
 
+  const data = getOrganizationData(membership);
+  const limitMessage = membership.organizationId
+    ? await savedItemLimitMessage(membership.organizationId, data)
+    : null;
+  if (limitMessage) {
+    return { ok: false, error: limitMessage };
+  }
+
   try {
-    await getAccountService().createLocation({
+    await data.createLocation({
       workspaceId: WORKSPACE_ID,
       label: label.trim(),
       latitude,
@@ -106,7 +114,7 @@ export async function updateLocationAction(
   }
 
   try {
-    await getAccountService().updateLocation(locationId, {
+    await getOrganizationData(membership).updateLocation(locationId, {
       label: label.trim(),
       latitude,
       longitude,
@@ -137,7 +145,7 @@ export async function deleteLocationAction(locationId: string): Promise<CreateLo
   }
 
   try {
-    await getAccountService().deleteLocation(locationId);
+    await getOrganizationData(membership).deleteLocation(locationId);
     revalidatePath("/workspaces/government-ngos");
     return { ok: true };
   } catch (err) {

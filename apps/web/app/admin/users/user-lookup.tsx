@@ -41,6 +41,11 @@ function UserDetails({ user }: { user: LookupUserView }) {
           <Row label="Last signed in">{user.lastSignInAt ?? "Never, or unknown"}</Row>
           <Row label="Onboarding">{user.onboarded ? "Finished or skipped" : "Not yet"}</Row>
           <Row label="Language">{user.language ?? "Not chosen"}</Row>
+          <Row label="Organisation">
+            {user.organization
+              ? `${user.organization.name} — ${user.organization.role === "owner" ? "owner (an admin in every workspace)" : "member"}`
+              : "None"}
+          </Row>
           <Row label="User id">
             <code style={{ fontSize: "0.8125rem" }}>{user.userId}</code>
           </Row>
@@ -50,10 +55,12 @@ function UserDetails({ user }: { user: LookupUserView }) {
           style={{ display: "grid", gap: "var(--wv-space-sm)" }}
         >
           <Text variant="body" as="h3" id="memberships-heading" style={{ fontWeight: 600 }}>
-            Workspace memberships
+            Workspace roles on record
           </Text>
           {user.memberships.length === 0 ? (
-            <Text variant="body">None.</Text>
+            <Text variant="body">
+              None on record{user.organization?.role === "owner" ? " (an owner needs none)" : ""}.
+            </Text>
           ) : (
             <ul
               style={{

@@ -1,6 +1,6 @@
 import { can } from "@world-vitality/identity-service";
 import { getWorkspaceMembership } from "../../lib/get-workspace-membership";
-import { getAccountService } from "../../lib/account";
+import { getOrganizationData } from "../../lib/organization-data";
 import { fetchFloodingLocations } from "../../lib/usgs-flood-impacts";
 import { fetchNearbyShelters } from "../../lib/fema-shelters";
 import { fetchActiveFireDetections } from "../../lib/nasa-firms";
@@ -72,18 +72,16 @@ const DISASTER_MONITORING_DEMO_LOCATION = {
 export default async function GlobePage() {
   logTelemetry.event("globe_viewed");
 
-  const [agricultureMembership, insuranceMembership, governmentNgosMembership] = await Promise.all(
-    [
-      getWorkspaceMembership("agriculture"),
-      getWorkspaceMembership("insurance"),
-      getWorkspaceMembership("government-ngos"),
-    ],
-  );
+  const [agricultureMembership, insuranceMembership, governmentNgosMembership] = await Promise.all([
+    getWorkspaceMembership("agriculture"),
+    getWorkspaceMembership("insurance"),
+    getWorkspaceMembership("government-ngos"),
+  ]);
 
   const [fields, properties, locations] = await Promise.all([
-    getAccountService().listFields("agriculture"),
-    getAccountService().listProperties("insurance"),
-    getAccountService().listLocations("government-ngos"),
+    getOrganizationData(agricultureMembership).listFields("agriculture"),
+    getOrganizationData(insuranceMembership).listProperties("insurance"),
+    getOrganizationData(governmentNgosMembership).listLocations("government-ngos"),
   ]);
 
   let floods: Awaited<ReturnType<typeof fetchFloodingLocations>> = [];

@@ -5,6 +5,7 @@ import { getOAuthClient } from "../../../lib/supabase-ssr";
 import { setSessionCookies } from "../../../lib/session-cookies";
 import { logSecurity, logTelemetry } from "../../../lib/logger";
 import { notifyMembershipAdded } from "../../../lib/notification-events";
+import { seatCapForJoining } from "../../../lib/plan-limits";
 
 /**
  * The route both the magic-link email, the password-reset email, AND
@@ -117,15 +118,32 @@ export async function GET(request: NextRequest) {
   if (type === "invite") {
     try {
       const auth = getAuthService();
-      const { session, pendingWorkspaceId, pendingRole, pendingScopedResourceIds } =
-        await auth.verifyInviteCallback(tokenHash);
+      const {
+        session,
+        pendingOrganizationId,
+        pendingWorkspaceId,
+        pendingRole,
+        pendingScopedResourceIds,
+      } = await auth.verifyInviteCallback(tokenHash);
 
-      if (pendingWorkspaceId && pendingRole) {
+      if (pendingOrganizationId && pendingWorkspaceId && pendingRole) {
         // Membership creation is the actual point of this branch — a
         // failure here must surface as a verification failure, not be
         // silently swallowed, since the alternative is a user who
         // "accepted" an invite with no resulting workspace access.
-        await getAccountService().createMembership({
+        //
+        // Two steps: first the person joins the inviter's organisation (one
+        // atomic database statement that also enforces the seat limit), then
+        // they get their role in that organisation's workspace.
+        const account = getAccountService();
+        const joined = await account.joinOrganization(session.userId, pendingOrganizationId, {
+          maxSeats: await seatCapForJoining(pendingOrganizationId),
+        });
+        if (joined !== "joined" && joined !== "already") {
+          logSecurity.warn("invite_join_refused", { userId: session.userId, result: joined });
+          throw new Error(`Invite could not be accepted: ${joined}`);
+        }
+        await account.forOrganization(pendingOrganizationId).addMember({
           workspaceId: pendingWorkspaceId,
           userId: session.userId,
           role: pendingRole,

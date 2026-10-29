@@ -2,6 +2,7 @@ import {
   can,
   fieldCommentNotification,
   membershipAddedNotification,
+  resolveWorkspaceMembership,
 } from "@world-vitality/identity-service";
 import { WORKSPACE_LINKS } from "../app/workspaces/workspace-nav";
 import { getAccountService } from "./account";
@@ -21,13 +22,15 @@ import { ROLE_LABELS } from "./role-labels";
  * Tells the creator of a field that someone else commented on it.
  *
  * Skipped when the commenter *is* the creator, when the field has no
- * recorded creator (created by an account since deleted), and when the
- * creator can no longer comment on that field — a removed member, or a
- * scoped field user whose scope no longer includes it, gets nothing, so
- * a notification never reveals a field (or a comment snippet) the
- * person has lost access to.
+ * recorded creator (created by an account since deleted), when the
+ * creator has left the organisation, and when the creator can no longer
+ * comment on that field — a removed member, or a scoped field user whose
+ * scope no longer includes it, gets nothing, so a notification never
+ * reveals a field (or a comment snippet) the person has lost access to.
  */
 export async function notifyFieldCommentOwner(input: {
+  /** The commenter's organisation; without one there is nothing to look in. */
+  organizationId: string | undefined;
   workspaceId: string;
   fieldId: string;
   commentId: string;
@@ -37,16 +40,25 @@ export async function notifyFieldCommentOwner(input: {
   body: string;
 }): Promise<void> {
   try {
+    if (!input.organizationId) return;
     const account = getAccountService();
-    const fields = await account.listFields(input.workspaceId);
+    const fields = await account
+      .forOrganization(input.organizationId)
+      .listFields(input.workspaceId);
     const field = fields.find((f) => f.id === input.fieldId);
     const ownerId = field?.createdBy;
     if (!field || !ownerId || ownerId === input.commenterId) return;
 
-    const memberships = await account.getWorkspaceMemberships(ownerId);
-    const membership = memberships.find((m) => m.workspaceId === input.workspaceId);
+    // The creator must still be in this organisation (they may have left it)
+    // and still be allowed to comment on this field.
+    const ownerOrganization = await account.getOrganizationMembership(ownerId);
+    if (!ownerOrganization || ownerOrganization.organizationId !== input.organizationId) return;
+    const membership = resolveWorkspaceMembership(
+      ownerOrganization,
+      await account.getWorkspaceMemberships(ownerId),
+      input.workspaceId,
+    );
     if (
-      !membership ||
       !can(membership.role, "comments:create", {
         resourceId: input.fieldId,
         scopedResourceIds: membership.scopedResourceIds,

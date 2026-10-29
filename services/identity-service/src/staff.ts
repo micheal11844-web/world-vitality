@@ -97,7 +97,14 @@ export interface SupportUserView {
   lastSignInAt: string | null;
   onboarded: boolean;
   language: string | null;
+  /**
+   * The explicit workspace roles on record. An organisation's **owner** is an
+   * admin in every workspace without a row here, so read this together with
+   * `organization`.
+   */
   memberships: { workspaceId: string; role: Role; scoped: boolean }[];
+  /** The organisation the person belongs to (BUILD_PLAN v93), or `null`. */
+  organization: { name: string; role: "owner" | "member" } | null;
 }
 
 export type SupportLookupResult =
@@ -282,7 +289,7 @@ export class SupabaseStaffService implements StaffService {
     if (!targetUserId) return { kind: "not_found" };
 
     // Step 3 — now read the minimal support view.
-    const [profileRes, authRes, membershipsRes, prefsRes] = await Promise.all([
+    const [profileRes, authRes, membershipsRes, prefsRes, organizationRes] = await Promise.all([
       this.client
         .from("profiles")
         .select("email, display_name, created_at")
@@ -298,6 +305,11 @@ export class SupabaseStaffService implements StaffService {
         .select("onboarded_at, language")
         .eq("user_id", targetUserId)
         .maybeSingle(),
+      this.client
+        .from("organization_members")
+        .select("role, organizations(name)")
+        .eq("user_id", targetUserId)
+        .maybeSingle(),
     ]);
     if (profileRes.error) {
       throw new Error(`Failed to load the account: ${profileRes.error.message}`);
@@ -308,9 +320,19 @@ export class SupabaseStaffService implements StaffService {
     if (prefsRes.error) {
       throw new Error(`Failed to load account preferences: ${prefsRes.error.message}`);
     }
+    if (organizationRes.error) {
+      throw new Error(`Failed to load the organisation: ${organizationRes.error.message}`);
+    }
     // The sign-in details come from the auth system; if it can't be reached
     // they are shown as unknown rather than failing the whole lookup.
     const authUser = authRes.error ? null : (authRes.data?.user ?? null);
+    const organizationRow = organizationRes.data as {
+      role: string;
+      organizations: { name: string } | { name: string }[] | null;
+    } | null;
+    const organizationName = Array.isArray(organizationRow?.organizations)
+      ? organizationRow?.organizations[0]?.name
+      : organizationRow?.organizations?.name;
 
     return {
       kind: "found",
@@ -328,6 +350,13 @@ export class SupabaseStaffService implements StaffService {
           role: row.role as Role,
           scoped: Boolean(row.scoped_resource_ids?.length),
         })),
+        organization:
+          organizationRow && organizationName !== undefined
+            ? {
+                name: organizationName,
+                role: organizationRow.role === "owner" ? "owner" : "member",
+              }
+            : null,
       },
     };
   }

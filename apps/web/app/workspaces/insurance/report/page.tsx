@@ -5,6 +5,7 @@ import { getPropertyStatus } from "../property-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
 import { getSessionUserId } from "../../../../lib/get-session-user-id";
 import { getAccountService } from "../../../../lib/account";
+import { getOrganizationData } from "../../../../lib/organization-data";
 import { logSecurity } from "../../../../lib/logger";
 import { PrintButton } from "./print-button";
 import { CsvExportButton, type CsvRow } from "./csv-export-button";
@@ -64,7 +65,7 @@ export default async function InsuranceReportPage() {
     );
   }
 
-  const allProperties = await getAccountService().listProperties(WORKSPACE_ID);
+  const allProperties = await getOrganizationData(membership).listProperties(WORKSPACE_ID);
   const visibleProperties = allProperties.filter((property) =>
     can(membership.role, "data:view", {
       resourceId: property.id,

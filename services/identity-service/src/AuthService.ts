@@ -231,10 +231,12 @@ export interface AuthService {
    * console anywhere" gap flagged since Government & NGOs). Uses
    * Supabase's own `admin.inviteUserByEmail` — a real invite email
    * through the same auth provider already in use, not a new email
-   * system. The intended workspace/role/resource-scope travels in the
-   * invited user's `user_metadata` as `pendingWorkspaceId`,
-   * `pendingRole`, `pendingScopedResourceIds` — read back and consumed
-   * exactly once by `verifyInviteCallback`.
+   * system. The intended organisation/workspace/role/resource-scope
+   * travels in the invited user's `user_metadata` as
+   * `pendingOrganizationId`, `pendingWorkspaceId`, `pendingRole`,
+   * `pendingScopedResourceIds` — read back and consumed exactly once by
+   * `verifyInviteCallback`. The organisation is the INVITER's, taken
+   * server-side from their own session when the invite is sent.
    *
    * Does not itself create the `workspace_members` row — that only
    * happens once the invite is actually accepted (see
@@ -243,7 +245,12 @@ export interface AuthService {
    */
   inviteUser(
     email: string,
-    pending: { workspaceId: string; role: Role; scopedResourceIds?: string[] },
+    pending: {
+      organizationId: string;
+      workspaceId: string;
+      role: Role;
+      scopedResourceIds?: string[];
+    },
   ): Promise<void>;
 
   /**
@@ -264,6 +271,7 @@ export interface AuthService {
    */
   verifyInviteCallback(tokenHash: string): Promise<{
     session: Session;
+    pendingOrganizationId?: string;
     pendingWorkspaceId?: string;
     pendingRole?: Role;
     pendingScopedResourceIds?: string[];

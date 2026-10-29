@@ -125,7 +125,11 @@ export function TeamClient({
       render: (m) =>
         m.userId === currentUserId ? (
           <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            (you)
+            {m.isOrganizationOwner ? "(you · owner)" : "(you)"}
+          </Text>
+        ) : m.isOrganizationOwner ? (
+          <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+            (owner)
           </Text>
         ) : (
           <Button variant="destructive" onClick={() => handleRemove(m.userId)} disabled={isPending}>

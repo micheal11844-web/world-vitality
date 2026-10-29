@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { can } from "@world-vitality/identity-service";
-import { getWorkspaceRole } from "../../../lib/get-workspace-role";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
-import { getAccountService } from "../../../lib/account";
+import { getOrganizationData } from "../../../lib/organization-data";
+import { savedItemLimitMessage } from "../../../lib/plan-limits";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
 import { notifyFieldCommentOwner } from "../../../lib/notification-events";
@@ -39,8 +39,8 @@ export async function createFieldAction(
     return { ok: false, error: "Longitude must be a number between -180 and 180." };
   }
 
-  const role = await getWorkspaceRole(WORKSPACE_ID);
-  if (!can(role, "data:edit")) {
+  const membership = await getWorkspaceMembership(WORKSPACE_ID);
+  if (!can(membership.role, "data:edit")) {
     return { ok: false, error: "You do not have permission to add fields in this workspace." };
   }
 
@@ -49,8 +49,16 @@ export async function createFieldAction(
     return { ok: false, error: "Your session could not be verified. Please sign in again." };
   }
 
+  const data = getOrganizationData(membership);
+  const limitMessage = membership.organizationId
+    ? await savedItemLimitMessage(membership.organizationId, data)
+    : null;
+  if (limitMessage) {
+    return { ok: false, error: limitMessage };
+  }
+
   try {
-    await getAccountService().createField({
+    await data.createField({
       workspaceId: WORKSPACE_ID,
       name: name.trim(),
       latitude,
@@ -101,7 +109,11 @@ export async function updateFieldAction(
   }
 
   try {
-    await getAccountService().updateField(fieldId, { name: name.trim(), latitude, longitude });
+    await getOrganizationData(membership).updateField(fieldId, {
+      name: name.trim(),
+      latitude,
+      longitude,
+    });
     revalidatePath("/workspaces/agriculture");
     return { ok: true };
   } catch (err) {
@@ -128,7 +140,7 @@ export async function deleteFieldAction(fieldId: string): Promise<CreateFieldRes
   }
 
   try {
-    await getAccountService().deleteField(fieldId);
+    await getOrganizationData(membership).deleteField(fieldId);
     revalidatePath("/workspaces/agriculture");
     return { ok: true };
   } catch (err) {
@@ -169,13 +181,14 @@ export async function createFieldCommentAction(
   }
 
   try {
-    const comment = await getAccountService().createFieldComment({
+    const comment = await getOrganizationData(membership).createFieldComment({
       fieldId,
       userId,
       body: body.trim(),
     });
     // Best-effort: tells the field's creator (never throws, never fails the comment).
     await notifyFieldCommentOwner({
+      organizationId: membership.organizationId,
       workspaceId: WORKSPACE_ID,
       fieldId,
       commentId: comment.id,
@@ -229,7 +242,7 @@ export async function updateFieldCommentAction(
   }
 
   try {
-    await getAccountService().updateFieldComment(commentId, userId, body.trim());
+    await getOrganizationData(membership).updateFieldComment(commentId, userId, body.trim());
     revalidatePath("/workspaces/agriculture");
     return { ok: true };
   } catch (err) {
@@ -270,7 +283,7 @@ export async function deleteFieldCommentAction(
   }
 
   try {
-    await getAccountService().deleteFieldComment(commentId, userId);
+    await getOrganizationData(membership).deleteFieldComment(commentId, userId);
     revalidatePath("/workspaces/agriculture");
     return { ok: true };
   } catch (err) {

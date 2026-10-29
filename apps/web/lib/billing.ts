@@ -2,11 +2,13 @@ import { createClient } from "@supabase/supabase-js";
 import {
   SupabaseBillingStore,
   loadEntitlements,
+  unlimitedEntitlements,
   parsePlanCodes,
   planForPlanCode,
   type Entitlements,
   type PlanCodeMap,
 } from "@world-vitality/billing-service";
+import { getAccountService } from "./account";
 import { logApplication } from "./logger";
 
 /**
@@ -14,8 +16,9 @@ import { logApplication } from "./logger";
  *
  * Billing is OFF unless `BILLING_ENABLED` is exactly "true". While it is
  * off: the webhook route answers 404, nothing here touches the database,
- * and `getEntitlementsForUser` gives everyone the unlimited entitlements,
- * so building the plan system changes nothing anyone can do today.
+ * and `getEntitlementsForUser` / `getEntitlementsForOrganization` give
+ * everyone the unlimited entitlements, so building the plan system changes
+ * nothing anyone can do today.
  *
  * Same construction and same rule as `getAccountService()`: the
  * service-role key never reaches a Client Component.
@@ -50,10 +53,9 @@ export function planForCode(planCode: string | null) {
  * unlimited (with the error logged) if their subscription cannot be read —
  * a payment-system hiccup must never lock someone out of their own data.
  *
- * Not called from any page yet, on purpose: seat, saved-item and workspace
- * limits need a customer-owned workspace to count against, and workspaces
- * are currently shared by everyone (docs/runbooks/billing.md, "Before
- * limits can be enforced").
+ * Entitlements belong to a PERSON (their subscription); what an organisation
+ * may do is its owner's — see `getEntitlementsForOrganization`, which is
+ * what the seat and saved-item checks use.
  */
 export function getEntitlementsForUser(userId: string): Promise<Entitlements> {
   return loadEntitlements(
@@ -64,4 +66,27 @@ export function getEntitlementsForUser(userId: string): Promise<Entitlements> {
     },
     userId,
   );
+}
+
+/**
+ * What an organisation's plan allows: its owner's plan. Seats are counted
+ * across the organisation and saved items across everything it owns, so the
+ * limits apply to the organisation as a whole, whoever in it is acting.
+ *
+ * Same two rules as above: unlimited while billing is off (without touching
+ * the database), and unlimited — with the error logged — if the owner or
+ * their subscription cannot be read.
+ */
+export async function getEntitlementsForOrganization(
+  organizationId: string,
+): Promise<Entitlements> {
+  if (!billingEnabled()) return unlimitedEntitlements("billing_off");
+  try {
+    const organization = await getAccountService().getOrganization(organizationId);
+    if (!organization) return unlimitedEntitlements("lookup_failed");
+    return await getEntitlementsForUser(organization.ownerId);
+  } catch (err) {
+    logApplication.error("organization_entitlement_lookup_failed", err);
+    return unlimitedEntitlements("lookup_failed");
+  }
 }

@@ -1,49 +1,39 @@
-import { cookies } from "next/headers";
-import type { WorkspaceMembership } from "@world-vitality/identity-service";
-import { getAuthService } from "./auth";
-import { getAccountService } from "./account";
-import { SESSION_COOKIE } from "./constants";
+import {
+  resolveWorkspaceMembership,
+  type WorkspaceMembership,
+} from "@world-vitality/identity-service";
+import { getAccessContext } from "./get-access-context";
 import { logSecurity } from "./logger";
 
 /**
- * Returns the current user's full membership for a workspace — role
- * AND `scopedResourceIds` — unlike `getWorkspaceRole()`, which discards
- * `scopedResourceIds` and returns only the role string. Kept as a
- * separate function rather than widening `getWorkspaceRole`'s return
- * type: that function is already consumed as `Promise<Role>` by every
- * one of this app's 10 workspace pages, and changing its shape for the
- * sake of the one caller that actually needs resource-scoping
- * (`agriculture/page.tsx`, the first real use of `can()`'s `scope`
- * parameter) would be a breaking change to every existing call site.
- * Same reasoning `get-session-user-id.ts` already used for the same
- * kind of "one caller needs more than the others" situation.
+ * Returns the current user's full membership for a workspace — role,
+ * `scopedResourceIds` AND `organizationId` — unlike `getWorkspaceRole()`,
+ * which returns only the role string (it is consumed as `Promise<Role>` by
+ * every workspace page, so its shape stays as it is).
  *
- * Fails safe the same way `getWorkspaceRole` does: no session, no
- * membership, or any lookup error all resolve to `viewer_external` with
- * no resource scope (i.e., least privilege, not resource-restricted —
- * restricting further on failure would be a different kind of bug, not
- * a safer one, since it could hide data a legitimately-scoped user
- * should see due to an unrelated transient error).
+ * The rules live in `resolveWorkspaceMembership` (identity-service):
+ *  - the organisation's owner is `admin_owner` in every workspace;
+ *  - a member has exactly the role they were invited with, in the
+ *    workspaces they were invited to;
+ *  - a member with no role in a workspace, and anyone with no organisation,
+ *    gets `viewer_external` and NO organisation, so they see none of the
+ *    organisation's saved items there.
+ *
+ * **Fails closed.** No session, no organisation, or any lookup error all
+ * resolve to `viewer_external` with no `organizationId`. Before
+ * organisations existed this failed to "least privilege, but see
+ * everything the workspace has"; now that saved items belong to someone,
+ * failing open would mean showing one customer another's data, so a
+ * transient error shows an empty workspace instead.
  */
 export async function getWorkspaceMembership(workspaceId: string): Promise<WorkspaceMembership> {
   const fallback: WorkspaceMembership = { workspaceId, role: "viewer_external" };
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
-    if (!sessionToken) {
+    const context = await getAccessContext();
+    if (!context) {
       return fallback;
     }
-
-    const auth = getAuthService();
-    const session = await auth.getSession(sessionToken);
-    if (!session) {
-      return fallback;
-    }
-
-    const account = getAccountService();
-    const memberships = await account.getWorkspaceMemberships(session.userId);
-    const membership = memberships.find((m) => m.workspaceId === workspaceId);
-    return membership ?? fallback;
+    return resolveWorkspaceMembership(context.organization, context.roleRows, workspaceId);
   } catch (err) {
     logSecurity.error("workspace_membership_lookup_failed", err, { workspaceId });
     return fallback;

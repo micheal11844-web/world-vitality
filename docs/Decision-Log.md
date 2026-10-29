@@ -414,4 +414,136 @@ build environment — the first test-mode payment is the real check
 currency, so Nigerian customers pay in NGN and enterprise customers in USD
 only if a USD settlement account exists.
 
-**Status:** Accepted; enforcement pending the organisation layer.
+**Status:** Accepted. Enforcement of seats and saved items followed the
+organisation layer (Decision #019).
+
+---
+
+## Decision #019 — Saved items and roles belong to an organisation; every read fails closed
+
+**Context:** Every workspace was one shared copy keyed by its name, and every
+signed-in person defaulted to `viewer_external`, which may view data — so any
+account could read every other customer's saved fields, insured properties,
+monitored locations and comments (found while building billing, Decision
+#018). Nobody had been exposed (one account in the project), but it had to be
+closed before a second customer signed up, and plan limits had nothing to
+count against.
+
+**Chosen:**
+
+- **An organisation per customer** (migration 0018): `organizations` and
+  `organization_members`. A person belongs to exactly one, has one owner per
+  organisation, and owns at most one. Everyone gets a personal organisation
+  the first time they need one, so nothing has to be "set up".
+- **The owner is `admin_owner` in every workspace of their organisation**
+  without a role row; members need an explicit role row for each workspace
+  they were invited to (a composite foreign key keeps a role from existing
+  for someone outside the organisation) and see nothing in workspaces they
+  were not invited to.
+- **Every saved item carries `organization_id`**; comments inherit it from
+  their field. The permissive "any signed-in user may read fields" database
+  policy is dropped. **Every access in the app goes through
+  `AccountService.forOrganization(orgId)`**, and every write carries the
+  organisation on the write itself (`… where id = ? and organization_id = ?`),
+  so a forged id from another organisation matches nothing. The old
+  unscoped list/create/update/delete methods no longer exist.
+- **Fail closed.** No session, no organisation, no role, or any lookup error
+  gives `viewer_external` with no organisation: reads are empty and writes
+  are refused. This is the opposite of billing's fail-open (#018) on purpose —
+  the cost of failing open for billing is a feature given away, for
+  organisations it is one customer seeing another's data.
+- **The organisation's plan is its owner's plan.** Seats and saved items are
+  now enforced when something is *added* (saved item, invitation; the last
+  seat is claimed in one atomic statement). Nothing is hidden, locked or
+  deleted over a limit. The `workspaces` limit is not enforced (only three
+  workspaces hold saved items).
+- **Invitations carry the inviter's organisation**, set from the inviter's
+  session and never from a form field; accepting joins it (with the seat cap)
+  and then creates the role. A person already in another organisation with
+  members or saved items is refused.
+- **An owner cannot delete their account while others remain** in the
+  organisation; they are told to remove them first.
+- **Safe to apply before the code ships:** additive, `organization_id`
+  nullable, triggers fill it for rows the old code writes, and the backfill
+  is idempotent (a personal organisation per account; items by creator;
+  creator-less demo rows to the earliest account's organisation).
+
+**Alternatives considered:**
+
+- _Row-level security with the user's own token._ Would put the guarantee in
+  the database, but the app reads everything with a service-role client by
+  design (Decision #017's console, the webhook, notifications), so the
+  guarantee is made in one place instead: `forOrganization`, tested to put the
+  organisation in every query.
+- _Many organisations per person, with a switcher._ The right end state for
+  consultants and advisers; not needed yet, and the single unique constraint
+  that forbids it is the one thing to drop if it is built.
+- _Keep workspace-keyed data and add a "private" flag._ Leaves the default
+  wrong: a forgotten flag would again share someone's data.
+- _A separate migration to make `organization_id` `NOT NULL` now._ Postponed
+  until the new code has run for a while; a row with no organisation is
+  invisible to the new code, never visible to the wrong organisation.
+
+**Trade-offs, stated honestly:** items are shared by everyone in an
+organisation who has a role in that workspace (a colleague's field is visible
+to you); there is no per-item privacy inside an organisation. Because the
+database can no longer be read through the browser's own token, a future
+feature that wants client-side reads would need its own policies. The
+organisation screens (rename, ownership transfer, members overview) are not
+built; rename is one line of SQL (`docs/runbooks/organisations.md`).
+
+**Status:** Accepted. Migration 0018 must be applied (`docs/runbooks/apply-migrations.md`)
+before the code that uses it is deployed.
+
+---
+
+## Decision #020 — Prices, and how the weather-data licence is handled
+
+**Context:** The owner asked what would be convenient for buyers, and what
+to do about Open-Meteo's free tier being non-commercial, and delegated the
+choice ("I trust your judgment").
+
+**Chosen:**
+
+- **Prices** (tax-inclusive; `services/billing-service/src/prices.ts`):
+  Standard ₦7,500/month or ₦75,000/year; Premium ₦25,000/month or
+  ₦250,000/year; USD $9/$90 and $29/$290 only once USD is enabled on the
+  Paystack account and USD plan codes are configured; Enterprise by contact,
+  invoiced outside Paystack. A year costs ten months — the only discount.
+  **Launch with the four NGN plans.**
+- **Why:** local prices are set for local purchasing power rather than
+  converted from USD; Paystack takes the amount from the plan, so each price
+  is one Paystack plan; four numbers keep the pricing page simple. Paystack's
+  local fee (1.5% + ₦100) leaves about ₦7,290 and ₦24,525 per month; with
+  roughly $74/month of paid services (Open-Meteo Standard $29, Vercel Pro
+  $20, Supabase Pro $25) at an assumed ~₦1,550/$, that is covered by about 16
+  Standard or 5 Premium customers.
+- **Licence:** subscribe to Open-Meteo **Standard** ($29/month, 1M calls; the
+  app only calls the forecast and geocoding APIs, which it includes) and set
+  `OPEN_METEO_API_KEY`. With the key the app uses Open-Meteo's `customer-`
+  hosts; without it, nothing changes. Replacing the source was the
+  alternative (below).
+
+**Alternatives considered:**
+
+- _Replace Open-Meteo with a source that permits commercial use._ NASA POWER
+  already does but gives observations, not forecasts, so the forecast
+  workspaces (Weather, Construction, Logistics, Renewable Energy) would lose
+  their main feature. A paid plan is $29/month.
+- _Charge in USD only._ Simplest to price, but a poor fit for Nigerian
+  customers paying by local card or bank transfer, and it needs a USD
+  settlement account first.
+- _More tiers, or per-seat pricing._ Premature before there is any usage data;
+  the limits in `plans.ts` can be tuned without touching prices.
+- _A free trial._ Not decided; Paystack plans support it, but it is a pricing
+  question to settle with real usage in view.
+
+**Trade-offs, stated honestly:** the exchange-rate and cost figures are
+assumptions to check at launch, not quotes; VAT and income tax are not
+handled (an accountant's question); the paid Open-Meteo hosts were
+implemented from its published documentation and **have not been run with a
+real key**; and no customer can buy yet — there is no pricing page or upgrade
+button (`docs/runbooks/billing.md`, "Not built yet").
+
+**Status:** Accepted. Prices and launch plan to be revisited after the first
+paying customers.
