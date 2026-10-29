@@ -163,7 +163,10 @@ Start with `paystack-setup.md`; this is the same order in brief.
 2. **Open-Meteo licence** (above): subscribe, add `OPEN_METEO_API_KEY`.
 3. **Create the four plans in Paystack — test mode first**, and the settings
    in Vercel (`PAYSTACK_SECRET_KEY`, `PAYSTACK_PLAN_CODES`) — never in chat or
-   in a file in the repo. Leave `BILLING_ENABLED` unset for now.
+   in a file in the repo. Leave `BILLING_ENABLED` unset for now. **If you
+   already use Paystack for another project, add World Vitality as its own
+   business under the same login** (a business has one webhook URL, and yours
+   is taken) — see `paystack-setup.md`.
 4. **Point Paystack at the webhook:**
    `https://<your-domain>/api/paystack/webhook`. Paystack signs with the
    secret key; there is no separate webhook secret.

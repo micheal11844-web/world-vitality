@@ -10,15 +10,63 @@ use the dashboard's search box or Paystack's help centre
 
 ## What you need first
 
-- A Paystack account (sign up at <https://paystack.com>). **Test mode works
-  straight away** with no business verification. Charging real money
-  ("Live mode") needs your account to be activated, which means giving
-  Paystack your business details and documents — follow the dashboard's
-  go-live prompts when you get there. You do not need that for any step here.
+- A Paystack login. **If you already have one for another project, use it —
+  there is nothing to sign up for.** Read "You already use Paystack for
+  another project" below before touching any settings, because one setting is
+  shared and changing it would affect that project.
 - The Vercel project `world-vitality` (team `micheal6`).
 - The prices in `billing.md` ("The prices").
 
+## You already use Paystack for another project
+
+Your existing project's payments are live and working, so the aim is to
+add this app **without touching anything it relies on**. The one thing that
+is shared is easy to trip over: **a Paystack business has a single webhook
+URL** (one for test mode, one for live mode). It currently points at your
+other project. If World Vitality used the same business, there would be
+nowhere to send its payment events without redirecting the other project's.
+
+**Recommended: give World Vitality its own business under the same login.**
+Paystack lets one login manage several businesses, and each keeps its own
+API keys, webhook URL, plans, subscriptions, customers, settlement details
+and activation status (source:
+<https://support.paystack.com/en/articles/10643330>). Nothing in your
+existing business changes, and the two projects' payments never mix.
+
+1. Paystack Dashboard → click the arrow next to your business name and
+   Business ID (top left) → **Add a Business**.
+2. Choose **Duplicate an existing business** (it copies your compliance
+   details, which saves re-entering documents; the source must be in the same
+   country) or **Create a new business**.
+3. Enter the trading name (for example *World Vitality*), review, and
+   **Create Business**. You are switched into it; check the name at the top
+   left before every step below, because every key, plan and webhook setting
+   in this guide must be made **inside the World Vitality business**, not
+   your existing one.
+4. Test mode works in the new business **straight away** — do steps 1–5
+   below now. For **live** payments the new business must be reviewed and
+   activated by Paystack (even when duplicated), and you add payout details
+   for it; start that from its Compliance section whenever you like. It is
+   the only wait in the whole plan, and it does not block testing.
+
+(Payout can go to the same bank account as your other business, if you want
+the money in one place; that is a setting inside the new business.)
+
+**If you would rather stay on one business**, the cost is the shared webhook:
+you would have to keep one URL and make one project forward the other's
+events (or put a forwarding service in front of both). That means changing
+your working project, so this guide does not recommend it. For what it is
+worth, World Vitality ignores events that are not its own — an unknown plan
+or unknown customer is acknowledged and recorded as `ignored`, never acted
+on — so forwarding the other project's events *to* it would be harmless; the
+risk is on the other side.
+
+**Either way:** do not reuse a secret key by copying it between projects
+unless both genuinely use the same business, and never paste one into chat.
+
 ## 1. Get the test secret key
+
+(Make sure you are inside the **World Vitality business** — top left.)
 
 1. Paystack Dashboard → **Settings** → **API Keys & Webhooks**.
 2. Make sure you are looking at **API Configuration – Test Mode**, not Live.
@@ -83,8 +131,8 @@ you add yourself — I will not take it in chat.)
 
 ## 5. Point Paystack at the webhook
 
-Paystack Dashboard → **Settings** → **API Keys & Webhooks** → **Test Webhook
-URL**:
+In the World Vitality business: Paystack Dashboard → **Settings** → **API
+Keys & Webhooks** → **Test Webhook URL**:
 
 ```
 https://world-vitality.vercel.app/api/paystack/webhook
@@ -126,10 +174,14 @@ to buy:
 
 ## Going live (later)
 
-1. Activate the Paystack account (business details and documents).
-2. Repeat steps 1–2 and 5 in **Live mode**: the live secret key (`sk_live_…`),
-   the same four plans created again (live and test plans are separate, so
-   the codes differ), and the **Live Webhook URL**.
+1. Get the World Vitality business activated (its Compliance section;
+   Paystack reviews it, and you add payout details). If you skipped the
+   separate business and are sharing your existing one, activation is
+   already done — but see the webhook caveat above.
+2. In the **live** side of that business, repeat steps 1–2 and 5: the live
+   secret key (`sk_live_…`), the same four plans created again (live and
+   test plans are separate, so the codes differ), and the **Live Webhook
+   URL**.
 3. Replace `PAYSTACK_SECRET_KEY` and `PAYSTACK_PLAN_CODES` in Vercel with the
    live values and redeploy.
 4. Subscribe to Open-Meteo and set `OPEN_METEO_API_KEY` first
