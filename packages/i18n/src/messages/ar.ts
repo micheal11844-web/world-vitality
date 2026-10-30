@@ -413,6 +413,25 @@ export const ar: Messages = {
   "errors.deleteCancelSubscriptionFailed":
     "تعذّر علينا إلغاء اشتراكك لدى Paystack، لذلك لم يُحذف حسابك (وإلا لاستمر الخصم منك). يُرجى المحاولة مرة أخرى بعد قليل.",
 
+  // ---- organisation card (v96)
+  "settings.org.title": "مؤسستك",
+  "settings.org.owner": "أنت مالك هذه المؤسسة.",
+  "settings.org.member": "أنت عضو في هذه المؤسسة. مالكها هو من يديرها.",
+  "settings.org.nameLabel": "اسم المؤسسة",
+  "settings.org.nameHelp": "حتى {max} حرفًا. يظهر في تصدير بياناتك وفي أدوات الدعم لدينا.",
+  "settings.org.save": "حفظ اسم المؤسسة",
+  "settings.org.people.title": "الأشخاص في مؤسستك",
+  "settings.org.people.count":
+    "{count, plural, one {# شخص} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخص}}",
+  "settings.org.people.owner": "المالك",
+  "settings.org.people.member": "عضو",
+  "settings.org.people.you": "أنت",
+  "settings.org.people.hint": "لإضافة أشخاص أو إزالتهم، افتح مساحة عمل واختر الفريق.",
+  "settings.org.people.loadFailed": "تعذّر تحميل قائمة الأشخاص الآن. يُرجى المحاولة مرة أخرى.",
+  "errors.orgNameInvalid": "استخدم ما بين 1 و{max} حرفًا لاسم المؤسسة.",
+  "errors.orgRenameFailed": "تعذّر تغيير اسم مؤسستك. يُرجى المحاولة مرة أخرى.",
+  "errors.orgOwnerOnly": "مالك المؤسسة وحده يستطيع تغيير اسمها.",
+
   // ---- search place result line
   "search.placeDescription": "عرض الظروف الحالية",
 

@@ -429,6 +429,27 @@ export const es: Messages = {
   "errors.deleteCancelSubscriptionFailed":
     "No pudimos cancelar tu suscripción en Paystack, así que tu cuenta no se ha eliminado (de lo contrario se te seguiría cobrando). Inténtalo de nuevo en un momento.",
 
+  // ---- organisation card (v96)
+  "settings.org.title": "Tu organización",
+  "settings.org.owner": "Eres el propietario de esta organización.",
+  "settings.org.member": "Eres miembro de esta organización. Su propietario la gestiona.",
+  "settings.org.nameLabel": "Nombre de la organización",
+  "settings.org.nameHelp":
+    "Hasta {max} caracteres. Aparece en la exportación de tus datos y en nuestras herramientas de soporte.",
+  "settings.org.save": "Guardar nombre de la organización",
+  "settings.org.people.title": "Personas en tu organización",
+  "settings.org.people.count": "{count, plural, one {# persona} other {# personas}}",
+  "settings.org.people.owner": "Propietario",
+  "settings.org.people.member": "Miembro",
+  "settings.org.people.you": "tú",
+  "settings.org.people.hint":
+    "Para añadir o quitar personas, abre un espacio de trabajo y elige Equipo.",
+  "settings.org.people.loadFailed":
+    "No se pudo cargar la lista de personas ahora mismo. Inténtalo de nuevo.",
+  "errors.orgNameInvalid": "Usa entre 1 y {max} caracteres para el nombre de la organización.",
+  "errors.orgRenameFailed": "No se pudo cambiar el nombre de tu organización. Inténtalo de nuevo.",
+  "errors.orgOwnerOnly": "Solo el propietario de la organización puede cambiarle el nombre.",
+
   // ---- search place result line
   "search.placeDescription": "Ver las condiciones actuales",
 

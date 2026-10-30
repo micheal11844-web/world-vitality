@@ -395,3 +395,91 @@ test("counting members is confined to the organisation", async () => {
   assert.equal(await new SupabaseOrganizationData(client, ORG).countMembers(), 4);
   assert.ok(has(calls[0]!, "eq", "organization_id", ORG));
 });
+
+test("renaming writes the owner condition into the update itself and trims the name", async () => {
+  const { client, calls } = makeClient(() => ({ data: [{ id: ORG }] }));
+  const result = await new SupabaseOrganizationData(client, ORG).renameOrganization(
+    "owner-1",
+    "  Acme   Farms ",
+  );
+  assert.equal(result, "renamed");
+  assert.equal(calls.length, 1);
+  const call = calls[0]!;
+  assert.equal(call.table, "organizations");
+  assert.deepEqual(first(call, "update"), [{ name: "Acme Farms" }]);
+  assert.ok(has(call, "eq", "id", ORG));
+  assert.ok(has(call, "eq", "owner_id", "owner-1"), "the owner condition is on the write");
+});
+
+test("renaming by someone who is not the owner changes nothing and says so", async () => {
+  const { client } = makeClient(() => ({ data: [] }));
+  assert.equal(
+    await new SupabaseOrganizationData(client, ORG).renameOrganization("not-owner", "Acme"),
+    "not_owner",
+  );
+});
+
+test("an invalid name never reaches the database", async () => {
+  const { client, calls } = makeClient();
+  const data = new SupabaseOrganizationData(client, ORG);
+  assert.equal(await data.renameOrganization("owner-1", "   "), "invalid_name");
+  assert.equal(await data.renameOrganization("owner-1", "x".repeat(101)), "invalid_name");
+  assert.equal(calls.length, 0);
+});
+
+test("a rename database error is thrown, not reported as success", async () => {
+  const { client } = makeClient(() => ({ error: { message: "boom" } }));
+  await assert.rejects(
+    () => new SupabaseOrganizationData(client, ORG).renameOrganization("owner-1", "Acme"),
+    /Failed to rename organisation/,
+  );
+});
+
+test("listing people is confined to the organisation, owner first, owner with no role rows", async () => {
+  const { client, calls } = makeClient((call) => {
+    if (call.table === "organization_members") {
+      return {
+        data: [
+          { user_id: "m1", role: "member", joined_at: "2026-10-02" },
+          { user_id: "o1", role: "owner", joined_at: "2026-10-01" },
+        ],
+      };
+    }
+    if (call.table === "profiles") {
+      return {
+        data: [
+          { user_id: "o1", email: "owner@example.com", display_name: "Olu" },
+          { user_id: "m1", email: "member@example.com", display_name: null },
+        ],
+      };
+    }
+    return {
+      data: [
+        { user_id: "m1", workspace_id: "weather", role: "operational_user" },
+        { user_id: "m1", workspace_id: "agriculture", role: "operational_user" },
+        // a stray row for the owner must not be listed against them
+        { user_id: "o1", workspace_id: "agriculture", role: "admin_owner" },
+      ],
+    };
+  });
+  const people = await new SupabaseOrganizationData(client, ORG).listPeople();
+  assert.deepEqual(
+    people.map((p) => [p.userId, p.role, p.email, p.workspaces.map((w) => w.workspaceId)]),
+    [
+      ["o1", "owner", "owner@example.com", []],
+      ["m1", "member", "member@example.com", ["agriculture", "weather"]],
+    ],
+  );
+  for (const table of ["organization_members", "workspace_members"]) {
+    const call = onTable(calls, table)[0]!;
+    assert.ok(has(call, "eq", "organization_id", ORG), `${table} is filtered by organisation`);
+  }
+  const profileCall = onTable(calls, "profiles")[0]!;
+  assert.deepEqual(first(profileCall, "in"), ["user_id", ["m1", "o1"]]);
+});
+
+test("listing people for an organisation with nobody in it asks for nothing else", async () => {
+  const { client, calls } = makeClient(() => ({ data: [] }));
+  assert.deepEqual(await new SupabaseOrganizationData(client, ORG).listPeople(), []);
+  assert.equal(calls.length, 1);
+});

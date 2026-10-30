@@ -16,14 +16,18 @@ export {
   type GovernmentNgosLocation,
 } from "./account.js";
 export {
+  MAX_ORGANIZATION_NAME_LENGTH,
   NoOrganizationError,
   OrganizationHasMembersError,
   emptyOrganizationData,
+  normaliseOrganizationName,
   resolveWorkspaceMembership,
   type JoinOrganizationResult,
   type OrganizationData,
   type OrganizationMembership,
+  type OrganizationPerson,
   type OrganizationRole,
+  type RenameOrganizationResult,
 } from "./organizations.js";
 export { buildUserDataExport, type UserDataExport } from "./data-export.js";
 export {

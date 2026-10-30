@@ -425,6 +425,25 @@ export const en = {
   "errors.deleteCancelSubscriptionFailed":
     "We couldn’t cancel your subscription with Paystack, so your account has not been deleted (otherwise you would keep being charged). Please try again in a moment.",
 
+  // ---- organisation card (v96)
+  "settings.org.title": "Your organisation",
+  "settings.org.owner": "You own this organisation.",
+  "settings.org.member": "You’re a member of this organisation. Its owner manages it.",
+  "settings.org.nameLabel": "Organisation name",
+  "settings.org.nameHelp":
+    "Up to {max} characters. It appears in your data export and in our support tools.",
+  "settings.org.save": "Save organisation name",
+  "settings.org.people.title": "People in your organisation",
+  "settings.org.people.count": "{count, plural, one {# person} other {# people}}",
+  "settings.org.people.owner": "Owner",
+  "settings.org.people.member": "Member",
+  "settings.org.people.you": "you",
+  "settings.org.people.hint": "To add or remove people, open a workspace and choose Team.",
+  "settings.org.people.loadFailed": "Couldn’t load the list of people just now. Please try again.",
+  "errors.orgNameInvalid": "Use between 1 and {max} characters for the organisation name.",
+  "errors.orgRenameFailed": "Couldn’t rename your organisation. Please try again.",
+  "errors.orgOwnerOnly": "Only the owner of the organisation can rename it.",
+
   // ---- search place result line
   "search.placeDescription": "See current conditions",
 

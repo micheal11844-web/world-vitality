@@ -18,10 +18,18 @@ import { personaLabel, roleLabel, workspaceName } from "../../lib/i18n/labels";
 import { AppBrand } from "../app-brand";
 import { InstallCard } from "./install-card";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
-import { updateDisplayNameAction, deleteAccountAction } from "../../lib/account-actions";
+import {
+  updateDisplayNameAction,
+  deleteAccountAction,
+  renameOrganizationAction,
+} from "../../lib/account-actions";
 import { clearHomePlaceAction } from "../../lib/onboarding-actions";
 import { saveNotificationSettingsAction } from "../../lib/notification-actions";
-import { MAX_DISPLAY_NAME_LENGTH, DELETE_CONFIRMATION_WORD } from "../../lib/account-constants";
+import {
+  MAX_DISPLAY_NAME_LENGTH,
+  MAX_ORGANIZATION_NAME_LENGTH,
+  DELETE_CONFIRMATION_WORD,
+} from "../../lib/account-constants";
 
 export interface SettingsViewProps {
   email: string;
@@ -32,6 +40,22 @@ export interface SettingsViewProps {
   /** Home place chosen in onboarding, if any. */
   homeLabel: string | null;
   onboarded: boolean;
+  /**
+   * The person's organisation. `people` is the owner's overview — empty for
+   * a member (who is never shown it), `null` when it could not be loaded.
+   */
+  organisation: {
+    name: string;
+    isOwner: boolean;
+    people: Array<{
+      userId: string;
+      email: string;
+      displayName: string | null;
+      isOwner: boolean;
+      isYou: boolean;
+      workspaces: Array<{ workspaceId: string; role: string }>;
+    }> | null;
+  } | null;
   /** `null` while billing is switched off (no card); `plan: null` when it is on but the plan couldn't be read. */
   billing: { plan: "basic" | "standard" | "premium" | "enterprise" | null } | null;
   /** `null` when the settings couldn't be loaded — the card then says so instead of guessing. */
@@ -54,6 +78,7 @@ export function SettingsView({
   homeLabel,
   onboarded,
   billing,
+  organisation,
   notificationSettings,
   memberships,
 }: SettingsViewProps) {
@@ -97,6 +122,24 @@ export function SettingsView({
     } else {
       setNotifStatus("error");
       setNotifError(result.error);
+    }
+  }
+
+  const [orgName, setOrgName] = useState(organisation?.name ?? "");
+  const [orgStatus, setOrgStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [orgError, setOrgError] = useState<string | undefined>();
+
+  async function saveOrgName(e: React.FormEvent) {
+    e.preventDefault();
+    setOrgStatus("saving");
+    setOrgError(undefined);
+    const result = await renameOrganizationAction(orgName);
+    if (result.ok) {
+      setOrgName(result.name ?? orgName);
+      setOrgStatus("saved");
+    } else {
+      setOrgStatus("error");
+      setOrgError(result.error);
     }
   }
 
@@ -348,6 +391,113 @@ export function SettingsView({
             </form>
           </Card>
         </div>
+
+        {organisation && (
+          <Card>
+            <div style={sectionGap}>
+              <Text variant="sectionTitle" as="h2">
+                {t("settings.org.title")}
+              </Text>
+              {organisation.isOwner ? (
+                <>
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                    {t("settings.org.owner")}
+                  </Text>
+                  <form onSubmit={saveOrgName} style={sectionGap}>
+                    <Input
+                      label={t("settings.org.nameLabel")}
+                      value={orgName}
+                      maxLength={MAX_ORGANIZATION_NAME_LENGTH}
+                      onChange={(e) => {
+                        setOrgName(e.target.value);
+                        setOrgStatus("idle");
+                      }}
+                      error={orgStatus === "error" ? orgError : undefined}
+                      helperText={t("settings.org.nameHelp", { max: MAX_ORGANIZATION_NAME_LENGTH })}
+                    />
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}
+                    >
+                      <Button type="submit" loading={orgStatus === "saving"}>
+                        {t("settings.org.save")}
+                      </Button>
+                      {orgStatus === "saved" && (
+                        <Text
+                          variant="caption"
+                          role="status"
+                          style={{ color: "var(--wv-text-secondary)" }}
+                        >
+                          {t("common.saved")}
+                        </Text>
+                      )}
+                    </div>
+                  </form>
+                  <Text variant="sectionTitle" as="h3">
+                    {t("settings.org.people.title")}
+                    {organisation.people
+                      ? ` (${t("settings.org.people.count", { count: organisation.people.length })})`
+                      : ""}
+                  </Text>
+                  {organisation.people === null ? (
+                    <Text variant="body" role="alert" style={{ color: "var(--wv-critical)" }}>
+                      {t("settings.org.people.loadFailed")}
+                    </Text>
+                  ) : (
+                    <ul
+                      style={{
+                        margin: 0,
+                        padding: 0,
+                        listStyle: "none",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "var(--wv-space-sm)",
+                        fontFamily: "var(--wv-font-sans)",
+                      }}
+                    >
+                      {organisation.people.map((p) => (
+                        <li key={p.userId}>
+                          <span dir="ltr">{p.email}</span>
+                          {p.displayName ? ` — ${p.displayName}` : ""}{" "}
+                          <span style={{ color: "var(--wv-text-secondary)" }}>
+                            (
+                            {p.isOwner
+                              ? t("settings.org.people.owner")
+                              : t("settings.org.people.member")}
+                            {p.isYou ? `, ${t("settings.org.people.you")}` : ""})
+                          </span>
+                          {p.workspaces.length > 0 && (
+                            <div
+                              style={{ color: "var(--wv-text-secondary)", fontSize: "0.875rem" }}
+                            >
+                              {p.workspaces
+                                .map(
+                                  (w) =>
+                                    `${workspaceName(w.workspaceId, t)} — ${roleLabel(w.role, t)}`,
+                                )
+                                .join("; ")}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+                    {t("settings.org.people.hint")}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text variant="body" style={{ fontWeight: 600 }}>
+                    {organisation.name}
+                  </Text>
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                    {t("settings.org.member")}
+                  </Text>
+                </>
+              )}
+            </div>
+          </Card>
+        )}
 
         {billing && (
           <Card>

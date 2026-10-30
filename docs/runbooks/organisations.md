@@ -101,7 +101,10 @@ union all select 'locations', id from public.government_ngos_locations where org
 
 Staff screens are read-only on customer data by design, so these are SQL.
 
-**Rename an organisation** (there is no screen yet):
+**Rename an organisation.** The owner can do this themselves: Settings →
+"Your organisation" → "Save organisation name" (1–100 characters, owner
+only; a member sees the name but cannot change it). Staff only need SQL if
+the owner cannot reach the screen:
 
 ```sql
 update public.organizations set name = 'Acme Farms' where id = '<organisation id>';
@@ -125,9 +128,21 @@ for rows that predate 0018 and have no creator. Give it an organisation:
 update public.fields set organization_id = '<organisation id>' where id = '<field id>';
 ```
 
+## What the organisation card shows
+
+Settings has a "Your organisation" card (v96). The **owner** sees the name
+(editable), and the list of people in the organisation: each person's email
+and name, whether they are the owner, and, for members, their workspace roles.
+A **member** sees the organisation's name and a note that the owner manages
+it; they do not see the people list. If the people list cannot be loaded the
+card says so and still lets the owner rename. Adding and removing people stays
+where it was: open a workspace and choose Team.
+
 ## Not built
 
-- Organisation screens (rename, members overview, ownership transfer).
+- Ownership transfer (hand an organisation to someone else). It needs an
+  atomic database function and a decision on whose plan and subscription
+  follow the organisation, so it is not built yet.
 - More than one organisation per person; an organisation switcher.
 - A per-workspace **workspaces** limit: the plan catalogue defines
   `workspaces`, but only three workspaces hold saved items, so it is not

@@ -6,7 +6,13 @@ import type {
   InsuranceProperty,
   WorkspaceMemberSummary,
 } from "./account.js";
-import type { OrganizationData } from "./organizations.js";
+import {
+  normaliseOrganizationName,
+  type OrganizationData,
+  type OrganizationPerson,
+  type OrganizationRole,
+  type RenameOrganizationResult,
+} from "./organizations.js";
 import type { Role } from "./roles.js";
 
 const FIELD_COLUMNS = "id, workspace_id, name, latitude, longitude, created_by, created_at";
@@ -622,6 +628,81 @@ export class SupabaseOrganizationData implements OrganizationData {
       throw new Error(`Failed to count organisation members: ${error.message}`);
     }
     return count ?? 0;
+  }
+
+  async listPeople(): Promise<OrganizationPerson[]> {
+    const { data: memberRows, error: membersError } = await this.client
+      .from("organization_members")
+      .select("user_id, role, joined_at")
+      .eq("organization_id", this.organizationId)
+      .order("joined_at", { ascending: true });
+    if (membersError) {
+      throw new Error(`Failed to load organisation people: ${membersError.message}`);
+    }
+    const members = memberRows ?? [];
+    if (members.length === 0) return [];
+    const userIds = members.map((m) => m.user_id as string);
+
+    const { data: profiles, error: profilesError } = await this.client
+      .from("profiles")
+      .select("user_id, email, display_name")
+      .in("user_id", userIds);
+    if (profilesError) {
+      throw new Error(`Failed to load profiles for organisation people: ${profilesError.message}`);
+    }
+    const { data: roleRows, error: rolesError } = await this.client
+      .from("workspace_members")
+      .select("user_id, workspace_id, role")
+      .eq("organization_id", this.organizationId);
+    if (rolesError) {
+      throw new Error(`Failed to load organisation roles: ${rolesError.message}`);
+    }
+
+    const profileById = new Map((profiles ?? []).map((p) => [p.user_id as string, p]));
+    const rolesByUser = new Map<string, Array<{ workspaceId: string; role: Role }>>();
+    for (const row of roleRows ?? []) {
+      const list = rolesByUser.get(row.user_id as string) ?? [];
+      list.push({ workspaceId: row.workspace_id as string, role: row.role as Role });
+      rolesByUser.set(row.user_id as string, list);
+    }
+
+    const people = members.map((m): OrganizationPerson => {
+      const profile = profileById.get(m.user_id as string);
+      const isOwner = m.role === "owner";
+      return {
+        userId: m.user_id as string,
+        email: (profile?.email as string | undefined) ?? "(no profile found)",
+        displayName: (profile?.display_name as string | null | undefined) ?? null,
+        role: m.role as OrganizationRole,
+        joinedAt: (m.joined_at as string | null) ?? null,
+        // The owner is admin everywhere without role rows; list none for them.
+        workspaces: isOwner
+          ? []
+          : (rolesByUser.get(m.user_id as string) ?? []).sort((a, b) =>
+              a.workspaceId.localeCompare(b.workspaceId),
+            ),
+      };
+    });
+    // Owner first; everyone else in the order they joined (the query's order).
+    return [
+      ...people.filter((p) => p.role === "owner"),
+      ...people.filter((p) => p.role !== "owner"),
+    ];
+  }
+
+  async renameOrganization(actingUserId: string, name: string): Promise<RenameOrganizationResult> {
+    const tidy = normaliseOrganizationName(name);
+    if (!tidy) return "invalid_name";
+    const { data, error } = await this.client
+      .from("organizations")
+      .update({ name: tidy })
+      .eq("id", this.organizationId)
+      .eq("owner_id", actingUserId)
+      .select("id");
+    if (error) {
+      throw new Error(`Failed to rename organisation ${this.organizationId}: ${error.message}`);
+    }
+    return Array.isArray(data) && data.length > 0 ? "renamed" : "not_owner";
   }
 }
 

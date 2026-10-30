@@ -43,6 +43,33 @@ export default async function SettingsPage() {
   ]);
   logTelemetry.event("workspace_viewed", { workspace: "settings" });
 
+  // The organisation card: its name for everyone, and — for the owner only —
+  // the people in it. If the people cannot be read the card says so rather
+  // than showing an empty list that looks like "nobody".
+  let organisation: SettingsViewProps["organisation"] = null;
+  if (access) {
+    const isOwner = access.organization.role === "owner";
+    let people: NonNullable<SettingsViewProps["organisation"]>["people"] = [];
+    if (isOwner) {
+      try {
+        people = (
+          await account.forOrganization(access.organization.organizationId).listPeople()
+        ).map((p) => ({
+          userId: p.userId,
+          email: p.email,
+          displayName: p.displayName,
+          isOwner: p.role === "owner",
+          isYou: p.userId === session.userId,
+          workspaces: p.workspaces,
+        }));
+      } catch (err) {
+        logApplication.error("settings_organisation_people_failed", err);
+        people = null;
+      }
+    }
+    organisation = { name: access.organization.name, isOwner, people };
+  }
+
   // The "Plan & billing" card exists only while billing is switched on. The
   // plan shown is the organisation owner's; if it cannot be read the card
   // still links to the plan page, which says so itself.
@@ -82,6 +109,7 @@ export default async function SettingsPage() {
       homeLabel={prefs?.homePlace ? homePlaceLabel(prefs.homePlace) : null}
       onboarded={Boolean(prefs?.onboardedAt)}
       billing={billing}
+      organisation={organisation}
       notificationSettings={
         notificationSettings
           ? {

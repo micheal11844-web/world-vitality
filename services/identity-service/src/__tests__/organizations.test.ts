@@ -1,9 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  MAX_ORGANIZATION_NAME_LENGTH,
   NoOrganizationError,
   OrganizationHasMembersError,
   emptyOrganizationData,
+  normaliseOrganizationName,
   resolveWorkspaceMembership,
   type OrganizationMembership,
 } from "../organizations.js";
@@ -120,4 +122,27 @@ test("the owner-still-has-members error says how many, with correct grammar", ()
     "Your organisation still has 3 other members.",
   );
   assert.equal(new OrganizationHasMembersError(2).otherMembers, 2);
+});
+
+test("organisation names are tidied and bounded the way the database requires", () => {
+  assert.equal(normaliseOrganizationName("  Acme   Farms \n"), "Acme Farms");
+  assert.equal(normaliseOrganizationName("Ibadan\tCo-op"), "Ibadan Co-op");
+  assert.equal(normaliseOrganizationName("Ünïcode ✓ ok"), "Ünïcode ✓ ok");
+  assert.equal(normaliseOrganizationName(""), null);
+  assert.equal(normaliseOrganizationName("   \n "), null);
+  assert.equal(
+    normaliseOrganizationName("a".repeat(MAX_ORGANIZATION_NAME_LENGTH)),
+    "a".repeat(100),
+  );
+  assert.equal(normaliseOrganizationName("a".repeat(MAX_ORGANIZATION_NAME_LENGTH + 1)), null);
+  assert.equal(normaliseOrganizationName("bad\u0000name"), null);
+  assert.equal(normaliseOrganizationName("bell\u0007"), null);
+  // not a string at all
+  assert.equal(normaliseOrganizationName(undefined as unknown as string), null);
+});
+
+test("the empty handle lists nobody and refuses to rename", async () => {
+  const data = emptyOrganizationData();
+  assert.deepEqual(await data.listPeople(), []);
+  await assert.rejects(() => data.renameOrganization("u1", "Acme"), NoOrganizationError);
 });

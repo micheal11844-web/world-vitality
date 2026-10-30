@@ -32,6 +32,41 @@ import type { Role } from "./roles.js";
 
 export type OrganizationRole = "owner" | "member";
 
+/** The database allows 1–100 characters (`organizations.name`). */
+export const MAX_ORGANIZATION_NAME_LENGTH = 100;
+
+/**
+ * Tidies a typed organisation name: trims, and turns any run of whitespace
+ * (including line breaks and tabs) into one space. Returns `null` when what
+ * is left is empty, too long, or contains control characters — the caller
+ * shows its own message. Pure, so the screen and the service agree.
+ */
+export function normaliseOrganizationName(raw: string): string | null {
+  if (typeof raw !== "string") return null;
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(raw)) return null;
+  const name = raw.replace(/\s+/g, " ").trim();
+  if (name.length < 1 || name.length > MAX_ORGANIZATION_NAME_LENGTH) return null;
+  return name;
+}
+
+/** One person in an organisation, for the owner's overview. */
+export interface OrganizationPerson {
+  userId: string;
+  email: string;
+  displayName: string | null;
+  role: OrganizationRole;
+  joinedAt: string | null;
+  /**
+   * The workspace roles they were given. Empty for the owner, who is
+   * `admin_owner` in every workspace without any role rows.
+   */
+  workspaces: Array<{ workspaceId: string; role: Role }>;
+}
+
+/** `renamed`; `invalid_name` (empty, too long, control characters); `not_owner` (changed nothing). */
+export type RenameOrganizationResult = "renamed" | "invalid_name" | "not_owner";
+
 export interface OrganizationMembership {
   organizationId: string;
   name: string;
@@ -199,6 +234,17 @@ export interface OrganizationData {
   removeMember(workspaceId: string, userId: string): Promise<void>;
   /** People in the organisation — what the plan's "seats" limit counts. */
   countMembers(): Promise<number>;
+  /**
+   * Everyone in the organisation with the workspace roles they hold, owner
+   * first. For the owner's overview; callers must only show it to the owner.
+   */
+  listPeople(): Promise<OrganizationPerson[]>;
+  /**
+   * Renames the organisation. `actingUserId` must be its owner: the owner
+   * condition is part of the write itself (`WHERE id = … AND owner_id = …`),
+   * so a caller that got the check wrong still cannot rename someone else's.
+   */
+  renameOrganization(actingUserId: string, name: string): Promise<RenameOrganizationResult>;
 }
 
 /** Thrown by the empty handle's writes: there is no organisation to write into. */
@@ -238,6 +284,8 @@ export function emptyOrganizationData(): OrganizationData {
     addMember: refuse("add a member"),
     removeMember: refuse("remove a member"),
     countMembers: async () => 0,
+    listPeople: async () => [],
+    renameOrganization: refuse("rename the organisation"),
   };
 }
 

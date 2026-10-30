@@ -437,6 +437,27 @@ export const fr: Messages = {
   "errors.deleteCancelSubscriptionFailed":
     "Nous n’avons pas pu résilier votre abonnement auprès de Paystack ; votre compte n’a donc pas été supprimé (sinon vous continueriez à être débité). Réessayez dans un instant.",
 
+  // ---- organisation card (v96)
+  "settings.org.title": "Votre organisation",
+  "settings.org.owner": "Vous êtes le propriétaire de cette organisation.",
+  "settings.org.member": "Vous êtes membre de cette organisation. Son propriétaire la gère.",
+  "settings.org.nameLabel": "Nom de l’organisation",
+  "settings.org.nameHelp":
+    "Jusqu’à {max} caractères. Il apparaît dans l’export de vos données et dans nos outils d’assistance.",
+  "settings.org.save": "Enregistrer le nom de l’organisation",
+  "settings.org.people.title": "Personnes dans votre organisation",
+  "settings.org.people.count": "{count, plural, one {# personne} other {# personnes}}",
+  "settings.org.people.owner": "Propriétaire",
+  "settings.org.people.member": "Membre",
+  "settings.org.people.you": "vous",
+  "settings.org.people.hint":
+    "Pour ajouter ou retirer des personnes, ouvrez un espace de travail et choisissez Équipe.",
+  "settings.org.people.loadFailed":
+    "Impossible de charger la liste des personnes pour le moment. Réessayez.",
+  "errors.orgNameInvalid": "Utilisez entre 1 et {max} caractères pour le nom de l’organisation.",
+  "errors.orgRenameFailed": "Impossible de renommer votre organisation. Réessayez.",
+  "errors.orgOwnerOnly": "Seul le propriétaire de l’organisation peut la renommer.",
+
   // ---- search place result line
   "search.placeDescription": "Voir les conditions actuelles",
 

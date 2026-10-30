@@ -1,8 +1,13 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { OrganizationHasMembersError } from "@world-vitality/identity-service";
+import {
+  MAX_ORGANIZATION_NAME_LENGTH,
+  OrganizationHasMembersError,
+  normaliseOrganizationName,
+} from "@world-vitality/identity-service";
 import { getAccountService } from "./account";
+import { getAccessContext } from "./get-access-context";
 import { cancelPaystackSubscriptionBeforeDeletion } from "./billing-cancel";
 import { getSessionUserId } from "./get-session-user-id";
 import { tServer } from "./i18n/server";
@@ -107,4 +112,55 @@ export async function deleteAccountAction(confirmation: string): Promise<Account
   logSecurity.info("account_deleted", { userId });
   logTelemetry.event("account_deleted");
   return { ok: true };
+}
+
+export interface RenameOrganizationResult extends AccountActionResult {
+  /** The name as saved (tidied), on success. */
+  name?: string;
+}
+
+/**
+ * Renames the signed-in person's organisation. Owner only, and enforced
+ * twice: here from the session's own organisation (never an id from the
+ * browser), and again inside the database write (`WHERE owner_id = …`), so
+ * a mistake in this check still cannot rename someone else's organisation.
+ */
+export async function renameOrganizationAction(name: string): Promise<RenameOrganizationResult> {
+  const tidy = normaliseOrganizationName(name);
+  if (!tidy) {
+    return {
+      ok: false,
+      error: await tServer("errors.orgNameInvalid", { max: MAX_ORGANIZATION_NAME_LENGTH }),
+    };
+  }
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return { ok: false, error: await tServer("errors.sessionExpired") };
+  }
+  try {
+    const access = await getAccessContext();
+    if (!access || access.organization.role !== "owner" || access.organization.ownerId !== userId) {
+      return { ok: false, error: await tServer("errors.orgOwnerOnly") };
+    }
+    const result = await getAccountService()
+      .forOrganization(access.organization.organizationId)
+      .renameOrganization(userId, tidy);
+    if (result === "not_owner") {
+      return { ok: false, error: await tServer("errors.orgOwnerOnly") };
+    }
+    if (result === "invalid_name") {
+      return {
+        ok: false,
+        error: await tServer("errors.orgNameInvalid", { max: MAX_ORGANIZATION_NAME_LENGTH }),
+      };
+    }
+    logSecurity.info("organization_renamed", {
+      userId,
+      organizationId: access.organization.organizationId,
+    });
+    return { ok: true, name: tidy };
+  } catch (err) {
+    logSecurity.error("organization_rename_failed", err, { userId });
+    return { ok: false, error: await tServer("errors.orgRenameFailed") };
+  }
 }
