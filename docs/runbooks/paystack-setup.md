@@ -126,6 +126,19 @@ is the one reasonable exception), and never paste one into chat.
   above touch it.
 - **When in doubt, stop and ask me** — and never paste a key into chat.
 
+## 0. Which business am I in? (the gate)
+
+Before steps 1–5, read the business name at the top left of the Paystack
+dashboard and the **Test Webhook URL** (Settings → API Keys & Webhooks, Test
+mode). Then:
+
+- **World Vitality's own business** → go ahead.
+- **Your existing business, and its Test Webhook URL is empty** → fine for
+  test mode only (see "If Add a Business is not available" above). Do not
+  touch Live mode or Settings → Preferences.
+- **Your existing business, and its Test Webhook URL already holds an
+  address** → stop. Something of yours is using it.
+
 ## 1. Get the test secret key
 
 (Make sure you are inside the **World Vitality business** — top left.)
@@ -174,16 +187,19 @@ here even though Paystack calls it "Annually" — that is how the app reads it.
 
 ## 4. Add the settings in Vercel
 
-Vercel → project **world-vitality** → **Settings** → **Environment
-Variables**. Add, for **Production** (and Preview too if you want to test
-there):
+Vercel → project **world-vitality** (team `micheal6`) → **Settings** →
+**Environment Variables**. Add, for **Production** only (the webhook points at
+the live site, so Preview has no use for them):
 
 | Name | Value | Notes |
 | --- | --- | --- |
 | `PAYSTACK_SECRET_KEY` | the `sk_test_…` key from step 1 | Tick **Sensitive** so it cannot be read back |
 | `PAYSTACK_PLAN_CODES` | the one-line JSON from step 3 | Not secret |
 
-Do **not** add `BILLING_ENABLED` yet. Environment variables only take
+Subscribing also needs `SUPABASE_AUTH_REDIRECT_URL`, which gives Paystack the
+address to send people back to — it is already set (it is what the sign-in
+emails use), so there is nothing to add for it. Do **not** add
+`BILLING_ENABLED` yet. Environment variables only take
 effect on a new deployment: after saving, redeploy (Deployments → the latest
 → ⋯ → Redeploy), or push any change.
 
