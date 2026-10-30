@@ -256,6 +256,8 @@ test-mode payment. If one is wrong, the fix is small and local.
 - The checkout request (`startCheckout`) is accepted: Paystack's
   initialise-transaction call takes `plan` and ignores `amount` when `plan`
   is set. We send a placeholder `amount`; confirm Paystack takes the plan's.
+  (Paystack's reference lists `amount` as required and says `plan` "would
+  invalidate the value provided in amount", which is why we send one.)
 - The events arrive with the fields the reader expects: `subscription.create`
   has `data.subscription_code`, `data.plan.plan_code`,
   `data.customer.{customer_code,email}`, `data.next_payment_date`;
@@ -273,6 +275,37 @@ test-mode payment. If one is wrong, the fix is small and local.
 Anything the reader does not recognise is acknowledged and recorded as
 `ignored` with a reason in `billing_events`, so a wrong guess shows up
 there rather than as an error.
+
+### Checked against Paystack's published documentation (2026-10-31)
+
+Read from <https://paystack.com/docs/api/subscription/>,
+<https://paystack.com/docs/api/transaction/> and
+<https://paystack.com/docs/payments/webhooks/> — documentation only, still no
+call to the real service.
+
+- **Matches what the app sends and reads:** `POST /transaction/initialize`
+  (`email`, `amount`, `plan`, `currency`, `callback_url`; returns
+  `data.authorization_url` and `data.reference`); `GET /subscription/:code`
+  (`status`, `email_token`, `next_payment_date`); `POST /subscription/disable`
+  (`code` + `token`); `GET /subscription/:code/manage/link` (`data.link`);
+  the `x-paystack-signature` header (HMAC SHA-512 of the body with the secret
+  key); the event names `subscription.create`, `subscription.not_renew`,
+  `subscription.disable`, `invoice.payment_failed`, `charge.success`.
+- **Not stated by the documentation, so confirmed only by the first test
+  payment:** the full list of subscription `status` values (only `active` is
+  shown; the app treats `non-renewing`, `cancelled`, `completed` and
+  `complete` as already stopped, and anything else as live, which fails safe);
+  whether `metadata` may be sent as an object (the reference types it as a
+  string; the app sends an object and does not read it back, so a rejection
+  would show as a failed checkout and is a one-line fix); the manage-link path
+  (shown with a trailing slash in the heading and without it in the example;
+  the app omits it).
+- **Webhook delivery:** the app relies on the signature, not on source
+  addresses. Test-mode webhooks are retried hourly for 72 hours; live ones
+  every 3 minutes for the first four tries, then hourly.
+- **Events the app records but does not act on:** `invoice.create`,
+  `invoice.update`, `subscription.expiring_cards`. Renewals arrive as
+  `charge.success`, which is handled.
 
 ## Not built yet
 
