@@ -12,6 +12,8 @@ import { logSecurity } from "../../../../lib/logger";
 export interface TeamActionResult {
   ok: boolean;
   error?: string;
+  /** The error is a plan limit: the form offers a "See plans" link. */
+  upgrade?: boolean;
 }
 
 const VALID_ROLES: Role[] = [
@@ -55,7 +57,7 @@ export async function inviteMemberAction(
     getOrganizationData(membership),
   );
   if (limitMessage) {
-    return { ok: false, error: limitMessage };
+    return { ok: false, error: limitMessage, upgrade: true };
   }
 
   try {

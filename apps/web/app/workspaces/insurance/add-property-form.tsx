@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createPropertyAction } from "./property-actions";
+import { UpgradeLink } from "../../upgrade-link";
 
 /**
  * "Add an insured property" form (BUILD_PLAN "STAGE — INSURANCE
@@ -21,12 +22,14 @@ export function AddPropertyForm() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [upgrade, setUpgrade] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setUpgrade(false);
     setSuccess(null);
     const lat = Number(latitude);
     const lon = Number(longitude);
@@ -40,6 +43,7 @@ export function AddPropertyForm() {
         setLongitude("");
       } else {
         setError(result.error ?? "Failed to add property.");
+        setUpgrade(Boolean(result.upgrade));
       }
     });
   }
@@ -108,6 +112,7 @@ export function AddPropertyForm() {
           style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}
         >
           {error}
+          {upgrade && <UpgradeLink />}
         </Text>
       )}
       {success && (

@@ -32,6 +32,8 @@ export interface SettingsViewProps {
   /** Home place chosen in onboarding, if any. */
   homeLabel: string | null;
   onboarded: boolean;
+  /** `null` while billing is switched off (no card); `plan: null` when it is on but the plan couldn't be read. */
+  billing: { plan: "basic" | "standard" | "premium" | "enterprise" | null } | null;
   /** `null` when the settings couldn't be loaded — the card then says so instead of guessing. */
   notificationSettings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean } | null;
   memberships: Array<{
@@ -51,6 +53,7 @@ export function SettingsView({
   personaId,
   homeLabel,
   onboarded,
+  billing,
   notificationSettings,
   memberships,
 }: SettingsViewProps) {
@@ -346,6 +349,26 @@ export function SettingsView({
           </Card>
         </div>
 
+        {billing && (
+          <Card>
+            <div style={sectionGap}>
+              <Text variant="sectionTitle" as="h2">
+                {t("settings.billing.title")}
+              </Text>
+              {billing.plan && (
+                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                  {t("settings.billing.body", { plan: t(`billing.plan.${billing.plan}`) })}
+                </Text>
+              )}
+              <div>
+                <ButtonLink href="/billing" variant="secondary">
+                  {t("settings.billing.link")}
+                </ButtonLink>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <Card>
           <div style={sectionGap}>
             <Text variant="sectionTitle" as="h2">
@@ -408,6 +431,11 @@ export function SettingsView({
               <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                 {t("settings.delete.body")}
               </Text>
+              {billing && (
+                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                  {t("settings.delete.billingNote")}
+                </Text>
+              )}
               <Input
                 label={t("settings.delete.confirmLabel", { word: DELETE_CONFIRMATION_WORD })}
                 value={confirmText}

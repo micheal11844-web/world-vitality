@@ -4,8 +4,10 @@ import { logApplication, logTelemetry } from "../../lib/logger";
 import { homePlaceLabel, type NotificationSettings } from "@world-vitality/identity-service";
 import { getMyPreferences } from "../../lib/preferences";
 import { getAccessContext } from "../../lib/get-access-context";
+import { billingEnabled, getBillingStore } from "../../lib/billing";
+import { summariseBilling } from "@world-vitality/billing-service";
 import { WORKSPACE_LINKS } from "../workspaces/workspace-nav";
-import { SettingsView } from "./settings-view";
+import { SettingsView, type SettingsViewProps } from "./settings-view";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,24 @@ export default async function SettingsPage() {
   ]);
   logTelemetry.event("workspace_viewed", { workspace: "settings" });
 
+  // The "Plan & billing" card exists only while billing is switched on. The
+  // plan shown is the organisation owner's; if it cannot be read the card
+  // still links to the plan page, which says so itself.
+  let billing: SettingsViewProps["billing"] = null;
+  if (billingEnabled()) {
+    billing = { plan: null };
+    try {
+      const ownerId = access?.organization.ownerId ?? session.userId;
+      const summary = summariseBilling(
+        await getBillingStore().getSubscription(ownerId),
+        new Date(),
+      );
+      billing = { plan: summary.plan };
+    } catch (err) {
+      logApplication.error("settings_billing_summary_failed", err);
+    }
+  }
+
   // The owner of an organisation is admin in every workspace without having
   // a role row for each, so list them all; a member sees the roles they were
   // given.
@@ -61,6 +81,7 @@ export default async function SettingsPage() {
       personaId={prefs?.persona ?? null}
       homeLabel={prefs?.homePlace ? homePlaceLabel(prefs.homePlace) : null}
       onboarded={Boolean(prefs?.onboardedAt)}
+      billing={billing}
       notificationSettings={
         notificationSettings
           ? {

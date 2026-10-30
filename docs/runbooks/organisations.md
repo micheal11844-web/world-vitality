@@ -68,6 +68,9 @@ own work.)
   the Team page first. Deleting the account then deletes the organisation's
   saved items too. A member deleting their account leaves the organisation
   and their comments go; items they created stay with the organisation.
+- With billing on, an owner's Paystack subscription is cancelled first, and
+  the account is left alone if that cannot be confirmed
+  (`docs/runbooks/billing.md`).
 
 ## Looking at it in SQL (read-only)
 

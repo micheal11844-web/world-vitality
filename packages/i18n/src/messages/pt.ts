@@ -341,6 +341,91 @@ export const pt: Messages = {
   "errors.deleteOrganizationHasMembers":
     "Sua organização ainda tem outros membros ({count}). Remova-os primeiro na página “Equipe” e depois exclua sua conta.",
 
+  // ---- plan & billing (v95)
+  "billing.title": "Plano e cobrança",
+  "billing.back": "Voltar às configurações",
+  "billing.seePlans": "Ver planos",
+  "billing.plan.basic": "Básico",
+  "billing.plan.standard": "Padrão",
+  "billing.plan.premium": "Premium",
+  "billing.plan.enterprise": "Enterprise",
+  "billing.current.title": "Seu plano",
+  "billing.state.free": "Você está no plano Básico gratuito.",
+  "billing.state.lapsed":
+    "Seu último pagamento não foi concluído, então por enquanto você está no Básico. Você pode atualizar seu cartão abaixo.",
+  "billing.state.active": "Você está assinando o {plan}. Ele é renovado automaticamente.",
+  "billing.state.ending":
+    "Seu plano {plan} foi cancelado. Você o mantém até {date} e depois passa para o Básico. Nada é excluído.",
+  "billing.state.endingNoDate":
+    "Seu plano {plan} foi cancelado. Você o mantém até o fim do período pago e depois passa para o Básico. Nada é excluído.",
+  "billing.state.pastDue":
+    "Seu último pagamento não foi concluído. Seu plano {plan} continua ativo até {date} enquanto você atualiza seu cartão.",
+  "billing.state.pastDueNoDate":
+    "Seu último pagamento não foi concluído. Seu plano {plan} continua ativo por alguns dias enquanto você atualiza seu cartão.",
+  "billing.state.manual":
+    "Seu plano {plan} foi combinado diretamente conosco, então não há nada para gerenciar aqui.",
+  "billing.member.note":
+    "O plano da sua organização é gerenciado pelo proprietário. Você está usando o plano {plan} dele.",
+  "billing.return.confirming":
+    "Obrigado. Estamos confirmando seu pagamento com a Paystack, o que costuma levar alguns segundos. Se o seu plano ainda não mudou, atualize esta página.",
+  "billing.return.refresh": "Atualizar",
+  "billing.return.done": "Pagamento confirmado. Você está no plano {plan}.",
+  "billing.limit.seats": "Pessoas na sua organização",
+  "billing.limit.savedItems": "Campos, propriedades e locais salvos",
+  "billing.limit.unlimited": "Sem limite definido",
+  "billing.plans.title": "Planos",
+  "billing.plans.free": "Grátis",
+  "billing.plans.current": "Seu plano",
+  "billing.plans.notOffered": "Ainda não disponível para compra.",
+  "billing.plans.none": "Os planos ainda não podem ser comprados. Volte em breve.",
+  "billing.interval.monthly": "Mensal",
+  "billing.interval.annual": "Anual",
+  "billing.interval.saving": "2 meses grátis",
+  "billing.interval.label": "Período de cobrança",
+  "billing.currency.label": "Moeda",
+  "billing.currency.NGN": "Naira (₦)",
+  "billing.currency.USD": "Dólares americanos ($)",
+  "billing.price.monthly": "{price} / mês",
+  "billing.price.annual": "{price} / ano",
+  "billing.subscribe": "Assinar o {plan}",
+  "billing.subscribe.failed":
+    "Não foi possível iniciar o pagamento e nada foi cobrado. Tente novamente em instantes.",
+  "billing.payNote":
+    "Você paga na página segura da Paystack e nós nunca vemos os dados do seu cartão. O preço exibido é o preço cobrado. Cancele quando quiser e mantenha seu plano até o fim do período pago.",
+  "billing.switchNote":
+    "Para trocar entre planos pagos, cancele o atual e assine o outro quando ele terminar. A Paystack não consegue trocar uma assinatura em andamento.",
+  "billing.alwaysFree":
+    "Alertas meteorológicos oficiais, o Explorador Público e a exportação ou exclusão dos seus próprios dados são gratuitos em todos os planos.",
+  "billing.ownerOnly": "Somente o proprietário da organização pode assinar ou mudar o plano.",
+  "billing.manage.title": "Cartão e cancelamento",
+  "billing.manage.cardBody":
+    "Abre a página da Paystack, onde você pode trocar o cartão usado nas renovações.",
+  "billing.manage.card": "Atualizar cartão na Paystack",
+  "billing.manage.cardFailed":
+    "Não foi possível abrir a página da Paystack agora. Tente novamente em instantes.",
+  "billing.manage.cancel": "Cancelar assinatura",
+  "billing.manage.cancelBody":
+    "Você mantém seu plano até o fim do período pago e depois passa para o Básico. Nada é excluído; você apenas não poderá adicionar mais do que o Básico permite.",
+  "billing.manage.cancelConfirm": "Sim, cancelar no fim do período",
+  "billing.manage.cancelKeep": "Manter meu plano",
+  "billing.manage.cancelDone":
+    "Cancelamento solicitado. Esta página é atualizada assim que a Paystack o confirmar.",
+  "billing.manage.cancelFailed":
+    "Não foi possível cancelar agora e nada mudou. Tente novamente em instantes.",
+  "settings.billing.title": "Plano e cobrança",
+  "settings.billing.body": "Você está no plano {plan}.",
+  "settings.billing.link": "Ver plano e cobrança",
+  "settings.delete.billingNote":
+    "Se você tem uma assinatura paga, nós a cancelamos primeiro na Paystack, para que você não seja cobrado novamente.",
+  "errors.billingUnavailable": "A cobrança não está disponível agora. Tente novamente mais tarde.",
+  "errors.billingOwnerOnly": "Somente o proprietário da organização pode mudar o plano dela.",
+  "errors.billingAlreadySubscribed":
+    "Você já tem uma assinatura. Você pode gerenciá-la na página do plano.",
+  "errors.billingNotOffered": "Esse plano não está disponível para compra no momento.",
+  "errors.billingNotSubscribed": "Não há nenhuma assinatura para gerenciar.",
+  "errors.deleteCancelSubscriptionFailed":
+    "Não conseguimos cancelar sua assinatura na Paystack, então sua conta não foi excluída (caso contrário você continuaria sendo cobrado). Tente novamente em instantes.",
+
   // ---- search place result line
   "search.placeDescription": "Ver as condições atuais",
 

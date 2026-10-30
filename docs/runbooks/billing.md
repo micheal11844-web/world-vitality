@@ -13,11 +13,15 @@ it on. The click-by-click for Paystack is in `paystack-setup.md`.
 | Plan catalogue (limits, features, support) | `services/billing-service/src/plans.ts` |
 | List prices | `services/billing-service/src/prices.ts` |
 | "What may this person do?" rules (fail-open, grace period, read-only after a downgrade) | `services/billing-service/src/entitlements.ts` |
-| Paystack signature check, event reading, plan-code mapping, checkout request | `services/billing-service/src/paystack.ts` |
+| Paystack signature check, event reading, plan-code mapping, checkout request, card-update link, cancel | `services/billing-service/src/paystack.ts` |
+| What the plan screen shows for a subscription (free / active / ending / past due / manual) | `services/billing-service/src/summary.ts` |
 | How Paystack events change a subscription | `services/billing-service/src/subscription.ts` |
 | The webhook, from raw bytes to stored result | `services/billing-service/src/webhook.ts` |
 | Storage (Supabase + an in-memory one for tests) | `services/billing-service/src/store.ts` |
 | Webhook route | `apps/web/app/api/paystack/webhook/route.ts` |
+| Plan & billing screen (`/billing`, 404 while billing is off) | `apps/web/app/billing/` |
+| Its buttons: Subscribe, Update card, Cancel | `apps/web/lib/billing-actions.ts` |
+| Cancelling the Paystack subscription when an account is deleted | `apps/web/lib/billing-cancel.ts`, called from `account-actions.ts` |
 | Switchboard (`billingEnabled`, plan codes, entitlements for a person / an organisation) | `apps/web/lib/billing.ts` |
 | The checks made when someone adds something | `apps/web/lib/plan-limits.ts` |
 | Tables (apply with `apply-migrations.md`) | `services/identity-service/supabase/migrations/0017_billing.sql` |
@@ -121,8 +125,12 @@ locked or deleted over a limit, and reading is never gated.
   defines them but no screen asks yet. Both need a decision on what "over the
   limit" looks like on screen before they are wired.
 - **An owner cannot delete their account while others are still in their
-  organisation**, and an account's Paystack subscription is **not** cancelled
-  when its account is deleted — see "Not built yet".
+  organisation.** When billing is on, deleting an account first cancels its
+  Paystack subscription, and **if Paystack cannot confirm the cancellation the
+  account is not deleted** (the person is told, and can retry) — deleting
+  anyway would leave them being charged for a plan they can no longer reach.
+  The members check runs before the cancel, so a refused deletion never
+  cancels anything.
 
 ## Weather data licence — before charging anyone
 
@@ -175,15 +183,75 @@ Start with `paystack-setup.md`; this is the same order in brief.
    they subscribe, so **existing customers over 3 saved items or 1 seat
    simply cannot add more** — decide whether that is what you want before
    this step; nothing is deleted).
-6. **There is no way to buy yet** (see "Not built yet"): build the plan
-   screen, then run the first test payment, and only then switch the keys to
-   live.
+6. **Make a first test-mode payment** from `/billing` (see "First test
+   payment" below), and only then switch the keys to live. The plan screen
+   exists from step 5 on; until `BILLING_ENABLED` is true `/billing` is a 404
+   and Settings shows no billing card, so nobody sees anything early.
+
+## The plan screen (`/billing`)
+
+Reached from Settings → "See plan & billing", and from a "See plans" link
+beside any plan-limit message. It exists only while `BILLING_ENABLED` is
+`true`.
+
+- **Only the organisation's owner** can subscribe, update the card or cancel
+  (the plan is the owner's). A member sees the owner's plan, read-only, with
+  a note saying so. Every button acts on the signed-in person's own id; the
+  browser never says whose subscription it is.
+- **Subscribe** sends the person to Paystack's own checkout page (card
+  details never touch this app). Only prices with a Paystack plan code
+  configured are shown, so USD stays hidden until its plans exist. The
+  return address is built from the origin of `SUPABASE_AUTH_REDIRECT_URL` —
+  the setting the sign-in emails already use — never from the request, so it
+  must be set in Vercel.
+- **Returning from Paystack** shows "we're confirming your payment", never
+  "paid": the webhook is the source of truth. The page re-checks every few
+  seconds for about half a minute and then stops; "Refresh" works any time.
+- **Update card** opens Paystack's hosted page for the subscription.
+- **Cancel** is one click plus one confirmation, and the person keeps the
+  plan until the end of the period they paid for. The page shows "ends on
+  <date>" only once Paystack's `subscription.not_renew` webhook arrives.
+- **Changing between paid plans while subscribed is not offered.** Paystack
+  has no switch on a running subscription, so the screen says: cancel, then
+  subscribe to the other plan once it ends. A person whose payments failed
+  and lapsed to Basic who subscribes again has the old Paystack subscription
+  stopped first, so they are never charged for both.
+- **Payment methods are Paystack's, not ours.** The checkout request does not
+  restrict channels, so whatever is switched on in the Paystack dashboard
+  (Settings → Preferences) is what a customer sees — including **Google
+  Pay** if you enable it there (below).
+- Enterprise is invoiced and set by hand (below); the screen shows such a
+  plan as "set up by agreement" with nothing to manage, and does not
+  advertise a contact route because none exists yet.
+
+### Google Pay
+
+Paystack supports Google Pay on its hosted checkout for businesses in
+Nigeria, Kenya, Ghana and South Africa (Visa and Mastercard only, with the
+card saved to the customer's Google account). It is **a dashboard setting,
+not something this app implements**: Dashboard → Settings → Preferences →
+turn on **Google Pay** (Cards must also be on). Paystack's checkout then
+shows "Pay with Card or Google Pay" on devices and browsers that support it,
+and Paystack says the authorisation can be reused for subscription renewals.
+Sources: <https://support.paystack.com/en/articles/10458754> and
+<https://support.paystack.com/en/articles/10458690>. Not verified here: that
+it appears on a *plan* checkout specifically — check in test mode.
 
 ## First test payment
 
-No call has been made to Paystack from the build environment, so these are
-the things to confirm with a real test-mode payment. If one is wrong, the
-fix is small and local.
+The plan screen has been exercised in a browser against a stand-in Paystack
+and a stand-in database, but **no call has been made to the real Paystack**
+from the build environment, so these are the things to confirm with a real
+test-mode payment. If one is wrong, the fix is small and local.
+
+- Subscribing from `/billing` lands on Paystack's checkout and returns to
+  `/billing?checkout=return`; the plan appears within a minute.
+- **Update card** opens a Paystack page (`GET /subscription/:code/manage/link`
+  returns `data.link`).
+- **Cancel** works (`POST /subscription/disable` with the subscription's
+  `email_token`) and the `subscription.not_renew` webhook then arrives, with
+  the end date. Cancelling something already cancelled is treated as done.
+- Google Pay (if enabled) shows on the checkout for a *plan* payment.
 
 - The checkout request (`startCheckout`) is accepted: Paystack's
   initialise-transaction call takes `plan` and ignores `amount` when `plan`
@@ -208,21 +276,17 @@ there rather than as an error.
 
 ## Not built yet
 
-- **Any billing screen: no plan card in Settings, no pricing page, no
-  upgrade or manage/cancel buttons.** `startCheckout` exists and is tested
-  but nothing calls it, so even with everything above done **nobody can buy
-  a plan yet.** This is the next piece to build; it needs new text in every
-  language the app offers.
-- Upgrade prompts at the point of a limit (today the person sees the message
-  "Your Basic plan includes up to 3 saved items… Upgrade your plan", with no
-  button).
+- Switching between paid plans in one step (Paystack cannot do it on a
+  running subscription; the screen explains cancel-then-subscribe).
+- A route for Enterprise enquiries on the screen (there is no contact address
+  or form yet to point at).
 - The `workspaces` limit and the feature switches (see "Where limits are
   enforced").
-- Cancelling the Paystack subscription when someone deletes their account.
-  The database row is removed with the account; Paystack's is not, so a
-  paying customer who deletes their account must be cancelled in Paystack by
-  hand until this is built.
-- Receipts, invoices, tax/VAT, refunds, failed-payment emails.
+- Receipts, invoices, tax/VAT, refunds, failed-payment emails. (Paystack
+  emails its own receipts; ours are not built.)
+- The plan limit text ("Your Basic plan includes up to 3 saved items…")
+  and the workspace pages around it are English only; the plan screen itself
+  is in all five languages, machine-drafted and unreviewed.
 - USD charging needs a USD settlement account on the Paystack side.
 
 ## Putting a customer on Enterprise (invoiced, by hand)

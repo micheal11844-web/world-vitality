@@ -52,6 +52,42 @@ existing business changes, and the two projects' payments never mix.
 (Payout can go to the same bank account as your other business, if you want
 the money in one place; that is a setting inside the new business.)
 
+### If "Add a Business" is not available to you
+
+Paystack's own article says anyone who can open the business switcher can add
+a business (<https://support.paystack.com/en/articles/10643330>), and it does
+not say what hides the option, so from here I cannot tell why yours is
+missing. In order:
+
+1. **Try the article's own checks:** refresh and reopen the switcher (the
+   arrow beside the business name, top left); sign in with the email that
+   *created* the business, not a login you were invited to as a team member;
+   use a desktop browser or a private window; read any email from Paystack
+   asking for more information. If **Duplicate** is greyed out or refuses,
+   choose **Create a new business** instead (duplicating only works from a
+   business in the same country and copies compliance documents; creating
+   asks for them again).
+2. **Ask Paystack** — in-dashboard chat or <https://support.paystack.com> —
+   "the Add a Business option is not available on my account". They can see
+   why. Send them the exact words on your screen, and send them to me too if
+   you want help reading it.
+3. **A second, separate Paystack account under a different email.** This
+   works the same way (own keys, webhook, plans) but I could not confirm from
+   Paystack's pages what they require when two accounts share a legal entity
+   or payout account — ask support before relying on it.
+4. **Test mode only, inside your existing business — a stop-gap, not the
+   plan.** A business has a separate *Test* webhook URL and *Live* webhook
+   URL. If the **Test Webhook URL** in your existing business is **empty**
+   (look, do not change anything yet), World Vitality can use that business's
+   *test* keys and test webhook for the whole test-payment phase without
+   touching your live project at all; test plans and test payments are
+   separate from live ones. Stop if that field already holds an address: your
+   other project (or its staging site) is using it. Two cautions: enabling
+   Google Pay or any other channel in Settings → Preferences changes
+   checkout for **both** projects in a shared business; and this does not get
+   you to live payments — going live still needs World Vitality's own
+   business (or a shared live webhook, below).
+
 **If you would rather stay on one business**, the cost is the shared webhook:
 you would have to keep one URL and make one project forward the other's
 events (or put a forwarding service in front of both). That means changing
@@ -61,8 +97,34 @@ or unknown customer is acknowledged and recorded as `ignored`, never acted
 on — so forwarding the other project's events *to* it would be harmless; the
 risk is on the other side.
 
+**Why a shared *live* business is the one thing to avoid.** The webhook
+receives every event of the business. Your other project would start
+receiving World Vitality's subscription and payment events (with customer
+emails) at its own webhook and could mistake them for its own — that is the
+way this app could affect it. World Vitality's side is safe (it ignores
+events that are not its own), so the risk is entirely on the other project.
+
 **Either way:** do not reuse a secret key by copying it between projects
-unless both genuinely use the same business, and never paste one into chat.
+unless both genuinely use the same business (a test key in the stop-gap above
+is the one reasonable exception), and never paste one into chat.
+
+### Before you click anything — a checklist that keeps your other project safe
+
+- **Read the business name at the top left before every step.** World
+  Vitality settings belong in the World Vitality business only.
+- **Never edit these in your existing business:** its live keys, its **Live
+  Webhook URL**, its plans, and Settings → Preferences (payment channels).
+- **Check the Test/Live switch** before you copy a key or paste a URL; steps
+  1–5 are all Test mode.
+- **In Vercel, double-check the project name** (`world-vitality`, team
+  `micheal6`) before saving the two settings. Do not add them to your other
+  project, and do not add World Vitality's to any project that already holds
+  Paystack keys.
+- **Nothing here needs a live transaction.** Do not make a real payment to
+  "see if the other project still works"; if you want reassurance, use that
+  project's own test mode, or simply leave it alone — none of the steps
+  above touch it.
+- **When in doubt, stop and ask me** — and never paste a key into chat.
 
 ## 1. Get the test secret key
 
@@ -143,10 +205,23 @@ with the secret key from step 1; there is no separate webhook secret to
 copy. Live mode has its own separate webhook field — you will fill that in
 again when you go live.
 
+## 5b. Optional — Google Pay
+
+Paystack's hosted checkout supports Google Pay (Nigeria, Kenya, Ghana and
+South Africa; Visa and Mastercard saved to the customer's Google account).
+This app needs **no code for it**: it sends people to Paystack's checkout
+without restricting payment channels, so whatever you switch on is what they
+see. In the **World Vitality business**: Settings → **Preferences** → payment
+channels → turn on **Google Pay** (Cards must stay on). Customers then see
+"Pay with Card or Google Pay" on devices that support it; on iPhone and
+desktop Paystack adds a 3D Secure step. Paystack says the authorisation can
+be reused for subscription renewals. Details:
+<https://support.paystack.com/en/articles/10458754>. Check in test mode that
+it shows on a *plan* checkout; I could not verify that from here.
+
 ## 6. Switch billing on
 
-Only when the plan screen exists (see below) — until then there is nothing
-to buy:
+The plan screen (`/billing`) exists and appears only once billing is on:
 
 1. Add `BILLING_ENABLED` = `true` in Vercel and redeploy.
 2. **Read this first:** with billing on, everyone is on the free Basic plan
@@ -157,8 +232,9 @@ to buy:
    "Putting a customer on Enterprise" in `billing.md` — same SQL with
    `'standard'`).
 3. Make a test payment with one of Paystack's test cards
-   (<https://paystack.com/docs/payments/test-payments/>). Then check, in the
-   Supabase SQL editor:
+   (<https://paystack.com/docs/payments/test-payments/>) — Subscribe on
+   `/billing` as the organisation's owner (sign in as yourself). Then check, in
+   the Supabase SQL editor:
 
    ```sql
    select user_id, plan, status, source, paystack_subscription_code
@@ -187,12 +263,13 @@ to buy:
 4. Subscribe to Open-Meteo and set `OPEN_METEO_API_KEY` first
    (`billing.md`, "Weather data licence").
 
-## What does not exist yet
+## What the app does once it is on
 
-There is **no pricing page and no upgrade button**, so even with steps 1–5
-done no customer can buy. Steps 1–5 are safe and worth doing now because
-they are the part only you can do (they need your Paystack account); the
-plan screen is the next piece of build work. It also does not cancel a
-Paystack subscription when an account is deleted — until it does, a paying
-customer who deletes their account has to be cancelled in the Paystack
-dashboard by hand.
+The plan screen (`/billing`) lets the organisation's owner subscribe, update
+the card on Paystack's page and cancel (keeping the plan until the paid term
+ends), and deleting an account cancels its Paystack subscription first — if
+Paystack cannot confirm that, the account is left in place. All of it is
+described in `billing.md` ("The plan screen"). It has been tested in a
+browser against a stand-in Paystack, **not** against the real one: the first
+test payment is where that happens, and `billing.md` ("First test payment")
+lists what to look for.

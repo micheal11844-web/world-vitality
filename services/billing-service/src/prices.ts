@@ -1,5 +1,6 @@
 import type { PaidPlanId } from "./plans.js";
-import type { Currency, Interval } from "./paystack.js";
+import { planCodeKey, type Currency, type Interval, type PlanCodeMap } from "./paystack.js";
+import { PAID_PLAN_IDS } from "./plans.js";
 
 /**
  * The list prices (BUILD_PLAN "v94"; Decision-Log #020), in the currency's
@@ -55,4 +56,32 @@ export function formatPrice(minor: number, currency: Currency): string {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })}`;
+}
+
+export interface OfferedPrice {
+  plan: PaidPlanId;
+  currency: Currency;
+  interval: Interval;
+  /** Smallest currency unit, from the list prices above. */
+  amountMinor: number;
+}
+
+/**
+ * The prices that can actually be bought right now: only the combinations
+ * with a Paystack plan code configured. The screen shows exactly these —
+ * a price with no plan behind it is never advertised, and that is how USD
+ * stays hidden until its plans exist.
+ */
+export function offeredPrices(codes: PlanCodeMap): OfferedPrice[] {
+  const out: OfferedPrice[] = [];
+  for (const plan of PAID_PLAN_IDS) {
+    for (const currency of PRICE_CURRENCIES) {
+      for (const interval of ["monthly", "annual"] as const) {
+        if (codes.has(planCodeKey(plan, currency, interval))) {
+          out.push({ plan, currency, interval, amountMinor: priceMinor(plan, currency, interval) });
+        }
+      }
+    }
+  }
+  return out;
 }

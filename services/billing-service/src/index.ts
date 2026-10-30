@@ -34,7 +34,10 @@ export {
   ANNUAL_MONTHS_CHARGED,
   priceMinor,
   formatPrice,
+  offeredPrices,
+  type OfferedPrice,
 } from "./prices.js";
+export { summariseBilling, type BillingState, type BillingSummary } from "./summary.js";
 export {
   applyPaystackEvent,
   type SubscriptionState,
@@ -45,6 +48,10 @@ export {
 } from "./subscription.js";
 export {
   PAYSTACK_API,
+  paystackBaseUrl,
+  fetchSubscription,
+  createManageLink,
+  disableSubscription,
   verifyPaystackSignature,
   parsePaystackEvent,
   parsePlanCodes,
@@ -58,6 +65,10 @@ export {
   type Interval,
   type CheckoutInput,
   type CheckoutResult,
+  type ManageDeps,
+  type ManageFailure,
+  type ManageResult,
+  type SubscriptionInfo,
 } from "./paystack.js";
 export {
   InMemoryBillingStore,

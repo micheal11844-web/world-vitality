@@ -11,6 +11,8 @@ import { logSecurity } from "../../../lib/logger";
 export interface CreatePropertyResult {
   ok: boolean;
   error?: string;
+  /** The error is a plan limit: the form offers a "See plans" link. */
+  upgrade?: boolean;
 }
 
 const WORKSPACE_ID = "insurance";
@@ -61,7 +63,7 @@ export async function createPropertyAction(
     ? await savedItemLimitMessage(membership.organizationId, data)
     : null;
   if (limitMessage) {
-    return { ok: false, error: limitMessage };
+    return { ok: false, error: limitMessage, upgrade: true };
   }
 
   try {

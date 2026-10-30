@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { OrganizationHasMembersError } from "@world-vitality/identity-service";
 import { getAccountService } from "./account";
+import { cancelPaystackSubscriptionBeforeDeletion } from "./billing-cancel";
 import { getSessionUserId } from "./get-session-user-id";
 import { tServer } from "./i18n/server";
 import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
@@ -73,7 +74,22 @@ export async function deleteAccountAction(confirmation: string): Promise<Account
     return { ok: false, error: await tServer("errors.sessionExpired") };
   }
   try {
-    await getAccountService().deleteAccount(userId);
+    // An owner who still has other people in the organisation is refused
+    // BEFORE anything else happens, so a subscription is never cancelled for
+    // a deletion that is then turned down.
+    const account = getAccountService();
+    const organization = await account.getOrganizationMembership(userId);
+    if (organization?.role === "owner") {
+      const members = await account.forOrganization(organization.organizationId).countMembers();
+      if (members > 1) throw new OrganizationHasMembersError(members - 1);
+    }
+    // A paying customer's subscription is stopped on Paystack first. If that
+    // cannot be confirmed the account is left alone — deleting it anyway
+    // would leave them being charged for a plan they can no longer reach.
+    if ((await cancelPaystackSubscriptionBeforeDeletion(userId)) === "failed") {
+      return { ok: false, error: await tServer("errors.deleteCancelSubscriptionFailed") };
+    }
+    await account.deleteAccount(userId);
   } catch (err) {
     if (err instanceof OrganizationHasMembersError) {
       // Not a failure to retry: the owner has to take the others out first.

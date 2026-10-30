@@ -334,6 +334,85 @@ export const ar: Messages = {
   "errors.deleteOrganizationHasMembers":
     "ما زال لدى مؤسستك أعضاء آخرون ({count}). أزِلهم أولًا من صفحة «الفريق» ثم احذف حسابك.",
 
+  // ---- plan & billing (v95)
+  "billing.title": "الخطة والفوترة",
+  "billing.back": "العودة إلى الإعدادات",
+  "billing.seePlans": "عرض الخطط",
+  "billing.plan.basic": "الأساسية",
+  "billing.plan.standard": "القياسية",
+  "billing.plan.premium": "المميزة",
+  "billing.plan.enterprise": "المؤسسات",
+  "billing.current.title": "خطتك",
+  "billing.state.free": "أنت على الخطة الأساسية المجانية.",
+  "billing.state.lapsed":
+    "لم تنجح عملية الدفع الأخيرة، لذا أنت على الخطة الأساسية حاليًا. يمكنك تحديث بطاقتك أدناه.",
+  "billing.state.active": "أنت مشترك في خطة {plan}. يتجدد الاشتراك تلقائيًا.",
+  "billing.state.ending":
+    "تم إلغاء خطة {plan}. تحتفظ بها حتى {date} ثم تنتقل إلى الخطة الأساسية. لا يُحذف أي شيء.",
+  "billing.state.endingNoDate":
+    "تم إلغاء خطة {plan}. تحتفظ بها حتى نهاية الفترة التي دفعت ثمنها ثم تنتقل إلى الخطة الأساسية. لا يُحذف أي شيء.",
+  "billing.state.pastDue":
+    "لم تنجح عملية الدفع الأخيرة. تبقى خطة {plan} فعّالة حتى {date} ريثما تحدّث بطاقتك.",
+  "billing.state.pastDueNoDate":
+    "لم تنجح عملية الدفع الأخيرة. تبقى خطة {plan} فعّالة لبضعة أيام ريثما تحدّث بطاقتك.",
+  "billing.state.manual": "تم الاتفاق على خطة {plan} معنا مباشرة، لذا لا يوجد ما تديره هنا.",
+  "billing.member.note": "مالك مؤسستك هو من يدير خطتها. أنت تستخدم خطة {plan} الخاصة به.",
+  "billing.return.confirming":
+    "شكرًا لك. نتأكد من دفعتك لدى Paystack، وهذا يستغرق عادةً بضع ثوانٍ. إذا لم تتغير خطتك بعد، فحدّث هذه الصفحة.",
+  "billing.return.refresh": "تحديث",
+  "billing.return.done": "تم تأكيد الدفع. أنت الآن على خطة {plan}.",
+  "billing.limit.seats": "الأشخاص في مؤسستك",
+  "billing.limit.savedItems": "الحقول والعقارات والمواقع المحفوظة",
+  "billing.limit.unlimited": "بلا حد محدد",
+  "billing.plans.title": "الخطط",
+  "billing.plans.free": "مجانية",
+  "billing.plans.current": "خطتك",
+  "billing.plans.notOffered": "غير متاحة للشراء بعد.",
+  "billing.plans.none": "لا يمكن شراء الخطط بعد. يُرجى العودة قريبًا.",
+  "billing.interval.monthly": "شهريًا",
+  "billing.interval.annual": "سنويًا",
+  "billing.interval.saving": "شهران مجانًا",
+  "billing.interval.label": "فترة الفوترة",
+  "billing.currency.label": "العملة",
+  "billing.currency.NGN": "النايرا (₦)",
+  "billing.currency.USD": "الدولار الأمريكي ($)",
+  "billing.price.monthly": "{price} / شهريًا",
+  "billing.price.annual": "{price} / سنويًا",
+  "billing.subscribe": "الاشتراك في خطة {plan}",
+  "billing.subscribe.failed":
+    "تعذّر بدء عملية الدفع ولم يُخصم أي مبلغ. يُرجى المحاولة مرة أخرى بعد قليل.",
+  "billing.payNote":
+    "تدفع على صفحة Paystack الآمنة، ولا نرى بيانات بطاقتك أبدًا. السعر المعروض هو السعر المحصَّل. يمكنك الإلغاء في أي وقت والاحتفاظ بخطتك حتى نهاية الفترة المدفوعة.",
+  "billing.switchNote":
+    "للانتقال بين الخطط المدفوعة، ألغِ الخطة الحالية ثم اشترك في الأخرى بعد انتهائها. لا تستطيع Paystack تبديل اشتراك جارٍ.",
+  "billing.alwaysFree":
+    "تنبيهات الطقس الرسمية والمستكشف العام وتصدير بياناتك أو حذفها مجانية في جميع الخطط.",
+  "billing.ownerOnly": "مالك المؤسسة وحده يستطيع الاشتراك أو تغيير الخطة.",
+  "billing.manage.title": "البطاقة والإلغاء",
+  "billing.manage.cardBody": "يفتح صفحة Paystack حيث يمكنك تغيير البطاقة المستخدمة في التجديدات.",
+  "billing.manage.card": "تحديث البطاقة على Paystack",
+  "billing.manage.cardFailed": "تعذّر فتح صفحة Paystack الآن. يُرجى المحاولة مرة أخرى بعد قليل.",
+  "billing.manage.cancel": "إلغاء الاشتراك",
+  "billing.manage.cancelBody":
+    "تحتفظ بخطتك حتى نهاية الفترة المدفوعة ثم تنتقل إلى الخطة الأساسية. لا يُحذف أي شيء؛ لن تتمكن فقط من إضافة أكثر مما تسمح به الخطة الأساسية.",
+  "billing.manage.cancelConfirm": "نعم، ألغِ في نهاية الفترة",
+  "billing.manage.cancelKeep": "الإبقاء على خطتي",
+  "billing.manage.cancelDone": "تم طلب الإلغاء. تتحدّث هذه الصفحة فور تأكيده من Paystack.",
+  "billing.manage.cancelFailed":
+    "تعذّر الإلغاء الآن ولم يتغير شيء. يُرجى المحاولة مرة أخرى بعد قليل.",
+  "settings.billing.title": "الخطة والفوترة",
+  "settings.billing.body": "أنت على خطة {plan}.",
+  "settings.billing.link": "عرض الخطة والفوترة",
+  "settings.delete.billingNote":
+    "إذا كان لديك اشتراك مدفوع، فنلغيه لدى Paystack أولًا حتى لا يُخصم منك مبلغ مرة أخرى.",
+  "errors.billingUnavailable": "الفوترة غير متاحة الآن. يُرجى المحاولة لاحقًا.",
+  "errors.billingOwnerOnly": "مالك المؤسسة وحده يستطيع تغيير خطتها.",
+  "errors.billingAlreadySubscribed": "لديك اشتراك بالفعل. يمكنك إدارته من صفحة الخطة.",
+  "errors.billingNotOffered": "هذه الخطة غير متاحة للشراء حاليًا.",
+  "errors.billingNotSubscribed": "لا يوجد اشتراك لإدارته.",
+  "errors.deleteCancelSubscriptionFailed":
+    "تعذّر علينا إلغاء اشتراكك لدى Paystack، لذلك لم يُحذف حسابك (وإلا لاستمر الخصم منك). يُرجى المحاولة مرة أخرى بعد قليل.",
+
   // ---- search place result line
   "search.placeDescription": "عرض الظروف الحالية",
 

@@ -351,6 +351,92 @@ export const fr: Messages = {
   "errors.deleteOrganizationHasMembers":
     "Votre organisation compte encore d’autres membres ({count}). Retirez-les d’abord depuis la page « Équipe », puis supprimez votre compte.",
 
+  // ---- plan & billing (v95)
+  "billing.title": "Offre et facturation",
+  "billing.back": "Retour aux paramètres",
+  "billing.seePlans": "Voir les offres",
+  "billing.plan.basic": "Basique",
+  "billing.plan.standard": "Standard",
+  "billing.plan.premium": "Premium",
+  "billing.plan.enterprise": "Enterprise",
+  "billing.current.title": "Votre offre",
+  "billing.state.free": "Vous êtes sur l’offre Basique gratuite.",
+  "billing.state.lapsed":
+    "Votre dernier paiement n’a pas abouti ; vous êtes donc sur Basique pour le moment. Vous pouvez mettre à jour votre carte ci-dessous.",
+  "billing.state.active": "Vous êtes abonné à {plan}. L’abonnement se renouvelle automatiquement.",
+  "billing.state.ending":
+    "Votre offre {plan} est résiliée. Vous la gardez jusqu’au {date}, puis vous passez à Basique. Rien n’est supprimé.",
+  "billing.state.endingNoDate":
+    "Votre offre {plan} est résiliée. Vous la gardez jusqu’à la fin de la période payée, puis vous passez à Basique. Rien n’est supprimé.",
+  "billing.state.pastDue":
+    "Votre dernier paiement n’a pas abouti. Votre offre {plan} reste active jusqu’au {date}, le temps de mettre à jour votre carte.",
+  "billing.state.pastDueNoDate":
+    "Votre dernier paiement n’a pas abouti. Votre offre {plan} reste active quelques jours, le temps de mettre à jour votre carte.",
+  "billing.state.manual":
+    "Votre offre {plan} a été convenue directement avec nous ; il n’y a donc rien à gérer ici.",
+  "billing.member.note":
+    "L’offre de votre organisation est gérée par son propriétaire. Vous utilisez son offre {plan}.",
+  "billing.return.confirming":
+    "Merci. Nous confirmons votre paiement auprès de Paystack, ce qui prend généralement quelques secondes. Si votre offre n’a pas encore changé, actualisez cette page.",
+  "billing.return.refresh": "Actualiser",
+  "billing.return.done": "Paiement confirmé. Vous êtes sur l’offre {plan}.",
+  "billing.limit.seats": "Personnes dans votre organisation",
+  "billing.limit.savedItems": "Champs, propriétés et lieux enregistrés",
+  "billing.limit.unlimited": "Aucune limite fixée",
+  "billing.plans.title": "Offres",
+  "billing.plans.free": "Gratuit",
+  "billing.plans.current": "Votre offre",
+  "billing.plans.notOffered": "Pas encore disponible à l’achat.",
+  "billing.plans.none": "Les offres ne peuvent pas encore être achetées. Revenez bientôt.",
+  "billing.interval.monthly": "Mensuel",
+  "billing.interval.annual": "Annuel",
+  "billing.interval.saving": "2 mois offerts",
+  "billing.interval.label": "Période de facturation",
+  "billing.currency.label": "Devise",
+  "billing.currency.NGN": "Naira (₦)",
+  "billing.currency.USD": "Dollars américains ($)",
+  "billing.price.monthly": "{price} / mois",
+  "billing.price.annual": "{price} / an",
+  "billing.subscribe": "Souscrire à {plan}",
+  "billing.subscribe.failed":
+    "Impossible de lancer le paiement ; rien n’a été débité. Réessayez dans un instant.",
+  "billing.payNote":
+    "Vous payez sur la page sécurisée de Paystack, et nous ne voyons jamais les données de votre carte. Le prix affiché est le prix facturé. Résiliez à tout moment et gardez votre offre jusqu’à la fin de la période payée.",
+  "billing.switchNote":
+    "Pour passer d’une offre payante à l’autre, résiliez l’offre actuelle et souscrivez à l’autre une fois qu’elle est terminée. Paystack ne peut pas modifier un abonnement en cours.",
+  "billing.alwaysFree":
+    "Les alertes météo officielles, l’Explorateur public, ainsi que l’export et la suppression de vos propres données sont gratuits sur toutes les offres.",
+  "billing.ownerOnly": "Seul le propriétaire de l’organisation peut souscrire ou changer d’offre.",
+  "billing.manage.title": "Carte et résiliation",
+  "billing.manage.cardBody":
+    "Ouvre la page de Paystack, où vous pouvez changer la carte utilisée pour les renouvellements.",
+  "billing.manage.card": "Mettre à jour la carte sur Paystack",
+  "billing.manage.cardFailed":
+    "Impossible d’ouvrir la page de Paystack pour le moment. Réessayez dans un instant.",
+  "billing.manage.cancel": "Résilier l’abonnement",
+  "billing.manage.cancelBody":
+    "Vous gardez votre offre jusqu’à la fin de la période payée, puis vous passez à Basique. Rien n’est supprimé ; vous ne pourrez simplement pas ajouter plus que ce que Basique permet.",
+  "billing.manage.cancelConfirm": "Oui, résilier à la fin de la période",
+  "billing.manage.cancelKeep": "Garder mon offre",
+  "billing.manage.cancelDone":
+    "Résiliation demandée. Cette page se met à jour dès que Paystack la confirme.",
+  "billing.manage.cancelFailed":
+    "Impossible de résilier pour le moment ; rien n’a changé. Réessayez dans un instant.",
+  "settings.billing.title": "Offre et facturation",
+  "settings.billing.body": "Vous êtes sur l’offre {plan}.",
+  "settings.billing.link": "Voir l’offre et la facturation",
+  "settings.delete.billingNote":
+    "Si vous avez un abonnement payant, nous le résilions d’abord auprès de Paystack, pour que vous ne soyez plus débité.",
+  "errors.billingUnavailable":
+    "La facturation n’est pas disponible pour le moment. Réessayez plus tard.",
+  "errors.billingOwnerOnly": "Seul le propriétaire de l’organisation peut changer son offre.",
+  "errors.billingAlreadySubscribed":
+    "Vous avez déjà un abonnement. Vous pouvez le gérer sur la page de l’offre.",
+  "errors.billingNotOffered": "Cette offre n’est pas disponible à l’achat pour le moment.",
+  "errors.billingNotSubscribed": "Il n’y a aucun abonnement à gérer.",
+  "errors.deleteCancelSubscriptionFailed":
+    "Nous n’avons pas pu résilier votre abonnement auprès de Paystack ; votre compte n’a donc pas été supprimé (sinon vous continueriez à être débité). Réessayez dans un instant.",
+
   // ---- search place result line
   "search.placeDescription": "Voir les conditions actuelles",
 

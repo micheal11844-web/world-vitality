@@ -5,7 +5,10 @@ import {
   unlimitedEntitlements,
   parsePlanCodes,
   planForPlanCode,
+  offeredPrices,
+  paystackBaseUrl,
   type Entitlements,
+  type OfferedPrice,
   type PlanCodeMap,
 } from "@world-vitality/billing-service";
 import { getAccountService } from "./account";
@@ -88,5 +91,44 @@ export async function getEntitlementsForOrganization(
   } catch (err) {
     logApplication.error("organization_entitlement_lookup_failed", err);
     return unlimitedEntitlements("lookup_failed");
+  }
+}
+
+/** `PAYSTACK_SECRET_KEY`, or `null` when it is not set (checkout then stays off). */
+export function paystackSecret(): string | null {
+  return process.env.PAYSTACK_SECRET_KEY?.trim() || null;
+}
+
+/**
+ * Where Paystack's API is. Always Paystack's own address unless
+ * `PAYSTACK_API_BASE` is set to an https address or a local one — which
+ * exists only so the screens can be exercised against a stand-in server in
+ * tests (`paystackBaseUrl` refuses anything else, so the secret key is never
+ * sent to an unencrypted address).
+ */
+export function paystackApiBase(): string {
+  return paystackBaseUrl(process.env.PAYSTACK_API_BASE);
+}
+
+/** What can be bought right now: only the prices with a Paystack plan behind them. */
+export function getOfferedPrices(): OfferedPrice[] {
+  return offeredPrices(getPlanCodes());
+}
+
+/**
+ * Where Paystack sends someone back to after paying. Built from the site's
+ * own address (the origin of `SUPABASE_AUTH_REDIRECT_URL`, which the sign-in
+ * emails already rely on), never from the request's Host header, so a forged
+ * header cannot point a customer's return trip somewhere else. `null` when
+ * that setting is missing or is not a URL — checkout then declines rather
+ * than guessing.
+ */
+export function billingReturnUrl(): string | null {
+  const configured = process.env.SUPABASE_AUTH_REDIRECT_URL;
+  if (!configured) return null;
+  try {
+    return `${new URL(configured).origin}/billing?checkout=return`;
+  } catch {
+    return null;
   }
 }

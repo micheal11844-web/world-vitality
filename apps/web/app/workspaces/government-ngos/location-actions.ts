@@ -11,6 +11,8 @@ import { logSecurity } from "../../../lib/logger";
 export interface CreateLocationResult {
   ok: boolean;
   error?: string;
+  /** The error is a plan limit: the form offers a "See plans" link. */
+  upgrade?: boolean;
 }
 
 const WORKSPACE_ID = "government-ngos";
@@ -58,7 +60,7 @@ export async function createLocationAction(
     ? await savedItemLimitMessage(membership.organizationId, data)
     : null;
   if (limitMessage) {
-    return { ok: false, error: limitMessage };
+    return { ok: false, error: limitMessage, upgrade: true };
   }
 
   try {

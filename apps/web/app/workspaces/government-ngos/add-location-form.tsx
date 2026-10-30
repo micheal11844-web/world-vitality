@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createLocationAction } from "./location-actions";
+import { UpgradeLink } from "../../upgrade-link";
 
 /**
  * "Add a monitored location" form (BUILD_PLAN "STAGE — GOVERNMENT &
@@ -20,12 +21,14 @@ export function AddLocationForm() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [upgrade, setUpgrade] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setUpgrade(false);
     setSuccess(null);
     const lat = Number(latitude);
     const lon = Number(longitude);
@@ -38,6 +41,7 @@ export function AddLocationForm() {
         setLongitude("");
       } else {
         setError(result.error ?? "Failed to add location.");
+        setUpgrade(Boolean(result.upgrade));
       }
     });
   }
@@ -97,6 +101,7 @@ export function AddLocationForm() {
           style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}
         >
           {error}
+          {upgrade && <UpgradeLink />}
         </Text>
       )}
       {success && (

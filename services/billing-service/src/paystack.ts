@@ -191,6 +191,29 @@ export function planForPlanCode(codes: PlanCodeMap, planCode: string | null): Pa
 
 export const PAYSTACK_API = "https://api.paystack.co";
 
+/**
+ * The Paystack API address to call. Always Paystack's own unless an
+ * override (`PAYSTACK_API_BASE`) is given AND is either an https address or
+ * plain http on this machine (`localhost` / `127.0.0.1`) — which exists so
+ * the checkout can be exercised against a stand-in server in tests. Anything
+ * else (a typo, an http address elsewhere) falls back to Paystack's real
+ * address rather than ever sending the secret key somewhere unencrypted.
+ */
+export function paystackBaseUrl(override?: string | null): string {
+  const raw = override?.trim();
+  if (!raw) return PAYSTACK_API;
+  try {
+    const url = new URL(raw);
+    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (url.protocol === "https:" || (url.protocol === "http:" && local)) {
+      return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+    }
+  } catch {
+    // fall through
+  }
+  return PAYSTACK_API;
+}
+
 /** In the currency's smallest unit (kobo / cents). Ignored by Paystack when a plan is given — verify in test mode. */
 const PLACEHOLDER_AMOUNT_MINOR = 10000;
 
@@ -225,7 +248,7 @@ type FetchLike = (
  * combination — checkout stays off until one is set.
  */
 export async function startCheckout(
-  deps: { secret: string; planCodes: PlanCodeMap; fetch: FetchLike },
+  deps: { secret: string; planCodes: PlanCodeMap; fetch: FetchLike; baseUrl?: string },
   input: CheckoutInput,
 ): Promise<CheckoutResult> {
   const planCode = deps.planCodes.get(planCodeKey(input.plan, input.currency, input.interval));
@@ -233,7 +256,7 @@ export async function startCheckout(
 
   let response: Awaited<ReturnType<FetchLike>>;
   try {
-    response = await deps.fetch(`${PAYSTACK_API}/transaction/initialize`, {
+    response = await deps.fetch(`${deps.baseUrl ?? PAYSTACK_API}/transaction/initialize`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${deps.secret}`,
@@ -266,4 +289,140 @@ export async function startCheckout(
     return { ok: false, reason: "paystack_error" };
   }
   return { ok: true, authorizationUrl: url, reference };
+}
+
+/* ------------------------------------------------------------------ */
+/* Managing a subscription                                            */
+/* ------------------------------------------------------------------ */
+
+type ManageFetch = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body?: string },
+) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
+
+export interface ManageDeps {
+  secret: string;
+  fetch: ManageFetch;
+  /** Defaults to Paystack's API; see `paystackBaseUrl`. */
+  baseUrl?: string;
+}
+
+export type ManageFailure = "unavailable" | "not_found" | "paystack_error" | "network_error";
+export type ManageResult<T> = ({ ok: true } & T) | { ok: false; reason: ManageFailure };
+
+/** What we read about a subscription from Paystack. */
+export interface SubscriptionInfo {
+  code: string;
+  /** The one-time-per-subscription token Paystack requires to cancel it. Never shown or stored. */
+  emailToken: string;
+  /** Paystack's own status word (e.g. "active", "non-renewing", "cancelled"), as sent. */
+  status: string | null;
+  /** ISO timestamp, as sent. */
+  nextPaymentDate: string | null;
+}
+
+/** Paystack subscription statuses that mean it will not charge again. */
+const ALREADY_STOPPED = new Set(["non-renewing", "cancelled", "completed", "complete"]);
+
+/** Codes come from our own database, but are checked before going into a URL path. */
+const CODE_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
+
+async function manageCall(
+  deps: ManageDeps,
+  method: "GET" | "POST",
+  path: string,
+  body?: Record<string, string>,
+): Promise<{ ok: true; payload: unknown } | { ok: false; reason: ManageFailure }> {
+  if (!deps.secret) return { ok: false, reason: "unavailable" };
+  let response: Awaited<ReturnType<ManageFetch>>;
+  try {
+    response = await deps.fetch(`${deps.baseUrl ?? PAYSTACK_API}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${deps.secret}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+  } catch {
+    return { ok: false, reason: "network_error" };
+  }
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    return { ok: false, reason: "paystack_error" };
+  }
+  if (!response.ok || pick(payload, "status") !== true) {
+    // Paystack answers an unknown code with a 404-style body; treat that
+    // distinctly from an outage so the caller can say something useful.
+    const message = text(pick(payload, "message"))?.toLowerCase() ?? "";
+    return { ok: false, reason: message.includes("not found") ? "not_found" : "paystack_error" };
+  }
+  return { ok: true, payload };
+}
+
+export async function fetchSubscription(
+  deps: ManageDeps,
+  code: string,
+): Promise<ManageResult<{ subscription: SubscriptionInfo }>> {
+  if (!CODE_PATTERN.test(code)) return { ok: false, reason: "not_found" };
+  const res = await manageCall(deps, "GET", `/subscription/${encodeURIComponent(code)}`);
+  if (!res.ok) return res;
+  const emailToken = text(pick(res.payload, "data", "email_token"));
+  if (!emailToken) return { ok: false, reason: "paystack_error" };
+  return {
+    ok: true,
+    subscription: {
+      code,
+      emailToken,
+      status: text(pick(res.payload, "data", "status")),
+      nextPaymentDate: text(pick(res.payload, "data", "next_payment_date")),
+    },
+  };
+}
+
+/** A hosted page where the person updates the card their subscription charges. */
+export async function createManageLink(
+  deps: ManageDeps,
+  code: string,
+): Promise<ManageResult<{ link: string }>> {
+  if (!CODE_PATTERN.test(code)) return { ok: false, reason: "not_found" };
+  const res = await manageCall(
+    deps,
+    "GET",
+    `/subscription/${encodeURIComponent(code)}/manage/link`,
+  );
+  if (!res.ok) return res;
+  const link = text(pick(res.payload, "data", "link"));
+  // Only ever hand a person an https address on to follow.
+  if (!link || !link.startsWith("https://")) {
+    // …except against the local stand-in used in tests, which is http on this machine.
+    const local = link && /^http:\/\/(localhost|127\.0\.0\.1)(:|\/)/.test(link);
+    if (!local) return { ok: false, reason: "paystack_error" };
+  }
+  return { ok: true, link: link as string };
+}
+
+/**
+ * Stops a subscription renewing. Paystack requires the subscription's
+ * `email_token` for this, so it is read first and used once; it never leaves
+ * this function. Paystack then sends `subscription.not_renew` (and later
+ * `subscription.disable`), which the webhook turns into "ends on …" and
+ * "cancelled" — this function does not change our own records.
+ */
+export async function disableSubscription(
+  deps: ManageDeps,
+  code: string,
+): Promise<ManageResult<object>> {
+  const found = await fetchSubscription(deps, code);
+  if (!found.ok) return found;
+  // Already stopped (our records can lag a webhook behind): nothing to do,
+  // and asking Paystack to stop it again could only produce a misleading error.
+  if (ALREADY_STOPPED.has((found.subscription.status ?? "").toLowerCase())) return { ok: true };
+  const res = await manageCall(deps, "POST", "/subscription/disable", {
+    code,
+    token: found.subscription.emailToken,
+  });
+  return res.ok ? { ok: true } : res;
 }

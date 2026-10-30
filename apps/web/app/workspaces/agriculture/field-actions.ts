@@ -12,6 +12,8 @@ import { notifyFieldCommentOwner } from "../../../lib/notification-events";
 export interface CreateFieldResult {
   ok: boolean;
   error?: string;
+  /** The error is a plan limit: the form offers a "See plans" link. */
+  upgrade?: boolean;
 }
 
 const WORKSPACE_ID = "agriculture";
@@ -54,7 +56,7 @@ export async function createFieldAction(
     ? await savedItemLimitMessage(membership.organizationId, data)
     : null;
   if (limitMessage) {
-    return { ok: false, error: limitMessage };
+    return { ok: false, error: limitMessage, upgrade: true };
   }
 
   try {

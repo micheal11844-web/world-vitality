@@ -547,3 +547,54 @@ button (`docs/runbooks/billing.md`, "Not built yet").
 
 **Status:** Accepted. Prices and launch plan to be revisited after the first
 paying customers.
+
+## Decision #021 — The plan screen: owner-only, no mid-subscription plan switch, and deletion cancels the subscription first
+
+**Context:** With prices decided (#020) and the organisation model in place
+(#019), customers needed a way to buy, update their card and cancel — and an
+account holder who deletes their account must not keep being charged.
+
+**Chosen:**
+
+- **Everything goes through Paystack's own pages.** Subscribe sends the
+  person to Paystack's hosted checkout; "Update card" opens Paystack's hosted
+  page; the app never sees card details. Payment methods (cards, and Google
+  Pay if it is switched on in the dashboard) are Paystack's, because the
+  checkout request does not restrict channels — so Google Pay needed no code.
+- **Only the organisation's owner can buy, update or cancel.** The plan is the
+  owner's, so a member sees it read-only. Each action acts on the signed-in
+  person's own id; nothing from the browser names a subscription.
+- **The page never says "paid" before the webhook does.** Returning from
+  Paystack shows "confirming" and re-checks briefly; the stored subscription,
+  written only by the signed webhook, is the one source of truth.
+- **No plan switch while subscribed.** Paystack has no "change plan" on a
+  running subscription, so the screen says: cancel, then subscribe to the
+  other plan once it ends. Cancelling keeps the plan until the paid term
+  ends.
+- **Deleting an account cancels its Paystack subscription first, and if that
+  cannot be confirmed the account is not deleted.** The owner-with-members
+  check runs before the cancel, so a refused deletion cancels nothing.
+- `/billing` is a 404 and Settings shows no billing card while
+  `BILLING_ENABLED` is off.
+
+**Alternatives considered:**
+
+- _Delete the account anyway and tell the person to cancel in Paystack._
+  Simpler and never blocks deletion, but a customer could keep being charged
+  for something they can no longer reach or cancel — worse than being asked to
+  try again. Deletion stays "as easy as sign-up" in the normal case; it only
+  waits on Paystack when there is a live subscription.
+- _Offer plan switching by cancelling and re-subscribing automatically._
+  Needs two steps that can half-fail around a payment; left out until
+  Paystack's behaviour is seen in test mode.
+- _A custom card form or an on-site Google Pay button._ More to build and to
+  secure; Paystack's hosted checkout already offers both card and Google Pay,
+  and its standalone Google Pay button is not supported yet.
+
+**Trade-offs, stated honestly:** the Paystack calls (fetch subscription, card
+link, disable) were written from Paystack's documentation and tested only
+against a stand-in; the first real test payment is where they are checked.
+A Paystack outage can briefly stop a paying customer deleting their account.
+The new screen text is machine-drafted and unreviewed in four languages.
+
+**Status:** Accepted.

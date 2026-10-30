@@ -13,6 +13,7 @@ import {
 } from "@world-vitality/ui-components";
 import type { Role, WorkspaceMemberSummary } from "@world-vitality/identity-service";
 import { inviteMemberAction, removeMemberAction } from "./team-actions";
+import { UpgradeLink } from "../../../upgrade-link";
 
 /** A real, scopable resource, reduced to just what the invite picker
  *  needs to display — `page.tsx` maps whichever workspace-specific
@@ -72,6 +73,7 @@ export function TeamClient({
   const [role, setRole] = useState<Role>("operational_user");
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [upgrade, setUpgrade] = useState(false);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -79,6 +81,7 @@ export function TeamClient({
   function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
+    setUpgrade(false);
     setFormSuccess(null);
     const scopedResourceIds =
       role === "scoped_field_user" && selectedResourceIds.length > 0
@@ -92,6 +95,7 @@ export function TeamClient({
         setSelectedResourceIds([]);
       } else {
         setFormError(result.error ?? "Failed to send invite.");
+        setUpgrade(Boolean(result.upgrade));
       }
     });
   }
@@ -215,6 +219,7 @@ export function TeamClient({
             }}
           >
             {formError}
+            {upgrade && <UpgradeLink />}
           </Text>
         )}
         {formSuccess && (

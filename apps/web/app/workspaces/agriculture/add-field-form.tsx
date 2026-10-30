@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createFieldAction } from "./field-actions";
+import { UpgradeLink } from "../../upgrade-link";
 
 /**
  * "Add a field" form (BUILD_PLAN "STAGE — AGRICULTURE FIELDS"). Only
@@ -19,12 +20,14 @@ export function AddFieldForm() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [upgrade, setUpgrade] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setUpgrade(false);
     setSuccess(null);
     const lat = Number(latitude);
     const lon = Number(longitude);
@@ -37,6 +40,7 @@ export function AddFieldForm() {
         setLongitude("");
       } else {
         setError(result.error ?? "Failed to add field.");
+        setUpgrade(Boolean(result.upgrade));
       }
     });
   }
@@ -96,6 +100,7 @@ export function AddFieldForm() {
           style={{ display: "block", color: "var(--wv-critical)", marginTop: "var(--wv-space-sm)" }}
         >
           {error}
+          {upgrade && <UpgradeLink />}
         </Text>
       )}
       {success && (

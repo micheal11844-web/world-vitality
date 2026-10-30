@@ -340,6 +340,91 @@ export const en = {
   "errors.deleteOrganizationHasMembers":
     "Your organisation still has other members ({count}). Remove them on the Team page first, then delete your account.",
 
+  // ---- plan & billing (v95)
+  "billing.title": "Plan & billing",
+  "billing.back": "Back to settings",
+  "billing.seePlans": "See plans",
+  "billing.plan.basic": "Basic",
+  "billing.plan.standard": "Standard",
+  "billing.plan.premium": "Premium",
+  "billing.plan.enterprise": "Enterprise",
+  "billing.current.title": "Your plan",
+  "billing.state.free": "You’re on the free Basic plan.",
+  "billing.state.lapsed":
+    "Your last payment didn’t go through, so you’re on Basic for now. You can update your card below.",
+  "billing.state.active": "You’re subscribed to {plan}. It renews automatically.",
+  "billing.state.ending":
+    "Your {plan} plan is cancelled. You keep it until {date}, then you move to Basic. Nothing is deleted.",
+  "billing.state.endingNoDate":
+    "Your {plan} plan is cancelled. You keep it until the end of the period you paid for, then you move to Basic. Nothing is deleted.",
+  "billing.state.pastDue":
+    "Your last payment didn’t go through. Your {plan} plan stays on until {date} while you update your card.",
+  "billing.state.pastDueNoDate":
+    "Your last payment didn’t go through. Your {plan} plan stays on for a few days while you update your card.",
+  "billing.state.manual":
+    "Your {plan} plan is set up by agreement with us, so there’s nothing to manage here.",
+  "billing.member.note":
+    "Your organisation’s plan is managed by its owner. You’re using their {plan} plan.",
+  "billing.return.confirming":
+    "Thanks. We’re confirming your payment with Paystack, which usually takes a few seconds. If your plan hasn’t changed yet, refresh this page.",
+  "billing.return.refresh": "Refresh",
+  "billing.return.done": "Payment confirmed. You’re on the {plan} plan.",
+  "billing.limit.seats": "People in your organisation",
+  "billing.limit.savedItems": "Saved fields, properties and locations",
+  "billing.limit.unlimited": "No set limit",
+  "billing.plans.title": "Plans",
+  "billing.plans.free": "Free",
+  "billing.plans.current": "Your plan",
+  "billing.plans.notOffered": "Not available to buy yet.",
+  "billing.plans.none": "Plans can’t be bought just yet. Please check back soon.",
+  "billing.interval.monthly": "Monthly",
+  "billing.interval.annual": "Yearly",
+  "billing.interval.saving": "2 months free",
+  "billing.interval.label": "Billing period",
+  "billing.currency.label": "Currency",
+  "billing.currency.NGN": "Naira (₦)",
+  "billing.currency.USD": "US dollars ($)",
+  "billing.price.monthly": "{price} / month",
+  "billing.price.annual": "{price} / year",
+  "billing.subscribe": "Subscribe to {plan}",
+  "billing.subscribe.failed":
+    "Couldn’t start the payment, and nothing was charged. Please try again in a moment.",
+  "billing.payNote":
+    "You pay on Paystack’s secure page, and we never see your card details. The price shown is the price charged. Cancel any time and keep your plan until the end of the period you paid for.",
+  "billing.switchNote":
+    "To move between paid plans, cancel the current one and subscribe to the other once it ends. Paystack can’t switch a running subscription.",
+  "billing.alwaysFree":
+    "Official weather alerts, the Public Explorer, and exporting or deleting your own data are free on every plan.",
+  "billing.ownerOnly": "Only the owner of the organisation can subscribe or change the plan.",
+  "billing.manage.title": "Card and cancellation",
+  "billing.manage.cardBody":
+    "Opens Paystack’s page, where you can change the card used for renewals.",
+  "billing.manage.card": "Update card on Paystack",
+  "billing.manage.cardFailed":
+    "Couldn’t open Paystack’s page right now. Please try again in a moment.",
+  "billing.manage.cancel": "Cancel subscription",
+  "billing.manage.cancelBody":
+    "You keep your plan until the end of the period you’ve paid for, then move to Basic. Nothing is deleted; you just can’t add more than Basic allows.",
+  "billing.manage.cancelConfirm": "Yes, cancel at the end of the period",
+  "billing.manage.cancelKeep": "Keep my plan",
+  "billing.manage.cancelDone":
+    "Cancellation requested. This page updates as soon as Paystack confirms it.",
+  "billing.manage.cancelFailed":
+    "Couldn’t cancel just now, and nothing has changed. Please try again in a moment.",
+  "settings.billing.title": "Plan & billing",
+  "settings.billing.body": "You’re on the {plan} plan.",
+  "settings.billing.link": "See plan & billing",
+  "settings.delete.billingNote":
+    "If you have a paid subscription, we cancel it with Paystack first, so you aren’t charged again.",
+  "errors.billingUnavailable": "Billing isn’t available right now. Please try again later.",
+  "errors.billingOwnerOnly": "Only the owner of the organisation can change its plan.",
+  "errors.billingAlreadySubscribed":
+    "You already have a subscription. You can manage it on the plan page.",
+  "errors.billingNotOffered": "That plan isn’t available to buy right now.",
+  "errors.billingNotSubscribed": "There’s no subscription to manage.",
+  "errors.deleteCancelSubscriptionFailed":
+    "We couldn’t cancel your subscription with Paystack, so your account has not been deleted (otherwise you would keep being charged). Please try again in a moment.",
+
   // ---- search place result line
   "search.placeDescription": "See current conditions",
 
