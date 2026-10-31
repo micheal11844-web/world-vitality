@@ -103,8 +103,11 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         run: |
+          # An unset secret arrives as an empty value, which the builder would
+          # read as a certificate file with no name. Remove it entirely.
+          if [ -z "${CSC_LINK}" ]; then unset CSC_LINK CSC_KEY_PASSWORD; fi
           extra=""
-          if [ "${{ matrix.flag }}" = "--mac" ] && [ -z "${CSC_LINK}" ]; then
+          if [ "${{ matrix.flag }}" = "--mac" ] && [ -z "${CSC_LINK:-}" ]; then
             # No Apple certificate: sign "ad hoc" so the app can start on Apple
             # Silicon once the person has chosen Open Anyway. Not notarised.
             extra="-c.mac.identity=- -c.mac.hardenedRuntime=false"
@@ -115,17 +118,17 @@ jobs:
             echo "::error title=Installer build failed::$(tail -n 40 "${RUNNER_TEMP}/build.log" | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
             exit 1
           fi
-      - name: List what was built
-        working-directory: ../desktop-build
-        run: ls -la dist
+      - name: Gather the installers
+        run: |
+          ls -la ../desktop-build/dist
+          mkdir -p release-files
+          find ../desktop-build/dist -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' \) -exec cp {} release-files/ \;
+          ls -la release-files
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.os }}
           if-no-files-found: error
-          path: |
-            ../desktop-build/dist/*.exe
-            ../desktop-build/dist/*.dmg
-            ../desktop-build/dist/*.AppImage
+          path: release-files/*
 
   android:
     needs: checks
