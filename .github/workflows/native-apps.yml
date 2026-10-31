@@ -79,7 +79,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: native/desktop
         shell: bash
     steps:
       - uses: actions/checkout@v4
@@ -88,8 +87,16 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: native/desktop/package-lock.json
+      # The desktop app is its own npm project, but it sits inside the website's
+      # pnpm workspace. Left there, the installer builder sees the website's
+      # pnpm settings, tries to run pnpm and fails. So it is built from a copy
+      # next to the repository, where it only sees itself.
+      - name: Copy the app out of the repository
+        run: cp -R native/desktop ../desktop-build
       - run: npm ci
+        working-directory: ../desktop-build
       - name: Build the installer
+        working-directory: ../desktop-build
         env:
           # Only set once the project owns an Apple Developer certificate and a
           # Windows code-signing certificate; see the runbook. Empty is fine.
@@ -109,15 +116,16 @@ jobs:
             exit 1
           fi
       - name: List what was built
+        working-directory: ../desktop-build
         run: ls -la dist
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.os }}
           if-no-files-found: error
           path: |
-            native/desktop/dist/*.exe
-            native/desktop/dist/*.dmg
-            native/desktop/dist/*.AppImage
+            ../desktop-build/dist/*.exe
+            ../desktop-build/dist/*.dmg
+            ../desktop-build/dist/*.AppImage
 
   android:
     needs: checks
