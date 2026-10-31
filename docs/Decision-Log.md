@@ -598,3 +598,61 @@ A Paystack outage can briefly stop a paying customer deleting their account.
 The new screen text is machine-drafted and unreviewed in four languages.
 
 **Status:** Accepted.
+
+## Decision #022 — Plan feature switches decide what a screen offers, not who may see data
+
+**Context:** The plan catalogue (#018) lists on/off features (forecast
+outlooks, CSV export, print/PDF, auditable report, team tools, audit log, …)
+but nothing asked for them, so every plan behaved like Enterprise once billing
+was on. Before wiring them, "what does a locked feature look like?" needed an
+answer that fits the rules already fixed for every plan: official life-safety
+alerts and the Public Explorer are never paywalled, saved data is never
+hidden or deleted over a plan, and people can always export and delete their
+own account data.
+
+**Chosen:**
+
+- **A locked feature is replaced by one plain sentence and a "See plans"
+  link**, in the place where it would have been: "Forecast outlooks are
+  included in the Standard plan and above. Your plan is Basic." The rest of
+  the page is untouched; nothing is hidden, greyed out or nagged about.
+- **Wired where a real screen exists:** the 7-day forecast cards (Weather &
+  Climate, Construction, Logistics, Renewable Energy's wind and solar) —
+  which are not even requested from the weather provider when locked — and
+  the Download CSV and Print buttons on the three reports (Agriculture,
+  Insurance, Government & NGOs). The plan is the organisation's (its owner's),
+  so a member sees what the organisation has.
+- **It is a convenience switch, not access control.** The data on screen is
+  data the person can already read; the switch decides what the screen
+  offers. Printing from the browser's own menu still works; that is not
+  something a web page can or should prevent.
+- **Same rules as the limits:** billing off ⇒ nothing is locked and the plan
+  is not looked up; if the plan cannot be read, nothing is locked and the
+  error is logged.
+
+**Not wired, deliberately:** _team tools_ (Basic's single seat already stops
+invitations with a clearer message), _audit log_ (no customer-facing screen
+exists), _auditable report_ (the Insurance report is one page with no separate
+"auditable" version to lock), and the unbuilt features (alerts, bulk export,
+API, integrations, SSO — never offered). The Research dataset explorer's
+CSV and forecast are left open: it is a raw-data tool by design. The
+`workspaces` limit is still not enforced.
+
+**Alternatives considered:**
+
+- _Hide the locked cards and buttons._ Cleaner pages, but a customer cannot
+  learn what a paid plan adds, and a missing button looks like a bug.
+- _Show them greyed out with an upgrade modal._ Closer to a dark pattern
+  (Constitution §7); a sentence and a link says the same thing.
+- _Lock the whole Insurance report behind the auditable-report switch._
+  Would remove the page's main purpose from Standard customers for a feature
+  that has no separate version to sell.
+
+**Trade-offs, stated honestly:** when billing is switched on, everyone who has
+not subscribed (including the owner's own account) loses the forecast cards
+and the report downloads until they do, so existing customers should be put on
+a plan first if that is not wanted (`billing.md`, "Putting a customer on
+Enterprise (invoiced, by hand)", with `'standard'` in place of `'enterprise'`). The note is English only, like the other workspace-page limit
+text.
+
+**Status:** Accepted.

@@ -10,6 +10,8 @@ import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
+import { featureLockedFor } from "../../../lib/plan-features";
+import { FeatureLockedNote } from "../../plan-notice";
 
 // Same reasoning as Agriculture and Weather & Climate: environmental
 // data must be fetched fresh on every request, never baked in at build
@@ -123,8 +125,13 @@ async function getSiteRiskTimeline(location: WorkspaceLocation) {
 export default async function ConstructionWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "construction" });
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
-  const [{ result, ingestionGaps }, { result: timelineResult, ingestionGaps: timelineGaps }] =
-    await Promise.all([getSiteRiskStatus(location), getSiteRiskTimeline(location)]);
+  // The 7-day timeline is a plan feature; when the plan lacks it the forecast
+  // is not even requested (see lib/plan-features.ts).
+  const timelineLocked = await featureLockedFor("forecastOutlooks");
+  const [{ result, ingestionGaps }, timeline] = await Promise.all([
+    getSiteRiskStatus(location),
+    timelineLocked ? Promise.resolve(null) : getSiteRiskTimeline(location),
+  ]);
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
@@ -209,28 +216,40 @@ export default async function ConstructionWorkspaceHome() {
       >
         <Card>
           <Text variant="caption">SITE RISK TIMELINE</Text>
-          {timelineResult.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {timelineResult.summary}
-            </Text>
+          {timeline === null ? (
+            <FeatureLockedNote message={timelineLocked} />
           ) : (
             <>
-              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                {timelineResult.summary}
-              </Text>
-              <ConfidenceBadge level={timelineResult.confidence} showDescription />
-              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {timelineResult.explanation}
-              </Text>
+              {timeline.result.unableToAnswer ? (
+                <Text
+                  variant="body"
+                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                >
+                  {timeline.result.summary}
+                </Text>
+              ) : (
+                <>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {timeline.result.summary}
+                  </Text>
+                  <ConfidenceBadge level={timeline.result.confidence} showDescription />
+                  <Text
+                    variant="caption"
+                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                  >
+                    {timeline.result.explanation}
+                  </Text>
+                </>
+              )}
+              {timeline.ingestionGaps.length > 0 && (
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
+                  {timeline.ingestionGaps.length} forecast day(s) had no data available.
+                </Text>
+              )}
             </>
-          )}
-          {timelineGaps.length > 0 && (
-            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {timelineGaps.length} forecast day(s) had no data available.
-            </Text>
           )}
         </Card>
         <Card>

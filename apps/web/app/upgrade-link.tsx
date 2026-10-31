@@ -14,7 +14,10 @@ import { useOptionalI18n } from "../lib/i18n/i18n-provider";
 export function UpgradeLink() {
   const i18n = useOptionalI18n();
   return (
-    <Link href="/billing" style={{ marginInlineStart: "var(--wv-space-xs)" }}>
+    <Link
+      href="/billing"
+      style={{ color: "var(--wv-accent)", marginInlineStart: "var(--wv-space-xs)" }}
+    >
       {i18n ? i18n.t("billing.seePlans") : "See plans"}
     </Link>
   );

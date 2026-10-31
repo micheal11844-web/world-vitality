@@ -1,4 +1,5 @@
 import {
+  PLAN_IDS,
   PLANS,
   UNBUILT_FEATURES,
   type Count,
@@ -165,6 +166,44 @@ export function isOverLimit(e: Entitlements, key: LimitKey, current: number): bo
 
 export function hasFeature(e: Entitlements, feature: FeatureKey): boolean {
   return !e.enforced || e.features[feature];
+}
+
+/** How a feature is named in a sentence, and whether that name is plural ("are"). */
+const FEATURE_NAMES: Record<FeatureKey, { name: string; plural: boolean }> = {
+  forecastOutlooks: { name: "Forecast outlooks", plural: true },
+  csvExport: { name: "CSV export", plural: false },
+  printReport: { name: "Print and PDF export", plural: false },
+  auditableReport: { name: "The auditable report", plural: false },
+  teamTools: { name: "Team tools", plural: true },
+  emailAlerts: { name: "Email alerts", plural: true },
+  smsAlerts: { name: "SMS alerts", plural: true },
+  auditLog: { name: "The audit log", plural: false },
+  bulkExport: { name: "Bulk export", plural: false },
+  apiAccess: { name: "API access", plural: false },
+  integrations: { name: "Integrations", plural: true },
+  sso: { name: "Single sign-on", plural: false },
+};
+
+/** The cheapest plan that includes the feature (plans are listed cheapest first). */
+export function lowestPlanWith(feature: FeatureKey): PlanId | null {
+  return PLAN_IDS.find((id) => PLANS[id].features[feature]) ?? null;
+}
+
+/**
+ * What to show where a feature the plan does not include would have been:
+ * `null` when the person has it (always, while billing is off or
+ * unreadable), otherwise one plain sentence naming the feature, the plan
+ * that includes it and the plan they are on. Never blames, and never
+ * implies anything saved has gone — a locked feature is an extra, not
+ * someone's data.
+ */
+export function featureLockedMessage(e: Entitlements, feature: FeatureKey): string | null {
+  if (hasFeature(e, feature)) return null;
+  const { name, plural } = FEATURE_NAMES[feature];
+  const verb = plural ? "are" : "is";
+  const lowest = lowestPlanWith(feature);
+  if (!lowest) return `${name} ${verb} not part of the ${PLANS[e.plan].label} plan.`;
+  return `${name} ${verb} included in the ${PLANS[lowest].label} plan and above. Your plan is ${PLANS[e.plan].label}.`;
 }
 
 /** Is the feature built at all? Anything that is not must not be offered. */

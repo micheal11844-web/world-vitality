@@ -23,6 +23,8 @@ export {
   limitReachedMessage,
   isOverLimit,
   hasFeature,
+  lowestPlanWith,
+  featureLockedMessage,
   isFeatureBuilt,
   type Entitlements,
   type EntitlementDeps,

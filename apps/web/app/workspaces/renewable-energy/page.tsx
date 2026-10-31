@@ -20,6 +20,8 @@ import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
+import { featureLockedFor } from "../../../lib/plan-features";
+import { FeatureLockedNote } from "../../plan-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -215,22 +217,25 @@ async function getCurrentHydroStatus() {
 export default async function RenewableEnergyWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "renewable-energy" });
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
+  // The two 7-day outlooks are a plan feature; when the plan lacks it they are
+  // not even requested (see lib/plan-features.ts).
+  const outlookLocked = await featureLockedFor("forecastOutlooks");
   const [
     { result, ingestionGaps },
-    { result: outlookResult, ingestionGaps: outlookGaps },
+    outlook,
     { result: solarResult, ingestionGaps: solarGaps },
-    { result: solarOutlookResult, ingestionGaps: solarOutlookGaps },
+    solarOutlook,
     { result: hydroResult, ingestionGaps: hydroGaps },
   ] = await Promise.all([
     getCurrentGenerationStatus(location),
-    getGenerationOutlook(location),
+    outlookLocked ? Promise.resolve(null) : getGenerationOutlook(location),
     getCurrentSolarStatus(location),
-    getSolarOutlook(location),
+    outlookLocked ? Promise.resolve(null) : getSolarOutlook(location),
     getCurrentHydroStatus(),
   ]);
 
   return (
-    <WorkspaceShell activeKey="home" aiInterpretation={outlookResult}>
+    <WorkspaceShell activeKey="home" aiInterpretation={outlook ? outlook.result : result}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
         Asset Generation Outlook
       </Text>
@@ -249,54 +254,78 @@ export default async function RenewableEnergyWorkspaceHome() {
       >
         <Card style={{ gridColumn: "1 / -1" }}>
           <Text variant="caption">GENERATION OUTLOOK — WIND (NEXT 7 DAYS)</Text>
-          {outlookResult.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {outlookResult.summary}
-            </Text>
+          {outlook === null ? (
+            <FeatureLockedNote message={outlookLocked} />
           ) : (
             <>
-              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                {outlookResult.summary}
-              </Text>
-              <ConfidenceBadge level={outlookResult.confidence} showDescription />
-              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {outlookResult.explanation}
-              </Text>
+              {outlook.result.unableToAnswer ? (
+                <Text
+                  variant="body"
+                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                >
+                  {outlook.result.summary}
+                </Text>
+              ) : (
+                <>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {outlook.result.summary}
+                  </Text>
+                  <ConfidenceBadge level={outlook.result.confidence} showDescription />
+                  <Text
+                    variant="caption"
+                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                  >
+                    {outlook.result.explanation}
+                  </Text>
+                </>
+              )}
+              {outlook.ingestionGaps.length > 0 && (
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
+                  {outlook.ingestionGaps.length} forecast day(s) had no data available.
+                </Text>
+              )}
             </>
-          )}
-          {outlookGaps.length > 0 && (
-            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {outlookGaps.length} forecast day(s) had no data available.
-            </Text>
           )}
         </Card>
         <Card style={{ gridColumn: "1 / -1" }}>
           <Text variant="caption">GENERATION OUTLOOK — SOLAR (NEXT 7 DAYS)</Text>
-          {solarOutlookResult.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {solarOutlookResult.summary}
-            </Text>
+          {solarOutlook === null ? (
+            <FeatureLockedNote message={outlookLocked} />
           ) : (
             <>
-              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                {solarOutlookResult.summary}
-              </Text>
-              <ConfidenceBadge level={solarOutlookResult.confidence} showDescription />
-              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {solarOutlookResult.explanation}
-              </Text>
+              {solarOutlook.result.unableToAnswer ? (
+                <Text
+                  variant="body"
+                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                >
+                  {solarOutlook.result.summary}
+                </Text>
+              ) : (
+                <>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {solarOutlook.result.summary}
+                  </Text>
+                  <ConfidenceBadge level={solarOutlook.result.confidence} showDescription />
+                  <Text
+                    variant="caption"
+                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                  >
+                    {solarOutlook.result.explanation}
+                  </Text>
+                </>
+              )}
+              {solarOutlook.ingestionGaps.length > 0 && (
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
+                  {solarOutlook.ingestionGaps.length} forecast day(s) had no data available.
+                </Text>
+              )}
             </>
-          )}
-          {solarOutlookGaps.length > 0 && (
-            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {solarOutlookGaps.length} forecast day(s) had no data available.
-            </Text>
           )}
         </Card>
       </div>

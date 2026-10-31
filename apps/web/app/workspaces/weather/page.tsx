@@ -12,6 +12,8 @@ import { LocaleBoundary } from "../../../lib/i18n/locale-boundary";
 import { getTranslator } from "../../../lib/i18n/server";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
+import { featureLockedFor } from "../../../lib/plan-features";
+import { FeatureLockedNote } from "../../plan-notice";
 
 // Same reasoning as the Agriculture workspace: environmental data must
 // be fetched fresh on every request, never baked in at build time.
@@ -123,8 +125,13 @@ export default async function WeatherWorkspaceHome() {
   const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   const caption = { textTransform: "uppercase" } as const;
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
-  const [{ result, ingestionGaps }, { result: forecastResult, ingestionGaps: forecastGaps }] =
-    await Promise.all([getTemperatureStatus(location), getForecastTrend(location)]);
+  // The 7-day forecast is a plan feature; when the plan lacks it the forecast
+  // is not even requested (see lib/plan-features.ts).
+  const forecastLocked = await featureLockedFor("forecastOutlooks");
+  const [{ result, ingestionGaps }, forecast] = await Promise.all([
+    getTemperatureStatus(location),
+    forecastLocked ? Promise.resolve(null) : getForecastTrend(location),
+  ]);
 
   return (
     <LocaleBoundary>
@@ -192,26 +199,37 @@ export default async function WeatherWorkspaceHome() {
             <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
               {t("weather.forecast")}
             </Text>
-            {forecastResult.unableToAnswer ? (
-              <StateDisplay status="empty" title={t("weather.noForecast")} />
-            ) : (
+            {forecast === null ? (
               <div {...englishOnly}>
-                <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
-                  {forecastResult.summary}
-                </Text>
-                <ConfidenceBadge level={forecastResult.confidence} showDescription />
-                <Text
-                  variant="caption"
-                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
-                >
-                  {forecastResult.explanation}
-                </Text>
+                <FeatureLockedNote message={forecastLocked} />
               </div>
-            )}
-            {forecastGaps.length > 0 && (
-              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {t("weather.forecastGaps", { count: forecastGaps.length })}
-              </Text>
+            ) : (
+              <>
+                {forecast.result.unableToAnswer ? (
+                  <StateDisplay status="empty" title={t("weather.noForecast")} />
+                ) : (
+                  <div {...englishOnly}>
+                    <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
+                      {forecast.result.summary}
+                    </Text>
+                    <ConfidenceBadge level={forecast.result.confidence} showDescription />
+                    <Text
+                      variant="caption"
+                      style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                    >
+                      {forecast.result.explanation}
+                    </Text>
+                  </div>
+                )}
+                {forecast.ingestionGaps.length > 0 && (
+                  <Text
+                    variant="caption"
+                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                  >
+                    {t("weather.forecastGaps", { count: forecast.ingestionGaps.length })}
+                  </Text>
+                )}
+              </>
             )}
           </Card>
           <Card>

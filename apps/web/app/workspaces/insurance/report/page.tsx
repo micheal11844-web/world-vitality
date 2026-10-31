@@ -9,6 +9,8 @@ import { getOrganizationData } from "../../../../lib/organization-data";
 import { logSecurity } from "../../../../lib/logger";
 import { PrintButton } from "./print-button";
 import { CsvExportButton, type CsvRow } from "./csv-export-button";
+import { featureLockedFor } from "../../../../lib/plan-features";
+import { FeatureLockedNote } from "../../../plan-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +78,8 @@ export default async function InsuranceReportPage() {
     visibleProperties.map((property) => getPropertyStatus(property)),
   );
   const generatedAt = new Date().toISOString();
+  const csvLocked = await featureLockedFor("csvExport");
+  const printLocked = await featureLockedFor("printReport");
 
   const userId = await getSessionUserId();
   if (userId) {
@@ -121,6 +125,7 @@ export default async function InsuranceReportPage() {
         @media print {
           [data-app-shell-chrome] { display: none !important; }
           [data-report-content] { padding: 0 !important; }
+          [data-plan-notice] { display: none !important; }
         }
       `}</style>
       <div data-report-content style={{ maxWidth: "40rem" }}>
@@ -153,10 +158,15 @@ export default async function InsuranceReportPage() {
               whiteSpace: "nowrap",
             }}
           >
-            <CsvExportButton generatedAt={generatedAt} rows={csvRows} />
-            <PrintButton />
+            {csvLocked === null && <CsvExportButton generatedAt={generatedAt} rows={csvRows} />}
+            {printLocked === null && <PrintButton />}
           </div>
         </div>
+        {/* Downloading and printing are plan features; one note covers both. */}
+        <FeatureLockedNote
+          message={csvLocked ?? printLocked}
+          style={{ marginBottom: "var(--wv-space-md)" }}
+        />
 
         <Text
           variant="caption"

@@ -120,10 +120,8 @@ locked or deleted over a limit, and reading is never gated.
   customer out of their own work. (Organisations do the opposite and fail
   *closed*, because there the risk is showing someone else's data.)
 - **Not enforced:** the `workspaces` limit (only three workspaces hold saved
-  items, so there is nothing to count yet) and the on/off **feature**
-  switches (CSV export, auditable report, audit log, …): the catalogue
-  defines them but no screen asks yet. Both need a decision on what "over the
-  limit" looks like on screen before they are wired.
+  items, so there is nothing to count yet). The on/off **feature** switches are
+  wired where a screen exists — see "Feature switches" below.
 - **An owner cannot delete their account while others are still in their
   organisation.** When billing is on, deleting an account first cancels its
   Paystack subscription, and **if Paystack cannot confirm the cancellation the
@@ -131,6 +129,44 @@ locked or deleted over a limit, and reading is never gated.
   anyway would leave them being charged for a plan they can no longer reach.
   The members check runs before the cancel, so a refused deletion never
   cancels anything.
+
+## Feature switches (v98)
+
+A locked feature is replaced, in the place it would have been, by one
+sentence and a "See plans" link: *"Forecast outlooks are included in the
+Standard plan and above. Your plan is Basic."* Nothing else on the page
+changes (Decision #022). The check is `featureLockedFor(feature)` in
+`apps/web/lib/plan-features.ts`; the notice is `FeatureLockedNote`
+(`apps/web/app/plan-notice.tsx`).
+
+| Switch | Plans | Where it is wired |
+| --- | --- | --- |
+| `forecastOutlooks` | Standard, Premium, Enterprise | The 7-day forecast cards on Weather & Climate, Construction (site risk timeline), Logistics (route risk outlook) and Renewable Energy (wind and solar outlooks). When locked the forecast is **not requested** from the weather provider. |
+| `csvExport` | Standard and up | "Download CSV" on the Agriculture, Insurance and Government & NGOs reports |
+| `printReport` | Standard and up | "Print / Save as PDF" on the same three reports |
+
+- **A convenience, not access control.** It decides what the screen offers;
+  the data on the page is data the person can already read, and the browser's
+  own Print still works. Nothing saved is hidden, locked or deleted.
+- **The plan is the organisation's (its owner's)**, so a member sees what the
+  organisation has paid for.
+- **Billing off ⇒ nothing is locked and the plan is not looked up. If the
+  plan cannot be read ⇒ nothing is locked** (logged). One plan lookup per page,
+  however many switches it asks about.
+- The note is hidden when the report is printed, and is English only like the
+  other workspace-page limit text.
+- **Not wired, on purpose:** `teamTools` (Basic's one seat already stops
+  invitations, with a clearer message), `auditLog` (no customer-facing screen
+  exists), `auditableReport` (the Insurance report is one page; there is no
+  separate "auditable" version to lock) and the features that are not built
+  (`emailAlerts`, `smsAlerts`, `bulkExport`, `apiAccess`, `integrations`,
+  `sso`). The Research dataset explorer's CSV and forecast stay open — it is a
+  raw-data tool by design.
+- **Before switching billing on:** anyone not subscribed, including your own
+  account, loses the forecast cards and report downloads until they subscribe
+  (or are put on a plan by hand — see "Putting a customer on Enterprise", with
+  `'standard'` in place of `'enterprise'`). Subscribing in test mode, as the
+  first test payment does, shows the cards and buttons returning.
 
 ## Weather data licence — before charging anyone
 
@@ -313,8 +349,9 @@ call to the real service.
   running subscription; the screen explains cancel-then-subscribe).
 - A route for Enterprise enquiries on the screen (there is no contact address
   or form yet to point at).
-- The `workspaces` limit and the feature switches (see "Where limits are
-  enforced").
+- The `workspaces` limit, and the feature switches for team tools, the audit
+  log and the auditable report (see "Where limits are enforced" and "Feature
+  switches").
 - Receipts, invoices, tax/VAT, refunds, failed-payment emails. (Paystack
   emails its own receipts; ours are not built.)
 - The plan limit text ("Your Basic plan includes up to 3 saved items…")

@@ -5,8 +5,10 @@ import {
   checkLimit,
   effectivePlan,
   entitlementsFor,
+  featureLockedMessage,
   hasFeature,
   isFeatureBuilt,
+  lowestPlanWith,
   isOverLimit,
   limitReachedMessage,
   loadEntitlements,
@@ -153,6 +155,35 @@ test("features follow the plan when enforced, and are all on when not", () => {
   assert.equal(hasFeature(entitlementsFor("standard"), "auditLog"), false);
   assert.equal(hasFeature(entitlementsFor("premium"), "auditLog"), true);
   assert.equal(hasFeature(unlimitedEntitlements("lookup_failed"), "auditLog"), true);
+});
+
+test("a locked feature says which plan includes it and which plan the person is on", () => {
+  assert.equal(
+    featureLockedMessage(entitlementsFor("basic"), "forecastOutlooks"),
+    "Forecast outlooks are included in the Standard plan and above. Your plan is Basic.",
+  );
+  assert.equal(
+    featureLockedMessage(entitlementsFor("basic"), "csvExport"),
+    "CSV export is included in the Standard plan and above. Your plan is Basic.",
+  );
+  assert.equal(
+    featureLockedMessage(entitlementsFor("standard"), "auditLog"),
+    "The audit log is included in the Premium plan and above. Your plan is Standard.",
+  );
+});
+
+test("nothing is locked for a plan that has the feature, while billing is off, or if billing could not be read", () => {
+  assert.equal(featureLockedMessage(entitlementsFor("standard"), "forecastOutlooks"), null);
+  assert.equal(featureLockedMessage(entitlementsFor("premium"), "auditLog"), null);
+  assert.equal(featureLockedMessage(entitlementsFor("enterprise"), "sso"), null);
+  assert.equal(featureLockedMessage(unlimitedEntitlements("billing_off"), "csvExport"), null);
+  assert.equal(featureLockedMessage(unlimitedEntitlements("lookup_failed"), "auditLog"), null);
+});
+
+test("the cheapest plan with a feature is found in price order", () => {
+  assert.equal(lowestPlanWith("printReport"), "standard");
+  assert.equal(lowestPlanWith("auditableReport"), "premium");
+  assert.equal(lowestPlanWith("sso"), "enterprise");
 });
 
 test("features that are not built are reported as such", () => {

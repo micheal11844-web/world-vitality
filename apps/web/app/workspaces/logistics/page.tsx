@@ -10,6 +10,8 @@ import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
+import { featureLockedFor } from "../../../lib/plan-features";
+import { FeatureLockedNote } from "../../plan-notice";
 
 // Same reasoning as every other workspace: environmental data must be
 // fetched fresh on every request, never baked in at build time.
@@ -110,7 +112,10 @@ export default async function LogisticsWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "logistics" });
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   const { result, ingestionGaps } = await getRouteRiskStatus(location);
-  const { result: outlookResult, ingestionGaps: outlookGaps } = await getRouteRiskOutlook(location);
+  // The 7-day outlook is a plan feature; when the plan lacks it the forecast
+  // is not even requested (see lib/plan-features.ts).
+  const outlookLocked = await featureLockedFor("forecastOutlooks");
+  const outlook = outlookLocked ? null : await getRouteRiskOutlook(location);
 
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
@@ -166,28 +171,40 @@ export default async function LogisticsWorkspaceHome() {
       >
         <Card>
           <Text variant="caption">ROUTE RISK OUTLOOK (NEXT 7 DAYS)</Text>
-          {outlookResult.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {outlookResult.summary}
-            </Text>
+          {outlook === null ? (
+            <FeatureLockedNote message={outlookLocked} />
           ) : (
             <>
-              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                {outlookResult.summary}
-              </Text>
-              <ConfidenceBadge level={outlookResult.confidence} showDescription />
-              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {outlookResult.explanation}
-              </Text>
+              {outlook.result.unableToAnswer ? (
+                <Text
+                  variant="body"
+                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                >
+                  {outlook.result.summary}
+                </Text>
+              ) : (
+                <>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {outlook.result.summary}
+                  </Text>
+                  <ConfidenceBadge level={outlook.result.confidence} showDescription />
+                  <Text
+                    variant="caption"
+                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                  >
+                    {outlook.result.explanation}
+                  </Text>
+                </>
+              )}
+              {outlook.ingestionGaps.length > 0 && (
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
+                  {outlook.ingestionGaps.length} forecast day(s) had no data available.
+                </Text>
+              )}
             </>
-          )}
-          {outlookGaps.length > 0 && (
-            <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {outlookGaps.length} forecast day(s) had no data available.
-            </Text>
           )}
         </Card>
         <Card>
