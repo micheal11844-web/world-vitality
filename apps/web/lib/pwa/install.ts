@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { isNativeShellUserAgent } from "./native-shell";
 
 /**
  * Installing the app (adding it to a phone's home screen or a desktop).
@@ -47,10 +48,17 @@ export function captureInstallPrompt(): () => void {
   };
 }
 
-/** Already running as an installed app (its own window, no browser bars). */
+/**
+ * Already running as an installed app: the browser's own installed window (no
+ * browser bars), or inside the World Vitality desktop or phone app.
+ */
 export function isRunningInstalled(): boolean {
   const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
-  return iosStandalone || window.matchMedia?.("(display-mode: standalone)").matches === true;
+  return (
+    iosStandalone ||
+    window.matchMedia?.("(display-mode: standalone)").matches === true ||
+    isNativeShellUserAgent(navigator.userAgent)
+  );
 }
 
 export type InstallState =

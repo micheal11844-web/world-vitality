@@ -1,0 +1,242 @@
+# Builds the World Vitality desktop and phone apps (native/) on GitHub's own
+# machines and, for a version tag, publishes the installers on the repository's
+# Releases page. How to use it, what is and is not signed, and what each app
+# can and cannot do: docs/runbooks/native-apps.md.
+#
+#   git tag native-v0.1.0 && git push origin native-v0.1.0
+#
+# The tag number must match "version" in native/desktop/package.json and
+# native/mobile/package.json (the first job checks). "Run workflow" on the
+# Actions page, or pushing a branch named native-build/<anything>, builds
+# everything and keeps the files as downloadable results of the run, without
+# publishing a release.
+name: Native apps
+
+on:
+  push:
+    tags: ["native-v*"]
+    # A branch named native-build/anything builds everything as a rehearsal:
+    # the files are kept on the run, nothing is published.
+    branches: ["native-build/**"]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "native/**"
+      - "apps/web/lib/pwa/native-shell.ts"
+      - ".github/workflows/native-apps.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-apps-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Cheap and fast: runs on every change to the apps. The same tests also run
+  # again before each real build below.
+  checks:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Desktop app tests
+        run: node --test native/desktop/test/navigation.test.cjs
+      - name: Phone app tests
+        run: node --test native/mobile/test/config.test.cjs
+      - name: Work out the version
+        id: version
+        run: |
+          desktop="$(node -p "require('./native/desktop/package.json').version")"
+          mobile="$(node -p "require('./native/mobile/package.json').version")"
+          if [ "$desktop" != "$mobile" ]; then
+            echo "::error::Desktop ($desktop) and phone ($mobile) versions differ; make them the same."
+            exit 1
+          fi
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "native-v${desktop}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match the apps' version ${desktop}. Tag native-v${desktop}, or change the version first."
+            exit 1
+          fi
+          echo "version=$desktop" >> "$GITHUB_OUTPUT"
+
+  desktop:
+    needs: checks
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            flag: --win
+          - os: macos-latest
+            flag: --mac
+          - os: ubuntu-latest
+            flag: --linux
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: native/desktop
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: native/desktop/package-lock.json
+      - run: npm ci
+      - name: Build the installer
+        env:
+          # Only set once the project owns an Apple Developer certificate and a
+          # Windows code-signing certificate; see the runbook. Empty is fine.
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          extra=""
+          if [ "${{ matrix.flag }}" = "--mac" ] && [ -z "${CSC_LINK}" ]; then
+            # No Apple certificate: sign "ad hoc" so the app can start on Apple
+            # Silicon once the person has chosen Open Anyway. Not notarised.
+            extra="-c.mac.identity=- -c.mac.hardenedRuntime=false"
+          fi
+          # shellcheck disable=SC2086
+          npx electron-builder ${{ matrix.flag }} --publish never $extra
+      - name: List what was built
+        run: ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            native/desktop/dist/*.exe
+            native/desktop/dist/*.dmg
+            native/desktop/dist/*.AppImage
+
+  android:
+    needs: checks
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      signing: ${{ steps.key.outputs.signing }}
+    defaults:
+      run:
+        working-directory: native/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: native/mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: Accept the Android SDK licences
+        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Signing key
+        id: key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          keystore="${RUNNER_TEMP}/release.jks"
+          if [ -n "${KEYSTORE_BASE64}" ]; then
+            echo "${KEYSTORE_BASE64}" | base64 -d > "${keystore}"
+            store_password="${KEYSTORE_PASSWORD}"
+            key_alias="${KEY_ALIAS}"
+            key_password="${KEY_PASSWORD}"
+            echo "signing=own" >> "${GITHUB_OUTPUT}"
+          else
+            # No key supplied: make a throwaway one so the file still installs.
+            # Every build then has a different signature, so a phone must
+            # uninstall the old copy before installing a newer one.
+            store_password="$(openssl rand -hex 16)"
+            key_password="${store_password}"
+            key_alias="worldvitality-temporary"
+            echo "::add-mask::${store_password}"
+            keytool -genkeypair -keystore "${keystore}" -storepass "${store_password}" \
+              -keypass "${key_password}" -alias "${key_alias}" -keyalg RSA -keysize 2048 \
+              -validity 10000 -dname "CN=World Vitality (temporary build key)"
+            echo "signing=temporary" >> "${GITHUB_OUTPUT}"
+          fi
+          {
+            echo "WV_KEYSTORE_FILE=${keystore}"
+            echo "WV_KEYSTORE_PASSWORD=${store_password}"
+            echo "WV_KEY_ALIAS=${key_alias}"
+            echo "WV_KEY_PASSWORD=${key_password}"
+            echo "WV_VERSION_NAME=${{ needs.checks.outputs.version }}"
+            echo "WV_VERSION_CODE=${{ github.run_number }}"
+          } >> "${GITHUB_ENV}"
+      - name: Copy the app's pages and settings into the Android project
+        run: npx cap sync android
+      - name: Build the signed app
+        working-directory: native/mobile/android
+        run: ./gradlew --no-daemon assembleRelease
+      - name: Name the file
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk \
+            "World-Vitality-${{ needs.checks.outputs.version }}.apk"
+          ls -la ./*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          if-no-files-found: error
+          path: native/mobile/*.apk
+
+  release:
+    needs: [checks, desktop, android]
+    if: startsWith(github.ref, 'refs/tags/native-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.checks.outputs.version }}
+      SIGNING: ${{ needs.android.outputs.signing }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+      - name: Checksums and notes
+        run: |
+          cd files
+          ls -la
+          sha256sum -- * > SHA256SUMS.txt
+          cd ..
+          {
+            echo "World Vitality apps ${VERSION}. They open the live site at https://world-vitality.vercel.app, so the site itself never needs a new download."
+            echo
+            echo "| Computer or phone | File |"
+            echo "| --- | --- |"
+            echo "| Windows | \`World-Vitality-Setup-${VERSION}.exe\` |"
+            echo "| Mac, Apple chip (M1 or newer) | \`World-Vitality-${VERSION}-arm64.dmg\` |"
+            echo "| Mac, Intel chip | \`World-Vitality-${VERSION}-x64.dmg\` |"
+            echo "| Linux | \`World-Vitality-${VERSION}.AppImage\` |"
+            echo "| Android phone | \`World-Vitality-${VERSION}.apk\` |"
+            echo
+            echo "**These installers are not yet signed by a certificate the operating system knows.** Windows will say \"Windows protected your PC\" (choose More info, then Run anyway). A Mac will say the app cannot be opened (open System Settings, Privacy & Security, then choose Open Anyway). Android will ask you to allow installing from your browser or files app. Compare a download with \`SHA256SUMS.txt\` if you want to be sure it is untouched."
+            echo
+            if [ "${SIGNING}" = "temporary" ]; then
+              echo "**This Android file was signed with a temporary key.** To install a newer one you must uninstall this one first. A permanent key stops that; see docs/runbooks/native-apps.md."
+              echo
+            fi
+            echo "In the apps, sign in with email and password. Google sign-in works only on the website."
+          } > notes.md
+          cat notes.md
+      - name: Publish the release
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" > /dev/null 2>&1; then
+            gh release upload "${tag}" files/* --clobber --repo "${GITHUB_REPOSITORY}"
+          else
+            gh release create "${tag}" files/* --repo "${GITHUB_REPOSITORY}" \
+              --title "World Vitality apps ${VERSION}" --notes-file notes.md --verify-tag
+          fi

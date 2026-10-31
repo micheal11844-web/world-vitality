@@ -13,3 +13,8 @@ pnpm-lock.yaml
 **/dist/
 **/build/
 **/node_modules/
+
+# The desktop and phone apps (native/) are separate npm projects: their lock
+# files are written by npm, and the generated Android project is Gradle/Java.
+native/**/package-lock.json
+native/mobile/android/

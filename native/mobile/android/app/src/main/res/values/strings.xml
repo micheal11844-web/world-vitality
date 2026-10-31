@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">World Vitality</string>
+    <string name="title_activity_main">World Vitality</string>
+    <string name="package_name">app.worldvitality.mobile</string>
+    <string name="custom_url_scheme">app.worldvitality.mobile</string>
+</resources>

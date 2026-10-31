@@ -1,0 +1,41 @@
+# Packaging for the desktop app. Built on GitHub's own machines (see
+# .github/workflows/native-apps.yml); none of it needs a paid certificate to
+# run, but until the installers are signed Windows and macOS show a warning
+# (docs/runbooks/native-apps.md).
+appId: app.worldvitality.desktop
+productName: World Vitality
+copyright: World Vitality
+directories:
+  output: dist
+  buildResources: assets
+files:
+  - src/**/*
+  - package.json
+asar: true
+# No automatic updates yet: people download a new installer (docs/runbooks/native-apps.md).
+publish: null
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: assets/icon.png
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: World-Vitality-Setup-${version}.${ext}
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  category: public.app-category.utilities
+  icon: assets/icon.png
+  artifactName: World-Vitality-${version}-${arch}.${ext}
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+  category: Utility
+  icon: assets/icon.png
+  syncDesktopName: true
+  artifactName: World-Vitality-${version}.${ext}

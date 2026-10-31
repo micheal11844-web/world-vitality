@@ -20,6 +20,7 @@ import {
   signUpWithPasswordAction,
   signInWithGoogleAction,
 } from "../../lib/actions";
+import { isNativeShellUserAgent } from "../../lib/pwa/native-shell";
 
 /**
  * Maps the form's real states onto the Guide Character's moods (Stage
@@ -89,6 +90,13 @@ function LoginForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState<string | undefined>();
   const [googleLoading, setGoogleLoading] = useState(false);
+  // Inside the World Vitality desktop or phone app Google refuses to sign
+  // anyone in (it blocks sign-in from app windows), so the button is hidden
+  // there and email and password is the way in (lib/pwa/native-shell.ts).
+  const [inApp, setInApp] = useState(false);
+  useEffect(() => {
+    setInApp(isNativeShellUserAgent(navigator.userAgent));
+  }, []);
   // Orbi walks off on a successful sign-in; navigation happens when he
   // finishes (or after a safety timeout, so a failed animation can never
   // strand someone on the login page).
@@ -136,6 +144,7 @@ function LoginForm() {
   }
 
   async function handleGoogleClick() {
+    if (isNativeShellUserAgent(navigator.userAgent)) return;
     setGoogleLoading(true);
     try {
       await signInWithGoogleAction(rememberMe);
@@ -234,38 +243,56 @@ function LoginForm() {
           Your password has been updated. Please sign in.
         </Text>
       )}
-      <Button
-        type="button"
-        variant="secondary"
-        loading={googleLoading}
-        onClick={handleGoogleClick}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "var(--wv-space-sm)",
-          marginBottom: "var(--wv-space-md)",
-        }}
-      >
-        <GoogleIcon />
-        Continue with Google
-      </Button>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "var(--wv-space-sm)",
-          margin: "var(--wv-space-md) 0",
-        }}
-      >
-        <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
-        <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-          or
+      {inApp ? (
+        <Text
+          variant="caption"
+          role="note"
+          style={{
+            display: "block",
+            color: "var(--wv-text-secondary)",
+            textAlign: "center",
+            marginBottom: "var(--wv-space-md)",
+          }}
+        >
+          In this app, sign in with your email and password. If you usually sign in with Google, use
+          “Forgot password?” to choose a password first.
         </Text>
-        <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
-      </div>
+      ) : (
+        <>
+          <Button
+            type="button"
+            variant="secondary"
+            loading={googleLoading}
+            onClick={handleGoogleClick}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--wv-space-sm)",
+              marginBottom: "var(--wv-space-md)",
+            }}
+          >
+            <GoogleIcon />
+            Continue with Google
+          </Button>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--wv-space-sm)",
+              margin: "var(--wv-space-md) 0",
+            }}
+          >
+            <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
+            <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+              or
+            </Text>
+            <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
+          </div>
+        </>
+      )}
 
       {/*
             Single primary flow, no tab strip — real login-page UX

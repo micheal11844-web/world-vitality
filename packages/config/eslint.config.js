@@ -25,7 +25,39 @@ export default tseslint.config(
       // working tree, which has it present after `pnpm run build` or
       // `pnpm run dev` has run at least once.
       "apps/web/public/cesium/**",
+      // The phone app's generated Android project (Gradle/Java) and its
+      // build output — not JavaScript this repo authors.
+      "native/mobile/android/**",
     ],
+  },
+  {
+    // The desktop and phone apps (native/) are small CommonJS programs that
+    // run in Electron's main process or under `node --test`, outside the
+    // pnpm workspace — so they get Node's globals and may use require().
+    files: ["native/**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        require: "readonly",
+        module: "writable",
+        process: "readonly",
+        console: "readonly",
+        __dirname: "readonly",
+        URL: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setImmediate: "readonly",
+      },
+    },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
+    // The desktop offline page's one small script runs in the page itself.
+    files: ["native/desktop/src/offline.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: { window: "readonly", document: "readonly", URLSearchParams: "readonly" },
+    },
   },
   {
     files: ["tools/**/*.mjs", "apps/web/scripts/**/*.mjs"],

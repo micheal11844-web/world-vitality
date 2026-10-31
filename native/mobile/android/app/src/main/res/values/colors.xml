@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The site's own background colour, behind the launcher icon and the splash. -->
+    <color name="ic_launcher_background">#FBFAF7</color>
+    <color name="splash_background">#FBFAF7</color>
+</resources>

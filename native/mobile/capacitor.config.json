@@ -1,0 +1,17 @@
+{
+  "appId": "app.worldvitality.mobile",
+  "appName": "World Vitality",
+  "webDir": "www",
+  "backgroundColor": "#fbfaf7",
+  "server": {
+    "url": "https://world-vitality.vercel.app",
+    "cleartext": false,
+    "allowNavigation": ["world-vitality.vercel.app"],
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false,
+    "appendUserAgent": "WorldVitalityApp/0.1.0"
+  }
+}
