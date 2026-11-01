@@ -11,9 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # No `version:` here on purpose: the action refuses to run when it and
+      # package.json's "packageManager" both name a version, and package.json
+      # is the one place that decides it (pnpm@9.0.0).
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -49,9 +50,10 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+      # No `version:` here on purpose: the action refuses to run when it and
+      # package.json's "packageManager" both name a version, and package.json
+      # is the one place that decides it (pnpm@9.0.0).
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 20
