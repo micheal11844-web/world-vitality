@@ -27,18 +27,24 @@ repository's **Releases** page:
 
 Each release also has `SHA256SUMS.txt` so a download can be checked.
 
-**Making a release** (one person, a few minutes, nothing to install):
+**Making a release** (a few minutes, nothing to install). First, both
+`version` fields (`native/desktop/package.json` and `native/mobile/package.json`)
+must be the same; when moving to a new version change both, the
+`WorldVitalityApp/<version>` word in `native/mobile/capacitor.config.json`, and
+the default in `native/mobile/android/app/build.gradle` (a test in
+`native/mobile/test` fails if these drift). Then either:
 
-1. Both `version` fields (`native/desktop/package.json` and
-   `native/mobile/package.json`) must be the same. Change both, and the
-   `WorldVitalityApp/<version>` word in `native/mobile/capacitor.config.json`
-   and the default in `native/mobile/android/app/build.gradle`, if you are
-   moving to a new version. A test in `native/mobile/test` fails if these drift.
-2. Push a tag with that number: `git tag native-v0.1.0 && git push origin native-v0.1.0`.
-3. Watch the **Native apps** run on the Actions tab. When all four builds
-   finish, the release appears on the Releases page with the files. If any one
-   build fails, **nothing is published** (a half release is worse than none).
-   Versions starting `0.` are marked **pre-release** on GitHub.
+- **The button (no terminal):** on GitHub open **Actions**, choose **Native
+  apps**, **Run workflow**, tick **Publish the files as a release**, and run it.
+  It builds all four, then creates the tag `native-v<version>` and the release.
+- **Or push a tag:** `git tag native-v0.1.0 && git push origin native-v0.1.0`.
+  (The assistant's session was refused permission to push tags, so the first
+  release is done with the button.)
+
+Watch the run on the Actions tab. When all four builds finish, the release
+appears on the Releases page with the files. If any one build fails,
+**nothing is published** (a half release is worse than none). Versions starting
+`0.` are marked **pre-release** on GitHub.
 
 **Rehearsal without publishing:** push a branch named `native-build/<anything>`,
 or use Actions, "Native apps", "Run workflow". Everything is built and the files

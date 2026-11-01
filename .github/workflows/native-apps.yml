@@ -9,7 +9,8 @@
 # native/mobile/package.json (the first job checks). "Run workflow" on the
 # Actions page, or pushing a branch named native-build/<anything>, builds
 # everything and keeps the files as downloadable results of the run, without
-# publishing a release.
+# publishing a release. "Run workflow" with "Publish" ticked builds and then
+# publishes the release (and creates the tag) with no terminal needed.
 name: Native apps
 
 on:
@@ -19,6 +20,11 @@ on:
     # the files are kept on the run, nothing is published.
     branches: ["native-build/**"]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the files as a release (otherwise they are only kept on this run)"
+        type: boolean
+        default: false
   pull_request:
     paths:
       - "native/**"
@@ -207,7 +213,7 @@ jobs:
 
   release:
     needs: [checks, desktop, android]
-    if: startsWith(github.ref, 'refs/tags/native-v')
+    if: startsWith(github.ref, 'refs/tags/native-v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -249,13 +255,18 @@ jobs:
           cat notes.md
       - name: Publish the release
         run: |
-          tag="${GITHUB_REF_NAME}"
+          # The tag is always native-v<version>. A tag run already has it; a
+          # button run asks GitHub to create it at this commit.
+          tag="native-v${VERSION}"
+          where="--verify-tag"
+          if [ "${GITHUB_REF_TYPE}" != "tag" ]; then where="--target ${GITHUB_SHA}"; fi
           # Versions starting 0. are first tries: shown on GitHub as a pre-release.
           prerelease=""
           case "${VERSION}" in 0.*) prerelease="--prerelease" ;; esac
           if gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" > /dev/null 2>&1; then
             gh release upload "${tag}" files/* --clobber --repo "${GITHUB_REPOSITORY}"
           else
+            # shellcheck disable=SC2086
             gh release create "${tag}" files/* --repo "${GITHUB_REPOSITORY}" \
-              --title "World Vitality apps ${VERSION}" --notes-file notes.md --verify-tag ${prerelease}
+              --title "World Vitality apps ${VERSION}" --notes-file notes.md ${where} ${prerelease}
           fi

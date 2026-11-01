@@ -680,7 +680,8 @@ thing kept correct and secure.
 - **Outside the pnpm workspace**, in `native/`, with their own npm lock files:
   the website's install, build and Vercel deploy are unaffected. The installers
   are built only on GitHub's machines (`.github/workflows/native-apps.yml`) and
-  published as a GitHub Release when a `native-v*` tag is pushed.
+  published as a GitHub Release when a `native-v*` tag is pushed or the
+  workflow is run by hand with "Publish" ticked.
 - **Sign in with email and password only.** Google refuses sign-in from app
   windows, and the code-exchange cookie the site sets cannot follow a browser
   hand-off. The site recognises the apps by one word each adds to the user
