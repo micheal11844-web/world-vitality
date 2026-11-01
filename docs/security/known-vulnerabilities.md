@@ -3,56 +3,93 @@
 Tracked here rather than silently ignored, per Engineering Blueprint
 Section 14 (security audits, maintenance). Reviewed whenever
 `.github/workflows/ci.yml`'s `dependency-audit` job output changes, and
-whenever `next` is upgraded.
+whenever `next` is upgraded. Last checked against a fresh
+`pnpm audit` on **2026-11-01**: 16 findings (1 critical, 9 high,
+6 moderate), every one reasoned about below.
 
-## Currently accepted (as of this entry)
+## Fixed on 2026-11-01 (Next.js 15.5.22 to 15.5.28)
 
-All four are pinned _inside_ `next@15.5.22`'s own dependency tree
-(`next > postcss`, `next > postcss > nanoid`, `next > sharp`), not
-direct dependencies of this repo — we cannot bump them independently
-without either an upstream Next.js patch release or a
-`pnpm.overrides` force-resolution.
+A fresh audit that day showed 30 findings, 5 of them critical, and this
+document had drifted from it. Upgrading `next` within 15.5.x (a patch
+upgrade, nothing else moved) and refreshing two transitive packages
+closed 14 of them:
 
-| Package         | Installed | Patched  | Severity | Advisory                                                                 |
-| --------------- | --------- | -------- | -------- | ------------------------------------------------------------------------ |
-| postcss         | 8.4.31    | >=8.5.12 | High     | [GHSA-6g55-p6wh-862q](https://github.com/advisories/GHSA-6g55-p6wh-862q) |
-| postcss         | 8.4.31    | >=8.5.18 | High     | [GHSA-r28c-9q8g-f849](https://github.com/advisories/GHSA-r28c-9q8g-f849) |
-| nanoid          | 3.3.17    | >=3.3.18 | High     | [GHSA-2v37-7h3g-55p8](https://github.com/advisories/GHSA-2v37-7h3g-55p8) |
-| sharp (libvips) | 0.34.5    | >=0.35.0 | High     | [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) |
+- **Next.js** (15.5.22, now 15.5.28): unauthenticated remote code execution
+  in the Image Optimization API (two advisories), remote code execution on
+  Windows-hosted servers, denial of service through Server Actions, and
+  cache poisoning of statically generated pages. The site uses the Image
+  Optimization endpoint (the logo), so the first of these applied.
+- **sharp** (0.34.5, now 0.35.5; optional dependency of `next`): three
+  image-library advisories (libvips, libheif, librsvg).
+- **dompurify** (3.4.14, now 3.4.17; inside `cesium`): one critical, one
+  high, three low. Refreshed within `cesium`'s own allowed range.
 
-`nanoid` was missing from this table until a repo-wide security audit
-(2026-09-02) cross-checked it against a fresh `pnpm audit
---audit-level=high` run — it's a real, currently-present finding
-(pulled in transitively via `postcss`), not a new regression; this
-doc had simply drifted from `pnpm audit`'s actual output. Same
-practical risk profile as the others: it requires a custom, attacker-
-controlled ID generator with a zero `size` argument, which nothing in
-this codebase does.
+Checked after the upgrade: 623 tests, lint, format and type checks; a
+production build; all 18 main pages load with no script errors (including
+the globe); the logo is still served through the image endpoint; the billing,
+organisation, admin and plan-feature browser checks pass.
 
-**Why not force-patched via `pnpm.overrides`:** attempted and reverted.
-Overriding `postcss`/`sharp` to patched versions triggered a much wider
-lockfile re-resolution than intended (~300 changed lines), including an
-unrelated major-version jump in `eslint` that broke peer-dependency
-ranges for `eslint-plugin-jsx-a11y` and `eslint-plugin-react-hooks`.
-For a solo-maintained project without capacity to fully re-verify a
-change of that blast radius, this was judged riskier than the
-vulnerabilities themselves — both are exploitable primarily through
-build-time/source-map or image-processing edge cases, not the
-project's actual live attack surface (no user-supplied CSS is ever
-processed by PostCSS at runtime; `sharp` is only exercised via Next's
-image optimization pipeline on operator-supplied images, not
-arbitrary user uploads).
+## Currently accepted
 
-**Real resolution path:** wait for a Next.js patch release that bumps
-its internal `postcss`/`sharp` pins, then a routine `next` upgrade
-(as already done once in Stage 7, 14→15.5.22) closes this
-automatically. Re-run `pnpm audit --audit-level=high` after every
-`next` version bump to check.
+| Package         | Installed     | Patched              | Severity               | Where it comes from                  |
+| --------------- | ------------- | -------------------- | ---------------------- | ------------------------------------ |
+| maplibre-gl     | 4.7.1         | >=6.4.1 (two majors) | Critical               | Direct dependency (the maps)         |
+| postcss         | 8.4.31        | >=8.5.23             | High (2), Moderate (2) | Pinned exactly inside `next@15.5.28` |
+| nanoid          | 3.3.17        | >=3.3.18             | High                   | Inside `next` (through `postcss`)    |
+| source-map-js   | 1.2.1         | >=1.2.2              | High                   | Inside `next` (through `postcss`)    |
+| zod             | 3.25.76       | >=4.6.6 (one major)  | High                   | Direct dependency (`data-schemas`)   |
+| brace-expansion | 1.1.18, 5.0.9 | >=1.1.21, >=5.0.12   | High (4), Moderate (2) | Dev tooling: ESLint and its plugins  |
+| minimatch       | 10.2.6, 3.1.5 | >=11.0.1             | Moderate               | Dev tooling: ESLint and its plugins  |
 
-**Do not** treat `dependency-audit`'s `continue-on-error: true` in CI
-as "vulnerabilities don't matter" — it exists specifically so real,
-currently-unfixable findings don't get lost in a wall of expected
-noise, and so a _new, actually-fixable_ finding introduced by a direct
-dependency is still visible in every CI run even though it won't
-block the merge. Revisit whether it should block merges once this
+Why each is accepted for now:
+
+- **maplibre-gl, critical** ([GHSA-jrc7-96c5-q579](https://github.com/advisories/GHSA-jrc7-96c5-q579),
+  CVE-2026-85061): the flaw is in the map's attribution sanitiser, and needs
+  an attacker to control a map style's attribution text (or a custom
+  attribution). Every map here (Agriculture, Insurance, Government & NGOs,
+  Disaster Monitoring, reference sites) builds its own style in code with the
+  fixed text "&copy; OpenStreetMap contributors"; popups use `setText`, not
+  `setHTML`; nothing a user or a data provider sends reaches the attribution.
+  Not reachable here. **Do upgrade**, but it is a two-major jump (4 to 6) on
+  a rendering library, so it needs the maps looked at in a real browser
+  before and after, not a blind bump. Next step on this list.
+- **postcss, nanoid, source-map-js** (all inside `next`): used at build time
+  to process CSS; no user-supplied CSS is ever processed at runtime. Next
+  pins `postcss` to exactly 8.4.31 even in 15.5.28, so only a newer Next
+  closes them. An override was tried before and reverted (~300 lockfile lines
+  changed, an unrelated major jump in ESLint); not worth the risk for a
+  build-time-only path.
+- **zod** ([GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)):
+  memory exhaustion when validating oversized collections that have size
+  limits. `data-schemas` validates responses from the weather, soil and
+  alert providers the app calls itself; an attacker cannot choose what those
+  send. Zod 3 to 4 is a major change touching every schema, so it waits for
+  its own change with its own tests.
+- **brace-expansion, minimatch**: pulled in by ESLint and its plugins, which
+  run on developers' machines and in CI over this repository's own files,
+  never on user input and never in the deployed site. They would only matter
+  if someone linted a file with a hostile glob pattern in it.
+
+**Do not** treat `dependency-audit`'s `continue-on-error: true` in CI as
+"vulnerabilities don't matter". It exists so real, currently-unfixable
+findings do not get lost in a wall of expected noise, and so a _new,
+actually-fixable_ finding is still visible in every CI run even though it
+will not block the merge. Revisit whether it should block merges once this
 list is empty.
+
+## Process: how this document drifted, and how not to let it again
+
+It went about two months (since the 2026-09-02 audit) without being compared to a fresh audit while new
+advisories were published against `next`, `sharp`, `dompurify` and others.
+`dependency-audit` goes red in CI whenever there is any finding, but a red
+job that is allowed to fail is easy to stop looking at. Until this list is
+empty, do this each time a `next` patch release appears (they are frequent)
+and at least monthly:
+
+1. `pnpm audit` and compare with the table above.
+2. Upgrade `next` and `@next/eslint-plugin-next` to the newest 15.5.x
+   (`pnpm install`, then `pnpm update sharp --depth Infinity -r` so the
+   image library follows).
+3. Run the checks (`pnpm test`, lint, a production build) and look at the
+   main pages in a browser.
+4. Update the table and the date at the top.

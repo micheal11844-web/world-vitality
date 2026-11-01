@@ -29,22 +29,14 @@ jobs:
   # docs/reviews/stage-7-observability-security-accessibility.md:
   # "no dependency-scanning in CI".
   #
-  # `continue-on-error: true`, deliberately, for now: as of this change
-  # `pnpm audit --audit-level=high` reports 3 high-severity findings
-  # (postcss <8.5.18, sharp <0.35.0, both CVEs listed in
-  # docs/security/known-vulnerabilities.md) that are pinned *inside*
-  # next@15.5.22's own dependency tree, not our direct dependencies. A
-  # `pnpm.overrides` attempt to force-patch them was tried and reverted —
-  # it re-resolved ~300 unrelated lockfile lines (including bumping
-  # eslint across a major version with unmet peer ranges), which is a
-  # materially riskier change than the vulnerabilities it would fix for
-  # a solo-maintained project with no test coverage of that blast
-  # radius. The real fix is a next.js patch release; until then, this
-  # job stays informational (visible in every CI run, never silently
-  # hidden) rather than blocking every PR on an upstream issue outside
-  # this repo's control. Flip `continue-on-error` to `false` once
-  # `pnpm audit --audit-level=high` is verified clean after the next
-  # Next.js upgrade.
+  # `continue-on-error: true`, deliberately, for now: `pnpm audit
+  # --audit-level=high` still reports findings that cannot be fixed by a
+  # routine upgrade (build-time packages pinned inside `next`, and two
+  # direct dependencies that need a major-version change). Each is listed
+  # and reasoned about in docs/security/known-vulnerabilities.md, which
+  # also says how to keep that list honest. The job stays informational
+  # (visible in every CI run, never silently hidden) rather than blocking
+  # every PR. Flip `continue-on-error` to `false` once the audit is clean.
   dependency-audit:
     runs-on: ubuntu-latest
     continue-on-error: true

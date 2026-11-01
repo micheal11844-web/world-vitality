@@ -32,7 +32,7 @@ const nextConfig = {
   // is the documented path if/when that tradeoff is chosen (Next 15.x
   // convention: `middleware.ts` exporting `middleware`, NOT `proxy.ts`
   // — that's Next 16's renamed convention, confirmed against this
-  // project's actual pinned Next version, 15.5.22, before writing
+  // project's pinned Next version at the time (15.5.22), before writing
   // anything, since a `proxy.ts` file is silently ignored on Next 15).
   //
   // This version — 'unsafe-inline' for script-src — still keeps
