@@ -33,12 +33,18 @@ test("classifies low flow correctly", async () => {
 });
 
 test("classifies moderate flow correctly", async () => {
-  const result = await provider.interpret({ capability: CAPABILITY_ID, records: [record(3000, 0)] });
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(3000, 0)],
+  });
   assert.match(result.summary, /^Moderate flow/);
 });
 
 test("classifies high flow correctly", async () => {
-  const result = await provider.interpret({ capability: CAPABILITY_ID, records: [record(6000, 0)] });
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(6000, 0)],
+  });
   assert.match(result.summary, /^High flow/);
 });
 
@@ -49,7 +55,10 @@ test("reports high confidence with 5+ readings", async () => {
 });
 
 test("reports low confidence with a single reading", async () => {
-  const result = await provider.interpret({ capability: CAPABILITY_ID, records: [record(3000, 0)] });
+  const result = await provider.interpret({
+    capability: CAPABILITY_ID,
+    records: [record(3000, 0)],
+  });
   assert.equal(result.confidence, "low");
 });
 

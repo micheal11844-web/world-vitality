@@ -102,13 +102,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "export:data",
     "comments:create",
   ],
-  scoped_field_user: [
-    "data:view",
-    "data:edit",
-    "reports:view",
-    "alerts:view",
-    "comments:create",
-  ],
+  scoped_field_user: ["data:view", "data:edit", "reports:view", "alerts:view", "comments:create"],
   viewer_external: ["data:view", "reports:view", "alerts:view"],
 } as const;
 

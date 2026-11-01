@@ -5,7 +5,10 @@ import type {
   ConfidenceLevel,
   ContributingFactor,
 } from "../InterpretationProvider.js";
-import { classifySolarIrradiance, type IrradianceBand } from "./solar-irradiance-status-provider.js";
+import {
+  classifySolarIrradiance,
+  type IrradianceBand,
+} from "./solar-irradiance-status-provider.js";
 
 export const CAPABILITY_ID = "renewable-energy.solar-irradiance-outlook";
 
@@ -77,9 +80,7 @@ export class SolarIrradianceOutlookProvider implements InterpretationProvider {
     }
 
     const forecastRecords = request.records
-      .filter(
-        (r) => r.metric === SOLAR_METRIC && r.recordType === "forecast" && r.forecastIssuedAt,
-      )
+      .filter((r) => r.metric === SOLAR_METRIC && r.recordType === "forecast" && r.forecastIssuedAt)
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
     if (forecastRecords.length === 0) {
@@ -148,7 +149,8 @@ export class SolarIrradianceOutlookProvider implements InterpretationProvider {
       highDays > 0 ? `${highDays} day(s) with high irradiance` : undefined,
       minimalDays > 0 ? `${minimalDays} day(s) with minimal irradiance` : undefined,
     ].filter((p): p is string => Boolean(p));
-    const breakdown = parts.length > 0 ? parts.join(", ") : "irradiance staying moderate throughout";
+    const breakdown =
+      parts.length > 0 ? parts.join(", ") : "irradiance staying moderate throughout";
     return `Over the next ${spanDays} day(s): ${breakdown}${qualifier}.`;
   }
 

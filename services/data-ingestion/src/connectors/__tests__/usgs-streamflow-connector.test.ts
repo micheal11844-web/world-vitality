@@ -36,7 +36,12 @@ const SAMPLE_RESPONSE = {
 const STATION = { id: "potomac-little-falls", siteNumber: "01646500", latitude: 0, longitude: 0 };
 
 test("normalizes real-shaped NWIS values into NormalizedDataRecords with full provenance", () => {
-  const { records } = parseNwisResponse("usgs-nwis-streamflow", "USGS NWIS", STATION, SAMPLE_RESPONSE);
+  const { records } = parseNwisResponse(
+    "usgs-nwis-streamflow",
+    "USGS NWIS",
+    STATION,
+    SAMPLE_RESPONSE,
+  );
 
   assert.equal(records.length, 2);
   const first = records[0]!;
@@ -49,13 +54,23 @@ test("normalizes real-shaped NWIS values into NormalizedDataRecords with full pr
 });
 
 test("uses the response's own reported station coordinates, not the configured fallback", () => {
-  const { records } = parseNwisResponse("usgs-nwis-streamflow", "USGS NWIS", STATION, SAMPLE_RESPONSE);
+  const { records } = parseNwisResponse(
+    "usgs-nwis-streamflow",
+    "USGS NWIS",
+    STATION,
+    SAMPLE_RESPONSE,
+  );
   assert.equal(records[0]?.location?.latitude, 38.94974);
   assert.equal(records[0]?.location?.longitude, -77.12786);
 });
 
 test("marks a provisional (qualifier 'P') value's limitation honestly, never silently upgraded", () => {
-  const { records } = parseNwisResponse("usgs-nwis-streamflow", "USGS NWIS", STATION, SAMPLE_RESPONSE);
+  const { records } = parseNwisResponse(
+    "usgs-nwis-streamflow",
+    "USGS NWIS",
+    STATION,
+    SAMPLE_RESPONSE,
+  );
   const provisional = records.find((r) => r.value === 4250.0);
   assert.ok(provisional?.provenance.knownLimitations.some((l) => l.includes("provisional")));
   const approved = records.find((r) => r.value === 4170.0);
@@ -68,7 +83,9 @@ test("falls back to the configured lat/lon when the response has no geoLocation"
       timeSeries: [
         {
           variable: { unit: { unitCode: "ft3/s" } },
-          values: [{ value: [{ value: "100.0", qualifiers: ["A"], dateTime: "2026-08-01T00:00:00Z" }] }],
+          values: [
+            { value: [{ value: "100.0", qualifiers: ["A"], dateTime: "2026-08-01T00:00:00Z" }] },
+          ],
         },
       ],
     },
@@ -98,12 +115,19 @@ test("reports a gap for a non-numeric value rather than a fabricated one", () =>
       timeSeries: [
         {
           variable: { unit: { unitCode: "ft3/s" } },
-          values: [{ value: [{ value: "Eqp", qualifiers: ["A"], dateTime: "2026-08-01T00:00:00Z" }] }],
+          values: [
+            { value: [{ value: "Eqp", qualifiers: ["A"], dateTime: "2026-08-01T00:00:00Z" }] },
+          ],
         },
       ],
     },
   };
-  const { records, gaps } = parseNwisResponse("usgs-nwis-streamflow", "USGS NWIS", STATION, malformed);
+  const { records, gaps } = parseNwisResponse(
+    "usgs-nwis-streamflow",
+    "USGS NWIS",
+    STATION,
+    malformed,
+  );
   assert.equal(records.length, 0);
   assert.equal(gaps.length, 1);
   assert.equal(gaps[0]?.reason, "malformed-response");

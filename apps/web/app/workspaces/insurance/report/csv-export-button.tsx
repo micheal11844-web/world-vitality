@@ -27,7 +27,15 @@ function toCsv({ generatedAt, rows }: CsvExportButtonProps): string {
     "unableToAnswer",
   ];
   const csvRows = rows.map((r) =>
-    [r.policyNumber, r.propertyAddress, generatedAt, r.metric, r.summary, r.confidence, String(r.unableToAnswer)]
+    [
+      r.policyNumber,
+      r.propertyAddress,
+      generatedAt,
+      r.metric,
+      r.summary,
+      r.confidence,
+      String(r.unableToAnswer),
+    ]
       .map((field) => `"${field.replace(/"/g, '""')}"`)
       .join(","),
   );

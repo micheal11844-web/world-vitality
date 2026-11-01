@@ -38,7 +38,7 @@ existing business changes, and the two projects' payments never mix.
 2. Choose **Duplicate an existing business** (it copies your compliance
    details, which saves re-entering documents; the source must be in the same
    country) or **Create a new business**.
-3. Enter the trading name (for example *World Vitality*), review, and
+3. Enter the trading name (for example _World Vitality_), review, and
    **Create Business**. You are switched into it; check the name at the top
    left before every step below, because every key, plan and webhook setting
    in this guide must be made **inside the World Vitality business**, not
@@ -61,7 +61,7 @@ missing. In order:
 
 1. **Try the article's own checks:** refresh and reopen the switcher (the
    arrow beside the business name, top left); sign in with the email that
-   *created* the business, not a login you were invited to as a team member;
+   _created_ the business, not a login you were invited to as a team member;
    use a desktop browser or a private window; read any email from Paystack
    asking for more information. If **Duplicate** is greyed out or refuses,
    choose **Create a new business** instead (duplicating only works from a
@@ -76,10 +76,10 @@ missing. In order:
    Paystack's pages what they require when two accounts share a legal entity
    or payout account — ask support before relying on it.
 4. **Test mode only, inside your existing business — a stop-gap, not the
-   plan.** A business has a separate *Test* webhook URL and *Live* webhook
+   plan.** A business has a separate _Test_ webhook URL and _Live_ webhook
    URL. If the **Test Webhook URL** in your existing business is **empty**
    (look, do not change anything yet), World Vitality can use that business's
-   *test* keys and test webhook for the whole test-payment phase without
+   _test_ keys and test webhook for the whole test-payment phase without
    touching your live project at all; test plans and test payments are
    separate from live ones. Stop if that field already holds an address: your
    other project (or its staging site) is using it. Two cautions: enabling
@@ -94,10 +94,10 @@ events (or put a forwarding service in front of both). That means changing
 your working project, so this guide does not recommend it. For what it is
 worth, World Vitality ignores events that are not its own — an unknown plan
 or unknown customer is acknowledged and recorded as `ignored`, never acted
-on — so forwarding the other project's events *to* it would be harmless; the
+on — so forwarding the other project's events _to_ it would be harmless; the
 risk is on the other side.
 
-**Why a shared *live* business is the one thing to avoid.** The webhook
+**Why a shared _live_ business is the one thing to avoid.** The webhook
 receives every event of the business. Your other project would start
 receiving World Vitality's subscription and payment events (with customer
 emails) at its own webhook and could mistake them for its own — that is the
@@ -158,12 +158,12 @@ plan fixes the amount, the currency and how often it charges, so each price
 is its own plan. Create exactly these, leaving "invoice limit" blank (charge
 until cancelled):
 
-| Name | Amount (₦) | Interval | Currency |
-| --- | --- | --- | --- |
-| World Vitality Standard — monthly | 7,500 | Monthly | NGN |
-| World Vitality Standard — annual | 75,000 | Annually | NGN |
-| World Vitality Premium — monthly | 25,000 | Monthly | NGN |
-| World Vitality Premium — annual | 250,000 | Annually | NGN |
+| Name                              | Amount (₦) | Interval | Currency |
+| --------------------------------- | ---------- | -------- | -------- |
+| World Vitality Standard — monthly | 7,500      | Monthly  | NGN      |
+| World Vitality Standard — annual  | 75,000     | Annually | NGN      |
+| World Vitality Premium — monthly  | 25,000     | Monthly  | NGN      |
+| World Vitality Premium — annual   | 250,000    | Annually | NGN      |
 
 (The dashboard asks in naira. Paystack's API counts in kobo, so in the API
 these are 750000, 7500000, 2500000 and 25000000.)
@@ -179,7 +179,12 @@ Put the four codes into this exact shape, replacing the `PLN_…` parts. It is
 one line of JSON:
 
 ```json
-{"standard.NGN.monthly":"PLN_aaaa","standard.NGN.annual":"PLN_bbbb","premium.NGN.monthly":"PLN_cccc","premium.NGN.annual":"PLN_dddd"}
+{
+  "standard.NGN.monthly": "PLN_aaaa",
+  "standard.NGN.annual": "PLN_bbbb",
+  "premium.NGN.monthly": "PLN_cccc",
+  "premium.NGN.annual": "PLN_dddd"
+}
 ```
 
 The keys are `plan.currency.interval`. The interval is spelled **`annual`**
@@ -191,10 +196,10 @@ Vercel → project **world-vitality** (team `micheal6`) → **Settings** →
 **Environment Variables**. Add, for **Production** only (the webhook points at
 the live site, so Preview has no use for them):
 
-| Name | Value | Notes |
-| --- | --- | --- |
+| Name                  | Value                           | Notes                                        |
+| --------------------- | ------------------------------- | -------------------------------------------- |
 | `PAYSTACK_SECRET_KEY` | the `sk_test_…` key from step 1 | Tick **Sensitive** so it cannot be read back |
-| `PAYSTACK_PLAN_CODES` | the one-line JSON from step 3 | Not secret |
+| `PAYSTACK_PLAN_CODES` | the one-line JSON from step 3   | Not secret                                   |
 
 Subscribing also needs `SUPABASE_AUTH_REDIRECT_URL`, which gives Paystack the
 address to send people back to — it is already set (it is what the sign-in
@@ -233,7 +238,7 @@ channels → turn on **Google Pay** (Cards must stay on). Customers then see
 desktop Paystack adds a 3D Secure step. Paystack says the authorisation can
 be reused for subscription renewals. Details:
 <https://support.paystack.com/en/articles/10458754>. Check in test mode that
-it shows on a *plan* checkout; I could not verify that from here.
+it shows on a _plan_ checkout; I could not verify that from here.
 
 ## 6. Switch billing on
 

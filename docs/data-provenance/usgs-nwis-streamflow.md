@@ -30,8 +30,7 @@ stations across the US and its territories.
 
 ## License
 
-**Public domain**, as a work of the US federal government (17 U.S.C. §
-105) — the same basis Disaster Monitoring's own USGS sources already
+**Public domain**, as a work of the US federal government (17 U.S.C. § 105) — the same basis Disaster Monitoring's own USGS sources already
 rely on. Recorded in every record's `provenance.license` field as
 `"Public Domain (US Government Work)"`.
 

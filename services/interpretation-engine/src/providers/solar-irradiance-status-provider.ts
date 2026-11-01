@@ -44,9 +44,10 @@ const BAND_LABEL: Record<IrradianceBand, string> = {
  *  mirroring `WindGenerationOutlookProvider`'s reuse of
  *  `classifyWindSpeed` — not built in this pass, see this file's
  *  module doc comment). */
-export function classifySolarIrradiance(
-  kwhPerM2PerDay: number,
-): { band: IrradianceBand; reason: string } {
+export function classifySolarIrradiance(kwhPerM2PerDay: number): {
+  band: IrradianceBand;
+  reason: string;
+} {
   if (kwhPerM2PerDay < MINIMAL_MAX) {
     return {
       band: "minimal",

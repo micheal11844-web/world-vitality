@@ -190,7 +190,14 @@ export function AuthIllustration({ className, guideCharacter }: AuthIllustration
         {/* Scattered data points — a quiet detail, not a pattern
             repeated across the whole scene. */}
         {[
-          [8, 14], [22, 8], [35, 18], [64, 9], [78, 15], [90, 20], [14, 28], [86, 32],
+          [8, 14],
+          [22, 8],
+          [35, 18],
+          [64, 9],
+          [78, 15],
+          [90, 20],
+          [14, 28],
+          [86, 32],
         ].map(([x, y], i) => (
           <circle
             key={i}

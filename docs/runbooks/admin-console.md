@@ -16,12 +16,12 @@ customers included — gets the ordinary "not found" page.
 
 ## What it does today
 
-| Screen | Address | Who may open it | What it is |
-| --- | --- | --- | --- |
-| Overview | `/admin` | any staff | Platform-wide counts only (accounts, recent sign-ups, onboarding, memberships, active staff). No names or emails. Also shows the licence notice below. |
-| User lookup | `/admin/users` | support, platform admin | Find **one** account by its **exact** email or user id. Shows email, name, joined, email confirmed, last signed in, onboarding, language, workspace memberships. Nothing from inside a workspace, no home place, no notifications. |
-| Data sources | `/admin/sources` | operations, platform admin | Licence and commercial-use status for every data source, and an on-demand live check of the three that have a probe (NASA POWER, Open-Meteo, USGS streamflow). |
-| Audit log | `/admin/audit` | platform admin | Who did what in the console, newest first, 50 at a time. |
+| Screen       | Address          | Who may open it            | What it is                                                                                                                                                                                                                         |
+| ------------ | ---------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overview     | `/admin`         | any staff                  | Platform-wide counts only (accounts, recent sign-ups, onboarding, memberships, active staff). No names or emails. Also shows the licence notice below.                                                                             |
+| User lookup  | `/admin/users`   | support, platform admin    | Find **one** account by its **exact** email or user id. Shows email, name, joined, email confirmed, last signed in, onboarding, language, workspace memberships. Nothing from inside a workspace, no home place, no notifications. |
+| Data sources | `/admin/sources` | operations, platform admin | Licence and commercial-use status for every data source, and an on-demand live check of the three that have a probe (NASA POWER, Open-Meteo, USGS streamflow).                                                                     |
+| Audit log    | `/admin/audit`   | platform admin             | Who did what in the console, newest first, 50 at a time.                                                                                                                                                                           |
 
 The roles and what each may open are defined in
 `services/identity-service/src/staff.ts` (`STAFF_PERMISSIONS`). That split

@@ -54,7 +54,7 @@ omitted.
 - **Honest uncertainty about the CSV response's exact column set.**
   FIRMS's documented VIIRS NRT CSV format is well-established
   (`latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,
-  satellite,confidence,version,bright_ti5,frp,daynight`), but this
+satellite,confidence,version,bright_ti5,frp,daynight`), but this
   module could not be exercised against a live response from this
   sandbox (no outbound access to `firms.modaps.eosdis.nasa.gov`).
   Parsing reads the header row to map columns by name rather than

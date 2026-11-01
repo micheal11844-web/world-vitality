@@ -453,7 +453,7 @@ count against.
   the cost of failing open for billing is a feature given away, for
   organisations it is one customer seeing another's data.
 - **The organisation's plan is its owner's plan.** Seats and saved items are
-  now enforced when something is *added* (saved item, invitation; the last
+  now enforced when something is _added_ (saved item, invitation; the last
   seat is claimed in one atomic statement). Nothing is hidden, locked or
   deleted over a limit. The `workspaces` limit is not enforced (only three
   workspaces hold saved items).

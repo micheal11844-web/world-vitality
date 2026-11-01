@@ -5,10 +5,10 @@ Supabase project**. This page is the paste-it-yourself way to apply them
 (the Supabase connector was declined when asked, so nothing was applied for
 you).
 
-| # | What it adds | Needed for | Safe to apply early? |
-| --- | --- | --- | --- |
-| 0016 | Staff accounts and an audit log | The admin console (`/admin`) | Yes — nothing reads it until you grant a staff role |
-| 0017 | Billing tables | Paystack (still switched off) | Yes — nothing reads it until `BILLING_ENABLED=true` |
+| #    | What it adds                                                | Needed for                                                                                                                             | Safe to apply early?                                    |
+| ---- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 0016 | Staff accounts and an audit log                             | The admin console (`/admin`)                                                                                                           | Yes — nothing reads it until you grant a staff role     |
+| 0017 | Billing tables                                              | Paystack (still switched off)                                                                                                          | Yes — nothing reads it until `BILLING_ENABLED=true`     |
 | 0018 | Organisations; every saved item and role now belongs to one | **The privacy fix** — without it, any signed-in person can see every other customer's saved fields, properties, locations and comments | Yes — it is additive and the app now live keeps working |
 
 **Order matters: 0016, then 0017, then 0018.** The script below has all

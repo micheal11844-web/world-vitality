@@ -8,44 +8,44 @@ it on. The click-by-click for Paystack is in `paystack-setup.md`.
 
 ## What exists
 
-| Piece | Where |
-| --- | --- |
-| Plan catalogue (limits, features, support) | `services/billing-service/src/plans.ts` |
-| List prices | `services/billing-service/src/prices.ts` |
-| "What may this person do?" rules (fail-open, grace period, read-only after a downgrade) | `services/billing-service/src/entitlements.ts` |
-| Paystack signature check, event reading, plan-code mapping, checkout request, card-update link, cancel | `services/billing-service/src/paystack.ts` |
-| What the plan screen shows for a subscription (free / active / ending / past due / manual) | `services/billing-service/src/summary.ts` |
-| How Paystack events change a subscription | `services/billing-service/src/subscription.ts` |
-| The webhook, from raw bytes to stored result | `services/billing-service/src/webhook.ts` |
-| Storage (Supabase + an in-memory one for tests) | `services/billing-service/src/store.ts` |
-| Webhook route | `apps/web/app/api/paystack/webhook/route.ts` |
-| Plan & billing screen (`/billing`, 404 while billing is off) | `apps/web/app/billing/` |
-| Its buttons: Subscribe, Update card, Cancel | `apps/web/lib/billing-actions.ts` |
-| Cancelling the Paystack subscription when an account is deleted | `apps/web/lib/billing-cancel.ts`, called from `account-actions.ts` |
-| Switchboard (`billingEnabled`, plan codes, entitlements for a person / an organisation) | `apps/web/lib/billing.ts` |
-| The checks made when someone adds something | `apps/web/lib/plan-limits.ts` |
-| Tables (apply with `apply-migrations.md`) | `services/identity-service/supabase/migrations/0017_billing.sql` |
-| Settings to fill in | `services/billing-service/.env.example` |
+| Piece                                                                                                  | Where                                                              |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Plan catalogue (limits, features, support)                                                             | `services/billing-service/src/plans.ts`                            |
+| List prices                                                                                            | `services/billing-service/src/prices.ts`                           |
+| "What may this person do?" rules (fail-open, grace period, read-only after a downgrade)                | `services/billing-service/src/entitlements.ts`                     |
+| Paystack signature check, event reading, plan-code mapping, checkout request, card-update link, cancel | `services/billing-service/src/paystack.ts`                         |
+| What the plan screen shows for a subscription (free / active / ending / past due / manual)             | `services/billing-service/src/summary.ts`                          |
+| How Paystack events change a subscription                                                              | `services/billing-service/src/subscription.ts`                     |
+| The webhook, from raw bytes to stored result                                                           | `services/billing-service/src/webhook.ts`                          |
+| Storage (Supabase + an in-memory one for tests)                                                        | `services/billing-service/src/store.ts`                            |
+| Webhook route                                                                                          | `apps/web/app/api/paystack/webhook/route.ts`                       |
+| Plan & billing screen (`/billing`, 404 while billing is off)                                           | `apps/web/app/billing/`                                            |
+| Its buttons: Subscribe, Update card, Cancel                                                            | `apps/web/lib/billing-actions.ts`                                  |
+| Cancelling the Paystack subscription when an account is deleted                                        | `apps/web/lib/billing-cancel.ts`, called from `account-actions.ts` |
+| Switchboard (`billingEnabled`, plan codes, entitlements for a person / an organisation)                | `apps/web/lib/billing.ts`                                          |
+| The checks made when someone adds something                                                            | `apps/web/lib/plan-limits.ts`                                      |
+| Tables (apply with `apply-migrations.md`)                                                              | `services/identity-service/supabase/migrations/0017_billing.sql`   |
+| Settings to fill in                                                                                    | `services/billing-service/.env.example`                            |
 
 ## The plans
 
 `null` = no cap (Enterprise terms are agreed per customer).
 
-| | Basic (free) | Standard | Premium | Enterprise |
-| --- | --- | --- | --- | --- |
-| Workspaces | 1 | 3 | 10 | all |
-| Seats | 1 | 5 | 25 | custom |
-| Saved items | 3 | 25 | 100 | custom |
-| Forecast outlooks | – | yes | yes | yes |
-| CSV export, print/PDF | – | yes | yes | yes |
-| Team tools | – | yes | yes | yes |
-| Auditable report | – | – | yes | yes |
-| Audit log | – | – | yes | yes |
-| Email alerts † | – | yes | yes | yes |
-| SMS alerts † | – | – | yes | yes |
-| Bulk export, API † | – | – | – | yes |
-| Integrations, SSO † | – | – | – | yes |
-| Support | community | email | priority | named contact |
+|                       | Basic (free) | Standard | Premium  | Enterprise    |
+| --------------------- | ------------ | -------- | -------- | ------------- |
+| Workspaces            | 1            | 3        | 10       | all           |
+| Seats                 | 1            | 5        | 25       | custom        |
+| Saved items           | 3            | 25       | 100      | custom        |
+| Forecast outlooks     | –            | yes      | yes      | yes           |
+| CSV export, print/PDF | –            | yes      | yes      | yes           |
+| Team tools            | –            | yes      | yes      | yes           |
+| Auditable report      | –            | –        | yes      | yes           |
+| Audit log             | –            | –        | yes      | yes           |
+| Email alerts †        | –            | yes      | yes      | yes           |
+| SMS alerts †          | –            | –        | yes      | yes           |
+| Bulk export, API †    | –            | –        | –        | yes           |
+| Integrations, SSO †   | –            | –        | –        | yes           |
+| Support               | community    | email    | priority | named contact |
 
 † **Not built yet.** Marked in code (`UNBUILT_FEATURES`); anything that
 shows a plan's contents must hide or label these.
@@ -59,13 +59,13 @@ deleted.
 
 Tax-inclusive. A year costs ten months (two free) — the only discount.
 
-| | Monthly | Annual |
-| --- | --- | --- |
-| Standard, Nigeria (NGN) | ₦7,500 | ₦75,000 |
-| Premium, Nigeria (NGN) | ₦25,000 | ₦250,000 |
-| Standard, abroad (USD) † | $9 | $90 |
-| Premium, abroad (USD) † | $29 | $290 |
-| Enterprise | contact us, invoiced outside Paystack | |
+|                          | Monthly                               | Annual   |
+| ------------------------ | ------------------------------------- | -------- |
+| Standard, Nigeria (NGN)  | ₦7,500                                | ₦75,000  |
+| Premium, Nigeria (NGN)   | ₦25,000                               | ₦250,000 |
+| Standard, abroad (USD) † | $9                                    | $90      |
+| Premium, abroad (USD) †  | $29                                   | $290     |
+| Enterprise               | contact us, invoiced outside Paystack |          |
 
 † Only sold once USD is enabled on the Paystack account **and** USD plan
 codes are configured. **Launch with the four NGN plans.** Enterprise is never
@@ -104,11 +104,11 @@ amount in place.
 Only when someone **adds** something; nothing already saved is ever hidden,
 locked or deleted over a limit, and reading is never gated.
 
-| Limit | Checked when | Where |
-| --- | --- | --- |
-| Saved items | adding a field, insured property or monitored location | `field-actions.ts`, `property-actions.ts`, `location-actions.ts` → `savedItemLimitMessage` |
-| Seats | sending an invitation | `team-actions.ts` → `seatLimitMessage` |
-| Seats (race-proof) | accepting an invitation | `app/auth/callback/route.ts` → `seatCapForJoining` → `join_organization` (one atomic statement, so the last seat cannot be taken twice) |
+| Limit              | Checked when                                           | Where                                                                                                                                   |
+| ------------------ | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Saved items        | adding a field, insured property or monitored location | `field-actions.ts`, `property-actions.ts`, `location-actions.ts` → `savedItemLimitMessage`                                              |
+| Seats              | sending an invitation                                  | `team-actions.ts` → `seatLimitMessage`                                                                                                  |
+| Seats (race-proof) | accepting an invitation                                | `app/auth/callback/route.ts` → `seatCapForJoining` → `join_organization` (one atomic statement, so the last seat cannot be taken twice) |
 
 - **An organisation's plan is its owner's plan** (`billing_subscriptions` is
   keyed by the owner's user id). Seats = people in the organisation; saved
@@ -118,7 +118,7 @@ locked or deleted over a limit, and reading is never gated.
 - **Fails open.** If the plan or the counts cannot be read, the person is let
   through and the error is logged — a payment-system fault must not lock a
   customer out of their own work. (Organisations do the opposite and fail
-  *closed*, because there the risk is showing someone else's data.)
+  _closed_, because there the risk is showing someone else's data.)
 - **Not enforced:** the `workspaces` limit (only three workspaces hold saved
   items, so there is nothing to count yet). The on/off **feature** switches are
   wired where a screen exists — see "Feature switches" below.
@@ -133,17 +133,17 @@ locked or deleted over a limit, and reading is never gated.
 ## Feature switches (v98)
 
 A locked feature is replaced, in the place it would have been, by one
-sentence and a "See plans" link: *"Forecast outlooks are included in the
-Standard plan and above. Your plan is Basic."* Nothing else on the page
+sentence and a "See plans" link: _"Forecast outlooks are included in the
+Standard plan and above. Your plan is Basic."_ Nothing else on the page
 changes (Decision #022). The check is `featureLockedFor(feature)` in
 `apps/web/lib/plan-features.ts`; the notice is `FeatureLockedNote`
 (`apps/web/app/plan-notice.tsx`).
 
-| Switch | Plans | Where it is wired |
-| --- | --- | --- |
+| Switch             | Plans                         | Where it is wired                                                                                                                                                                                                                         |
+| ------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `forecastOutlooks` | Standard, Premium, Enterprise | The 7-day forecast cards on Weather & Climate, Construction (site risk timeline), Logistics (route risk outlook) and Renewable Energy (wind and solar outlooks). When locked the forecast is **not requested** from the weather provider. |
-| `csvExport` | Standard and up | "Download CSV" on the Agriculture, Insurance and Government & NGOs reports |
-| `printReport` | Standard and up | "Print / Save as PDF" on the same three reports |
+| `csvExport`        | Standard and up               | "Download CSV" on the Agriculture, Insurance and Government & NGOs reports                                                                                                                                                                |
+| `printReport`      | Standard and up               | "Print / Save as PDF" on the same three reports                                                                                                                                                                                           |
 
 - **A convenience, not access control.** It decides what the screen offers;
   the data on the page is data the person can already read, and the browser's
@@ -271,7 +271,7 @@ shows "Pay with Card or Google Pay" on devices and browsers that support it,
 and Paystack says the authorisation can be reused for subscription renewals.
 Sources: <https://support.paystack.com/en/articles/10458754> and
 <https://support.paystack.com/en/articles/10458690>. Not verified here: that
-it appears on a *plan* checkout specifically — check in test mode.
+it appears on a _plan_ checkout specifically — check in test mode.
 
 ## First test payment
 
@@ -287,7 +287,7 @@ test-mode payment. If one is wrong, the fix is small and local.
 - **Cancel** works (`POST /subscription/disable` with the subscription's
   `email_token`) and the `subscription.not_renew` webhook then arrives, with
   the end date. Cancelling something already cancelled is treated as done.
-- Google Pay (if enabled) shows on the checkout for a *plan* payment.
+- Google Pay (if enabled) shows on the checkout for a _plan_ payment.
 
 - The checkout request (`startCheckout`) is accepted: Paystack's
   initialise-transaction call takes `plan` and ignores `amount` when `plan`

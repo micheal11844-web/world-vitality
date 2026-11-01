@@ -6,7 +6,11 @@ import {
 } from "../construction-risk-status-provider.js";
 import type { NormalizedDataRecord } from "@world-vitality/data-schemas";
 
-function record(value: number, dayOffset: number, metric: "T2M" | "WS2M" | "PRECTOTCORR"): NormalizedDataRecord {
+function record(
+  value: number,
+  dayOffset: number,
+  metric: "T2M" | "WS2M" | "PRECTOTCORR",
+): NormalizedDataRecord {
   const timestamp = new Date(Date.UTC(2024, 0, 1 + dayOffset)).toISOString();
   return {
     id: `test:${metric}:${dayOffset}`,

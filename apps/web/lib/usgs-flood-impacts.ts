@@ -144,8 +144,5 @@ export async function fetchFloodingLocations(stateCode: string): Promise<FloodIm
     throw new Error(`USGS Real-Time Flood Impact API returned ${response.status}`);
   }
   const records = (await response.json()) as RtfiReferencePoint[];
-  return records
-    .filter((r) => r.state_id === stateId)
-    .map((r) => parseRecord(r, stateCode));
+  return records.filter((r) => r.state_id === stateId).map((r) => parseRecord(r, stateCode));
 }
-
