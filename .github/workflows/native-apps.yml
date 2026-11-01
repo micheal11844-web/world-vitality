@@ -228,6 +228,7 @@ jobs:
           cd ..
           {
             echo "World Vitality apps ${VERSION}. They open the live site at https://world-vitality.vercel.app, so the site itself never needs a new download."
+            case "${VERSION}" in 0.*) echo; echo "**This is a first version, built by GitHub's machines and not yet tried on every kind of computer and phone.** Please report anything that does not work." ;; esac
             echo
             echo "| Computer or phone | File |"
             echo "| --- | --- |"
@@ -249,9 +250,12 @@ jobs:
       - name: Publish the release
         run: |
           tag="${GITHUB_REF_NAME}"
+          # Versions starting 0. are first tries: shown on GitHub as a pre-release.
+          prerelease=""
+          case "${VERSION}" in 0.*) prerelease="--prerelease" ;; esac
           if gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" > /dev/null 2>&1; then
             gh release upload "${tag}" files/* --clobber --repo "${GITHUB_REPOSITORY}"
           else
             gh release create "${tag}" files/* --repo "${GITHUB_REPOSITORY}" \
-              --title "World Vitality apps ${VERSION}" --notes-file notes.md --verify-tag
+              --title "World Vitality apps ${VERSION}" --notes-file notes.md --verify-tag ${prerelease}
           fi

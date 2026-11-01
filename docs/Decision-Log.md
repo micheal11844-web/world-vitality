@@ -656,3 +656,67 @@ Enterprise (invoiced, by hand)", with `'standard'` in place of `'enterprise'`). 
 text.
 
 **Status:** Accepted.
+
+## Decision #023 — Desktop and phone apps are thin windows around the live site
+
+**Context:** The owner asked for real downloadable installers for the desktop
+and the phone, not only the installable web app of v86, so customers can
+"download World Vitality" like any other app. The website already does all the
+work (sign-in, data, plans, language), is deployed continuously, and is the one
+thing kept correct and secure.
+
+**Chosen:**
+
+- **Each app is a locked-down window that opens the live site**: Electron for
+  Windows, Mac and Linux (`native/desktop`), Capacitor for Android
+  (`native/mobile`). The site is not copied into the apps, so a site change
+  reaches every installed app immediately, and there is one product to keep
+  correct, not three.
+- **Only the site is trusted.** Other addresses open in the person's browser;
+  the desktop window has no Node access (context isolation, sandbox, web
+  security on) and refuses camera, microphone and location; the phone app asks
+  Android for the internet only, with no backups, no plain `http`, no web
+  debugging.
+- **Outside the pnpm workspace**, in `native/`, with their own npm lock files:
+  the website's install, build and Vercel deploy are unaffected. The installers
+  are built only on GitHub's machines (`.github/workflows/native-apps.yml`) and
+  published as a GitHub Release when a `native-v*` tag is pushed.
+- **Sign in with email and password only.** Google refuses sign-in from app
+  windows, and the code-exchange cookie the site sets cannot follow a browser
+  hand-off. The site recognises the apps by one word each adds to the user
+  agent (`WorldVitalityDesktop/`, `WorldVitalityApp/`) and hides "Continue with
+  Google" there. The word is cosmetic only and unlocks nothing.
+- **Unsigned for now.** Installers carry the operating systems' "unknown
+  publisher" warnings until signing certificates exist; the runbook says what
+  each costs and what to add. Android builds sign with a throwaway key until a
+  permanent one is supplied as GitHub secrets.
+- **Not built:** an iPhone app, automatic updates, push notifications on the
+  phone, Google sign-in inside the apps, store listings.
+
+**Alternatives considered:**
+
+- _Tauri (Rust) for desktop._ Smaller downloads, but a second toolchain and
+  less mature web-view differences between systems; Electron's one bundled
+  Chromium behaves the same everywhere, which matters for a site that must
+  look identical.
+- _React Native or Flutter for the phone._ A second codebase for every screen
+  the site already has, to re-implement plan limits, languages and roles.
+  Rejected while the website is the product.
+- _Bundle the site inside the apps._ Works offline, but every site fix would
+  need a new download, and the apps would drift from the site.
+- _Browser hand-off for Google sign-in._ Needs a short-lived one-time code
+  exchanged between browser and app: a database table, expiry and replay
+  rules, and a security review. Proposed for later, not needed to ship.
+- _Wait for certificates before releasing._ Delays everything on accounts
+  and fees; unsigned installers with clear instructions let people use the
+  apps now.
+
+**Trade-offs, stated honestly:** the Windows and Mac installers show warnings
+that some people will not click through; the Android file installs from
+outside the Play store; the phone app cannot show push notifications; people
+who signed up with Google need to set a password once. The Windows, Mac and
+Android builds were built on GitHub but never started on a real machine or
+phone by the person who wrote them. Apple may refuse an iPhone app that is
+only a website.
+
+**Status:** Accepted.
