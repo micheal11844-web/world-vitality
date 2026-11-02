@@ -59,6 +59,19 @@ a business (<https://support.paystack.com/en/articles/10643330>), and it does
 not say what hides the option, so from here I cannot tell why yours is
 missing. In order:
 
+0. **The Paystack mobile app.** Worth one look, but I could not confirm it.
+   Paystack's two help pages on adding a business
+   (<https://support.paystack.com/en/articles/10643330> and
+   <https://support2.paystack.com/hc/en-us/articles/360009973759>) describe
+   **only the web dashboard** (the arrow beside the business name, top left)
+   and never mention the app; its Merchant app page
+   (<https://support2.paystack.com/hc/en-us/articles/360016122699-Paystack-Merchant-App-Account>)
+   covers account setup and profile editing and says nothing about adding or
+   switching businesses, only that the app lets an _active_ business log in.
+   So nothing says the app is the only place. Looking costs nothing: open the
+   app, go to its profile or business screen, and look for a business switcher
+   or **Add a business**. If it is there, use it and carry on from step 2 of
+   the recommended route above; if not, go on to 1 to 4 below.
 1. **Try the article's own checks:** refresh and reopen the switcher (the
    arrow beside the business name, top left); sign in with the email that
    _created_ the business, not a login you were invited to as a team member;

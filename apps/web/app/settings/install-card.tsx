@@ -4,13 +4,18 @@ import { Button, Card, Text } from "@world-vitality/ui-components";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { useInstallState } from "../../lib/pwa/install";
 
+/** The separate downloads website (sites/download, Decision #024). */
+const DOWNLOADS_URL = "https://world-vitality-downloads.vercel.app";
+
 const sectionGap = { display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" } as const;
 
 /**
  * "Install on this device" (Experience Blueprint §16): one button where the
  * browser offers installing, a plain instruction where it doesn't, and a
  * confirmation once it's done. Says what is kept on the device for offline
- * use and when it goes — the same promise the service worker keeps.
+ * use and when it goes — the same promise the service worker keeps. Not
+ * shown once installed (that includes inside the desktop and phone apps),
+ * otherwise points at the downloads website for the desktop and Android apps.
  */
 export function InstallCard() {
   const { t } = useI18n();
@@ -42,6 +47,17 @@ export function InstallCard() {
                 {t("settings.install.hint")}
               </Text>
             )}
+            <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+              {t("settings.install.appsLead")}{" "}
+              <a
+                href={DOWNLOADS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "var(--wv-accent)", textDecoration: "underline" }}
+              >
+                {t("settings.install.appsLink")}
+              </a>
+            </Text>
           </>
         )}
       </div>

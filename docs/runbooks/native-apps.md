@@ -70,6 +70,10 @@ below, and how to check a download. Its README has the details.
   button above) is the whole job. Do not rename the files or the tag format
   without changing `FILE_KINDS` and `TAG` in `sites/download/public/releases.js`;
   a test in that folder checks the page and the workflow still agree on the tag.
+- **The main website links to it** from Settings, in the "Install on this
+  device" card (`DOWNLOADS_URL` in `apps/web/app/settings/install-card.tsx`);
+  the card hides the link once the app is installed. Nothing else links to it
+  yet (not the landing page or the login page).
 - **Until the first release is published** the page says "The first version of
   the app is being prepared" and shows no download buttons.
 - **A draft release, or one whose tag is not `native-vX.Y.Z`, is never shown.**

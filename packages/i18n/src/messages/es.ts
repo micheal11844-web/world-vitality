@@ -488,6 +488,8 @@ export const es: Messages = {
   "settings.install.installed": "World Vitality está instalado en este dispositivo.",
   "settings.install.hint":
     "Para instalarlo, abre el botón de compartir o el menú de tu navegador y elige “Añadir a la pantalla de inicio” o “Instalar aplicación”.",
+  "settings.install.appsLead": "¿Prefieres una aplicación de escritorio o para Android?",
+  "settings.install.appsLink": "Ver las descargas",
 
   // ---- Weather & Climate workspace (home page) and the location note shared by workspace pages
   "weather.currentConditions": "Condiciones actuales",

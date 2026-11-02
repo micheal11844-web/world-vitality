@@ -469,6 +469,8 @@ export const ar: Messages = {
   "settings.install.installed": "World Vitality مثبّت على هذا الجهاز.",
   "settings.install.hint":
     "للتثبيت، افتح زر المشاركة أو قائمة المتصفح واختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».",
+  "settings.install.appsLead": "هل تفضّل تطبيقًا لسطح المكتب أو لنظام أندرويد؟",
+  "settings.install.appsLink": "عرض التنزيلات",
 
   // ---- Weather & Climate workspace (home page) and the location note shared by workspace pages
   "weather.currentConditions": "الظروف الحالية",

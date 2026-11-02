@@ -481,6 +481,8 @@ export const en = {
   "settings.install.installed": "World Vitality is installed on this device.",
   "settings.install.hint":
     "To install, open your browser’s share or menu button and choose “Add to Home Screen” or “Install app”.",
+  "settings.install.appsLead": "Prefer a desktop or Android app?",
+  "settings.install.appsLink": "See the downloads",
 
   // ---- Weather & Climate workspace (home page) and the location note shared by workspace pages
   "weather.currentConditions": "Current Conditions",

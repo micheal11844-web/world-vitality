@@ -100,7 +100,9 @@ environment variables.
   links in `index.html` (a test checks that every external link is the website
   or this repository).
 - **Website address** (a custom domain later): the links to
-  `https://world-vitality.vercel.app` in `index.html` and `app.js`.
+  `https://world-vitality.vercel.app` in `index.html` and `app.js`. And the
+  other way round: the main website links here from Settings
+  (`DOWNLOADS_URL` in `apps/web/app/settings/install-card.tsx`).
 - **A new kind of file** (say a `.deb`): add its pattern to `FILE_KINDS` in
   `public/releases.js`, a row and button in `index.html` with `data-file` and
   `data-meta`, and the name to `KINDS` in `public/app.js`.
