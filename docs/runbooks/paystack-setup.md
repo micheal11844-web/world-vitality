@@ -61,14 +61,20 @@ Paystack", and pointed to Settings (Profile, Payments, Payouts, Team). That
 on the same login and say "you can use the same documents and settlement
 account information to create each of these new businesses"
 (<https://support2.paystack.com/hc/en-us/articles/360009973679-Can-I-use-the-same-payout-account-and-business-registration-document-for-multiple-businesses>).
-A bot can be wrong, or it can be reacting to something about that login. The
-likeliest thing is the role: the owner is an **Admin** on the existing
-business, and Paystack says each business has **one Business Owner** and that
-Admins "can manage most business settings" (<https://support.paystack.com/en/articles/10643266>).
-If the Owner is a different login, that login is the one that can add
-businesses, and the money from the existing business settles to the Owner's
-payout account, which is not where World Vitality's customers' money should go
-unless that is deliberate. So, in order:
+A bot can be wrong, or it can be reacting to something about that login. One
+possibility is the role: the owner sees **Admin** on the existing business, and
+Paystack says each business has **one Business Owner** and that Admins "can
+manage most business settings" (<https://support.paystack.com/en/articles/10643266>).
+**But Paystack support later wrote that the Business Owner also carries the
+Admin role, so the label alone does not show who the Owner is.** Support also
+said Add a Business is at the top left of the dashboard. The owner's screenshot
+(31 October) of that switcher for the business "Joelflowstack" shows only a
+search box and "No businesses found", with no Add a Business option, so the two
+do not agree and the cause is unknown from here. Two things to settle: whether
+that business is the owner's own or someone else's (its money settles to the
+Owner's payout account, which is not where World Vitality's customers' money
+should go unless that is deliberate), and why the option is missing. So, in
+order:
 
 1. Find out who the **Owner** is (Settings → Team). If it is another email that
    is also yours, sign in with that one and use **Add a Business**.
