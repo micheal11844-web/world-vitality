@@ -34,7 +34,7 @@ export default tseslint.config(
     // The desktop and phone apps (native/) are small CommonJS programs that
     // run in Electron's main process or under `node --test`, outside the
     // pnpm workspace — so they get Node's globals and may use require().
-    files: ["native/**/*.cjs"],
+    files: ["native/**/*.cjs", "sites/download/test/**/*.cjs"],
     languageOptions: {
       sourceType: "commonjs",
       globals: {
@@ -57,6 +57,27 @@ export default tseslint.config(
     languageOptions: {
       sourceType: "script",
       globals: { window: "readonly", document: "readonly", URLSearchParams: "readonly" },
+    },
+  },
+  {
+    // The downloads website (sites/download) is plain files served as they
+    // are: classic scripts that run in the visitor's browser. releases.js also
+    // loads under Node (require) so its logic can be tested without a browser.
+    files: ["sites/download/public/**/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: {
+        window: "readonly",
+        document: "readonly",
+        navigator: "readonly",
+        fetch: "readonly",
+        sessionStorage: "readonly",
+        AbortController: "readonly",
+        URL: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        module: "writable",
+      },
     },
   },
   {

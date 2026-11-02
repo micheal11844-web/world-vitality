@@ -10,6 +10,11 @@ building and deploying the website never touches it.
 
 There is no iPhone or iPad app. See "iPhone and iPad" below.
 
+Where people download them: the **downloads website** (`sites/download`,
+Decision #024), a separate site that reads the newest release from GitHub and
+offers the right file for each person's system. See "The downloads website"
+below.
+
 ## Getting the installers
 
 They are built on GitHub's own machines (Windows, Mac, Linux and Android
@@ -51,6 +56,24 @@ or use Actions, "Native apps", "Run workflow". Everything is built and the files
 are kept on the run's page (GitHub's default is 90 days). That is not a release
 and nothing links to it, but because the repository is public, anyone signed
 in to GitHub who finds the run can download them.
+
+## The downloads website
+
+Customers should not have to read GitHub's Releases page. `sites/download` is a
+small static website (its own Vercel project, `world-vitality-downloads`) with
+sections for Windows, Mac, Linux and Android, install steps for the warnings
+below, and how to check a download. Its README has the details.
+
+- **It needs nothing from you after a release.** It asks GitHub for the newest
+  `native-v*` release each time it is opened, so publishing a release (the
+  button above) is the whole job. Do not rename the files or the tag format
+  without changing `FILE_KINDS` and `TAG` in `sites/download/public/releases.js`;
+  a test in that folder checks the page and the workflow still agree on the tag.
+- **Until the first release is published** the page says "The first version of
+  the app is being prepared" and shows no download buttons.
+- **A draft release, or one whose tag is not `native-vX.Y.Z`, is never shown.**
+  The newest published one wins.
+- **It offers only files under this repository's release address.**
 
 ## What people see when they install
 

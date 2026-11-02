@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Download World Vitality for Windows, Mac, Linux and Android</title>
+    <meta
+      name="description"
+      content="World Vitality in a window of its own. Download the app for Windows, Mac, Linux or Android."
+    />
+    <meta name="theme-color" content="#eef4f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1a1b" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/png" href="img/icon-192.png" />
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
+    <link
+      rel="preload"
+      href="fonts/bricolage-grotesque-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-state="static">
+    <a class="skip" href="#downloads">Skip to the downloads</a>
+
+    <header class="top">
+      <a class="brand" href="https://world-vitality.vercel.app">
+        <img class="brand-mark" src="img/icon-192.png" alt="" width="32" height="32" />
+        <span>World Vitality</span>
+      </a>
+      <a class="top-link" href="https://world-vitality.vercel.app">Open the website</a>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title">World Vitality, in a window of its own.</h1>
+          <p class="lede">
+            The same World Vitality you use on the website, on your computer or your phone. Sign in
+            with the account you already have.
+          </p>
+
+          <div id="primary" class="primary" aria-live="polite">
+            <a class="btn btn-large" href="#downloads">Choose your computer</a>
+          </div>
+          <p id="release-line" class="release-line"></p>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <svg class="orbits" viewBox="0 0 520 440" focusable="false">
+            <g class="orbit-group">
+              <ellipse class="orbit orbit-a" cx="260" cy="220" rx="250" ry="92" pathLength="1" />
+              <ellipse class="orbit orbit-b" cx="260" cy="220" rx="214" ry="170" pathLength="1" />
+              <ellipse class="orbit orbit-c" cx="260" cy="220" rx="150" ry="205" pathLength="1" />
+            </g>
+            <circle class="node node-leaf" cx="494.9" cy="251.5" r="6" />
+            <circle class="node node-tide" cx="74.7" cy="305" r="6" />
+            <circle class="node node-sun" cx="298.8" cy="22" r="6" />
+          </svg>
+          <img class="hero-mark" src="img/mark.webp" alt="" width="720" height="448" />
+        </div>
+      </section>
+
+      <section id="downloads" class="downloads" aria-labelledby="downloads-title">
+        <h2 id="downloads-title">Choose your computer</h2>
+
+        <div id="status" class="status" role="status" hidden>
+          <p id="status-text"></p>
+          <p class="status-actions">
+            <button id="status-retry" class="btn btn-quiet" type="button" hidden>
+              Check again
+            </button>
+            <a
+              id="status-releases"
+              class="text-link"
+              href="https://github.com/micheal11844-web/world-vitality/releases"
+              rel="noopener"
+              >See every version on GitHub</a
+            >
+          </p>
+        </div>
+
+        <article id="windows" class="platform" data-platform="windows">
+          <div class="platform-name">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="3" y="4" width="18" height="12" rx="1.5" />
+              <path d="M8 20h8M12 16v4" />
+            </svg>
+            <h3>Windows</h3>
+            <p class="match" hidden>Matches this computer</p>
+          </div>
+          <div class="platform-body">
+            <p class="needs">For 64-bit Windows 10 and 11.</p>
+            <div class="choices">
+              <div class="choice">
+                <a
+                  class="btn"
+                  data-file="windows"
+                  href="https://github.com/micheal11844-web/world-vitality/releases"
+                  rel="noopener"
+                  >Download for Windows</a
+                >
+                <p class="file-meta" data-meta="windows"></p>
+              </div>
+            </div>
+            <details>
+              <summary>How to install</summary>
+              <ol>
+                <li>Open the file you downloaded.</li>
+                <li>
+                  If Windows says “Windows protected your PC”, choose <strong>More info</strong>,
+                  then <strong>Run anyway</strong>.
+                </li>
+                <li>
+                  Follow the steps. It installs for your user account only, so it doesn’t ask for an
+                  administrator password. World Vitality opens when it finishes.
+                </li>
+              </ol>
+            </details>
+          </div>
+        </article>
+
+        <article id="mac" class="platform" data-platform="mac">
+          <div class="platform-name">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="5" y="5" width="14" height="10" rx="1.5" />
+              <path d="M2.5 19h19l-1.5-4h-16z" />
+            </svg>
+            <h3>Mac</h3>
+            <p class="match" hidden>Matches this computer</p>
+          </div>
+          <div class="platform-body">
+            <p class="needs">There is one file for each kind of Mac.</p>
+            <div class="choices">
+              <div class="choice">
+                <a
+                  class="btn"
+                  data-file="macArm"
+                  href="https://github.com/micheal11844-web/world-vitality/releases"
+                  rel="noopener"
+                  >Download for Apple chip</a
+                >
+                <p class="file-meta" data-meta="macArm"></p>
+              </div>
+              <div class="choice">
+                <a
+                  class="btn btn-quiet"
+                  data-file="macIntel"
+                  href="https://github.com/micheal11844-web/world-vitality/releases"
+                  rel="noopener"
+                  >Download for Intel</a
+                >
+                <p class="file-meta" data-meta="macIntel"></p>
+              </div>
+            </div>
+            <details>
+              <summary>Which Mac do I have?</summary>
+              <p>
+                Choose the Apple menu, then <strong>About This Mac</strong>. If it says
+                <strong>Chip</strong> with a name starting “Apple M”, choose Apple chip. If it says
+                <strong>Processor</strong> with an Intel name, choose Intel.
+              </p>
+            </details>
+            <details>
+              <summary>How to install</summary>
+              <ol>
+                <li>
+                  Open the file you downloaded, then drag World Vitality into
+                  <strong>Applications</strong>.
+                </li>
+                <li>
+                  Open World Vitality from Applications. If macOS says it can’t check the app for
+                  malicious software, close the message and open
+                  <strong>System Settings</strong>, then <strong>Privacy &amp; Security</strong>.
+                </li>
+                <li>
+                  Scroll to the message about World Vitality and choose
+                  <strong>Open Anyway</strong>. You only do this once. On older versions of macOS,
+                  right-click the app and choose <strong>Open</strong> instead.
+                </li>
+              </ol>
+            </details>
+          </div>
+        </article>
+
+        <article id="linux" class="platform" data-platform="linux">
+          <div class="platform-name">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="3" y="4" width="18" height="16" rx="1.5" />
+              <path d="M7 10l3 2-3 2M12 15h5" />
+            </svg>
+            <h3>Linux</h3>
+            <p class="match" hidden>Matches this computer</p>
+          </div>
+          <div class="platform-body">
+            <p class="needs">
+              For 64-bit Linux desktops. It is an AppImage, so it needs no installer.
+            </p>
+            <div class="choices">
+              <div class="choice">
+                <a
+                  class="btn"
+                  data-file="linux"
+                  href="https://github.com/micheal11844-web/world-vitality/releases"
+                  rel="noopener"
+                  >Download for Linux</a
+                >
+                <p class="file-meta" data-meta="linux"></p>
+              </div>
+            </div>
+            <details>
+              <summary>How to run it</summary>
+              <ol>
+                <li>
+                  Make the file runnable: right-click it, open <strong>Properties</strong>, and
+                  allow running it as a program. Or, in a terminal, run
+                  <code>chmod +x World-Vitality-*.AppImage</code>.
+                </li>
+                <li>Double-click the file, or run it from the terminal.</li>
+                <li>
+                  If nothing happens, install your system’s FUSE 2 package (often called
+                  <code>libfuse2</code>) and try again.
+                </li>
+              </ol>
+            </details>
+          </div>
+        </article>
+
+        <article id="android" class="platform" data-platform="android">
+          <div class="platform-name">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="7" y="2.5" width="10" height="19" rx="2" />
+              <path d="M11 18.5h2" />
+            </svg>
+            <h3>Android</h3>
+            <p class="match" hidden>Matches this phone</p>
+          </div>
+          <div class="platform-body">
+            <p class="needs">For phones and tablets on Android 7 or newer.</p>
+            <div class="choices">
+              <div class="choice">
+                <a
+                  class="btn"
+                  data-file="android"
+                  href="https://github.com/micheal11844-web/world-vitality/releases"
+                  rel="noopener"
+                  >Download for Android</a
+                >
+                <p class="file-meta" data-meta="android"></p>
+              </div>
+            </div>
+            <details>
+              <summary>How to install</summary>
+              <ol>
+                <li>Open this page on your phone and download the file.</li>
+                <li>
+                  Open the downloaded file. Android asks you to allow installing from your browser
+                  or Files app; allow it.
+                </li>
+                <li>
+                  If Google Play Protect warns you, choose <strong>Install anyway</strong>. The app
+                  isn’t on Google Play yet, so Play Protect hasn’t seen it before.
+                </li>
+              </ol>
+            </details>
+          </div>
+        </article>
+
+        <article id="ios" class="platform" data-platform="ios">
+          <div class="platform-name">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+              <circle cx="12" cy="18.5" r="0.8" />
+            </svg>
+            <h3>iPhone and iPad</h3>
+            <p class="match" hidden>Matches this device</p>
+          </div>
+          <div class="platform-body">
+            <p class="needs">There is no app to download. Add the website to your Home Screen.</p>
+            <details>
+              <summary>How to add it</summary>
+              <ol>
+                <li>
+                  Open <a class="text-link" href="https://world-vitality.vercel.app">the website</a>
+                  in Safari.
+                </li>
+                <li>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</li>
+                <li>World Vitality opens from your Home Screen like any other app.</li>
+              </ol>
+            </details>
+          </div>
+        </article>
+      </section>
+
+      <section class="trust" aria-labelledby="trust-title">
+        <h2 id="trust-title">Before you open it</h2>
+        <div class="prose">
+          <p>
+            These first versions aren’t signed with a publisher certificate yet. The first time you
+            open one, Windows and macOS show a warning that they don’t recognise the publisher. The
+            steps above show how to continue. The app only opens World Vitality; it doesn’t read
+            your files.
+          </p>
+          <p>
+            Each version lists a checksum for every file. You can check that your download is
+            exactly the file we published.
+          </p>
+          <details>
+            <summary>How to check a download</summary>
+            <p>
+              Run the command for your computer in the folder with the file, then compare the result
+              with the line for that file in
+              <a
+                id="checksums-link"
+                class="text-link"
+                href="https://github.com/micheal11844-web/world-vitality/releases"
+                rel="noopener"
+                >the checksums file</a
+              >. The two should match exactly.
+            </p>
+            <dl class="commands">
+              <dt>Windows (PowerShell)</dt>
+              <dd><code>Get-FileHash .\World-Vitality-Setup-0.1.0.exe -Algorithm SHA256</code></dd>
+              <dt>Mac</dt>
+              <dd><code>shasum -a 256 World-Vitality-0.1.0-arm64.dmg</code></dd>
+              <dt>Linux</dt>
+              <dd><code>sha256sum World-Vitality-0.1.0.AppImage</code></dd>
+            </dl>
+            <p>Use the name of the file you downloaded.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="faq" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+        <div class="prose">
+          <details>
+            <summary>Is it free to download?</summary>
+            <p>
+              Yes. What you can use inside it depends on your World Vitality plan, the same as on
+              the website.
+            </p>
+          </details>
+          <details>
+            <summary>Why can’t I sign in with Google?</summary>
+            <p>
+              Google doesn’t allow sign-in inside app windows, so the app uses your email and
+              password. If you usually sign in with Google, open the website, choose
+              <strong>Forgot password?</strong> and set a password first. Then use it in the app.
+            </p>
+          </details>
+          <details>
+            <summary>Do I need to download it again when World Vitality changes?</summary>
+            <p>
+              No. The app shows the live website, so changes to World Vitality appear straight away.
+              You only download again when there is a new version of the app itself, and it will be
+              listed here.
+            </p>
+          </details>
+          <details>
+            <summary>Does it work without internet?</summary>
+            <p>
+              It needs a connection. Without one it shows a short page with a
+              <strong>Try again</strong> button, and nothing you saved is lost.
+            </p>
+          </details>
+          <details>
+            <summary>What can the app see on my computer?</summary>
+            <p>
+              Very little. The desktop app can’t read your files, turns off the camera, microphone
+              and location, and opens links to other websites in your normal browser. The Android
+              app asks for internet access and nothing else.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        <a class="text-link" href="https://world-vitality.vercel.app">World Vitality</a>
+      </p>
+      <p>
+        <a
+          id="notes-link"
+          class="text-link"
+          href="https://github.com/micheal11844-web/world-vitality/releases"
+          rel="noopener"
+          >All versions and release notes</a
+        >
+      </p>
+    </footer>
+
+    <noscript>
+      <p class="noscript">
+        This page works without JavaScript, but it can’t show the newest version. The download
+        buttons go to the
+        <a href="https://github.com/micheal11844-web/world-vitality/releases">releases page</a>,
+        where every file is listed.
+      </p>
+    </noscript>
+
+    <script src="releases.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

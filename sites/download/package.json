@@ -1,0 +1,7 @@
+{
+  "name": "world-vitality-downloads-site",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static downloads page for the World Vitality desktop and Android apps. No dependencies and no build step; Vercel serves the public folder.",
+  "type": "commonjs"
+}

@@ -721,3 +721,62 @@ phone by the person who wrote them. Apple may refuse an iPhone app that is
 only a website.
 
 **Status:** Accepted.
+
+## Decision #024 — A separate downloads website that reads GitHub Releases
+
+**Context:** The desktop and Android apps (Decision #023) exist as installers on
+GitHub's Releases page, but a person who wants "to download World Vitality"
+expects an app's own download page: their system picked for them, plain
+install steps, and an honest word about the unknown-publisher warnings. The
+owner asked for that page, with sections for Windows, Mac and Linux.
+
+**Chosen:**
+
+- **A separate static website** in `sites/download`, deployed as its own Vercel
+  project (`world-vitality-downloads`) from the same repository. Plain HTML,
+  CSS and two small scripts: no framework, no build, no dependencies.
+- **The page reads GitHub Releases when it is opened** (the public API, no key)
+  instead of having versions written into it. Publishing a release is then the
+  only step needed for the page to offer it: no change to the site, no redeploy,
+  and no way for the page and the files to disagree.
+- **Only this repository's release files are ever offered**, checked by address
+  in the logic and again by the site's Content-Security-Policy, which also lets
+  the page contact nothing but `api.github.com`.
+- **It works in every state:** before any release exists it says the first
+  version is being prepared and shows no download buttons; if GitHub cannot be
+  reached it says so and links to the list of versions; with scripts off it is a
+  plain page whose buttons lead to the Releases page.
+- **Sections for Windows, Mac (Apple chip and Intel), Linux, and also Android**
+  (the phone app exists), plus a short note for iPhone and iPad (no app; add
+  the website to the Home Screen). The visitor's own system is highlighted and
+  listed first.
+- **Its tests run in their own workflow** (`downloads-site.yml`), not in the
+  apps' build, so a problem with the website can never hold back a release.
+
+**Alternatives considered:**
+
+- _A page inside the main website (`apps/web`)._ Ties the downloads page to the
+  website's build and deploys, and puts a page about the apps behind the
+  website's login and plan machinery. Rejected: the page is public marketing
+  with no account, and a separate project cannot take the website down.
+- _Versions and file names written into the page (or a manifest committed to
+  the repository)._ Needs an edit and a deploy after every release, and the two
+  can drift. Rejected for reading the release itself.
+- _A server-side function that asks GitHub and caches the answer._ Would avoid
+  GitHub's per-visitor limit and the flash before the answer, but adds a server
+  and a failure mode to a page that does not need one; the limit (60 an hour per
+  visitor) is not a problem for a person downloading one file. Revisit if the
+  page is ever linked from somewhere very busy.
+- _Link straight to GitHub Releases._ Works, but shows a developer page with
+  many files and no guidance about which to choose.
+
+**Trade-offs, stated honestly:** before the page can show a download, someone
+must publish the first release on GitHub (Actions, Native apps, Run workflow,
+Publish ticked); until then the page says the first version is being prepared.
+The download buttons point at github.com, so a visitor who cannot reach GitHub
+cannot download. The page cannot tell an Apple-chip Mac from an Intel one (the
+browser does not say), so it offers both and explains how to check. It does
+not make the installers signed; the warnings are explained on the page, not
+removed.
+
+**Status:** Accepted.

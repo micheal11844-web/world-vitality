@@ -1,0 +1,34 @@
+# Checks the downloads website (sites/download): the logic that finds the
+# newest app release and the page's own rules (every external link, no inline
+# scripts or styles, the security headers in vercel.json). It is a separate
+# workflow so a problem with the website can never hold back an app release
+# (native-apps.yml). What the site is and how it is deployed:
+# sites/download/README.md.
+name: Downloads site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sites/download/**"
+      - ".github/workflows/downloads-site.yml"
+      - ".github/workflows/native-apps.yml"
+  pull_request:
+    paths:
+      - "sites/download/**"
+      - ".github/workflows/downloads-site.yml"
+      - ".github/workflows/native-apps.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Downloads site tests
+        run: node --test sites/download/test/releases.test.cjs
