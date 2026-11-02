@@ -52,6 +52,34 @@ existing business changes, and the two projects' payments never mix.
 (Payout can go to the same bank account as your other business, if you want
 the money in one place; that is a setting inside the new business.)
 
+### What Paystack's chat bot said (2 November 2026)
+
+Asked about adding a business, Paystack's in-dashboard chat bot told the
+owner "You can't create a second business entity under the same login in
+Paystack", and pointed to Settings (Profile, Payments, Payouts, Team). That
+**contradicts Paystack's own help pages**, which describe **Add a Business**
+on the same login and say "you can use the same documents and settlement
+account information to create each of these new businesses"
+(<https://support2.paystack.com/hc/en-us/articles/360009973679-Can-I-use-the-same-payout-account-and-business-registration-document-for-multiple-businesses>).
+A bot can be wrong, or it can be reacting to something about that login. The
+likeliest thing is the role: the owner is an **Admin** on the existing
+business, and Paystack says each business has **one Business Owner** and that
+Admins "can manage most business settings" (<https://support.paystack.com/en/articles/10643266>).
+If the Owner is a different login, that login is the one that can add
+businesses, and the money from the existing business settles to the Owner's
+payout account, which is not where World Vitality's customers' money should go
+unless that is deliberate. So, in order:
+
+1. Find out who the **Owner** is (Settings → Team). If it is another email that
+   is also yours, sign in with that one and use **Add a Business**.
+2. If the existing business belongs to someone else, or the Owner login is
+   not available, **sign up a new Paystack account** for World Vitality with an
+   email you control: its own keys, webhook, plans and payout account, nothing
+   shared. Live payments need that account to be activated; test mode does not
+   (confirm once you are in).
+3. If the bot is simply wrong and you are the Owner, ask support for a person
+   and quote the two help pages above.
+
 ### If "Add a Business" is not available to you
 
 Paystack's own article says anyone who can open the business switcher can add
