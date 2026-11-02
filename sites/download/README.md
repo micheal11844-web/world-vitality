@@ -74,13 +74,19 @@ dark; phone widths from 320 px; no script) are not in the repository.
 
 ## Deploying (Vercel)
 
-A separate Vercel project, **world-vitality-downloads**, from the same
+Live at **https://world-vitality-downloads.vercel.app**. A separate Vercel
+project, **world-vitality-downloads**, from the same
 repository (`micheal11844-web/world-vitality`, branch `main`) with:
 
 - Root Directory: `sites/download`
 - Framework Preset: Other (`vercel.json` sets it to none)
 - Install Command and Build Command: none (set in `vercel.json`)
 - Output Directory: `public` (set in `vercel.json`)
+
+Keep Vercel's **Deployment Protection** (Vercel Authentication) **off** for
+this project: it is a public page, and with it on every visitor is asked to
+sign in to Vercel. (It is on by default for a new project and was switched off
+when this one was created.)
 
 It is separate from the main website's project on purpose: the website's
 install, build and environment variables are untouched, and a problem here

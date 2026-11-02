@@ -60,7 +60,8 @@ in to GitHub who finds the run can download them.
 ## The downloads website
 
 Customers should not have to read GitHub's Releases page. `sites/download` is a
-small static website (its own Vercel project, `world-vitality-downloads`) with
+small static website (**https://world-vitality-downloads.vercel.app**, its own
+Vercel project, `world-vitality-downloads`) with
 sections for Windows, Mac, Linux and Android, install steps for the warnings
 below, and how to check a download. Its README has the details.
 
