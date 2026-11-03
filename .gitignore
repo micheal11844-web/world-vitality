@@ -15,6 +15,11 @@ build/
 # something pnpm install already gives us.
 apps/web/public/cesium/
 
+# MapLibre's background-worker file (MapLibre 6 needs it served from the
+# site) — copied from node_modules/maplibre-gl by
+# apps/web/scripts/copy-maplibre-worker.mjs (predev/prebuild), never committed.
+apps/web/public/maplibre/
+
 # Env / secrets
 .env
 .env.*

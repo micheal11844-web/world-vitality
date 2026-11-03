@@ -25,6 +25,8 @@ export default tseslint.config(
       // working tree, which has it present after `pnpm run build` or
       // `pnpm run dev` has run at least once.
       "apps/web/public/cesium/**",
+      // MapLibre's worker file, copied the same way (copy-maplibre-worker.mjs).
+      "apps/web/public/maplibre/**",
       // The phone app's generated Android project (Gradle/Java) and its
       // build output — not JavaScript this repo authors.
       "native/mobile/android/**",

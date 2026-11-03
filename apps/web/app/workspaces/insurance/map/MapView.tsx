@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import { maplibregl } from "../../../../lib/maps/maplibre";
 
 export interface PropertyMarkerData {
   id: string;

@@ -4,8 +4,41 @@ Tracked here rather than silently ignored, per Engineering Blueprint
 Section 14 (security audits, maintenance). Reviewed whenever
 `.github/workflows/ci.yml`'s `dependency-audit` job output changes, and
 whenever `next` is upgraded. Last checked against a fresh
-`pnpm audit` on **2026-11-01**: 16 findings (1 critical, 9 high,
+`pnpm audit` on **2026-11-03**: 15 findings (0 critical, 9 high,
 6 moderate), every one reasoned about below.
+
+## Fixed on 2026-11-03 (maplibre-gl 4.7.1 to 6.16.0)
+
+The one critical finding left, in the map library. It was not reachable here
+(every map builds its own style with a fixed attribution, and popups use
+`setText`), but it was a critical advisory on a direct dependency, so it went.
+Audit: **16 findings down to 15, and no critical ones remain**.
+
+It is a two-major jump on a rendering library, so the maps were looked at in a
+real browser (headless Chromium with WebGL2, under the site's own
+Content-Security-Policy) before and after, on all five map components:
+marker count, colours and positions (within 0.5 px), popups, zoom buttons,
+mouse-wheel zoom, drag, compass, attribution, overlay toggles, and a
+screenshot comparison. Identical, with no script errors and no policy
+violations.
+
+What the upgrade needed, so the next person is not surprised:
+
+- **Imports.** Version 6 is ES-module only and has no default export, so the
+  maps now `import * as maplibregl`. All five go through one small module,
+  `apps/web/lib/maps/maplibre.ts`, rather than importing the library each.
+- **The background worker.** Version 6 ships its worker as a separate file
+  (`maplibre-gl-worker.mjs`) and finds it from its own address, which means
+  nothing inside a bundle. Left alone it logs "Worker failed to load", and
+  the visible maps still look fine (markers and raster tiles never use it),
+  so this is easy to miss. `apps/web/scripts/copy-maplibre-worker.mjs`
+  (`predev` and `prebuild`, like the globe's assets; generated, not committed)
+  copies it to `public/maplibre/`, and `lib/maps/maplibre.ts` points the
+  library at it with the library version in the address. It is on the site's
+  own address, so `worker-src 'self'` already covers it. The script fails the
+  build if the address in `maplibre.ts` and the copy destination disagree.
+  A browser check that parses a GeoJSON layer (which does need the worker)
+  is the proof that it really starts.
 
 ## Fixed on 2026-11-01 (Next.js 15.5.22 to 15.5.28)
 
@@ -31,28 +64,17 @@ organisation, admin and plan-feature browser checks pass.
 
 ## Currently accepted
 
-| Package         | Installed     | Patched              | Severity               | Where it comes from                  |
-| --------------- | ------------- | -------------------- | ---------------------- | ------------------------------------ |
-| maplibre-gl     | 4.7.1         | >=6.4.1 (two majors) | Critical               | Direct dependency (the maps)         |
-| postcss         | 8.4.31        | >=8.5.23             | High (2), Moderate (2) | Pinned exactly inside `next@15.5.28` |
-| nanoid          | 3.3.17        | >=3.3.18             | High                   | Inside `next` (through `postcss`)    |
-| source-map-js   | 1.2.1         | >=1.2.2              | High                   | Inside `next` (through `postcss`)    |
-| zod             | 3.25.76       | >=4.6.6 (one major)  | High                   | Direct dependency (`data-schemas`)   |
-| brace-expansion | 1.1.18, 5.0.9 | >=1.1.21, >=5.0.12   | High (4), Moderate (2) | Dev tooling: ESLint and its plugins  |
-| minimatch       | 10.2.6, 3.1.5 | >=11.0.1             | Moderate               | Dev tooling: ESLint and its plugins  |
+| Package         | Installed     | Patched             | Severity               | Where it comes from                  |
+| --------------- | ------------- | ------------------- | ---------------------- | ------------------------------------ |
+| postcss         | 8.4.31        | >=8.5.23            | High (2), Moderate (2) | Pinned exactly inside `next@15.5.28` |
+| nanoid          | 3.3.17        | >=3.3.18            | High                   | Inside `next` (through `postcss`)    |
+| source-map-js   | 1.2.1         | >=1.2.2             | High                   | Inside `next` (through `postcss`)    |
+| zod             | 3.25.76       | >=4.6.6 (one major) | High                   | Direct dependency (`data-schemas`)   |
+| brace-expansion | 1.1.18, 5.0.9 | >=1.1.21, >=5.0.12  | High (4), Moderate (2) | Dev tooling: ESLint and its plugins  |
+| minimatch       | 10.2.6, 3.1.5 | >=11.0.1            | Moderate               | Dev tooling: ESLint and its plugins  |
 
 Why each is accepted for now:
 
-- **maplibre-gl, critical** ([GHSA-jrc7-96c5-q579](https://github.com/advisories/GHSA-jrc7-96c5-q579),
-  CVE-2026-85061): the flaw is in the map's attribution sanitiser, and needs
-  an attacker to control a map style's attribution text (or a custom
-  attribution). Every map here (Agriculture, Insurance, Government & NGOs,
-  Disaster Monitoring, reference sites) builds its own style in code with the
-  fixed text "&copy; OpenStreetMap contributors"; popups use `setText`, not
-  `setHTML`; nothing a user or a data provider sends reaches the attribution.
-  Not reachable here. **Do upgrade**, but it is a two-major jump (4 to 6) on
-  a rendering library, so it needs the maps looked at in a real browser
-  before and after, not a blind bump. Next step on this list.
 - **postcss, nanoid, source-map-js** (all inside `next`): used at build time
   to process CSS; no user-supplied CSS is ever processed at runtime. Next
   pins `postcss` to exactly 8.4.31 even in 15.5.28, so only a newer Next

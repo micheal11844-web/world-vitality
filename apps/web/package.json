@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "node scripts/copy-cesium-assets.mjs",
+    "predev": "node scripts/copy-cesium-assets.mjs && node scripts/copy-maplibre-worker.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-cesium-assets.mjs",
+    "prebuild": "node scripts/copy-cesium-assets.mjs && node scripts/copy-maplibre-worker.mjs",
     "build": "cd ../.. && pnpm run build && cd apps/web && next build",
     "start": "next start"
   },
@@ -23,7 +23,7 @@
     "@world-vitality/knowledge-graph": "workspace:*",
     "@world-vitality/ui-components": "workspace:*",
     "cesium": "^1.145.0",
-    "maplibre-gl": "^4.7.0",
+    "maplibre-gl": "^6.16.0",
     "next": "^15.5.28",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
