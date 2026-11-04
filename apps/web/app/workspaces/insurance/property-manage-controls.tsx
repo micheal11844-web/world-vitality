@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button, Input, Text } from "@world-vitality/ui-components";
 import { updatePropertyAction, deletePropertyAction } from "./property-actions";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 
 export interface PropertyManageControlsProps {
   propertyId: string;
@@ -31,6 +32,7 @@ export function PropertyManageControls({
   initialLatitude,
   initialLongitude,
 }: PropertyManageControlsProps) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [policyNumber, setPolicyNumber] = useState(initialPolicyNumber);
   const [propertyAddress, setPropertyAddress] = useState(initialPropertyAddress);
@@ -55,7 +57,7 @@ export function PropertyManageControls({
       if (result.ok) {
         setEditing(false);
       } else {
-        setError(result.error ?? "Failed to update property.");
+        setError(result.error ?? t("common.genericError"));
       }
     });
   }
@@ -69,7 +71,7 @@ export function PropertyManageControls({
     startTransition(async () => {
       const result = await deletePropertyAction(propertyId);
       if (!result.ok) {
-        setError(result.error ?? "Failed to delete property.");
+        setError(result.error ?? t("common.genericError"));
         setConfirmingDelete(false);
       }
       // On success, revalidatePath (in the Server Action) refreshes
@@ -81,10 +83,10 @@ export function PropertyManageControls({
     return (
       <div style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-sm)" }}>
         <Button variant="secondary" onClick={() => setEditing(true)} disabled={isPending}>
-          Edit
+          {t("resource.edit")}
         </Button>
         <Button variant="destructive" onClick={handleDeleteClick} disabled={isPending}>
-          {confirmingDelete ? "Confirm Delete?" : "Delete"}
+          {confirmingDelete ? t("resource.confirmDelete") : t("resource.delete")}
         </Button>
         {error && (
           <Text variant="caption" style={{ color: "var(--wv-critical)" }}>
@@ -105,18 +107,18 @@ export function PropertyManageControls({
       }}
     >
       <Input
-        label="Policy number"
+        label={t("insurance.policyNumber")}
         value={policyNumber}
         onChange={(e) => setPolicyNumber(e.target.value)}
       />
       <Input
-        label="Property address"
+        label={t("insurance.propertyAddress")}
         value={propertyAddress}
         onChange={(e) => setPropertyAddress(e.target.value)}
       />
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
         <Input
-          label="Latitude"
+          label={t("resource.latitude")}
           type="number"
           step="any"
           value={latitude}
@@ -124,7 +126,7 @@ export function PropertyManageControls({
           style={{ width: "7rem" }}
         />
         <Input
-          label="Longitude"
+          label={t("resource.longitude")}
           type="number"
           step="any"
           value={longitude}
@@ -134,10 +136,10 @@ export function PropertyManageControls({
       </div>
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
         <Button onClick={handleSave} loading={isPending}>
-          Save
+          {t("resource.save")}
         </Button>
         <Button variant="secondary" onClick={() => setEditing(false)} disabled={isPending}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
       {error && (

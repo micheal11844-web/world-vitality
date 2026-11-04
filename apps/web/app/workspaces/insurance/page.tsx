@@ -14,6 +14,7 @@ import { getPropertyStatus } from "./property-status";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../lib/organization-data";
 import { logTelemetry } from "../../../lib/logger";
+import { getTranslator } from "../../../lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,10 @@ const WORKSPACE_ID = "insurance";
  */
 export default async function InsuranceWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: WORKSPACE_ID });
+  const { t, locale } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const caption = { textTransform: "uppercase" } as const;
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
   const allProperties = await getOrganizationData(membership).listProperties(WORKSPACE_ID);
   const visibleProperties = allProperties.filter((property) =>
@@ -114,15 +119,13 @@ export default async function InsuranceWorkspaceHome() {
       aiInterpretation={headlineInterpretation}
     >
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-        Underwriting Risk Context
+        {t("nav.underwritingRiskContext")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        Real insured portfolio ({allProperties.length} propert
-        {allProperties.length === 1 ? "y" : "ies"}). Individual hazard signals only; no synthesized
-        multi-hazard risk score (see this page&apos;s honest-scope notes).
+        {t("insurance.home.intro", { count: allProperties.length })}
       </Text>
 
       {canEdit && <AddPropertyForm />}
@@ -132,13 +135,11 @@ export default async function InsuranceWorkspaceHome() {
           status="empty"
           title={
             allProperties.length === 0
-              ? "No insured properties yet"
-              : "No properties visible for your role"
+              ? t("insurance.empty.noProperties")
+              : t("insurance.empty.noPropertiesVisible")
           }
           description={
-            allProperties.length === 0
-              ? "Add an insured property above to get started."
-              : "Your access is scoped to specific properties, and none are currently assigned to you."
+            allProperties.length === 0 ? t("insurance.empty.addAbove") : t("insurance.empty.scoped")
           }
         />
       ) : (
@@ -153,7 +154,7 @@ export default async function InsuranceWorkspaceHome() {
           {statuses.map(({ property, weather, soilMoisture, ingestionGaps }) => (
             <Card key={property.id}>
               <Text variant="sectionTitle" as="p" style={{ marginBottom: "var(--wv-space-xs)" }}>
-                {property.policyNumber}
+                <bdi>{property.policyNumber}</bdi>
               </Text>
               <Text
                 variant="caption"
@@ -163,45 +164,53 @@ export default async function InsuranceWorkspaceHome() {
                   marginBottom: "var(--wv-space-sm)",
                 }}
               >
-                {property.propertyAddress}
+                <bdi>{property.propertyAddress}</bdi>
               </Text>
 
-              <Text variant="caption">TEMPERATURE</Text>
-              {weather.unableToAnswer ? (
-                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                  {weather.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+              <Text variant="caption" style={caption}>
+                {t("insurance.temperature")}
+              </Text>
+              <div {...englishOnly}>
+                {weather.unableToAnswer ? (
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                     {weather.summary}
                   </Text>
-                  <ConfidenceBadge level={weather.confidence} />
-                </>
-              )}
+                ) : (
+                  <>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {weather.summary}
+                    </Text>
+                    <ConfidenceBadge level={weather.confidence} />
+                  </>
+                )}
+              </div>
 
               <div style={{ height: "var(--wv-space-sm)" }} />
 
-              <Text variant="caption">SOIL / DROUGHT-ADJACENT</Text>
-              {soilMoisture.unableToAnswer ? (
-                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                  {soilMoisture.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+              <Text variant="caption" style={caption}>
+                {t("insurance.soilDrought")}
+              </Text>
+              <div {...englishOnly}>
+                {soilMoisture.unableToAnswer ? (
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                     {soilMoisture.summary}
                   </Text>
-                  <ConfidenceBadge level={soilMoisture.confidence} />
-                </>
-              )}
+                ) : (
+                  <>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {soilMoisture.summary}
+                    </Text>
+                    <ConfidenceBadge level={soilMoisture.confidence} />
+                  </>
+                )}
+              </div>
 
               {ingestionGaps > 0 && (
                 <Text
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                 >
-                  {ingestionGaps} day(s) had no data available.
+                  {t("workspace.gaps", { count: ingestionGaps })}
                 </Text>
               )}
 
@@ -224,7 +233,7 @@ export default async function InsuranceWorkspaceHome() {
 
       <Card>
         <Text variant="sectionTitle" as="p">
-          Auditable Report
+          {t("nav.auditableReport")}
         </Text>
         {canCreateReports ? (
           <>
@@ -232,18 +241,17 @@ export default async function InsuranceWorkspaceHome() {
               variant="body"
               style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
             >
-              Generate a print-ready underwriting report, with sources, timestamps, and a logged
-              audit trail entry.
+              {t("insurance.reportCard.body")}
             </Text>
             <Link href="/workspaces/insurance/report" style={buttonStyle("secondary")}>
-              Open Report
+              {t("report.open")}
             </Link>
           </>
         ) : (
           <StateDisplay
             status="empty"
-            title="Report export not available for your role"
-            description="This role does not have permission to create reports in this workspace."
+            title={t("report.notAvailable")}
+            description={t("report.accessDeniedBody")}
           />
         )}
       </Card>

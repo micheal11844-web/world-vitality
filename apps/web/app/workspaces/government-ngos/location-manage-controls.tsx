@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button, Input, Text } from "@world-vitality/ui-components";
 import { updateLocationAction, deleteLocationAction } from "./location-actions";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 
 export interface LocationManageControlsProps {
   locationId: string;
@@ -31,6 +32,7 @@ export function LocationManageControls({
   initialLatitude,
   initialLongitude,
 }: LocationManageControlsProps) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(initialLabel);
   const [latitude, setLatitude] = useState(String(initialLatitude));
@@ -48,7 +50,7 @@ export function LocationManageControls({
       if (result.ok) {
         setEditing(false);
       } else {
-        setError(result.error ?? "Failed to update location.");
+        setError(result.error ?? t("common.genericError"));
       }
     });
   }
@@ -62,7 +64,7 @@ export function LocationManageControls({
     startTransition(async () => {
       const result = await deleteLocationAction(locationId);
       if (!result.ok) {
-        setError(result.error ?? "Failed to delete location.");
+        setError(result.error ?? t("common.genericError"));
         setConfirmingDelete(false);
       }
       // On success, revalidatePath (in the Server Action) refreshes
@@ -74,10 +76,10 @@ export function LocationManageControls({
     return (
       <div style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-sm)" }}>
         <Button variant="secondary" onClick={() => setEditing(true)} disabled={isPending}>
-          Edit
+          {t("resource.edit")}
         </Button>
         <Button variant="destructive" onClick={handleDeleteClick} disabled={isPending}>
-          {confirmingDelete ? "Confirm Delete?" : "Delete"}
+          {confirmingDelete ? t("resource.confirmDelete") : t("resource.delete")}
         </Button>
         {error && (
           <Text variant="caption" style={{ color: "var(--wv-critical)" }}>
@@ -97,10 +99,14 @@ export function LocationManageControls({
         gap: "var(--wv-space-xs)",
       }}
     >
-      <Input label="Location label" value={label} onChange={(e) => setLabel(e.target.value)} />
+      <Input
+        label={t("gov.locationLabel")}
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+      />
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
         <Input
-          label="Latitude"
+          label={t("resource.latitude")}
           type="number"
           step="any"
           value={latitude}
@@ -108,7 +114,7 @@ export function LocationManageControls({
           style={{ width: "7rem" }}
         />
         <Input
-          label="Longitude"
+          label={t("resource.longitude")}
           type="number"
           step="any"
           value={longitude}
@@ -118,10 +124,10 @@ export function LocationManageControls({
       </div>
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
         <Button onClick={handleSave} loading={isPending}>
-          Save
+          {t("resource.save")}
         </Button>
         <Button variant="secondary" onClick={() => setEditing(false)} disabled={isPending}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
       {error && (

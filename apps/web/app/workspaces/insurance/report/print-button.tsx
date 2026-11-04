@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@world-vitality/ui-components";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 
 /**
  * The "formal report export" mechanism (BUILD_PLAN "STAGE — INSURANCE
@@ -11,5 +12,6 @@ import { Button } from "@world-vitality/ui-components";
  * is the only client-interactive piece needed to trigger it.
  */
 export function PrintButton() {
-  return <Button onClick={() => window.print()}>Print / Save as PDF</Button>;
+  const { t } = useI18n();
+  return <Button onClick={() => window.print()}>{t("report.print")}</Button>;
 }

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { maplibregl } from "../../../../lib/maps/maplibre";
+import { formatReading, moistureLabelKey } from "../../../../lib/maps/moisture";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 
 export interface LocationMarkerData {
   id: string;
@@ -41,16 +43,6 @@ function colorForMoisture(value: number): string {
  *  doesn't have. */
 const NO_DATA_COLOR = "#8a8a80";
 
-/** Same band boundaries, in plain language — used for the accessible
- *  description below. */
-function moistureLabel(value: number): string {
-  if (value <= 0.2) return "very dry";
-  if (value <= 0.4) return "dry";
-  if (value <= 0.6) return "moderate moisture";
-  if (value <= 0.8) return "moist";
-  return "saturated";
-}
-
 /**
  * Map view (BUILD_PLAN "STAGE — GOVERNMENT & NGOS FOLLOW-UP:
  * MULTI-MARKER MAP") — this workspace's own instance of the
@@ -68,6 +60,7 @@ function moistureLabel(value: number): string {
  * every marker's bounds on load.
  */
 export function MapView({ markers }: MapViewProps) {
+  const { t, locale } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRefs = useRef<maplibregl.Marker[]>([]);
@@ -126,8 +119,13 @@ export function MapView({ markers }: MapViewProps) {
           : NO_DATA_COLOR;
       const popupText =
         location.moistureValue !== undefined
-          ? `${location.name}: ${moistureLabel(location.moistureValue)} (${location.moistureValue.toFixed(2)} of 1.0)`
-          : `${location.name}: no current soil moisture reading`;
+          ? t("map.popupReading", {
+              name: location.name,
+              // The band in the reader's language, the reading in their numerals.
+              label: t(moistureLabelKey(location.moistureValue)),
+              value: formatReading(location.moistureValue, locale),
+            })
+          : t("map.popupNoReading", { name: location.name });
 
       const popup = new maplibregl.Popup({ offset: 24, closeButton: false }).setText(popupText);
 
@@ -139,21 +137,28 @@ export function MapView({ markers }: MapViewProps) {
       marker.getElement().addEventListener("click", () => setSelectedLocationId(location.id));
       markerRefs.current.push(marker);
     }
-  }, [overlayOn, markers]);
+  }, [overlayOn, markers, t, locale]);
 
   const selectedLocation = markers.find((l) => l.id === selectedLocationId);
   const description =
     markers.length === 0
-      ? "No locations to show on the map."
+      ? t("gov.map.descNone")
       : overlayOn
-        ? `Map showing ${markers.length} location${markers.length === 1 ? "" : "s"}. ${markers
-            .map((l) =>
-              l.moistureValue !== undefined
-                ? `${l.name}: ${moistureLabel(l.moistureValue)} (${l.moistureValue.toFixed(2)} on a 0 to 1 scale)`
-                : `${l.name}: no current reading`,
-            )
-            .join(". ")}.`
-        : `Map showing ${markers.length} location${markers.length === 1 ? "" : "s"}. Soil moisture overlay is currently hidden.`;
+        ? t("gov.map.descOn", {
+            count: markers.length,
+            items: `${markers
+              .map((m) =>
+                m.moistureValue !== undefined
+                  ? t("map.descItem", {
+                      name: m.name,
+                      label: t(moistureLabelKey(m.moistureValue)),
+                      value: formatReading(m.moistureValue, locale),
+                    })
+                  : t("map.descItemNoReading", { name: m.name }),
+              )
+              .join(". ")}.`,
+          })
+        : t("gov.map.descOff", { count: markers.length });
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
@@ -194,13 +199,15 @@ export function MapView({ markers }: MapViewProps) {
           checked={overlayOn}
           onChange={(e) => setOverlayOn(e.target.checked)}
         />
-        Soil moisture ({markers.length} location{markers.length === 1 ? "" : "s"})
+        {t("gov.map.toggle", { count: markers.length })}
       </label>
       {selectedLocation && (
         <div
           style={{
             position: "absolute",
-            bottom: "var(--wv-space-sm)",
+            // Above MapLibre's attribution bar (bottom-right, a physical corner): in a
+            // right-to-left page this panel starts at the right and would sit on top of it.
+            bottom: "2.25rem",
             left: "var(--wv-space-sm)",
             right: "var(--wv-space-sm)",
             backgroundColor: "var(--wv-surface)",
@@ -212,8 +219,14 @@ export function MapView({ markers }: MapViewProps) {
             maxWidth: "24rem",
           }}
         >
-          <strong>{selectedLocation.name}</strong>
-          <div style={{ color: "var(--wv-text-secondary)", marginTop: "0.25rem" }}>
+          <strong>
+            <bdi>{selectedLocation.name}</bdi>
+          </strong>
+          <div
+            // The engine's sentence is written in English; marked as such on a translated page.
+            {...(locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const))}
+            style={{ color: "var(--wv-text-secondary)", marginTop: "0.25rem" }}
+          >
             {selectedLocation.summary}
           </div>
         </div>

@@ -7,6 +7,7 @@ import { getOrganizationData } from "../../../lib/organization-data";
 import { savedItemLimitMessage } from "../../../lib/plan-limits";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
+import { tServer } from "../../../lib/i18n/server";
 
 export interface CreateLocationResult {
   ok: boolean;
@@ -33,26 +34,26 @@ export async function createLocationAction(
   longitude: number,
 ): Promise<CreateLocationResult> {
   if (!label.trim()) {
-    return { ok: false, error: "Enter a label for this location." };
+    return { ok: false, error: await tServer("gov.err.labelRequired") };
   }
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    return { ok: false, error: "Latitude must be a number between -90 and 90." };
+    return { ok: false, error: await tServer("resource.latitudeRange") };
   }
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    return { ok: false, error: "Longitude must be a number between -180 and 180." };
+    return { ok: false, error: await tServer("resource.longitudeRange") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
   if (!can(membership.role, "data:edit")) {
     return {
       ok: false,
-      error: "You do not have permission to add monitored locations in this workspace.",
+      error: await tServer("gov.err.noPermissionAdd"),
     };
   }
 
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+    return { ok: false, error: await tServer("resource.sessionUnverified") };
   }
 
   const data = getOrganizationData(membership);
@@ -75,7 +76,7 @@ export async function createLocationAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("create_location_failed", err, { workspaceId: WORKSPACE_ID });
-    return { ok: false, error: "Failed to add monitored location. Please try again." };
+    return { ok: false, error: await tServer("gov.err.createFailed") };
   }
 }
 
@@ -96,13 +97,13 @@ export async function updateLocationAction(
   longitude: number,
 ): Promise<CreateLocationResult> {
   if (!label.trim()) {
-    return { ok: false, error: "Enter a label for this location." };
+    return { ok: false, error: await tServer("gov.err.labelRequired") };
   }
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    return { ok: false, error: "Latitude must be a number between -90 and 90." };
+    return { ok: false, error: await tServer("resource.latitudeRange") };
   }
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    return { ok: false, error: "Longitude must be a number between -180 and 180." };
+    return { ok: false, error: await tServer("resource.longitudeRange") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
@@ -112,7 +113,7 @@ export async function updateLocationAction(
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to edit this location." };
+    return { ok: false, error: await tServer("gov.err.noPermissionEdit") };
   }
 
   try {
@@ -125,7 +126,7 @@ export async function updateLocationAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("update_location_failed", err, { workspaceId: WORKSPACE_ID, locationId });
-    return { ok: false, error: "Failed to update monitored location. Please try again." };
+    return { ok: false, error: await tServer("gov.err.updateFailed") };
   }
 }
 
@@ -143,7 +144,7 @@ export async function deleteLocationAction(locationId: string): Promise<CreateLo
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to delete this location." };
+    return { ok: false, error: await tServer("gov.err.noPermissionDelete") };
   }
 
   try {
@@ -152,6 +153,6 @@ export async function deleteLocationAction(locationId: string): Promise<CreateLo
     return { ok: true };
   } catch (err) {
     logSecurity.error("delete_location_failed", err, { workspaceId: WORKSPACE_ID, locationId });
-    return { ok: false, error: "Failed to delete monitored location. Please try again." };
+    return { ok: false, error: await tServer("gov.err.deleteFailed") };
   }
 }

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createPropertyAction } from "./property-actions";
 import { UpgradeLink } from "../../upgrade-link";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 
 /**
  * "Add an insured property" form (BUILD_PLAN "STAGE — INSURANCE
@@ -17,6 +18,7 @@ import { UpgradeLink } from "../../upgrade-link";
  * height instead of sitting short beside it.
  */
 export function AddPropertyForm() {
+  const { t } = useI18n();
   const [policyNumber, setPolicyNumber] = useState("");
   const [propertyAddress, setPropertyAddress] = useState("");
   const [latitude, setLatitude] = useState("");
@@ -36,13 +38,13 @@ export function AddPropertyForm() {
     startTransition(async () => {
       const result = await createPropertyAction(policyNumber, propertyAddress, lat, lon);
       if (result.ok) {
-        setSuccess(`"${policyNumber}" added.`);
+        setSuccess(t("insurance.add.success", { name: policyNumber }));
         setPolicyNumber("");
         setPropertyAddress("");
         setLatitude("");
         setLongitude("");
       } else {
-        setError(result.error ?? "Failed to add property.");
+        setError(result.error ?? t("common.genericError"));
         setUpgrade(Boolean(result.upgrade));
       }
     });
@@ -51,7 +53,7 @@ export function AddPropertyForm() {
   return (
     <Card style={{ marginBottom: "var(--wv-space-lg)" }}>
       <Text variant="sectionTitle" as="h2" style={{ marginBottom: "var(--wv-space-sm)" }}>
-        Add an insured property
+        {t("insurance.add.title")}
       </Text>
       <form
         onSubmit={handleSubmit}
@@ -65,7 +67,7 @@ export function AddPropertyForm() {
         <div style={{ flex: "1 1 9rem", maxWidth: "12rem" }}>
           <Input
             id="property-policy-number"
-            label="Policy Number"
+            label={t("insurance.policyNumber")}
             required
             value={policyNumber}
             onChange={(e) => setPolicyNumber(e.target.value)}
@@ -74,7 +76,7 @@ export function AddPropertyForm() {
         <div style={{ flex: "1 1 12rem", maxWidth: "20rem" }}>
           <Input
             id="property-address"
-            label="Address"
+            label={t("insurance.address")}
             required
             value={propertyAddress}
             onChange={(e) => setPropertyAddress(e.target.value)}
@@ -83,7 +85,7 @@ export function AddPropertyForm() {
         <div style={{ width: "8rem" }}>
           <Input
             id="property-lat"
-            label="Latitude"
+            label={t("resource.latitude")}
             type="number"
             step="any"
             required
@@ -94,7 +96,7 @@ export function AddPropertyForm() {
         <div style={{ width: "8rem" }}>
           <Input
             id="property-lon"
-            label="Longitude"
+            label={t("resource.longitude")}
             type="number"
             step="any"
             required
@@ -103,7 +105,7 @@ export function AddPropertyForm() {
           />
         </div>
         <Button type="submit" loading={isPending}>
-          Add Property
+          {t("insurance.add.button")}
         </Button>
       </form>
       {error && (

@@ -11,6 +11,7 @@ import { PrintButton } from "./print-button";
 import { CsvExportButton, type CsvRow } from "./csv-export-button";
 import { featureLockedFor } from "../../../../lib/plan-features";
 import { FeatureLockedNote } from "../../../plan-notice";
+import { getTranslator } from "../../../../lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,9 @@ const WORKSPACE_ID = "insurance";
  * both formats explicitly.
  */
 export default async function InsuranceReportPage() {
+  const { t, locale, date } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
   if (!can(membership.role, "reports:create")) {
@@ -60,8 +64,8 @@ export default async function InsuranceReportPage() {
       <WorkspaceShell activeKey="report" role={membership.role}>
         <StateDisplay
           status="error"
-          title="Access denied"
-          description="This role does not have permission to create reports in this workspace."
+          title={t("report.accessDenied")}
+          description={t("report.accessDeniedBody")}
         />
       </WorkspaceShell>
     );
@@ -143,11 +147,13 @@ export default async function InsuranceReportPage() {
         >
           <div>
             <Text variant="pageTitle" as="h1">
-              Underwriting Risk Report
+              {t("insurance.report.title")}
             </Text>
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              {visibleProperties.length} propert{visibleProperties.length === 1 ? "y" : "ies"} ·
-              Generated {generatedAt}
+              {t("insurance.report.count", { count: visibleProperties.length })} ·{" "}
+              {t("report.generated", {
+                when: date(generatedAt, { dateStyle: "long", timeStyle: "short" }),
+              })}
             </Text>
           </div>
           <div
@@ -176,25 +182,21 @@ export default async function InsuranceReportPage() {
             color: "var(--wv-text-secondary)",
           }}
         >
-          This report covers every insured property you can see, and shows individual hazard signals
-          only — not a synthesized multi-hazard risk score. Not suitable for real underwriting,
-          claims, or regulatory documentation as-is. Report access is logged to this
-          workspace&apos;s audit trail. See World Vitality&apos;s data provenance documentation for
-          source details.
+          {t("insurance.report.scopeNote")}
         </Text>
 
         {statuses.length === 0 ? (
           <StateDisplay
             status="empty"
-            title="No properties visible"
-            description="There are no insured properties to include in this report."
+            title={t("insurance.report.noPropertiesTitle")}
+            description={t("insurance.report.noPropertiesBody")}
           />
         ) : (
           statuses.map(({ property, weather, soilMoisture }) => (
             <div key={property.id} style={{ marginBottom: "var(--wv-space-md)" }}>
               <Card>
                 <Text variant="sectionTitle" as="h2">
-                  {property.policyNumber}
+                  <bdi>{property.policyNumber}</bdi>
                 </Text>
                 <Text
                   variant="caption"
@@ -204,19 +206,21 @@ export default async function InsuranceReportPage() {
                     marginBottom: "var(--wv-space-xs)",
                   }}
                 >
-                  {property.propertyAddress}
+                  <bdi>{property.propertyAddress}</bdi>
                 </Text>
-                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                  {weather.summary}
-                </Text>
-                {!weather.unableToAnswer && <ConfidenceBadge level={weather.confidence} />}
-                <div style={{ height: "var(--wv-space-xs)" }} />
-                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                  {soilMoisture.summary}
-                </Text>
-                {!soilMoisture.unableToAnswer && (
-                  <ConfidenceBadge level={soilMoisture.confidence} />
-                )}
+                <div {...englishOnly}>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {weather.summary}
+                  </Text>
+                  {!weather.unableToAnswer && <ConfidenceBadge level={weather.confidence} />}
+                  <div style={{ height: "var(--wv-space-xs)" }} />
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {soilMoisture.summary}
+                  </Text>
+                  {!soilMoisture.unableToAnswer && (
+                    <ConfidenceBadge level={soilMoisture.confidence} />
+                  )}
+                </div>
               </Card>
             </div>
           ))

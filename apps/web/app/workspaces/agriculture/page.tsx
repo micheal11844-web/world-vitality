@@ -142,7 +142,7 @@ export default async function AgricultureWorkspaceHome() {
           {statuses.map(({ field, weather, soilMoisture, ingestionGaps }) => (
             <Card key={field.id}>
               <Text variant="sectionTitle" as="p" style={{ marginBottom: "var(--wv-space-sm)" }}>
-                {field.name}
+                <bdi>{field.name}</bdi>
               </Text>
 
               <Text variant="caption" style={caption}>

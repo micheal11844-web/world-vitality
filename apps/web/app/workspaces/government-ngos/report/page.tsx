@@ -8,6 +8,7 @@ import { PrintButton } from "./print-button";
 import { CsvExportButton, type CsvRow } from "./csv-export-button";
 import { featureLockedFor } from "../../../../lib/plan-features";
 import { FeatureLockedNote } from "../../../plan-notice";
+import { getTranslator } from "../../../../lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,9 @@ const WORKSPACE_ID = "government-ngos";
  * so this page doesn't fabricate one it was never asked for.
  */
 export default async function GovernmentNgosReportPage() {
+  const { t, locale, date } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
   if (!can(membership.role, "reports:create")) {
@@ -53,8 +57,8 @@ export default async function GovernmentNgosReportPage() {
       <WorkspaceShell activeKey="report" role={membership.role}>
         <StateDisplay
           status="error"
-          title="Access denied"
-          description="This role does not have permission to create reports in this workspace."
+          title={t("report.accessDenied")}
+          description={t("report.accessDeniedBody")}
         />
       </WorkspaceShell>
     );
@@ -115,11 +119,13 @@ export default async function GovernmentNgosReportPage() {
         >
           <div>
             <Text variant="pageTitle" as="h1">
-              Jurisdiction Overview Report
+              {t("gov.report.title")}
             </Text>
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              {visibleLocations.length} location{visibleLocations.length === 1 ? "" : "s"} ·
-              Generated {generatedAt}
+              {t("gov.report.count", { count: visibleLocations.length })} ·{" "}
+              {t("report.generated", {
+                when: date(generatedAt, { dateStyle: "long", timeStyle: "short" }),
+              })}
             </Text>
           </div>
           <div
@@ -148,35 +154,35 @@ export default async function GovernmentNgosReportPage() {
             color: "var(--wv-text-secondary)",
           }}
         >
-          This report covers every monitored location you can see, not a real jurisdiction boundary
-          — not suitable for public, policy, or donor documentation as-is. See World Vitality&apos;s
-          data provenance documentation for source details.
+          {t("gov.report.scopeNote")}
         </Text>
 
         {statuses.length === 0 ? (
           <StateDisplay
             status="empty"
-            title="No locations visible"
-            description="There are no monitored locations to include in this report."
+            title={t("gov.report.noLocationsTitle")}
+            description={t("gov.report.noLocationsBody")}
           />
         ) : (
           statuses.map(({ location, weather, soilMoisture }) => (
             <div key={location.id} style={{ marginBottom: "var(--wv-space-md)" }}>
               <Card>
                 <Text variant="sectionTitle" as="h2">
-                  {location.label}
+                  <bdi>{location.label}</bdi>
                 </Text>
-                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                  {weather.summary}
-                </Text>
-                {!weather.unableToAnswer && <ConfidenceBadge level={weather.confidence} />}
-                <div style={{ height: "var(--wv-space-xs)" }} />
-                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                  {soilMoisture.summary}
-                </Text>
-                {!soilMoisture.unableToAnswer && (
-                  <ConfidenceBadge level={soilMoisture.confidence} />
-                )}
+                <div {...englishOnly}>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {weather.summary}
+                  </Text>
+                  {!weather.unableToAnswer && <ConfidenceBadge level={weather.confidence} />}
+                  <div style={{ height: "var(--wv-space-xs)" }} />
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {soilMoisture.summary}
+                  </Text>
+                  {!soilMoisture.unableToAnswer && (
+                    <ConfidenceBadge level={soilMoisture.confidence} />
+                  )}
+                </div>
               </Card>
             </div>
           ))

@@ -14,6 +14,7 @@ import { getLocationStatus } from "./location-status";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../lib/organization-data";
 import { logTelemetry } from "../../../lib/logger";
+import { getTranslator } from "../../../lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,10 @@ const WORKSPACE_ID = "government-ngos";
  */
 export default async function GovernmentNgosWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: WORKSPACE_ID });
+  const { t, locale } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const caption = { textTransform: "uppercase" } as const;
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
   const allLocations = await getOrganizationData(membership).listLocations(WORKSPACE_ID);
   const visibleLocations = allLocations.filter((location) =>
@@ -103,15 +108,13 @@ export default async function GovernmentNgosWorkspaceHome() {
       aiInterpretation={headlineInterpretation}
     >
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-        Jurisdiction Overview
+        {t("nav.jurisdictionOverview")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        Real monitored locations ({allLocations.length} location
-        {allLocations.length === 1 ? "" : "s"}), not real jurisdiction boundaries (see this
-        page&apos;s honest-scope notes).
+        {t("gov.home.intro", { count: allLocations.length })}
       </Text>
 
       {canEdit && <AddLocationForm />}
@@ -121,14 +124,10 @@ export default async function GovernmentNgosWorkspaceHome() {
           status="empty"
           title={
             allLocations.length === 0
-              ? "No monitored locations yet"
-              : "No locations visible for your role"
+              ? t("gov.empty.noLocations")
+              : t("gov.empty.noLocationsVisible")
           }
-          description={
-            allLocations.length === 0
-              ? "Add a monitored location above to get started."
-              : "Your access is scoped to specific locations, and none are currently assigned to you."
-          }
+          description={allLocations.length === 0 ? t("gov.empty.addAbove") : t("gov.empty.scoped")}
         />
       ) : (
         <div
@@ -142,45 +141,53 @@ export default async function GovernmentNgosWorkspaceHome() {
           {statuses.map(({ location, weather, soilMoisture, ingestionGaps }) => (
             <Card key={location.id}>
               <Text variant="sectionTitle" as="p" style={{ marginBottom: "var(--wv-space-sm)" }}>
-                {location.label}
+                <bdi>{location.label}</bdi>
               </Text>
 
-              <Text variant="caption">CLIMATE</Text>
-              {weather.unableToAnswer ? (
-                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                  {weather.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+              <Text variant="caption" style={caption}>
+                {t("gov.climate")}
+              </Text>
+              <div {...englishOnly}>
+                {weather.unableToAnswer ? (
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                     {weather.summary}
                   </Text>
-                  <ConfidenceBadge level={weather.confidence} />
-                </>
-              )}
+                ) : (
+                  <>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {weather.summary}
+                    </Text>
+                    <ConfidenceBadge level={weather.confidence} />
+                  </>
+                )}
+              </div>
 
               <div style={{ height: "var(--wv-space-sm)" }} />
 
-              <Text variant="caption">AGRICULTURE</Text>
-              {soilMoisture.unableToAnswer ? (
-                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                  {soilMoisture.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+              <Text variant="caption" style={caption}>
+                {t("workspace.agriculture.name")}
+              </Text>
+              <div {...englishOnly}>
+                {soilMoisture.unableToAnswer ? (
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                     {soilMoisture.summary}
                   </Text>
-                  <ConfidenceBadge level={soilMoisture.confidence} />
-                </>
-              )}
+                ) : (
+                  <>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {soilMoisture.summary}
+                    </Text>
+                    <ConfidenceBadge level={soilMoisture.confidence} />
+                  </>
+                )}
+              </div>
 
               {ingestionGaps > 0 && (
                 <Text
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                 >
-                  {ingestionGaps} day(s) had no data available.
+                  {t("workspace.gaps", { count: ingestionGaps })}
                 </Text>
               )}
 
@@ -202,7 +209,7 @@ export default async function GovernmentNgosWorkspaceHome() {
 
       <Card>
         <Text variant="sectionTitle" as="p">
-          Formal Report
+          {t("nav.formalReport")}
         </Text>
         {canCreateReports ? (
           <>
@@ -210,17 +217,17 @@ export default async function GovernmentNgosWorkspaceHome() {
               variant="body"
               style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
             >
-              Generate a print-ready report of this overview, with sources and timestamps.
+              {t("gov.reportCard.body")}
             </Text>
             <Link href="/workspaces/government-ngos/report" style={buttonStyle("secondary")}>
-              Open Report
+              {t("report.open")}
             </Link>
           </>
         ) : (
           <StateDisplay
             status="empty"
-            title="Report export not available for your role"
-            description="This role does not have permission to create reports in this workspace."
+            title={t("report.notAvailable")}
+            description={t("report.accessDeniedBody")}
           />
         )}
       </Card>

@@ -4,6 +4,7 @@ import { WorkspaceShell } from "../workspace-shell";
 import { getLocationStatus } from "../location-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../../lib/organization-data";
+import { getTranslator } from "../../../../lib/i18n/server";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,7 @@ const WORKSPACE_ID = "government-ngos";
  *   as the two prior stages.
  */
 export default async function GovernmentNgosMapPage() {
+  const { t } = await getTranslator();
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
   const allLocations = await getOrganizationData(membership).listLocations(WORKSPACE_ID);
@@ -72,8 +74,8 @@ export default async function GovernmentNgosMapPage() {
       {markers.length === 0 ? (
         <StateDisplay
           status="empty"
-          title="No locations visible"
-          description="There are no monitored locations to show on the map yet. Add a location from the workspace home page."
+          title={t("gov.report.noLocationsTitle")}
+          description={t("gov.map.noLocationsBody")}
         />
       ) : (
         <div

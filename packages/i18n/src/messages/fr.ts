@@ -600,13 +600,108 @@ export const fr: Messages = {
   "map.moisture.moist": "humide",
   "map.moisture.saturated": "saturé",
   "agri.map.toggle": "Humidité du sol ({count, plural, one {# parcelle} other {# parcelles}})",
-  "agri.map.popupReading": "{name} : {label} ({value} sur 1,0)",
-  "agri.map.popupNoReading": "{name} : aucune mesure actuelle d’humidité du sol",
+  "map.popupReading": "{name} : {label} ({value} sur 1,0)",
+  "map.popupNoReading": "{name} : aucune mesure actuelle d’humidité du sol",
   "agri.map.descNone": "Aucune parcelle à afficher sur la carte.",
   "agri.map.descOn":
     "Carte montrant {count, plural, one {# parcelle} other {# parcelles}}. {items}",
   "agri.map.descOff":
     "Carte montrant {count, plural, one {# parcelle} other {# parcelles}}. La couche d’humidité du sol est masquée.",
-  "agri.map.descItem": "{name} : {label} ({value} sur une échelle de 0 à 1)",
-  "agri.map.descItemNoReading": "{name} : aucune mesure actuelle",
+  "map.descItem": "{name} : {label} ({value} sur une échelle de 0 à 1)",
+  "map.descItemNoReading": "{name} : aucune mesure actuelle",
+
+  // ---- Shared: signed-in line, report link, map readings (v105)
+  "workspace.signedInAs": "Connecté en tant que : {role}",
+  "report.open": "Ouvrir le rapport",
+  "report.notAvailable": "L’export de rapports n’est pas disponible pour votre rôle",
+
+  // ---- Insurance workspace (v105)
+  "insurance.role.admin_owner": "Administrateur",
+  "insurance.role.operational_user": "Souscripteur",
+  "insurance.role.scoped_field_user": "Expert en sinistres",
+  "insurance.role.viewer_external": "Analyste (lecture seule)",
+  "insurance.aiPanel.emptyBody":
+    "Ouvrez Contexte de risque pour la souscription pour voir un état généré par l’IA.",
+  "insurance.home.intro":
+    "Portefeuille assuré réel ({count, plural, one {# bien} other {# biens}}). Signaux de danger individuels uniquement ; aucun score de risque multirisque synthétisé (voir les notes de portée de cette page).",
+  "insurance.empty.noProperties": "Aucun bien assuré pour le moment",
+  "insurance.empty.noPropertiesVisible": "Aucun bien visible pour votre rôle",
+  "insurance.empty.addAbove": "Ajoutez un bien assuré ci-dessus pour commencer.",
+  "insurance.empty.scoped":
+    "Votre accès est limité à certains biens, et aucun ne vous est attribué pour le moment.",
+  "insurance.temperature": "Température",
+  "insurance.soilDrought": "Sol / lié à la sécheresse",
+  "insurance.reportCard.body":
+    "Générez un rapport de souscription prêt à imprimer, avec les sources, les horodatages et une entrée consignée dans la piste d’audit.",
+  "insurance.add.title": "Ajouter un bien assuré",
+  "insurance.add.button": "Ajouter le bien",
+  "insurance.add.success": "« {name} » ajouté.",
+  "insurance.policyNumber": "Numéro de police",
+  "insurance.address": "Adresse",
+  "insurance.propertyAddress": "Adresse du bien",
+  "insurance.err.policyRequired": "Saisissez un numéro de police.",
+  "insurance.err.addressRequired": "Saisissez l’adresse du bien.",
+  "insurance.err.noPermissionAdd":
+    "Vous n’avez pas l’autorisation d’ajouter des biens assurés dans cet espace de travail.",
+  "insurance.err.createFailed": "Impossible de créer le bien assuré. Veuillez réessayer.",
+  "insurance.err.noPermissionEdit": "Vous n’avez pas l’autorisation de modifier ce bien.",
+  "insurance.err.updateFailed": "Impossible de mettre à jour le bien assuré. Veuillez réessayer.",
+  "insurance.err.noPermissionDelete": "Vous n’avez pas l’autorisation de supprimer ce bien.",
+  "insurance.err.deleteFailed": "Impossible de supprimer le bien assuré. Veuillez réessayer.",
+  "insurance.report.title": "Rapport de risque pour la souscription",
+  "insurance.report.count": "{count, plural, one {# bien} other {# biens}}",
+  "insurance.report.scopeNote":
+    "Ce rapport couvre tous les biens assurés que vous pouvez voir et ne présente que des signaux de danger individuels — pas un score de risque multirisque synthétisé. Il ne convient pas tel quel à une documentation réelle de souscription, de sinistres ou de conformité réglementaire. L’accès au rapport est consigné dans la piste d’audit de cet espace de travail. Consultez la documentation de World Vitality sur la provenance des données pour le détail des sources.",
+  "insurance.report.noPropertiesTitle": "Aucun bien visible",
+  "insurance.report.noPropertiesBody": "Aucun bien assuré à inclure dans ce rapport.",
+  "insurance.map.noPropertiesBody":
+    "Il n’y a pas encore de bien assuré à afficher sur la carte. Ajoutez un bien depuis la page d’accueil de l’espace de travail.",
+  "insurance.map.toggle": "Humidité du sol ({count, plural, one {# bien} other {# biens}})",
+  "insurance.map.descNone": "Aucun bien à afficher sur la carte.",
+  "insurance.map.descOn": "Carte montrant {count, plural, one {# bien} other {# biens}}. {items}",
+  "insurance.map.descOff":
+    "Carte montrant {count, plural, one {# bien} other {# biens}}. La couche d’humidité du sol est masquée.",
+
+  // ---- Government & NGOs workspace (v105)
+  "gov.role.admin_owner": "Administrateur de l’agence",
+  "gov.role.operational_user": "Analyste",
+  "gov.role.scoped_field_user": "Personnel de terrain",
+  "gov.role.viewer_external": "Agence partenaire (lecture seule)",
+  "gov.aiPanel.emptyBody": "Ouvrez Aperçu de la juridiction pour voir un état généré par l’IA.",
+  "gov.home.intro":
+    "Sites surveillés réels ({count, plural, one {# site} other {# sites}}), et non de véritables limites de juridiction (voir les notes de portée de cette page).",
+  "gov.empty.noLocations": "Aucun site surveillé pour le moment",
+  "gov.empty.noLocationsVisible": "Aucun site visible pour votre rôle",
+  "gov.empty.addAbove": "Ajoutez un site surveillé ci-dessus pour commencer.",
+  "gov.empty.scoped":
+    "Votre accès est limité à certains sites, et aucun ne vous est attribué pour le moment.",
+  "gov.climate": "Climat",
+  "gov.reportCard.body":
+    "Générez un rapport prêt à imprimer de cet aperçu, avec les sources et les horodatages.",
+  "gov.add.title": "Ajouter un site surveillé",
+  "gov.add.button": "Ajouter le site",
+  "gov.add.success": "« {name} » ajouté.",
+  "gov.label": "Libellé",
+  "gov.locationLabel": "Libellé du site",
+  "gov.err.labelRequired": "Saisissez un libellé pour ce site.",
+  "gov.err.noPermissionAdd":
+    "Vous n’avez pas l’autorisation d’ajouter des sites surveillés dans cet espace de travail.",
+  "gov.err.createFailed": "Impossible d’ajouter le site surveillé. Veuillez réessayer.",
+  "gov.err.noPermissionEdit": "Vous n’avez pas l’autorisation de modifier ce site.",
+  "gov.err.updateFailed": "Impossible de mettre à jour le site surveillé. Veuillez réessayer.",
+  "gov.err.noPermissionDelete": "Vous n’avez pas l’autorisation de supprimer ce site.",
+  "gov.err.deleteFailed": "Impossible de supprimer le site surveillé. Veuillez réessayer.",
+  "gov.report.title": "Rapport d’aperçu de la juridiction",
+  "gov.report.count": "{count, plural, one {# site} other {# sites}}",
+  "gov.report.scopeNote":
+    "Ce rapport couvre tous les sites surveillés que vous pouvez voir, et non une véritable limite de juridiction — il ne convient pas tel quel à une documentation publique, politique ou destinée aux donateurs. Consultez la documentation de World Vitality sur la provenance des données pour le détail des sources.",
+  "gov.report.noLocationsTitle": "Aucun site visible",
+  "gov.report.noLocationsBody": "Aucun site surveillé à inclure dans ce rapport.",
+  "gov.map.noLocationsBody":
+    "Il n’y a pas encore de site surveillé à afficher sur la carte. Ajoutez un site depuis la page d’accueil de l’espace de travail.",
+  "gov.map.toggle": "Humidité du sol ({count, plural, one {# site} other {# sites}})",
+  "gov.map.descNone": "Aucun site à afficher sur la carte.",
+  "gov.map.descOn": "Carte montrant {count, plural, one {# site} other {# sites}}. {items}",
+  "gov.map.descOff":
+    "Carte montrant {count, plural, one {# site} other {# sites}}. La couche d’humidité du sol est masquée.",
 };

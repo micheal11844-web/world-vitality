@@ -589,12 +589,108 @@ export const pt: Messages = {
   "map.moisture.moist": "úmido",
   "map.moisture.saturated": "saturado",
   "agri.map.toggle": "Umidade do solo ({count, plural, one {# campo} other {# campos}})",
-  "agri.map.popupReading": "{name}: {label} ({value} de 1,0)",
-  "agri.map.popupNoReading": "{name}: sem leitura atual de umidade do solo",
+  "map.popupReading": "{name}: {label} ({value} de 1,0)",
+  "map.popupNoReading": "{name}: sem leitura atual de umidade do solo",
   "agri.map.descNone": "Não há campos para mostrar no mapa.",
   "agri.map.descOn": "Mapa mostrando {count, plural, one {# campo} other {# campos}}. {items}",
   "agri.map.descOff":
     "Mapa mostrando {count, plural, one {# campo} other {# campos}}. A camada de umidade do solo está oculta.",
-  "agri.map.descItem": "{name}: {label} ({value} em uma escala de 0 a 1)",
-  "agri.map.descItemNoReading": "{name}: sem leitura atual",
+  "map.descItem": "{name}: {label} ({value} em uma escala de 0 a 1)",
+  "map.descItemNoReading": "{name}: sem leitura atual",
+
+  // ---- Shared: signed-in line, report link, map readings (v105)
+  "workspace.signedInAs": "Conectado como: {role}",
+  "report.open": "Abrir relatório",
+  "report.notAvailable": "A exportação de relatórios não está disponível para a sua função",
+
+  // ---- Insurance workspace (v105)
+  "insurance.role.admin_owner": "Administrador",
+  "insurance.role.operational_user": "Subscritor",
+  "insurance.role.scoped_field_user": "Regulador de sinistros",
+  "insurance.role.viewer_external": "Analista (somente leitura)",
+  "insurance.aiPanel.emptyBody":
+    "Abra Contexto de risco para subscrição para ver uma situação gerada por IA.",
+  "insurance.home.intro":
+    "Carteira segurada real ({count, plural, one {# imóvel} other {# imóveis}}). Apenas sinais de perigo individuais; sem pontuação de risco multiameaça sintetizada (veja as notas de escopo desta página).",
+  "insurance.empty.noProperties": "Ainda não há imóveis segurados",
+  "insurance.empty.noPropertiesVisible": "Nenhum imóvel visível para a sua função",
+  "insurance.empty.addAbove": "Adicione um imóvel segurado acima para começar.",
+  "insurance.empty.scoped":
+    "Seu acesso é limitado a imóveis específicos, e nenhum está atribuído a você no momento.",
+  "insurance.temperature": "Temperatura",
+  "insurance.soilDrought": "Solo / relacionado à seca",
+  "insurance.reportCard.body":
+    "Gere um relatório de subscrição pronto para impressão, com fontes, registros de data e hora e uma entrada registrada na trilha de auditoria.",
+  "insurance.add.title": "Adicionar um imóvel segurado",
+  "insurance.add.button": "Adicionar imóvel",
+  "insurance.add.success": "“{name}” adicionado.",
+  "insurance.policyNumber": "Número da apólice",
+  "insurance.address": "Endereço",
+  "insurance.propertyAddress": "Endereço do imóvel",
+  "insurance.err.policyRequired": "Informe um número de apólice.",
+  "insurance.err.addressRequired": "Informe o endereço do imóvel.",
+  "insurance.err.noPermissionAdd":
+    "Você não tem permissão para adicionar imóveis segurados neste espaço de trabalho.",
+  "insurance.err.createFailed": "Não foi possível criar o imóvel segurado. Tente novamente.",
+  "insurance.err.noPermissionEdit": "Você não tem permissão para editar este imóvel.",
+  "insurance.err.updateFailed": "Não foi possível atualizar o imóvel segurado. Tente novamente.",
+  "insurance.err.noPermissionDelete": "Você não tem permissão para excluir este imóvel.",
+  "insurance.err.deleteFailed": "Não foi possível excluir o imóvel segurado. Tente novamente.",
+  "insurance.report.title": "Relatório de risco para subscrição",
+  "insurance.report.count": "{count, plural, one {# imóvel} other {# imóveis}}",
+  "insurance.report.scopeNote":
+    "Este relatório abrange todos os imóveis segurados que você pode ver e mostra apenas sinais de perigo individuais — não uma pontuação de risco multiameaça sintetizada. Não é adequado, no estado em que está, para documentação real de subscrição, sinistros ou conformidade regulatória. O acesso ao relatório é registrado na trilha de auditoria deste espaço de trabalho. Consulte a documentação de procedência dos dados do World Vitality para os detalhes das fontes.",
+  "insurance.report.noPropertiesTitle": "Nenhum imóvel visível",
+  "insurance.report.noPropertiesBody": "Não há imóveis segurados para incluir neste relatório.",
+  "insurance.map.noPropertiesBody":
+    "Ainda não há imóveis segurados para mostrar no mapa. Adicione um imóvel na página inicial do espaço de trabalho.",
+  "insurance.map.toggle": "Umidade do solo ({count, plural, one {# imóvel} other {# imóveis}})",
+  "insurance.map.descNone": "Não há imóveis para mostrar no mapa.",
+  "insurance.map.descOn":
+    "Mapa mostrando {count, plural, one {# imóvel} other {# imóveis}}. {items}",
+  "insurance.map.descOff":
+    "Mapa mostrando {count, plural, one {# imóvel} other {# imóveis}}. A camada de umidade do solo está oculta.",
+
+  // ---- Government & NGOs workspace (v105)
+  "gov.role.admin_owner": "Administrador da agência",
+  "gov.role.operational_user": "Analista",
+  "gov.role.scoped_field_user": "Equipe de campo",
+  "gov.role.viewer_external": "Agência parceira (somente leitura)",
+  "gov.aiPanel.emptyBody": "Abra Visão geral da jurisdição para ver uma situação gerada por IA.",
+  "gov.home.intro":
+    "Locais monitorados reais ({count, plural, one {# local} other {# locais}}), não limites reais de jurisdição (veja as notas de escopo desta página).",
+  "gov.empty.noLocations": "Ainda não há locais monitorados",
+  "gov.empty.noLocationsVisible": "Nenhum local visível para a sua função",
+  "gov.empty.addAbove": "Adicione um local monitorado acima para começar.",
+  "gov.empty.scoped":
+    "Seu acesso é limitado a locais específicos, e nenhum está atribuído a você no momento.",
+  "gov.climate": "Clima",
+  "gov.reportCard.body":
+    "Gere um relatório pronto para impressão desta visão geral, com fontes e registros de data e hora.",
+  "gov.add.title": "Adicionar um local monitorado",
+  "gov.add.button": "Adicionar local",
+  "gov.add.success": "“{name}” adicionado.",
+  "gov.label": "Rótulo",
+  "gov.locationLabel": "Rótulo do local",
+  "gov.err.labelRequired": "Informe um rótulo para este local.",
+  "gov.err.noPermissionAdd":
+    "Você não tem permissão para adicionar locais monitorados neste espaço de trabalho.",
+  "gov.err.createFailed": "Não foi possível adicionar o local monitorado. Tente novamente.",
+  "gov.err.noPermissionEdit": "Você não tem permissão para editar este local.",
+  "gov.err.updateFailed": "Não foi possível atualizar o local monitorado. Tente novamente.",
+  "gov.err.noPermissionDelete": "Você não tem permissão para excluir este local.",
+  "gov.err.deleteFailed": "Não foi possível excluir o local monitorado. Tente novamente.",
+  "gov.report.title": "Relatório da visão geral da jurisdição",
+  "gov.report.count": "{count, plural, one {# local} other {# locais}}",
+  "gov.report.scopeNote":
+    "Este relatório abrange todos os locais monitorados que você pode ver, não um limite real de jurisdição — não é adequado, no estado em que está, para documentação pública, de políticas ou para doadores. Consulte a documentação de procedência dos dados do World Vitality para os detalhes das fontes.",
+  "gov.report.noLocationsTitle": "Nenhum local visível",
+  "gov.report.noLocationsBody": "Não há locais monitorados para incluir neste relatório.",
+  "gov.map.noLocationsBody":
+    "Ainda não há locais monitorados para mostrar no mapa. Adicione um local na página inicial do espaço de trabalho.",
+  "gov.map.toggle": "Umidade do solo ({count, plural, one {# local} other {# locais}})",
+  "gov.map.descNone": "Não há locais para mostrar no mapa.",
+  "gov.map.descOn": "Mapa mostrando {count, plural, one {# local} other {# locais}}. {items}",
+  "gov.map.descOff":
+    "Mapa mostrando {count, plural, one {# local} other {# locais}}. A camada de umidade do solo está oculta.",
 };

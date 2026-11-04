@@ -108,10 +108,12 @@ function CommentRow({
   return (
     <div>
       <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-        {comment.displayName ?? comment.email} · {comment.createdAt.slice(0, 10)}
+        <bdi>{comment.displayName ?? comment.email}</bdi> · {comment.createdAt.slice(0, 10)}
         {comment.updatedAt ? ` ${t("agri.comments.edited")}` : ""}
       </Text>
-      <Text variant="body">{comment.body}</Text>
+      <Text variant="body">
+        <bdi>{comment.body}</bdi>
+      </Text>
       {isOwnComment && (
         <div
           style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-xs)" }}

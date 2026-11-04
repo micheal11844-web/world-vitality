@@ -164,7 +164,7 @@ export default async function AgricultureReportPage() {
             <div key={field.id} style={{ marginBottom: "var(--wv-space-md)" }}>
               <Card>
                 <Text variant="sectionTitle" as="h2">
-                  {field.name}
+                  <bdi>{field.name}</bdi>
                 </Text>
                 <div {...englishOnly}>
                   <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>

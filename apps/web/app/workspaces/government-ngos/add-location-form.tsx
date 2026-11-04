@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createLocationAction } from "./location-actions";
 import { UpgradeLink } from "../../upgrade-link";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 
 /**
  * "Add a monitored location" form (BUILD_PLAN "STAGE — GOVERNMENT &
@@ -17,6 +18,7 @@ import { UpgradeLink } from "../../upgrade-link";
  * height instead of sitting short beside it.
  */
 export function AddLocationForm() {
+  const { t } = useI18n();
   const [label, setLabel] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -35,12 +37,12 @@ export function AddLocationForm() {
     startTransition(async () => {
       const result = await createLocationAction(label, lat, lon);
       if (result.ok) {
-        setSuccess(`"${label}" added.`);
+        setSuccess(t("gov.add.success", { name: label }));
         setLabel("");
         setLatitude("");
         setLongitude("");
       } else {
-        setError(result.error ?? "Failed to add location.");
+        setError(result.error ?? t("common.genericError"));
         setUpgrade(Boolean(result.upgrade));
       }
     });
@@ -49,7 +51,7 @@ export function AddLocationForm() {
   return (
     <Card style={{ marginBottom: "var(--wv-space-lg)" }}>
       <Text variant="sectionTitle" as="h2" style={{ marginBottom: "var(--wv-space-sm)" }}>
-        Add a monitored location
+        {t("gov.add.title")}
       </Text>
       <form
         onSubmit={handleSubmit}
@@ -63,7 +65,7 @@ export function AddLocationForm() {
         <div style={{ flex: "1 1 12rem", maxWidth: "20rem" }}>
           <Input
             id="location-label"
-            label="Label"
+            label={t("gov.label")}
             required
             value={label}
             onChange={(e) => setLabel(e.target.value)}
@@ -72,7 +74,7 @@ export function AddLocationForm() {
         <div style={{ width: "8rem" }}>
           <Input
             id="location-lat"
-            label="Latitude"
+            label={t("resource.latitude")}
             type="number"
             step="any"
             required
@@ -83,7 +85,7 @@ export function AddLocationForm() {
         <div style={{ width: "8rem" }}>
           <Input
             id="location-lon"
-            label="Longitude"
+            label={t("resource.longitude")}
             type="number"
             step="any"
             required
@@ -92,7 +94,7 @@ export function AddLocationForm() {
           />
         </div>
         <Button type="submit" loading={isPending}>
-          Add Location
+          {t("gov.add.button")}
         </Button>
       </form>
       {error && (

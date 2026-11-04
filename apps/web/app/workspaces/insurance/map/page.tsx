@@ -4,6 +4,7 @@ import { WorkspaceShell } from "../workspace-shell";
 import { getPropertyStatus } from "../property-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../../lib/organization-data";
+import { getTranslator } from "../../../../lib/i18n/server";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,7 @@ const WORKSPACE_ID = "insurance";
  *   Agriculture's own stage.
  */
 export default async function InsuranceMapPage() {
+  const { t } = await getTranslator();
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
   const allProperties = await getOrganizationData(membership).listProperties(WORKSPACE_ID);
@@ -79,8 +81,8 @@ export default async function InsuranceMapPage() {
       {markers.length === 0 ? (
         <StateDisplay
           status="empty"
-          title="No properties visible"
-          description="There are no insured properties to show on the map yet. Add a property from the workspace home page."
+          title={t("insurance.report.noPropertiesTitle")}
+          description={t("insurance.map.noPropertiesBody")}
         />
       ) : (
         <div

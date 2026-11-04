@@ -584,14 +584,109 @@ export const en = {
   "map.moisture.moist": "moist",
   "map.moisture.saturated": "saturated",
   "agri.map.toggle": "Soil moisture ({count, plural, one {# field} other {# fields}})",
-  "agri.map.popupReading": "{name}: {label} ({value} of 1.0)",
-  "agri.map.popupNoReading": "{name}: no current soil moisture reading",
+  "map.popupReading": "{name}: {label} ({value} of 1.0)",
+  "map.popupNoReading": "{name}: no current soil moisture reading",
   "agri.map.descNone": "No fields to show on the map.",
   "agri.map.descOn": "Map showing {count, plural, one {# field} other {# fields}}. {items}",
   "agri.map.descOff":
     "Map showing {count, plural, one {# field} other {# fields}}. Soil moisture overlay is currently hidden.",
-  "agri.map.descItem": "{name}: {label} ({value} on a 0 to 1 scale)",
-  "agri.map.descItemNoReading": "{name}: no current reading",
+  "map.descItem": "{name}: {label} ({value} on a 0 to 1 scale)",
+  "map.descItemNoReading": "{name}: no current reading",
+
+  // ---- Shared: signed-in line, report link, map readings (v105)
+  "workspace.signedInAs": "Signed in as: {role}",
+  "report.open": "Open Report",
+  "report.notAvailable": "Report export not available for your role",
+
+  // ---- Insurance workspace (v105)
+  "insurance.role.admin_owner": "Admin",
+  "insurance.role.operational_user": "Underwriter",
+  "insurance.role.scoped_field_user": "Claims Adjuster",
+  "insurance.role.viewer_external": "Analyst (read-only)",
+  "insurance.aiPanel.emptyBody": "Open Underwriting Risk Context to see an AI-generated status.",
+  "insurance.home.intro":
+    "Real insured portfolio ({count, plural, one {# property} other {# properties}}). Individual hazard signals only; no synthesized multi-hazard risk score (see this page’s honest-scope notes).",
+  "insurance.empty.noProperties": "No insured properties yet",
+  "insurance.empty.noPropertiesVisible": "No properties visible for your role",
+  "insurance.empty.addAbove": "Add an insured property above to get started.",
+  "insurance.empty.scoped":
+    "Your access is scoped to specific properties, and none are currently assigned to you.",
+  "insurance.temperature": "Temperature",
+  "insurance.soilDrought": "Soil / drought-adjacent",
+  "insurance.reportCard.body":
+    "Generate a print-ready underwriting report, with sources, timestamps, and a logged audit trail entry.",
+  "insurance.add.title": "Add an insured property",
+  "insurance.add.button": "Add property",
+  "insurance.add.success": "“{name}” added.",
+  "insurance.policyNumber": "Policy number",
+  "insurance.address": "Address",
+  "insurance.propertyAddress": "Property address",
+  "insurance.err.policyRequired": "Enter a policy number.",
+  "insurance.err.addressRequired": "Enter a property address.",
+  "insurance.err.noPermissionAdd":
+    "You do not have permission to add insured properties in this workspace.",
+  "insurance.err.createFailed": "Failed to create insured property. Please try again.",
+  "insurance.err.noPermissionEdit": "You do not have permission to edit this property.",
+  "insurance.err.updateFailed": "Failed to update insured property. Please try again.",
+  "insurance.err.noPermissionDelete": "You do not have permission to delete this property.",
+  "insurance.err.deleteFailed": "Failed to delete insured property. Please try again.",
+  "insurance.report.title": "Underwriting Risk Report",
+  "insurance.report.count": "{count, plural, one {# property} other {# properties}}",
+  "insurance.report.scopeNote":
+    "This report covers every insured property you can see, and shows individual hazard signals only — not a synthesized multi-hazard risk score. Not suitable for real underwriting, claims, or regulatory documentation as-is. Report access is logged to this workspace’s audit trail. See World Vitality’s data provenance documentation for source details.",
+  "insurance.report.noPropertiesTitle": "No properties visible",
+  "insurance.report.noPropertiesBody": "There are no insured properties to include in this report.",
+  "insurance.map.noPropertiesBody":
+    "There are no insured properties to show on the map yet. Add a property from the workspace home page.",
+  "insurance.map.toggle": "Soil moisture ({count, plural, one {# property} other {# properties}})",
+  "insurance.map.descNone": "No properties to show on the map.",
+  "insurance.map.descOn":
+    "Map showing {count, plural, one {# property} other {# properties}}. {items}",
+  "insurance.map.descOff":
+    "Map showing {count, plural, one {# property} other {# properties}}. Soil moisture overlay is currently hidden.",
+
+  // ---- Government & NGOs workspace (v105)
+  "gov.role.admin_owner": "Agency Admin",
+  "gov.role.operational_user": "Analyst",
+  "gov.role.scoped_field_user": "Field Staff",
+  "gov.role.viewer_external": "Partner Agency (view-only)",
+  "gov.aiPanel.emptyBody": "Open Jurisdiction Overview to see an AI-generated status.",
+  "gov.home.intro":
+    "Real monitored locations ({count, plural, one {# location} other {# locations}}), not real jurisdiction boundaries (see this page’s honest-scope notes).",
+  "gov.empty.noLocations": "No monitored locations yet",
+  "gov.empty.noLocationsVisible": "No locations visible for your role",
+  "gov.empty.addAbove": "Add a monitored location above to get started.",
+  "gov.empty.scoped":
+    "Your access is scoped to specific locations, and none are currently assigned to you.",
+  "gov.climate": "Climate",
+  "gov.reportCard.body":
+    "Generate a print-ready report of this overview, with sources and timestamps.",
+  "gov.add.title": "Add a monitored location",
+  "gov.add.button": "Add location",
+  "gov.add.success": "“{name}” added.",
+  "gov.label": "Label",
+  "gov.locationLabel": "Location label",
+  "gov.err.labelRequired": "Enter a label for this location.",
+  "gov.err.noPermissionAdd":
+    "You do not have permission to add monitored locations in this workspace.",
+  "gov.err.createFailed": "Failed to add monitored location. Please try again.",
+  "gov.err.noPermissionEdit": "You do not have permission to edit this location.",
+  "gov.err.updateFailed": "Failed to update monitored location. Please try again.",
+  "gov.err.noPermissionDelete": "You do not have permission to delete this location.",
+  "gov.err.deleteFailed": "Failed to delete monitored location. Please try again.",
+  "gov.report.title": "Jurisdiction Overview Report",
+  "gov.report.count": "{count, plural, one {# location} other {# locations}}",
+  "gov.report.scopeNote":
+    "This report covers every monitored location you can see, not a real jurisdiction boundary — not suitable for public, policy, or donor documentation as-is. See World Vitality’s data provenance documentation for source details.",
+  "gov.report.noLocationsTitle": "No locations visible",
+  "gov.report.noLocationsBody": "There are no monitored locations to include in this report.",
+  "gov.map.noLocationsBody":
+    "There are no monitored locations to show on the map yet. Add a location from the workspace home page.",
+  "gov.map.toggle": "Soil moisture ({count, plural, one {# location} other {# locations}})",
+  "gov.map.descNone": "No locations to show on the map.",
+  "gov.map.descOn": "Map showing {count, plural, one {# location} other {# locations}}. {items}",
+  "gov.map.descOff":
+    "Map showing {count, plural, one {# location} other {# locations}}. Soil moisture overlay is currently hidden.",
 } as const;
 
 export type MessageKey = keyof typeof en;

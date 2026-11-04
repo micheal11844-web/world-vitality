@@ -7,6 +7,7 @@ import { getOrganizationData } from "../../../lib/organization-data";
 import { savedItemLimitMessage } from "../../../lib/plan-limits";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
+import { tServer } from "../../../lib/i18n/server";
 
 export interface CreatePropertyResult {
   ok: boolean;
@@ -33,29 +34,29 @@ export async function createPropertyAction(
   longitude: number,
 ): Promise<CreatePropertyResult> {
   if (!policyNumber.trim()) {
-    return { ok: false, error: "Enter a policy number." };
+    return { ok: false, error: await tServer("insurance.err.policyRequired") };
   }
   if (!propertyAddress.trim()) {
-    return { ok: false, error: "Enter a property address." };
+    return { ok: false, error: await tServer("insurance.err.addressRequired") };
   }
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    return { ok: false, error: "Latitude must be a number between -90 and 90." };
+    return { ok: false, error: await tServer("resource.latitudeRange") };
   }
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    return { ok: false, error: "Longitude must be a number between -180 and 180." };
+    return { ok: false, error: await tServer("resource.longitudeRange") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
   if (!can(membership.role, "data:edit")) {
     return {
       ok: false,
-      error: "You do not have permission to add insured properties in this workspace.",
+      error: await tServer("insurance.err.noPermissionAdd"),
     };
   }
 
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+    return { ok: false, error: await tServer("resource.sessionUnverified") };
   }
 
   const data = getOrganizationData(membership);
@@ -79,7 +80,7 @@ export async function createPropertyAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("create_property_failed", err, { workspaceId: WORKSPACE_ID });
-    return { ok: false, error: "Failed to create insured property. Please try again." };
+    return { ok: false, error: await tServer("insurance.err.createFailed") };
   }
 }
 
@@ -99,16 +100,16 @@ export async function updatePropertyAction(
   longitude: number,
 ): Promise<CreatePropertyResult> {
   if (!policyNumber.trim()) {
-    return { ok: false, error: "Enter a policy number." };
+    return { ok: false, error: await tServer("insurance.err.policyRequired") };
   }
   if (!propertyAddress.trim()) {
-    return { ok: false, error: "Enter a property address." };
+    return { ok: false, error: await tServer("insurance.err.addressRequired") };
   }
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    return { ok: false, error: "Latitude must be a number between -90 and 90." };
+    return { ok: false, error: await tServer("resource.latitudeRange") };
   }
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    return { ok: false, error: "Longitude must be a number between -180 and 180." };
+    return { ok: false, error: await tServer("resource.longitudeRange") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
@@ -118,7 +119,7 @@ export async function updatePropertyAction(
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to edit this property." };
+    return { ok: false, error: await tServer("insurance.err.noPermissionEdit") };
   }
 
   try {
@@ -132,7 +133,7 @@ export async function updatePropertyAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("update_property_failed", err, { workspaceId: WORKSPACE_ID, propertyId });
-    return { ok: false, error: "Failed to update insured property. Please try again." };
+    return { ok: false, error: await tServer("insurance.err.updateFailed") };
   }
 }
 
@@ -150,7 +151,7 @@ export async function deletePropertyAction(propertyId: string): Promise<CreatePr
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to delete this property." };
+    return { ok: false, error: await tServer("insurance.err.noPermissionDelete") };
   }
 
   try {
@@ -159,6 +160,6 @@ export async function deletePropertyAction(propertyId: string): Promise<CreatePr
     return { ok: true };
   } catch (err) {
     logSecurity.error("delete_property_failed", err, { workspaceId: WORKSPACE_ID, propertyId });
-    return { ok: false, error: "Failed to delete insured property. Please try again." };
+    return { ok: false, error: await tServer("insurance.err.deleteFailed") };
   }
 }

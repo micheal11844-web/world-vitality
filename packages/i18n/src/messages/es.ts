@@ -591,12 +591,109 @@ export const es: Messages = {
   "map.moisture.moist": "húmedo",
   "map.moisture.saturated": "saturado",
   "agri.map.toggle": "Humedad del suelo ({count, plural, one {# campo} other {# campos}})",
-  "agri.map.popupReading": "{name}: {label} ({value} de 1,0)",
-  "agri.map.popupNoReading": "{name}: sin lectura actual de humedad del suelo",
+  "map.popupReading": "{name}: {label} ({value} de 1,0)",
+  "map.popupNoReading": "{name}: sin lectura actual de humedad del suelo",
   "agri.map.descNone": "No hay campos que mostrar en el mapa.",
   "agri.map.descOn": "Mapa con {count, plural, one {# campo} other {# campos}}. {items}",
   "agri.map.descOff":
     "Mapa con {count, plural, one {# campo} other {# campos}}. La capa de humedad del suelo está oculta.",
-  "agri.map.descItem": "{name}: {label} ({value} en una escala de 0 a 1)",
-  "agri.map.descItemNoReading": "{name}: sin lectura actual",
+  "map.descItem": "{name}: {label} ({value} en una escala de 0 a 1)",
+  "map.descItemNoReading": "{name}: sin lectura actual",
+
+  // ---- Shared: signed-in line, report link, map readings (v105)
+  "workspace.signedInAs": "Sesión iniciada como: {role}",
+  "report.open": "Abrir informe",
+  "report.notAvailable": "La exportación de informes no está disponible para tu rol",
+
+  // ---- Insurance workspace (v105)
+  "insurance.role.admin_owner": "Administrador",
+  "insurance.role.operational_user": "Suscriptor",
+  "insurance.role.scoped_field_user": "Ajustador de siniestros",
+  "insurance.role.viewer_external": "Analista (solo lectura)",
+  "insurance.aiPanel.emptyBody":
+    "Abre Contexto de riesgo para suscripción para ver un estado generado por IA.",
+  "insurance.home.intro":
+    "Cartera asegurada real ({count, plural, one {# propiedad} other {# propiedades}}). Solo señales de peligro individuales; sin una puntuación de riesgo multipeligro sintetizada (consulta las notas sobre el alcance de esta página).",
+  "insurance.empty.noProperties": "Aún no hay propiedades aseguradas",
+  "insurance.empty.noPropertiesVisible": "No hay propiedades visibles para tu rol",
+  "insurance.empty.addAbove": "Añade una propiedad asegurada arriba para empezar.",
+  "insurance.empty.scoped":
+    "Tu acceso está limitado a propiedades concretas y ahora mismo no tienes ninguna asignada.",
+  "insurance.temperature": "Temperatura",
+  "insurance.soilDrought": "Suelo / relacionado con la sequía",
+  "insurance.reportCard.body":
+    "Genera un informe de suscripción listo para imprimir, con fuentes, marcas de tiempo y una entrada registrada en el registro de auditoría.",
+  "insurance.add.title": "Añadir una propiedad asegurada",
+  "insurance.add.button": "Añadir propiedad",
+  "insurance.add.success": "«{name}» añadida.",
+  "insurance.policyNumber": "Número de póliza",
+  "insurance.address": "Dirección",
+  "insurance.propertyAddress": "Dirección de la propiedad",
+  "insurance.err.policyRequired": "Introduce un número de póliza.",
+  "insurance.err.addressRequired": "Introduce la dirección de la propiedad.",
+  "insurance.err.noPermissionAdd":
+    "No tienes permiso para añadir propiedades aseguradas en este espacio de trabajo.",
+  "insurance.err.createFailed": "No se pudo crear la propiedad asegurada. Inténtalo de nuevo.",
+  "insurance.err.noPermissionEdit": "No tienes permiso para editar esta propiedad.",
+  "insurance.err.updateFailed": "No se pudo actualizar la propiedad asegurada. Inténtalo de nuevo.",
+  "insurance.err.noPermissionDelete": "No tienes permiso para eliminar esta propiedad.",
+  "insurance.err.deleteFailed": "No se pudo eliminar la propiedad asegurada. Inténtalo de nuevo.",
+  "insurance.report.title": "Informe de riesgo para suscripción",
+  "insurance.report.count": "{count, plural, one {# propiedad} other {# propiedades}}",
+  "insurance.report.scopeNote":
+    "Este informe abarca todas las propiedades aseguradas que puedes ver y muestra solo señales de peligro individuales; no una puntuación de riesgo multipeligro sintetizada. No es adecuado, tal cual, para documentación real de suscripción, siniestros o cumplimiento normativo. El acceso al informe queda registrado en el registro de auditoría de este espacio de trabajo. Consulta la documentación de procedencia de datos de World Vitality para ver los detalles de las fuentes.",
+  "insurance.report.noPropertiesTitle": "No hay propiedades visibles",
+  "insurance.report.noPropertiesBody": "No hay propiedades aseguradas que incluir en este informe.",
+  "insurance.map.noPropertiesBody":
+    "Aún no hay propiedades aseguradas que mostrar en el mapa. Añade una propiedad desde la página de inicio del espacio de trabajo.",
+  "insurance.map.toggle":
+    "Humedad del suelo ({count, plural, one {# propiedad} other {# propiedades}})",
+  "insurance.map.descNone": "No hay propiedades que mostrar en el mapa.",
+  "insurance.map.descOn":
+    "Mapa con {count, plural, one {# propiedad} other {# propiedades}}. {items}",
+  "insurance.map.descOff":
+    "Mapa con {count, plural, one {# propiedad} other {# propiedades}}. La capa de humedad del suelo está oculta.",
+
+  // ---- Government & NGOs workspace (v105)
+  "gov.role.admin_owner": "Administrador de la agencia",
+  "gov.role.operational_user": "Analista",
+  "gov.role.scoped_field_user": "Personal de campo",
+  "gov.role.viewer_external": "Agencia asociada (solo lectura)",
+  "gov.aiPanel.emptyBody": "Abre Resumen de la jurisdicción para ver un estado generado por IA.",
+  "gov.home.intro":
+    "Ubicaciones monitoreadas reales ({count, plural, one {# ubicación} other {# ubicaciones}}), no límites jurisdiccionales reales (consulta las notas sobre el alcance de esta página).",
+  "gov.empty.noLocations": "Aún no hay ubicaciones monitoreadas",
+  "gov.empty.noLocationsVisible": "No hay ubicaciones visibles para tu rol",
+  "gov.empty.addAbove": "Añade una ubicación monitoreada arriba para empezar.",
+  "gov.empty.scoped":
+    "Tu acceso está limitado a ubicaciones concretas y ahora mismo no tienes ninguna asignada.",
+  "gov.climate": "Clima",
+  "gov.reportCard.body":
+    "Genera un informe de este resumen listo para imprimir, con fuentes y marcas de tiempo.",
+  "gov.add.title": "Añadir una ubicación monitoreada",
+  "gov.add.button": "Añadir ubicación",
+  "gov.add.success": "«{name}» añadida.",
+  "gov.label": "Etiqueta",
+  "gov.locationLabel": "Etiqueta de la ubicación",
+  "gov.err.labelRequired": "Introduce una etiqueta para esta ubicación.",
+  "gov.err.noPermissionAdd":
+    "No tienes permiso para añadir ubicaciones monitoreadas en este espacio de trabajo.",
+  "gov.err.createFailed": "No se pudo añadir la ubicación monitoreada. Inténtalo de nuevo.",
+  "gov.err.noPermissionEdit": "No tienes permiso para editar esta ubicación.",
+  "gov.err.updateFailed": "No se pudo actualizar la ubicación monitoreada. Inténtalo de nuevo.",
+  "gov.err.noPermissionDelete": "No tienes permiso para eliminar esta ubicación.",
+  "gov.err.deleteFailed": "No se pudo eliminar la ubicación monitoreada. Inténtalo de nuevo.",
+  "gov.report.title": "Informe del resumen de la jurisdicción",
+  "gov.report.count": "{count, plural, one {# ubicación} other {# ubicaciones}}",
+  "gov.report.scopeNote":
+    "Este informe abarca todas las ubicaciones monitoreadas que puedes ver, no un límite jurisdiccional real; no es adecuado, tal cual, para documentación pública, de políticas o para donantes. Consulta la documentación de procedencia de datos de World Vitality para ver los detalles de las fuentes.",
+  "gov.report.noLocationsTitle": "No hay ubicaciones visibles",
+  "gov.report.noLocationsBody": "No hay ubicaciones monitoreadas que incluir en este informe.",
+  "gov.map.noLocationsBody":
+    "Aún no hay ubicaciones monitoreadas que mostrar en el mapa. Añade una ubicación desde la página de inicio del espacio de trabajo.",
+  "gov.map.toggle": "Humedad del suelo ({count, plural, one {# ubicación} other {# ubicaciones}})",
+  "gov.map.descNone": "No hay ubicaciones que mostrar en el mapa.",
+  "gov.map.descOn": "Mapa con {count, plural, one {# ubicación} other {# ubicaciones}}. {items}",
+  "gov.map.descOff":
+    "Mapa con {count, plural, one {# ubicación} other {# ubicaciones}}. La capa de humedad del suelo está oculta.",
 };

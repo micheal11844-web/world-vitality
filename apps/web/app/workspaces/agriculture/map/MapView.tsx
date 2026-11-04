@@ -132,13 +132,13 @@ export function MapView({ markers }: MapViewProps) {
         field.moistureValue !== undefined ? colorForMoisture(field.moistureValue) : NO_DATA_COLOR;
       const popupText =
         field.moistureValue !== undefined
-          ? t("agri.map.popupReading", {
+          ? t("map.popupReading", {
               name: field.name,
               // The band in the reader's language, the reading in their numerals.
               label: t(moistureLabelKey(field.moistureValue)),
               value: formatReading(field.moistureValue, locale),
             })
-          : t("agri.map.popupNoReading", { name: field.name });
+          : t("map.popupNoReading", { name: field.name });
 
       const popup = new maplibregl.Popup({ offset: 24, closeButton: false }).setText(popupText);
 
@@ -162,12 +162,12 @@ export function MapView({ markers }: MapViewProps) {
             items: `${markers
               .map((f) =>
                 f.moistureValue !== undefined
-                  ? t("agri.map.descItem", {
+                  ? t("map.descItem", {
                       name: f.name,
                       label: t(moistureLabelKey(f.moistureValue)),
                       value: formatReading(f.moistureValue, locale),
                     })
-                  : t("agri.map.descItemNoReading", { name: f.name }),
+                  : t("map.descItemNoReading", { name: f.name }),
               )
               .join(". ")}.`,
           })
@@ -237,7 +237,9 @@ export function MapView({ markers }: MapViewProps) {
             maxWidth: "24rem",
           }}
         >
-          <strong>{selectedField.name}</strong>
+          <strong>
+            <bdi>{selectedField.name}</bdi>
+          </strong>
           <div
             // The engine's sentence is written in English; marked as such on a translated page.
             {...(locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const))}

@@ -571,13 +571,111 @@ export const ar: Messages = {
   "map.moisture.saturated": "مشبع",
   "agri.map.toggle":
     "رطوبة التربة ({count, plural, one {حقل واحد} two {حقلان} few {# حقول} many {# حقلًا} other {# حقل}})",
-  "agri.map.popupReading": "{name}: {label} ({value} من 1.0)",
-  "agri.map.popupNoReading": "{name}: لا توجد قراءة حالية لرطوبة التربة",
+  "map.popupReading": "{name}: {label} ({value} من 1.0)",
+  "map.popupNoReading": "{name}: لا توجد قراءة حالية لرطوبة التربة",
   "agri.map.descNone": "لا توجد حقول لعرضها على الخريطة.",
   "agri.map.descOn":
     "خريطة تعرض {count, plural, one {حقلًا واحدًا} two {حقلين} few {# حقول} many {# حقلًا} other {# حقل}}. {items}",
   "agri.map.descOff":
     "خريطة تعرض {count, plural, one {حقلًا واحدًا} two {حقلين} few {# حقول} many {# حقلًا} other {# حقل}}. طبقة رطوبة التربة مخفية حاليًا.",
-  "agri.map.descItem": "{name}: {label} ({value} على مقياس من 0 إلى 1)",
-  "agri.map.descItemNoReading": "{name}: لا توجد قراءة حالية",
+  "map.descItem": "{name}: {label} ({value} على مقياس من 0 إلى 1)",
+  "map.descItemNoReading": "{name}: لا توجد قراءة حالية",
+
+  // ---- Shared: signed-in line, report link, map readings (v105)
+  "workspace.signedInAs": "تم تسجيل الدخول بصفة: {role}",
+  "report.open": "فتح التقرير",
+  "report.notAvailable": "تصدير التقارير غير متاح لدورك",
+
+  // ---- Insurance workspace (v105)
+  "insurance.role.admin_owner": "مسؤول",
+  "insurance.role.operational_user": "مكتتب",
+  "insurance.role.scoped_field_user": "مسوّي المطالبات",
+  "insurance.role.viewer_external": "محلل (للقراءة فقط)",
+  "insurance.aiPanel.emptyBody":
+    "افتح «سياق المخاطر للاكتتاب» لعرض حالة مولَّدة بالذكاء الاصطناعي.",
+  "insurance.home.intro":
+    "محفظة تأمين حقيقية ({count, plural, one {عقار واحد} two {عقاران} few {# عقارات} many {# عقارًا} other {# عقار}}). إشارات مخاطر فردية فقط، دون درجة مخاطر مركّبة متعددة الأخطار (راجع ملاحظات النطاق في هذه الصفحة).",
+  "insurance.empty.noProperties": "لا توجد عقارات مؤمَّن عليها بعد",
+  "insurance.empty.noPropertiesVisible": "لا توجد عقارات ظاهرة لدورك",
+  "insurance.empty.addAbove": "أضف عقارًا مؤمَّنًا عليه أعلاه للبدء.",
+  "insurance.empty.scoped": "صلاحيتك محصورة في عقارات محددة، ولا يوجد حاليًا أي عقار مُسنَد إليك.",
+  "insurance.temperature": "درجة الحرارة",
+  "insurance.soilDrought": "التربة / ذات الصلة بالجفاف",
+  "insurance.reportCard.body":
+    "أنشئ تقرير اكتتاب جاهزًا للطباعة، مع المصادر والطوابع الزمنية وإدخال مسجَّل في سجل التدقيق.",
+  "insurance.add.title": "إضافة عقار مؤمَّن عليه",
+  "insurance.add.button": "إضافة العقار",
+  "insurance.add.success": "تمت إضافة «{name}».",
+  "insurance.policyNumber": "رقم الوثيقة",
+  "insurance.address": "العنوان",
+  "insurance.propertyAddress": "عنوان العقار",
+  "insurance.err.policyRequired": "أدخل رقم الوثيقة.",
+  "insurance.err.addressRequired": "أدخل عنوان العقار.",
+  "insurance.err.noPermissionAdd": "ليست لديك صلاحية إضافة عقارات مؤمَّن عليها في مساحة العمل هذه.",
+  "insurance.err.createFailed": "تعذّر إنشاء العقار المؤمَّن عليه. يُرجى المحاولة مرة أخرى.",
+  "insurance.err.noPermissionEdit": "ليست لديك صلاحية تعديل هذا العقار.",
+  "insurance.err.updateFailed": "تعذّر تحديث العقار المؤمَّن عليه. يُرجى المحاولة مرة أخرى.",
+  "insurance.err.noPermissionDelete": "ليست لديك صلاحية حذف هذا العقار.",
+  "insurance.err.deleteFailed": "تعذّر حذف العقار المؤمَّن عليه. يُرجى المحاولة مرة أخرى.",
+  "insurance.report.title": "تقرير مخاطر الاكتتاب",
+  "insurance.report.count":
+    "{count, plural, one {عقار واحد} two {عقاران} few {# عقارات} many {# عقارًا} other {# عقار}}",
+  "insurance.report.scopeNote":
+    "يشمل هذا التقرير كل عقار مؤمَّن عليه يمكنك رؤيته، ويعرض إشارات مخاطر فردية فقط — وليس درجة مخاطر مركّبة متعددة الأخطار. وهو غير مناسب بصورته الحالية للوثائق الفعلية الخاصة بالاكتتاب أو المطالبات أو الامتثال التنظيمي. يُسجَّل الاطّلاع على التقرير في سجل التدقيق الخاص بمساحة العمل هذه. راجع وثائق مصدر البيانات في World Vitality لمعرفة تفاصيل المصادر.",
+  "insurance.report.noPropertiesTitle": "لا توجد عقارات ظاهرة",
+  "insurance.report.noPropertiesBody": "لا توجد عقارات مؤمَّن عليها لإدراجها في هذا التقرير.",
+  "insurance.map.noPropertiesBody":
+    "لا توجد عقارات مؤمَّن عليها لعرضها على الخريطة بعد. أضف عقارًا من الصفحة الرئيسية لمساحة العمل.",
+  "insurance.map.toggle":
+    "رطوبة التربة ({count, plural, one {عقار واحد} two {عقاران} few {# عقارات} many {# عقارًا} other {# عقار}})",
+  "insurance.map.descNone": "لا توجد عقارات لعرضها على الخريطة.",
+  "insurance.map.descOn":
+    "خريطة تعرض {count, plural, one {عقار واحد} two {عقاران} few {# عقارات} many {# عقارًا} other {# عقار}}. {items}",
+  "insurance.map.descOff":
+    "خريطة تعرض {count, plural, one {عقار واحد} two {عقاران} few {# عقارات} many {# عقارًا} other {# عقار}}. طبقة رطوبة التربة مخفية حاليًا.",
+
+  // ---- Government & NGOs workspace (v105)
+  "gov.role.admin_owner": "مسؤول الجهة",
+  "gov.role.operational_user": "محلل",
+  "gov.role.scoped_field_user": "موظف ميداني",
+  "gov.role.viewer_external": "جهة شريكة (للقراءة فقط)",
+  "gov.aiPanel.emptyBody":
+    "افتح «نظرة عامة على النطاق الإداري» لعرض حالة مولَّدة بالذكاء الاصطناعي.",
+  "gov.home.intro":
+    "مواقع مراقَبة حقيقية ({count, plural, one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}})، وليست حدودًا إدارية حقيقية (راجع ملاحظات النطاق في هذه الصفحة).",
+  "gov.empty.noLocations": "لا توجد مواقع مراقَبة بعد",
+  "gov.empty.noLocationsVisible": "لا توجد مواقع ظاهرة لدورك",
+  "gov.empty.addAbove": "أضف موقعًا مراقَبًا أعلاه للبدء.",
+  "gov.empty.scoped": "صلاحيتك محصورة في مواقع محددة، ولا يوجد حاليًا أي موقع مُسنَد إليك.",
+  "gov.climate": "المناخ",
+  "gov.reportCard.body":
+    "أنشئ تقريرًا جاهزًا للطباعة لهذه النظرة العامة، مع المصادر والطوابع الزمنية.",
+  "gov.add.title": "إضافة موقع مراقَب",
+  "gov.add.button": "إضافة الموقع",
+  "gov.add.success": "تمت إضافة «{name}».",
+  "gov.label": "التسمية",
+  "gov.locationLabel": "تسمية الموقع",
+  "gov.err.labelRequired": "أدخل تسمية لهذا الموقع.",
+  "gov.err.noPermissionAdd": "ليست لديك صلاحية إضافة مواقع مراقَبة في مساحة العمل هذه.",
+  "gov.err.createFailed": "تعذّرت إضافة الموقع المراقَب. يُرجى المحاولة مرة أخرى.",
+  "gov.err.noPermissionEdit": "ليست لديك صلاحية تعديل هذا الموقع.",
+  "gov.err.updateFailed": "تعذّر تحديث الموقع المراقَب. يُرجى المحاولة مرة أخرى.",
+  "gov.err.noPermissionDelete": "ليست لديك صلاحية حذف هذا الموقع.",
+  "gov.err.deleteFailed": "تعذّر حذف الموقع المراقَب. يُرجى المحاولة مرة أخرى.",
+  "gov.report.title": "تقرير النظرة العامة على النطاق الإداري",
+  "gov.report.count":
+    "{count, plural, one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}}",
+  "gov.report.scopeNote":
+    "يشمل هذا التقرير كل موقع مراقَب يمكنك رؤيته، وليس حدًّا إداريًا حقيقيًا — وهو غير مناسب بصورته الحالية للوثائق العامة أو الخاصة بالسياسات أو بالجهات المانحة. راجع وثائق مصدر البيانات في World Vitality لمعرفة تفاصيل المصادر.",
+  "gov.report.noLocationsTitle": "لا توجد مواقع ظاهرة",
+  "gov.report.noLocationsBody": "لا توجد مواقع مراقَبة لإدراجها في هذا التقرير.",
+  "gov.map.noLocationsBody":
+    "لا توجد مواقع مراقَبة لعرضها على الخريطة بعد. أضف موقعًا من الصفحة الرئيسية لمساحة العمل.",
+  "gov.map.toggle":
+    "رطوبة التربة ({count, plural, one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}})",
+  "gov.map.descNone": "لا توجد مواقع لعرضها على الخريطة.",
+  "gov.map.descOn":
+    "خريطة تعرض {count, plural, one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}}. {items}",
+  "gov.map.descOff":
+    "خريطة تعرض {count, plural, one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}}. طبقة رطوبة التربة مخفية حاليًا.",
 };

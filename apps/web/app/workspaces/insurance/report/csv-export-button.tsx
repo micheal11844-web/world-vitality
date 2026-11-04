@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@world-vitality/ui-components";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 
 export interface CsvRow {
   policyNumber: string;
@@ -52,6 +53,7 @@ function toCsv({ generatedAt, rows }: CsvExportButtonProps): string {
  * pattern throughout this app's CSV exports.
  */
 export function CsvExportButton(props: CsvExportButtonProps) {
+  const { t } = useI18n();
   function handleClick() {
     const csv = toCsv(props);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -65,7 +67,7 @@ export function CsvExportButton(props: CsvExportButtonProps) {
 
   return (
     <Button variant="secondary" onClick={handleClick}>
-      Download CSV
+      {t("report.downloadCsv")}
     </Button>
   );
 }
