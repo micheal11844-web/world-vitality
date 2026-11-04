@@ -512,7 +512,7 @@ export const fr: Messages = {
   "weather.noBenchmark": "Pas encore de référence climatique régionale",
   "weather.gaps":
     "{count, plural, one {# jour sans données disponibles.} other {# jours sans données disponibles.}}",
-  "weather.forecastGaps":
+  "workspace.forecastGaps":
     "{count, plural, one {# jour de prévision sans données disponibles.} other {# jours de prévision sans données disponibles.}}",
   "weather.aiPanel.emptyTitle": "Rien à interpréter pour l’instant",
   "weather.aiPanel.emptyBody": "Ouvrez Conditions actuelles pour voir un état généré par l’IA.",
@@ -704,4 +704,76 @@ export const fr: Messages = {
   "gov.map.descOn": "Carte montrant {count, plural, one {# site} other {# sites}}. {items}",
   "gov.map.descOff":
     "Carte montrant {count, plural, one {# site} other {# sites}}. La couche d’humidité du sol est masquée.",
+
+  // ---- Shared map pieces for the sample-reference-site maps; status caption (v106)
+  "workspace.status": "État",
+  "map.mode.temperature": "Température",
+  "map.mode.generation": "Niveau de production",
+  "map.mode.routeRisk": "Niveau de risque de l’itinéraire",
+  "map.mode.siteRisk": "Risque du site",
+  "map.mode.moisture": "Afficher l’humidité du sol",
+  "map.mode.raw": "Mesures brutes",
+  "map.verdict.cold": "froid",
+  "map.verdict.cool": "frais",
+  "map.verdict.mild": "doux",
+  "map.verdict.warm": "chaud",
+  "map.verdict.hot": "très chaud",
+  "map.verdict.belowCutIn": "sous le seuil de démarrage",
+  "map.verdict.ramping": "montée en puissance",
+  "map.verdict.rated": "puissance nominale",
+  "map.verdict.cutOut": "arrêt par vent fort",
+  "map.verdict.clear": "dégagé",
+  "map.verdict.elevated": "accru",
+  "map.verdict.high": "élevé",
+  "map.verdict.severe": "sévère",
+  "map.verdict.dry": "Sec",
+  "map.verdict.somewhatWet": "Assez humide",
+  "map.verdict.wet": "Humide",
+  "map.tempValue": "{value} °C",
+  "map.windValue": "vent de {value} m/s",
+  "map.popup.pair": "{first} — {second}",
+  "map.ref.coverage": "Sites de référence d’exemple : {plotted} sur {total} avec données",
+  "map.ref.descOn":
+    "Carte de {count, plural, one {# site de référence d’exemple} other {# sites de référence d’exemple}}. {items}",
+  "map.ref.descOff": "Carte de sites de référence d’exemple. La couche est masquée.",
+  "site.ibadan": "Ibadan, Nigéria",
+  "site.nairobi": "Nairobi, Kenya",
+  "site.rotterdam": "Rotterdam, Pays-Bas",
+  "site.desMoines": "Des Moines, États-Unis",
+  "site.chennai": "Chennai, Inde",
+  "site.brisbane": "Brisbane, Australie",
+
+  // ---- Construction workspace (v106)
+  "construction.aiPanel.emptyBody": "Ouvrez Risque du site pour voir un état généré par l’IA.",
+  "construction.title": "État des activités du jour",
+  "construction.siteRiskStatus": "État du risque du site",
+  "construction.siteRiskTimeline": "Chronologie du risque du site",
+  "construction.activity.concretePour": "Coulage du béton",
+  "construction.activity.craneOperation": "Utilisation de la grue",
+  "construction.activity.roofingWork": "Travaux de toiture",
+  "construction.activity.excavation": "Excavation (risque de crue soudaine)",
+  "construction.status.go": "autorisé",
+  "construction.status.caution": "prudence",
+  "construction.status.noGo": "à éviter",
+
+  // ---- Renewable Energy workspace (v106)
+  "renewable.aiPanel.emptyBody":
+    "Ouvrez Perspectives de production pour voir un état généré par l’IA.",
+  "renewable.title": "Perspectives de production des actifs",
+  "renewable.hydroNote":
+    "Le module hydroélectrique lit toujours une station de jaugeage fixe de l’USGS, et non ce lieu.",
+  "renewable.outlookWind": "Perspectives de production : éolien (7 prochains jours)",
+  "renewable.outlookSolar": "Perspectives de production : solaire (7 prochains jours)",
+  "renewable.statusWind": "État actuel : éolien",
+  "renewable.statusSolar": "État actuel : solaire",
+  "renewable.statusHydro": "État actuel : hydroélectricité (station de jaugeage aux États-Unis)",
+  "renewable.hydroGaps":
+    "{count, plural, one {# mesure sans données disponibles.} other {# mesures sans données disponibles.}}",
+
+  // ---- Logistics & Shipping workspace (v106)
+  "logistics.aiPanel.emptyBody": "Ouvrez Risque de l’itinéraire pour voir un état généré par l’IA.",
+  "logistics.title": "État du risque de l’itinéraire",
+  "logistics.outlook": "Perspectives du risque de l’itinéraire (7 prochains jours)",
+  "logistics.disruptionReports": "Signalements de perturbations",
+  "logistics.noDisruptions": "Aucun historique de perturbations pour le moment",
 };

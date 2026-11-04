@@ -7,7 +7,9 @@ import {
 } from "@world-vitality/interpretation-engine";
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
+import { ACTIVITY_LABEL_KEYS, ACTIVITY_STATUS_KEYS, parseActivityChips } from "./activity-chips";
 import { logTelemetry } from "../../../lib/logger";
+import { getTranslator } from "../../../lib/i18n/server";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
 import { featureLockedFor } from "../../../lib/plan-features";
@@ -124,6 +126,10 @@ async function getSiteRiskTimeline(location: WorkspaceLocation) {
  */
 export default async function ConstructionWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "construction" });
+  const { t, locale } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const caption = { textTransform: "uppercase" } as const;
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   // The 7-day timeline is a plan feature; when the plan lacks it the forecast
   // is not even requested (see lib/plan-features.ts).
@@ -136,9 +142,9 @@ export default async function ConstructionWorkspaceHome() {
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
-        Today's Activity Status
+        {t("construction.title")}
       </Text>
-      <LocationNote location={location} />
+      <LocationNote location={location} t={t} />
 
       <div
         style={{
@@ -149,14 +155,18 @@ export default async function ConstructionWorkspaceHome() {
         }}
       >
         <Card style={{ gridColumn: "1 / -1" }}>
-          <Text variant="caption">SITE RISK STATUS</Text>
+          <Text variant="caption" style={caption}>
+            {t("construction.siteRiskStatus")}
+          </Text>
           {result.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {result.summary}
-            </Text>
+            <div {...englishOnly}>
+              <Text
+                variant="body"
+                style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+              >
+                {result.summary}
+              </Text>
+            </div>
           ) : (
             <>
               <div
@@ -167,41 +177,45 @@ export default async function ConstructionWorkspaceHome() {
                   margin: "var(--wv-space-sm) 0",
                 }}
               >
-                {result.summary
-                  .split(/(?<=\.)\s*(?=[A-Z])|;\s*/)
-                  .map((s) => s.replace(/\.$/, "").trim())
-                  .filter((s) => s.includes(":"))
-                  .map((entry) => {
-                    const [label, status] = entry.split(":").map((p) => p.trim());
-                    const color = ACTIVITY_STATUS_COLOR[status ?? ""] ?? "var(--wv-text-primary)";
-                    return (
-                      <div
-                        key={label}
-                        style={{
-                          border: `1px solid ${color}`,
-                          borderRadius: "var(--wv-radius-sm)",
-                          padding: "var(--wv-space-xs) var(--wv-space-sm)",
-                        }}
-                      >
-                        <Text variant="body" style={{ fontWeight: 600 }}>
-                          {label}
-                        </Text>
-                        <Text variant="caption" style={{ color, textTransform: "uppercase" }}>
-                          {status}
-                        </Text>
-                      </div>
-                    );
-                  })}
+                {parseActivityChips(result.summary).map(({ label, status }) => {
+                  const color = ACTIVITY_STATUS_COLOR[status] ?? "var(--wv-text-primary)";
+                  const labelKey = ACTIVITY_LABEL_KEYS[label];
+                  const statusKey = ACTIVITY_STATUS_KEYS[status];
+                  return (
+                    <div
+                      key={label}
+                      style={{
+                        border: `1px solid ${color}`,
+                        borderRadius: "var(--wv-radius-sm)",
+                        padding: "var(--wv-space-xs) var(--wv-space-sm)",
+                      }}
+                    >
+                      <Text variant="body" style={{ fontWeight: 600 }}>
+                        {labelKey ? t(labelKey) : <span {...englishOnly}>{label}</span>}
+                      </Text>
+                      <Text variant="caption" style={{ color, textTransform: "uppercase" }}>
+                        {statusKey ? t(statusKey) : <span {...englishOnly}>{status}</span>}
+                      </Text>
+                    </div>
+                  );
+                })}
               </div>
-              <ConfidenceBadge level={result.confidence} showDescription />
-              <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {result.explanation}
-              </Text>
+              <div {...englishOnly}>
+                <ConfidenceBadge level={result.confidence} showDescription />
+              </div>
+              <div {...englishOnly}>
+                <Text
+                  variant="caption"
+                  style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                >
+                  {result.explanation}
+                </Text>
+              </div>
             </>
           )}
           {ingestionGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {ingestionGaps.length} day(s) had no data available.
+              {t("workspace.gaps", { count: ingestionGaps.length })}
             </Text>
           )}
         </Card>
@@ -215,30 +229,40 @@ export default async function ConstructionWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">SITE RISK TIMELINE</Text>
+          <Text variant="caption" style={caption}>
+            {t("construction.siteRiskTimeline")}
+          </Text>
           {timeline === null ? (
             <FeatureLockedNote message={timelineLocked} />
           ) : (
             <>
               {timeline.result.unableToAnswer ? (
-                <Text
-                  variant="body"
-                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-                >
-                  {timeline.result.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                <div {...englishOnly}>
+                  <Text
+                    variant="body"
+                    style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                  >
                     {timeline.result.summary}
                   </Text>
-                  <ConfidenceBadge level={timeline.result.confidence} showDescription />
-                  <Text
-                    variant="caption"
-                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
-                  >
-                    {timeline.result.explanation}
-                  </Text>
+                </div>
+              ) : (
+                <>
+                  <div {...englishOnly}>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {timeline.result.summary}
+                    </Text>
+                  </div>
+                  <div {...englishOnly}>
+                    <ConfidenceBadge level={timeline.result.confidence} showDescription />
+                  </div>
+                  <div {...englishOnly}>
+                    <Text
+                      variant="caption"
+                      style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                    >
+                      {timeline.result.explanation}
+                    </Text>
+                  </div>
                 </>
               )}
               {timeline.ingestionGaps.length > 0 && (
@@ -246,15 +270,17 @@ export default async function ConstructionWorkspaceHome() {
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                 >
-                  {timeline.ingestionGaps.length} forecast day(s) had no data available.
+                  {t("workspace.forecastGaps", { count: timeline.ingestionGaps.length })}
                 </Text>
               )}
             </>
           )}
         </Card>
         <Card>
-          <Text variant="caption">ALERTS</Text>
-          <StateDisplay status="empty" title="No active alerts" />
+          <Text variant="caption" style={caption}>
+            {t("workspace.alerts")}
+          </Text>
+          <StateDisplay status="empty" title={t("workspace.noActiveAlerts")} />
         </Card>
       </div>
     </WorkspaceShell>

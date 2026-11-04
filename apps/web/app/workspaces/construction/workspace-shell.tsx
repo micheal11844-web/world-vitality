@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { ConfidenceBadge, StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 import { AppBrand } from "../../app-brand";
 import { buildAppSidebar } from "../workspace-nav";
 
@@ -32,7 +33,11 @@ export interface WorkspaceShellProps {
  */
 export function WorkspaceShell({ activeKey, children, aiInterpretation }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
-  const sidebar = buildAppSidebar({ workspaceKey: "construction", subKey: activeKey });
+  const { t, locale } = useI18n();
+  const sidebar = buildAppSidebar({ workspaceKey: "construction", subKey: activeKey, t });
+  // The engine writes its interpretation in English and it is not translated
+  // yet, so on a translated page it is marked as English text.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
 
   return (
     <AppShell
@@ -43,7 +48,10 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={
         aiInterpretation ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
+          <div
+            {...englishOnly}
+            style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}
+          >
             <Text variant="body">{aiInterpretation.summary}</Text>
             <ConfidenceBadge level={aiInterpretation.confidence} showDescription />
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
@@ -53,8 +61,8 @@ export function WorkspaceShell({ activeKey, children, aiInterpretation }: Worksp
         ) : (
           <StateDisplay
             status="empty"
-            title="Nothing to interpret yet"
-            description="Open Site Risk to see an AI-generated status."
+            title={t("workspace.aiPanel.emptyTitle")}
+            description={t("construction.aiPanel.emptyBody")}
           />
         )
       }

@@ -497,7 +497,7 @@ export const en = {
   "weather.noBenchmark": "No regional climate benchmark yet",
   "weather.gaps":
     "{count, plural, one {# day had no data available.} other {# days had no data available.}}",
-  "weather.forecastGaps":
+  "workspace.forecastGaps":
     "{count, plural, one {# forecast day had no data available.} other {# forecast days had no data available.}}",
   "weather.aiPanel.emptyTitle": "Nothing to interpret yet",
   "weather.aiPanel.emptyBody": "Open Current Conditions to see an AI-generated status.",
@@ -687,6 +687,76 @@ export const en = {
   "gov.map.descOn": "Map showing {count, plural, one {# location} other {# locations}}. {items}",
   "gov.map.descOff":
     "Map showing {count, plural, one {# location} other {# locations}}. Soil moisture overlay is currently hidden.",
+
+  // ---- Shared map pieces for the sample-reference-site maps; status caption (v106)
+  "workspace.status": "Status",
+  "map.mode.temperature": "Temperature",
+  "map.mode.generation": "Generation band",
+  "map.mode.routeRisk": "Route risk band",
+  "map.mode.siteRisk": "Site risk",
+  "map.mode.moisture": "Show ground wetness",
+  "map.mode.raw": "Raw readings",
+  "map.verdict.cold": "cold",
+  "map.verdict.cool": "cool",
+  "map.verdict.mild": "mild",
+  "map.verdict.warm": "warm",
+  "map.verdict.hot": "hot",
+  "map.verdict.belowCutIn": "below cut-in",
+  "map.verdict.ramping": "ramping",
+  "map.verdict.rated": "rated output",
+  "map.verdict.cutOut": "cut-out",
+  "map.verdict.clear": "clear",
+  "map.verdict.elevated": "elevated",
+  "map.verdict.high": "high",
+  "map.verdict.severe": "severe",
+  "map.verdict.dry": "Dry",
+  "map.verdict.somewhatWet": "Somewhat wet",
+  "map.verdict.wet": "Wet",
+  "map.tempValue": "{value}°C",
+  "map.windValue": "{value} m/s wind",
+  "map.popup.pair": "{first} — {second}",
+  "map.ref.coverage": "Sample reference sites — {plotted} of {total} reporting",
+  "map.ref.descOn":
+    "Map of {count, plural, one {# sample reference site} other {# sample reference sites}}. {items}",
+  "map.ref.descOff": "Map of sample reference sites. The overlay is currently hidden.",
+  "site.ibadan": "Ibadan, Nigeria",
+  "site.nairobi": "Nairobi, Kenya",
+  "site.rotterdam": "Rotterdam, Netherlands",
+  "site.desMoines": "Des Moines, USA",
+  "site.chennai": "Chennai, India",
+  "site.brisbane": "Brisbane, Australia",
+
+  // ---- Construction workspace (v106)
+  "construction.aiPanel.emptyBody": "Open Site Risk to see an AI-generated status.",
+  "construction.title": "Today’s Activity Status",
+  "construction.siteRiskStatus": "Site risk status",
+  "construction.siteRiskTimeline": "Site risk timeline",
+  "construction.activity.concretePour": "Concrete pour",
+  "construction.activity.craneOperation": "Crane operation",
+  "construction.activity.roofingWork": "Roofing work",
+  "construction.activity.excavation": "Excavation (flash-flood risk)",
+  "construction.status.go": "go",
+  "construction.status.caution": "caution",
+  "construction.status.noGo": "no-go",
+
+  // ---- Renewable Energy workspace (v106)
+  "renewable.aiPanel.emptyBody": "Open Generation Outlook to see an AI-generated status.",
+  "renewable.title": "Asset Generation Outlook",
+  "renewable.hydroNote": "The hydro widget always reads a fixed USGS river gauge, not this place.",
+  "renewable.outlookWind": "Generation outlook — wind (next 7 days)",
+  "renewable.outlookSolar": "Generation outlook — solar (next 7 days)",
+  "renewable.statusWind": "Current status — wind",
+  "renewable.statusSolar": "Current status — solar",
+  "renewable.statusHydro": "Current status — hydro (US gauge station)",
+  "renewable.hydroGaps":
+    "{count, plural, one {# reading had no data available.} other {# readings had no data available.}}",
+
+  // ---- Logistics & Shipping workspace (v106)
+  "logistics.aiPanel.emptyBody": "Open Route Risk to see an AI-generated status.",
+  "logistics.title": "Route Risk Status",
+  "logistics.outlook": "Route risk outlook (next 7 days)",
+  "logistics.disruptionReports": "Disruption reports",
+  "logistics.noDisruptions": "No disruption history yet",
 } as const;
 
 export type MessageKey = keyof typeof en;

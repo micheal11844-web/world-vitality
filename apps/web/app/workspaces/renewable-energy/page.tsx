@@ -18,6 +18,7 @@ import {
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
+import { getTranslator } from "../../../lib/i18n/server";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
 import { featureLockedFor } from "../../../lib/plan-features";
@@ -216,6 +217,10 @@ async function getCurrentHydroStatus() {
  */
 export default async function RenewableEnergyWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "renewable-energy" });
+  const { t, locale } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const caption = { textTransform: "uppercase" } as const;
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   // The two 7-day outlooks are a plan feature; when the plan lacks it they are
   // not even requested (see lib/plan-features.ts).
@@ -237,12 +242,9 @@ export default async function RenewableEnergyWorkspaceHome() {
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={outlook ? outlook.result : result}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
-        Asset Generation Outlook
+        {t("renewable.title")}
       </Text>
-      <LocationNote
-        location={location}
-        note="The hydro widget always reads a fixed USGS river gauge, not this place."
-      />
+      <LocationNote location={location} t={t} note={t("renewable.hydroNote")} />
 
       <div
         style={{
@@ -253,30 +255,40 @@ export default async function RenewableEnergyWorkspaceHome() {
         }}
       >
         <Card style={{ gridColumn: "1 / -1" }}>
-          <Text variant="caption">GENERATION OUTLOOK — WIND (NEXT 7 DAYS)</Text>
+          <Text variant="caption" style={caption}>
+            {t("renewable.outlookWind")}
+          </Text>
           {outlook === null ? (
             <FeatureLockedNote message={outlookLocked} />
           ) : (
             <>
               {outlook.result.unableToAnswer ? (
-                <Text
-                  variant="body"
-                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-                >
-                  {outlook.result.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                <div {...englishOnly}>
+                  <Text
+                    variant="body"
+                    style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                  >
                     {outlook.result.summary}
                   </Text>
-                  <ConfidenceBadge level={outlook.result.confidence} showDescription />
-                  <Text
-                    variant="caption"
-                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
-                  >
-                    {outlook.result.explanation}
-                  </Text>
+                </div>
+              ) : (
+                <>
+                  <div {...englishOnly}>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {outlook.result.summary}
+                    </Text>
+                  </div>
+                  <div {...englishOnly}>
+                    <ConfidenceBadge level={outlook.result.confidence} showDescription />
+                  </div>
+                  <div {...englishOnly}>
+                    <Text
+                      variant="caption"
+                      style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                    >
+                      {outlook.result.explanation}
+                    </Text>
+                  </div>
                 </>
               )}
               {outlook.ingestionGaps.length > 0 && (
@@ -284,37 +296,47 @@ export default async function RenewableEnergyWorkspaceHome() {
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                 >
-                  {outlook.ingestionGaps.length} forecast day(s) had no data available.
+                  {t("workspace.forecastGaps", { count: outlook.ingestionGaps.length })}
                 </Text>
               )}
             </>
           )}
         </Card>
         <Card style={{ gridColumn: "1 / -1" }}>
-          <Text variant="caption">GENERATION OUTLOOK — SOLAR (NEXT 7 DAYS)</Text>
+          <Text variant="caption" style={caption}>
+            {t("renewable.outlookSolar")}
+          </Text>
           {solarOutlook === null ? (
             <FeatureLockedNote message={outlookLocked} />
           ) : (
             <>
               {solarOutlook.result.unableToAnswer ? (
-                <Text
-                  variant="body"
-                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-                >
-                  {solarOutlook.result.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                <div {...englishOnly}>
+                  <Text
+                    variant="body"
+                    style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                  >
                     {solarOutlook.result.summary}
                   </Text>
-                  <ConfidenceBadge level={solarOutlook.result.confidence} showDescription />
-                  <Text
-                    variant="caption"
-                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
-                  >
-                    {solarOutlook.result.explanation}
-                  </Text>
+                </div>
+              ) : (
+                <>
+                  <div {...englishOnly}>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {solarOutlook.result.summary}
+                    </Text>
+                  </div>
+                  <div {...englishOnly}>
+                    <ConfidenceBadge level={solarOutlook.result.confidence} showDescription />
+                  </div>
+                  <div {...englishOnly}>
+                    <Text
+                      variant="caption"
+                      style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                    >
+                      {solarOutlook.result.explanation}
+                    </Text>
+                  </div>
                 </>
               )}
               {solarOutlook.ingestionGaps.length > 0 && (
@@ -322,7 +344,7 @@ export default async function RenewableEnergyWorkspaceHome() {
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                 >
-                  {solarOutlook.ingestionGaps.length} forecast day(s) had no data available.
+                  {t("workspace.forecastGaps", { count: solarOutlook.ingestionGaps.length })}
                 </Text>
               )}
             </>
@@ -338,77 +360,103 @@ export default async function RenewableEnergyWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">CURRENT STATUS — WIND</Text>
+          <Text variant="caption" style={caption}>
+            {t("renewable.statusWind")}
+          </Text>
           {result.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {result.summary}
-            </Text>
-          ) : (
-            <>
-              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+            <div {...englishOnly}>
+              <Text
+                variant="body"
+                style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+              >
                 {result.summary}
               </Text>
-              <ConfidenceBadge level={result.confidence} showDescription />
+            </div>
+          ) : (
+            <>
+              <div {...englishOnly}>
+                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                  {result.summary}
+                </Text>
+              </div>
+              <div {...englishOnly}>
+                <ConfidenceBadge level={result.confidence} showDescription />
+              </div>
             </>
           )}
           {ingestionGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {ingestionGaps.length} day(s) had no data available.
+              {t("workspace.gaps", { count: ingestionGaps.length })}
             </Text>
           )}
         </Card>
         <Card>
-          <Text variant="caption">CURRENT STATUS — SOLAR</Text>
+          <Text variant="caption" style={caption}>
+            {t("renewable.statusSolar")}
+          </Text>
           {solarResult.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {solarResult.summary}
-            </Text>
-          ) : (
-            <>
-              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+            <div {...englishOnly}>
+              <Text
+                variant="body"
+                style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+              >
                 {solarResult.summary}
               </Text>
-              <ConfidenceBadge level={solarResult.confidence} showDescription />
+            </div>
+          ) : (
+            <>
+              <div {...englishOnly}>
+                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                  {solarResult.summary}
+                </Text>
+              </div>
+              <div {...englishOnly}>
+                <ConfidenceBadge level={solarResult.confidence} showDescription />
+              </div>
             </>
           )}
           {solarGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {solarGaps.length} day(s) had no data available.
+              {t("workspace.gaps", { count: solarGaps.length })}
             </Text>
           )}
         </Card>
         <Card>
-          <Text variant="caption">CURRENT STATUS — HYDRO (US gauge station)</Text>
+          <Text variant="caption" style={caption}>
+            {t("renewable.statusHydro")}
+          </Text>
           {hydroResult.unableToAnswer ? (
-            <Text
-              variant="body"
-              style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-            >
-              {hydroResult.summary}
-            </Text>
-          ) : (
-            <>
-              <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+            <div {...englishOnly}>
+              <Text
+                variant="body"
+                style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+              >
                 {hydroResult.summary}
               </Text>
-              <ConfidenceBadge level={hydroResult.confidence} showDescription />
+            </div>
+          ) : (
+            <>
+              <div {...englishOnly}>
+                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                  {hydroResult.summary}
+                </Text>
+              </div>
+              <div {...englishOnly}>
+                <ConfidenceBadge level={hydroResult.confidence} showDescription />
+              </div>
             </>
           )}
           {hydroGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {hydroGaps.length} reading(s) had no data available.
+              {t("renewable.hydroGaps", { count: hydroGaps.length })}
             </Text>
           )}
         </Card>
         <Card>
-          <Text variant="caption">ALERTS</Text>
-          <StateDisplay status="empty" title="No active alerts" />
+          <Text variant="caption" style={caption}>
+            {t("workspace.alerts")}
+          </Text>
+          <StateDisplay status="empty" title={t("workspace.noActiveAlerts")} />
         </Card>
       </div>
     </WorkspaceShell>

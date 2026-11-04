@@ -504,7 +504,7 @@ export const es: Messages = {
   "weather.noBenchmark": "Aún no hay una referencia climática regional",
   "weather.gaps":
     "{count, plural, one {# día no tuvo datos disponibles.} other {# días no tuvieron datos disponibles.}}",
-  "weather.forecastGaps":
+  "workspace.forecastGaps":
     "{count, plural, one {# día de pronóstico no tuvo datos disponibles.} other {# días de pronóstico no tuvieron datos disponibles.}}",
   "weather.aiPanel.emptyTitle": "Aún no hay nada que interpretar",
   "weather.aiPanel.emptyBody": "Abre Condiciones actuales para ver un estado generado por IA.",
@@ -696,4 +696,75 @@ export const es: Messages = {
   "gov.map.descOn": "Mapa con {count, plural, one {# ubicación} other {# ubicaciones}}. {items}",
   "gov.map.descOff":
     "Mapa con {count, plural, one {# ubicación} other {# ubicaciones}}. La capa de humedad del suelo está oculta.",
+
+  // ---- Shared map pieces for the sample-reference-site maps; status caption (v106)
+  "workspace.status": "Estado",
+  "map.mode.temperature": "Temperatura",
+  "map.mode.generation": "Banda de generación",
+  "map.mode.routeRisk": "Nivel de riesgo de la ruta",
+  "map.mode.siteRisk": "Riesgo del sitio",
+  "map.mode.moisture": "Mostrar la humedad del suelo",
+  "map.mode.raw": "Lecturas sin procesar",
+  "map.verdict.cold": "frío",
+  "map.verdict.cool": "fresco",
+  "map.verdict.mild": "templado",
+  "map.verdict.warm": "cálido",
+  "map.verdict.hot": "caluroso",
+  "map.verdict.belowCutIn": "por debajo del arranque",
+  "map.verdict.ramping": "en aumento",
+  "map.verdict.rated": "potencia nominal",
+  "map.verdict.cutOut": "corte por viento fuerte",
+  "map.verdict.clear": "despejado",
+  "map.verdict.elevated": "elevado",
+  "map.verdict.high": "alto",
+  "map.verdict.severe": "severo",
+  "map.verdict.dry": "Seco",
+  "map.verdict.somewhatWet": "Algo húmedo",
+  "map.verdict.wet": "Húmedo",
+  "map.tempValue": "{value} °C",
+  "map.windValue": "viento de {value} m/s",
+  "map.popup.pair": "{first} — {second}",
+  "map.ref.coverage": "Sitios de referencia de muestra: {plotted} de {total} con datos",
+  "map.ref.descOn":
+    "Mapa de {count, plural, one {# sitio de referencia de muestra} other {# sitios de referencia de muestra}}. {items}",
+  "map.ref.descOff": "Mapa de sitios de referencia de muestra. La capa está oculta.",
+  "site.ibadan": "Ibadán, Nigeria",
+  "site.nairobi": "Nairobi, Kenia",
+  "site.rotterdam": "Róterdam, Países Bajos",
+  "site.desMoines": "Des Moines, EE. UU.",
+  "site.chennai": "Chennai, India",
+  "site.brisbane": "Brisbane, Australia",
+
+  // ---- Construction workspace (v106)
+  "construction.aiPanel.emptyBody": "Abre Riesgo del sitio para ver un estado generado por IA.",
+  "construction.title": "Estado de las actividades de hoy",
+  "construction.siteRiskStatus": "Estado de riesgo del sitio",
+  "construction.siteRiskTimeline": "Cronología de riesgo del sitio",
+  "construction.activity.concretePour": "Vertido de hormigón",
+  "construction.activity.craneOperation": "Operación de grúa",
+  "construction.activity.roofingWork": "Trabajos de techado",
+  "construction.activity.excavation": "Excavación (riesgo de inundación repentina)",
+  "construction.status.go": "proceder",
+  "construction.status.caution": "precaución",
+  "construction.status.noGo": "no proceder",
+
+  // ---- Renewable Energy workspace (v106)
+  "renewable.aiPanel.emptyBody": "Abre Previsión de generación para ver un estado generado por IA.",
+  "renewable.title": "Previsión de generación de los activos",
+  "renewable.hydroNote":
+    "El panel de hidroeléctrica siempre lee una estación de aforo fija del USGS, no este lugar.",
+  "renewable.outlookWind": "Previsión de generación: eólica (próximos 7 días)",
+  "renewable.outlookSolar": "Previsión de generación: solar (próximos 7 días)",
+  "renewable.statusWind": "Estado actual: eólica",
+  "renewable.statusSolar": "Estado actual: solar",
+  "renewable.statusHydro": "Estado actual: hidroeléctrica (estación de aforo de EE. UU.)",
+  "renewable.hydroGaps":
+    "{count, plural, one {# lectura no tuvo datos disponibles.} other {# lecturas no tuvieron datos disponibles.}}",
+
+  // ---- Logistics & Shipping workspace (v106)
+  "logistics.aiPanel.emptyBody": "Abre Riesgo de la ruta para ver un estado generado por IA.",
+  "logistics.title": "Estado del riesgo de la ruta",
+  "logistics.outlook": "Previsión del riesgo de la ruta (próximos 7 días)",
+  "logistics.disruptionReports": "Informes de interrupciones",
+  "logistics.noDisruptions": "Aún no hay historial de interrupciones",
 };

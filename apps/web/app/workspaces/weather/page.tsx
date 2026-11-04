@@ -226,7 +226,7 @@ export default async function WeatherWorkspaceHome() {
                     variant="caption"
                     style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                   >
-                    {t("weather.forecastGaps", { count: forecast.ingestionGaps.length })}
+                    {t("workspace.forecastGaps", { count: forecast.ingestionGaps.length })}
                   </Text>
                 )}
               </>

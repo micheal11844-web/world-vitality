@@ -485,7 +485,7 @@ export const ar: Messages = {
   "weather.noBenchmark": "لا يوجد بعد مرجع مناخي إقليمي",
   "weather.gaps":
     "{count, plural, zero {لا توجد أيام بلا بيانات.} one {يوم واحد لم تتوفر عنه بيانات.} two {يومان لم تتوفر عنهما بيانات.} few {# أيام لم تتوفر عنها بيانات.} many {# يومًا لم تتوفر عنها بيانات.} other {# يوم لم تتوفر عنها بيانات.}}",
-  "weather.forecastGaps":
+  "workspace.forecastGaps":
     "{count, plural, zero {لا توجد أيام توقعات بلا بيانات.} one {يوم توقعات واحد لم تتوفر عنه بيانات.} two {يوما توقعات لم تتوفر عنهما بيانات.} few {# أيام توقعات لم تتوفر عنها بيانات.} many {# يومًا من التوقعات لم تتوفر عنها بيانات.} other {# يوم من التوقعات لم تتوفر عنها بيانات.}}",
   "weather.aiPanel.emptyTitle": "لا شيء لتفسيره بعد",
   "weather.aiPanel.emptyBody": "افتح «الظروف الحالية» لعرض حالة مولَّدة بالذكاء الاصطناعي.",
@@ -678,4 +678,75 @@ export const ar: Messages = {
     "خريطة تعرض {count, plural, one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}}. {items}",
   "gov.map.descOff":
     "خريطة تعرض {count, plural, one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}}. طبقة رطوبة التربة مخفية حاليًا.",
+
+  // ---- Shared map pieces for the sample-reference-site maps; status caption (v106)
+  "workspace.status": "الحالة",
+  "map.mode.temperature": "درجة الحرارة",
+  "map.mode.generation": "نطاق التوليد",
+  "map.mode.routeRisk": "مستوى مخاطر المسار",
+  "map.mode.siteRisk": "مخاطر الموقع",
+  "map.mode.moisture": "إظهار رطوبة الأرض",
+  "map.mode.raw": "القراءات الخام",
+  "map.verdict.cold": "بارد",
+  "map.verdict.cool": "بارد نسبيًا",
+  "map.verdict.mild": "معتدل",
+  "map.verdict.warm": "دافئ",
+  "map.verdict.hot": "حار",
+  "map.verdict.belowCutIn": "أقل من سرعة التشغيل",
+  "map.verdict.ramping": "إنتاج متصاعد",
+  "map.verdict.rated": "القدرة المقنَّنة",
+  "map.verdict.cutOut": "إيقاف بسبب الرياح القوية",
+  "map.verdict.clear": "سالك",
+  "map.verdict.elevated": "متزايد",
+  "map.verdict.high": "مرتفع",
+  "map.verdict.severe": "شديد",
+  "map.verdict.dry": "جاف",
+  "map.verdict.somewhatWet": "رطب إلى حد ما",
+  "map.verdict.wet": "رطب",
+  "map.tempValue": "{value} °م",
+  "map.windValue": "رياح بسرعة {value} م/ث",
+  "map.popup.pair": "{first} — {second}",
+  "map.ref.coverage": "مواقع مرجعية نموذجية: {plotted} من {total} تعرض بيانات",
+  "map.ref.descOn":
+    "خريطة لـ{count, plural, one {موقع مرجعي نموذجي واحد} two {موقعين مرجعيين نموذجيين} few {# مواقع مرجعية نموذجية} many {# موقعًا مرجعيًا نموذجيًا} other {# موقع مرجعي نموذجي}}. {items}",
+  "map.ref.descOff": "خريطة لمواقع مرجعية نموذجية. الطبقة مخفية حاليًا.",
+  "site.ibadan": "إبادان، نيجيريا",
+  "site.nairobi": "نيروبي، كينيا",
+  "site.rotterdam": "روتردام، هولندا",
+  "site.desMoines": "دي موين، الولايات المتحدة",
+  "site.chennai": "تشيناي، الهند",
+  "site.brisbane": "بريسبان، أستراليا",
+
+  // ---- Construction workspace (v106)
+  "construction.aiPanel.emptyBody": "افتح «مخاطر الموقع» لعرض حالة مولَّدة بالذكاء الاصطناعي.",
+  "construction.title": "حالة أنشطة اليوم",
+  "construction.siteRiskStatus": "حالة مخاطر الموقع",
+  "construction.siteRiskTimeline": "الجدول الزمني لمخاطر الموقع",
+  "construction.activity.concretePour": "صبّ الخرسانة",
+  "construction.activity.craneOperation": "تشغيل الرافعة",
+  "construction.activity.roofingWork": "أعمال التسقيف",
+  "construction.activity.excavation": "الحفر (خطر الفيضانات المفاجئة)",
+  "construction.status.go": "مسموح",
+  "construction.status.caution": "حذر",
+  "construction.status.noGo": "غير مسموح",
+
+  // ---- Renewable Energy workspace (v106)
+  "renewable.aiPanel.emptyBody": "افتح «توقعات التوليد» لعرض حالة مولَّدة بالذكاء الاصطناعي.",
+  "renewable.title": "توقعات التوليد للأصول",
+  "renewable.hydroNote":
+    "تقرأ بطاقة الطاقة المائية دائمًا بيانات محطة قياس ثابتة تابعة لهيئة المسح الجيولوجي الأمريكية (USGS)، وليس هذا المكان.",
+  "renewable.outlookWind": "توقعات التوليد — الرياح (الأيام السبعة القادمة)",
+  "renewable.outlookSolar": "توقعات التوليد — الطاقة الشمسية (الأيام السبعة القادمة)",
+  "renewable.statusWind": "الحالة الحالية — الرياح",
+  "renewable.statusSolar": "الحالة الحالية — الطاقة الشمسية",
+  "renewable.statusHydro": "الحالة الحالية — الطاقة المائية (محطة قياس في الولايات المتحدة)",
+  "renewable.hydroGaps":
+    "{count, plural, one {قراءة واحدة بلا بيانات متاحة.} two {قراءتان بلا بيانات متاحة.} few {# قراءات بلا بيانات متاحة.} many {# قراءةً بلا بيانات متاحة.} other {# قراءة بلا بيانات متاحة.}}",
+
+  // ---- Logistics & Shipping workspace (v106)
+  "logistics.aiPanel.emptyBody": "افتح «مخاطر المسار» لعرض حالة مولَّدة بالذكاء الاصطناعي.",
+  "logistics.title": "حالة مخاطر المسار",
+  "logistics.outlook": "توقعات مخاطر المسار (الأيام السبعة القادمة)",
+  "logistics.disruptionReports": "تقارير الاضطرابات",
+  "logistics.noDisruptions": "لا يوجد سجل اضطرابات بعد",
 };

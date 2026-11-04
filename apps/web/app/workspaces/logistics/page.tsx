@@ -8,6 +8,7 @@ import {
 import { Card, Text, StateDisplay, ConfidenceBadge } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry } from "../../../lib/logger";
+import { getTranslator } from "../../../lib/i18n/server";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
 import { LocationNote } from "../location-note";
 import { featureLockedFor } from "../../../lib/plan-features";
@@ -110,6 +111,10 @@ async function getRouteRiskOutlook(location: WorkspaceLocation) {
  */
 export default async function LogisticsWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "logistics" });
+  const { t, locale } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const caption = { textTransform: "uppercase" } as const;
   const location = await resolveWorkspaceLocation(DEMO_LOCATION);
   const { result, ingestionGaps } = await getRouteRiskStatus(location);
   // The 7-day outlook is a plan feature; when the plan lacks it the forecast
@@ -120,9 +125,9 @@ export default async function LogisticsWorkspaceHome() {
   return (
     <WorkspaceShell activeKey="home" aiInterpretation={result}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
-        Route Risk Status
+        {t("logistics.title")}
       </Text>
-      <LocationNote location={location} />
+      <LocationNote location={location} t={t} />
 
       <div
         style={{
@@ -133,32 +138,42 @@ export default async function LogisticsWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">STATUS</Text>
+          <Text variant="caption" style={caption}>
+            {t("workspace.status")}
+          </Text>
           <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
-            Route Risk
+            {t("nav.routeRisk")}
           </Text>
           {result.unableToAnswer ? (
-            <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-              {result.summary}
-            </Text>
-          ) : (
-            <>
-              <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
+            <div {...englishOnly}>
+              <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                 {result.summary}
               </Text>
-              <ConfidenceBadge level={result.confidence} showDescription />
+            </div>
+          ) : (
+            <>
+              <div {...englishOnly}>
+                <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
+                  {result.summary}
+                </Text>
+              </div>
+              <div {...englishOnly}>
+                <ConfidenceBadge level={result.confidence} showDescription />
+              </div>
             </>
           )}
           {ingestionGaps.length > 0 && (
             <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-              {ingestionGaps.length} day(s) had no data available.
+              {t("workspace.gaps", { count: ingestionGaps.length })}
             </Text>
           )}
         </Card>
 
         <Card>
-          <Text variant="caption">ALERTS</Text>
-          <StateDisplay status="empty" title="No active alerts" />
+          <Text variant="caption" style={caption}>
+            {t("workspace.alerts")}
+          </Text>
+          <StateDisplay status="empty" title={t("workspace.noActiveAlerts")} />
         </Card>
       </div>
 
@@ -170,30 +185,40 @@ export default async function LogisticsWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">ROUTE RISK OUTLOOK (NEXT 7 DAYS)</Text>
+          <Text variant="caption" style={caption}>
+            {t("logistics.outlook")}
+          </Text>
           {outlook === null ? (
             <FeatureLockedNote message={outlookLocked} />
           ) : (
             <>
               {outlook.result.unableToAnswer ? (
-                <Text
-                  variant="body"
-                  style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
-                >
-                  {outlook.result.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                <div {...englishOnly}>
+                  <Text
+                    variant="body"
+                    style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-xs)" }}
+                  >
                     {outlook.result.summary}
                   </Text>
-                  <ConfidenceBadge level={outlook.result.confidence} showDescription />
-                  <Text
-                    variant="caption"
-                    style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
-                  >
-                    {outlook.result.explanation}
-                  </Text>
+                </div>
+              ) : (
+                <>
+                  <div {...englishOnly}>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {outlook.result.summary}
+                    </Text>
+                  </div>
+                  <div {...englishOnly}>
+                    <ConfidenceBadge level={outlook.result.confidence} showDescription />
+                  </div>
+                  <div {...englishOnly}>
+                    <Text
+                      variant="caption"
+                      style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
+                    >
+                      {outlook.result.explanation}
+                    </Text>
+                  </div>
                 </>
               )}
               {outlook.ingestionGaps.length > 0 && (
@@ -201,15 +226,17 @@ export default async function LogisticsWorkspaceHome() {
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                 >
-                  {outlook.ingestionGaps.length} forecast day(s) had no data available.
+                  {t("workspace.forecastGaps", { count: outlook.ingestionGaps.length })}
                 </Text>
               )}
             </>
           )}
         </Card>
         <Card>
-          <Text variant="caption">DISRUPTION REPORTS</Text>
-          <StateDisplay status="empty" title="No disruption history yet" />
+          <Text variant="caption" style={caption}>
+            {t("logistics.disruptionReports")}
+          </Text>
+          <StateDisplay status="empty" title={t("logistics.noDisruptions")} />
         </Card>
       </div>
     </WorkspaceShell>

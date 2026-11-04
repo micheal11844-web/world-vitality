@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MessageKey } from "@world-vitality/i18n";
 import { maplibregl } from "../../lib/maps/maplibre";
+import { siteNameKey } from "../../lib/maps/site-names";
+import { useI18n } from "../../lib/i18n/i18n-provider";
 import type { SiteReading } from "../../lib/reference-sites";
 
 /**
@@ -21,18 +24,26 @@ export type ReferenceMapMode =
   | "moisture" // Education (plain-language ground wetness)
   | "raw"; // Research (raw values, deliberately uncolored)
 
+/** The band's colour and, as a message key, its plain-language name (none for raw readings). */
 interface Verdict {
   color: string;
-  label: string;
+  labelKey?: MessageKey;
 }
 
-const MODE_TOGGLE_LABEL: Record<ReferenceMapMode, string> = {
-  temperature: "Temperature",
-  generation: "Generation band",
-  "route-risk": "Route risk band",
-  "site-risk": "Site risk",
-  moisture: "Show ground wetness",
-  raw: "Raw readings",
+/** Numbers and joins in the reader's language, built once per language. */
+interface Formatters {
+  temp: (v: number) => string;
+  wind: (v: number) => string;
+  join: string;
+}
+
+const MODE_TOGGLE_KEY: Record<ReferenceMapMode, MessageKey> = {
+  temperature: "map.mode.temperature",
+  generation: "map.mode.generation",
+  "route-risk": "map.mode.routeRisk",
+  "site-risk": "map.mode.siteRisk",
+  moisture: "map.mode.moisture",
+  raw: "map.mode.raw",
 };
 
 // Band boundaries mirror each workspace's interpretation provider and
@@ -40,25 +51,25 @@ const MODE_TOGGLE_LABEL: Record<ReferenceMapMode, string> = {
 // this is a display concern (same precedent as the original MapViews).
 
 function temperatureVerdict(t: number): Verdict {
-  if (t <= 5) return { color: "#5b7a8c", label: "cold" };
-  if (t <= 15) return { color: "#8fa8a0", label: "cool" };
-  if (t <= 25) return { color: "#3f9f7e", label: "mild" };
-  if (t <= 32) return { color: "#d4652f", label: "warm" };
-  return { color: "#b3401f", label: "hot" };
+  if (t <= 5) return { color: "#5b7a8c", labelKey: "map.verdict.cold" };
+  if (t <= 15) return { color: "#8fa8a0", labelKey: "map.verdict.cool" };
+  if (t <= 25) return { color: "#3f9f7e", labelKey: "map.verdict.mild" };
+  if (t <= 32) return { color: "#d4652f", labelKey: "map.verdict.warm" };
+  return { color: "#b3401f", labelKey: "map.verdict.hot" };
 }
 
 function generationVerdict(w: number): Verdict {
-  if (w < 3) return { color: "#9a9a9a", label: "below cut-in" };
-  if (w < 12) return { color: "#3f7f9f", label: "ramping" };
-  if (w < 25) return { color: "#3f9f7e", label: "rated output" };
-  return { color: "#b3401f", label: "cut-out" };
+  if (w < 3) return { color: "#9a9a9a", labelKey: "map.verdict.belowCutIn" };
+  if (w < 12) return { color: "#3f7f9f", labelKey: "map.verdict.ramping" };
+  if (w < 25) return { color: "#3f9f7e", labelKey: "map.verdict.rated" };
+  return { color: "#b3401f", labelKey: "map.verdict.cutOut" };
 }
 
 function routeRiskVerdict(w: number): Verdict {
-  if (w < 8) return { color: "#3f9f7e", label: "clear" };
-  if (w < 14) return { color: "#d4a72f", label: "elevated" };
-  if (w < 20) return { color: "#d4652f", label: "high" };
-  return { color: "#b3401f", label: "severe" };
+  if (w < 8) return { color: "#3f9f7e", labelKey: "map.verdict.clear" };
+  if (w < 14) return { color: "#d4a72f", labelKey: "map.verdict.elevated" };
+  if (w < 20) return { color: "#d4652f", labelKey: "map.verdict.high" };
+  return { color: "#b3401f", labelKey: "map.verdict.severe" };
 }
 
 function siteRiskVerdict(t?: number, w?: number): Verdict | undefined {
@@ -67,9 +78,9 @@ function siteRiskVerdict(t?: number, w?: number): Verdict | undefined {
   if (t !== undefined) levels.push(t < 5 ? 2 : t > 32 ? 1 : 0);
   if (w !== undefined) levels.push(w >= 13 ? 2 : w >= 8 ? 1 : 0);
   const worst = Math.max(...levels);
-  if (worst === 2) return { color: "#b3401f", label: "no-go" };
-  if (worst === 1) return { color: "#d4652f", label: "caution" };
-  return { color: "#3f9f7e", label: "go" };
+  if (worst === 2) return { color: "#b3401f", labelKey: "construction.status.noGo" };
+  if (worst === 1) return { color: "#d4652f", labelKey: "construction.status.caution" };
+  return { color: "#3f9f7e", labelKey: "construction.status.go" };
 }
 
 function moistureVerdict(m: number): Verdict {
@@ -83,17 +94,18 @@ function moistureVerdict(m: number): Verdict {
           : m <= 0.8
             ? "#3f9f7e"
             : "#175a46";
-  const label = m <= 0.4 ? "Dry" : m <= 0.6 ? "Somewhat wet" : "Wet";
-  return { color, label };
+  const labelKey: MessageKey =
+    m <= 0.4 ? "map.verdict.dry" : m <= 0.6 ? "map.verdict.somewhatWet" : "map.verdict.wet";
+  return { color, labelKey };
 }
 
-function rawText(site: SiteReading): string {
+function rawText(site: SiteReading, fmt: Formatters): string {
   return [
-    site.temperatureValue !== undefined ? `${site.temperatureValue.toFixed(1)}°C` : undefined,
-    site.windValue !== undefined ? `${site.windValue.toFixed(1)} m/s wind` : undefined,
+    site.temperatureValue !== undefined ? fmt.temp(site.temperatureValue) : undefined,
+    site.windValue !== undefined ? fmt.wind(site.windValue) : undefined,
   ]
     .filter((v): v is string => Boolean(v))
-    .join(", ");
+    .join(fmt.join);
 }
 
 /** The verdict for one site under one mode, or undefined if the site has
@@ -102,47 +114,41 @@ function rawText(site: SiteReading): string {
 function verdictFor(
   mode: ReferenceMapMode,
   site: SiteReading,
+  fmt: Formatters,
 ): (Verdict & { detail: string }) | undefined {
   switch (mode) {
     case "temperature":
       if (site.temperatureValue === undefined) return undefined;
       return {
         ...temperatureVerdict(site.temperatureValue),
-        detail: `${site.temperatureValue.toFixed(1)}°C`,
+        detail: fmt.temp(site.temperatureValue),
       };
     case "generation":
       if (site.windValue === undefined) return undefined;
       return {
         ...generationVerdict(site.windValue),
-        detail: `${site.windValue.toFixed(1)} m/s wind`,
+        detail: fmt.wind(site.windValue),
       };
     case "route-risk":
       if (site.windValue === undefined) return undefined;
       return {
         ...routeRiskVerdict(site.windValue),
-        detail: `${site.windValue.toFixed(1)} m/s wind`,
+        detail: fmt.wind(site.windValue),
       };
     case "site-risk": {
       const v = siteRiskVerdict(site.temperatureValue, site.windValue);
-      return v ? { ...v, detail: rawText(site) } : undefined;
+      return v ? { ...v, detail: rawText(site, fmt) } : undefined;
     }
     case "moisture":
       if (site.moistureValue === undefined) return undefined;
       return { ...moistureVerdict(site.moistureValue), detail: "" };
     case "raw": {
-      const text = rawText(site);
+      const text = rawText(site, fmt);
       // Neutral gray — deliberately not a status color (Research shows
       // raw values, minimally interpreted).
-      return text ? { color: "#6b7280", label: "", detail: text } : undefined;
+      return text ? { color: "#6b7280", detail: text } : undefined;
     }
   }
-}
-
-function popupTextFor(site: SiteReading, v: Verdict & { detail: string }): string {
-  const parts = [site.name];
-  if (v.detail) parts.push(v.detail);
-  if (v.label) parts.push(v.label);
-  return parts.join(" — ");
 }
 
 export interface ReferenceSitesMapProps {
@@ -165,18 +171,44 @@ export interface ReferenceSitesMapProps {
  * same boundary the single-marker maps drew.
  */
 export function ReferenceSitesMap({ mode, sites, failedSites = 0 }: ReferenceSitesMapProps) {
+  const { t, locale } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRefs = useRef<maplibregl.Marker[]>([]);
   const [overlayOn, setOverlayOn] = useState(true);
 
+  // Readings in the reader's numerals and units.
+  const fmt = useMemo<Formatters>(() => {
+    const one = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+    return {
+      temp: (v) => t("map.tempValue", { value: one.format(v) }),
+      wind: (v) => t("map.windValue", { value: one.format(v) }),
+      join: locale === "ar" ? "، " : ", ",
+    };
+  }, [t, locale]);
+
   const plotted = useMemo(
     () =>
       sites.flatMap((site) => {
-        const v = verdictFor(mode, site);
+        const v = verdictFor(mode, site, fmt);
         return v ? [{ site, v }] : [];
       }),
-    [mode, sites],
+    [mode, sites, fmt],
+  );
+
+  /** "Name — reading — band", with the place name in the reader's language. */
+  const popupTextFor = useCallback(
+    (site: SiteReading, v: Verdict & { detail: string }): string => {
+      const nameKey = siteNameKey(site.id);
+      const parts = [nameKey ? t(nameKey) : site.name];
+      if (v.detail) parts.push(v.detail);
+      if (v.labelKey) parts.push(t(v.labelKey));
+      return parts.reduce((first, second) => t("map.popup.pair", { first, second }));
+    },
+    [t],
   );
 
   useEffect(() => {
@@ -230,13 +262,14 @@ export function ReferenceSitesMap({ mode, sites, failedSites = 0 }: ReferenceSit
           .addTo(map),
       );
     }
-  }, [overlayOn, plotted]);
+  }, [overlayOn, plotted, popupTextFor]);
 
   const description = overlayOn
-    ? `Map of ${plotted.length} sample reference sites. ${plotted
-        .map(({ site, v }) => popupTextFor(site, v))
-        .join("; ")}.`
-    : "Map of sample reference sites. The overlay is currently hidden.";
+    ? t("map.ref.descOn", {
+        count: plotted.length,
+        items: `${plotted.map(({ site, v }) => popupTextFor(site, v)).join("; ")}.`,
+      })
+    : t("map.ref.descOff");
 
   const chip = {
     position: "absolute" as const,
@@ -281,10 +314,10 @@ export function ReferenceSitesMap({ mode, sites, failedSites = 0 }: ReferenceSit
           checked={overlayOn}
           onChange={(e) => setOverlayOn(e.target.checked)}
         />
-        {MODE_TOGGLE_LABEL[mode]}
+        {t(MODE_TOGGLE_KEY[mode])}
       </label>
       <span style={{ ...chip, bottom: "var(--wv-space-sm)", left: "var(--wv-space-sm)" }}>
-        Sample reference sites — {plotted.length} of {sites.length + failedSites} reporting
+        {t("map.ref.coverage", { plotted: plotted.length, total: sites.length + failedSites })}
       </span>
     </div>
   );
