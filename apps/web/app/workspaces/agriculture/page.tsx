@@ -10,6 +10,7 @@ import { logTelemetry } from "../../../lib/logger";
 import { getWorkspaceMembership } from "../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../lib/organization-data";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
+import { getTranslator } from "../../../lib/i18n/server";
 
 // Environmental data must be fetched fresh on every request, never
 // baked in at build time — a statically prerendered page would show
@@ -76,6 +77,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function AgricultureWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "agriculture" });
+  const { t, locale } = await getTranslator();
+  // The engine's sentences are English; on a translated page they are marked as such.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const caption = { textTransform: "uppercase" } as const;
 
   const membership = await getWorkspaceMembership("agriculture");
   const data = getOrganizationData(membership);
@@ -111,7 +116,7 @@ export default async function AgricultureWorkspaceHome() {
         }}
       >
         <Text variant="pageTitle" as="h1">
-          Field Overview
+          {t("nav.fieldOverview")}
         </Text>
       </div>
 
@@ -120,12 +125,10 @@ export default async function AgricultureWorkspaceHome() {
       {statuses.length === 0 ? (
         <StateDisplay
           status="empty"
-          title={allFields.length === 0 ? "No fields yet" : "No fields visible for your role"}
-          description={
-            allFields.length === 0
-              ? "Add a field above to get started."
-              : "Your access is scoped to specific fields, and none are currently assigned to you."
+          title={
+            allFields.length === 0 ? t("agri.empty.noFields") : t("agri.empty.noFieldsVisible")
           }
+          description={allFields.length === 0 ? t("agri.empty.addAbove") : t("agri.empty.scoped")}
         />
       ) : (
         <div
@@ -142,42 +145,50 @@ export default async function AgricultureWorkspaceHome() {
                 {field.name}
               </Text>
 
-              <Text variant="caption">SOIL MOISTURE</Text>
-              {soilMoisture.unableToAnswer ? (
-                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                  {soilMoisture.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+              <Text variant="caption" style={caption}>
+                {t("agri.soilMoisture")}
+              </Text>
+              <div {...englishOnly}>
+                {soilMoisture.unableToAnswer ? (
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                     {soilMoisture.summary}
                   </Text>
-                  <ConfidenceBadge level={soilMoisture.confidence} />
-                </>
-              )}
+                ) : (
+                  <>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {soilMoisture.summary}
+                    </Text>
+                    <ConfidenceBadge level={soilMoisture.confidence} />
+                  </>
+                )}
+              </div>
 
               <div style={{ height: "var(--wv-space-sm)" }} />
 
-              <Text variant="caption">TEMPERATURE</Text>
-              {weather.unableToAnswer ? (
-                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                  {weather.summary}
-                </Text>
-              ) : (
-                <>
-                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+              <Text variant="caption" style={caption}>
+                {t("agri.temperature")}
+              </Text>
+              <div {...englishOnly}>
+                {weather.unableToAnswer ? (
+                  <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                     {weather.summary}
                   </Text>
-                  <ConfidenceBadge level={weather.confidence} />
-                </>
-              )}
+                ) : (
+                  <>
+                    <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                      {weather.summary}
+                    </Text>
+                    <ConfidenceBadge level={weather.confidence} />
+                  </>
+                )}
+              </div>
 
               {ingestionGaps > 0 && (
                 <Text
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-sm)" }}
                 >
-                  {ingestionGaps} day(s) had no data available.
+                  {t("workspace.gaps", { count: ingestionGaps })}
                 </Text>
               )}
 
@@ -216,8 +227,10 @@ export default async function AgricultureWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">ALERTS</Text>
-          <StateDisplay status="empty" title="No active alerts" />
+          <Text variant="caption" style={caption}>
+            {t("workspace.alerts")}
+          </Text>
+          <StateDisplay status="empty" title={t("workspace.noActiveAlerts")} />
         </Card>
 
         <Link
@@ -225,7 +238,9 @@ export default async function AgricultureWorkspaceHome() {
           style={{ display: "block", height: "100%", textDecoration: "none", color: "inherit" }}
         >
           <Card style={{ height: "100%", boxSizing: "border-box" }}>
-            <Text variant="caption">MAP</Text>
+            <Text variant="caption" style={caption}>
+              {t("workspace.map")}
+            </Text>
             <div
               style={{
                 marginTop: "var(--wv-space-sm)",
@@ -237,7 +252,7 @@ export default async function AgricultureWorkspaceHome() {
                 justifyContent: "center",
               }}
             >
-              <Text variant="caption">View full map →</Text>
+              <Text variant="caption">{t("workspace.viewFullMap")}</Text>
             </div>
           </Card>
         </Link>
@@ -248,12 +263,14 @@ export default async function AgricultureWorkspaceHome() {
             style={{ display: "block", height: "100%", textDecoration: "none", color: "inherit" }}
           >
             <Card style={{ height: "100%", boxSizing: "border-box" }}>
-              <Text variant="caption">FIELD REPORT</Text>
+              <Text variant="caption" style={caption}>
+                {t("nav.fieldReport")}
+              </Text>
               <Text
                 variant="body"
                 style={{ color: "var(--wv-text-secondary)", marginTop: "var(--wv-space-sm)" }}
               >
-                Current-conditions snapshot for every field you can see, exportable as CSV or PDF →
+                {t("agri.reportCard.body")}
               </Text>
             </Card>
           </Link>
@@ -268,16 +285,20 @@ export default async function AgricultureWorkspaceHome() {
         }}
       >
         <Card>
-          <Text variant="caption">TREND</Text>
+          <Text variant="caption" style={caption}>
+            {t("workspace.trend")}
+          </Text>
           <StateDisplay
             status="empty"
-            title="Not enough history yet"
-            description="Trend comparisons need more than one season of data."
+            title={t("agri.trend.emptyTitle")}
+            description={t("agri.trend.emptyBody")}
           />
         </Card>
         <Card>
-          <Text variant="caption">COMPARISON</Text>
-          <StateDisplay status="empty" title="No regional benchmark yet" />
+          <Text variant="caption" style={caption}>
+            {t("workspace.comparison")}
+          </Text>
+          <StateDisplay status="empty" title={t("workspace.noBenchmark")} />
         </Card>
       </div>
     </WorkspaceShell>

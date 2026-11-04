@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button, Input, Text } from "@world-vitality/ui-components";
 import { updateFieldAction, deleteFieldAction } from "./field-actions";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 
 export interface FieldManageControlsProps {
   fieldId: string;
@@ -31,6 +32,7 @@ export function FieldManageControls({
   initialLatitude,
   initialLongitude,
 }: FieldManageControlsProps) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(initialName);
   const [latitude, setLatitude] = useState(String(initialLatitude));
@@ -48,7 +50,7 @@ export function FieldManageControls({
       if (result.ok) {
         setEditing(false);
       } else {
-        setError(result.error ?? "Failed to update field.");
+        setError(result.error ?? t("common.genericError"));
       }
     });
   }
@@ -62,7 +64,7 @@ export function FieldManageControls({
     startTransition(async () => {
       const result = await deleteFieldAction(fieldId);
       if (!result.ok) {
-        setError(result.error ?? "Failed to delete field.");
+        setError(result.error ?? t("common.genericError"));
         setConfirmingDelete(false);
       }
       // On success, revalidatePath (in the Server Action) refreshes
@@ -75,10 +77,10 @@ export function FieldManageControls({
     return (
       <div style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-sm)" }}>
         <Button variant="secondary" onClick={() => setEditing(true)} disabled={isPending}>
-          Edit
+          {t("resource.edit")}
         </Button>
         <Button variant="destructive" onClick={handleDeleteClick} disabled={isPending}>
-          {confirmingDelete ? "Confirm Delete?" : "Delete"}
+          {confirmingDelete ? t("resource.confirmDelete") : t("resource.delete")}
         </Button>
         {error && (
           <Text variant="caption" style={{ color: "var(--wv-critical)" }}>
@@ -98,10 +100,10 @@ export function FieldManageControls({
         gap: "var(--wv-space-xs)",
       }}
     >
-      <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+      <Input label={t("resource.name")} value={name} onChange={(e) => setName(e.target.value)} />
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
         <Input
-          label="Latitude"
+          label={t("resource.latitude")}
           type="number"
           step="any"
           value={latitude}
@@ -109,7 +111,7 @@ export function FieldManageControls({
           style={{ width: "7rem" }}
         />
         <Input
-          label="Longitude"
+          label={t("resource.longitude")}
           type="number"
           step="any"
           value={longitude}
@@ -119,10 +121,10 @@ export function FieldManageControls({
       </div>
       <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
         <Button onClick={handleSave} loading={isPending}>
-          Save
+          {t("resource.save")}
         </Button>
         <Button variant="secondary" onClick={() => setEditing(false)} disabled={isPending}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
       {error && (

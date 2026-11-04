@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@world-vitality/ui-components";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 
 export interface CsvRow {
   fieldName: string;
@@ -30,11 +31,14 @@ function toCsv({ generatedAt, rows }: CsvExportButtonProps): string {
  * FOLLOW-UP: REPORT/EXPORT"), closing part of PRD A.1's "CSV/PDF season
  * reports" line. Same `Blob` + `URL.createObjectURL` download pattern
  * `insurance/report/csv-export-button.tsx` already established —
- * adapted here for multiple fields (one row per field per metric)
+ * (the file's column names stay English: they are identifiers for whoever
+ * processes the file, and the summaries in it are written in English by the
+ * engine) adapted here for multiple fields (one row per field per metric)
  * rather than Insurance's fixed two-row single-location shape, since
  * Agriculture is genuinely multi-field.
  */
 export function CsvExportButton(props: CsvExportButtonProps) {
+  const { t } = useI18n();
   function handleClick() {
     const csv = toCsv(props);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -48,7 +52,7 @@ export function CsvExportButton(props: CsvExportButtonProps) {
 
   return (
     <Button variant="secondary" onClick={handleClick}>
-      Download CSV
+      {t("report.downloadCsv")}
     </Button>
   );
 }

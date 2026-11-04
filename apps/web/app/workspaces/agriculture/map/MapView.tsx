@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { maplibregl } from "../../../../lib/maps/maplibre";
+import { formatReading, moistureLabelKey } from "../../../../lib/maps/moisture";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 
 export interface FieldMarkerData {
   id: string;
@@ -38,16 +40,6 @@ function colorForMoisture(value: number): string {
  *  "moderate" reading it doesn't have. */
 const NO_DATA_COLOR = "#8a8a80";
 
-/** Same band boundaries, in plain language — used for the accessible
- *  description below. */
-function moistureLabel(value: number): string {
-  if (value <= 0.2) return "very dry";
-  if (value <= 0.4) return "dry";
-  if (value <= 0.6) return "moderate moisture";
-  if (value <= 0.8) return "moist";
-  return "saturated";
-}
-
 /**
  * Map view (BUILD_PLAN "STAGE — AGRICULTURE FOLLOW-UP: MULTI-MARKER
  * MAP") — "base layers + one data overlay" per BUILD_PLAN ticket 6.4's
@@ -77,6 +69,7 @@ function moistureLabel(value: number): string {
  * fixed point.
  */
 export function MapView({ markers }: MapViewProps) {
+  const { t, locale } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRefs = useRef<maplibregl.Marker[]>([]);
@@ -139,8 +132,13 @@ export function MapView({ markers }: MapViewProps) {
         field.moistureValue !== undefined ? colorForMoisture(field.moistureValue) : NO_DATA_COLOR;
       const popupText =
         field.moistureValue !== undefined
-          ? `${field.name}: ${moistureLabel(field.moistureValue)} (${field.moistureValue.toFixed(2)} of 1.0)`
-          : `${field.name}: no current soil moisture reading`;
+          ? t("agri.map.popupReading", {
+              name: field.name,
+              // The band in the reader's language, the reading in their numerals.
+              label: t(moistureLabelKey(field.moistureValue)),
+              value: formatReading(field.moistureValue, locale),
+            })
+          : t("agri.map.popupNoReading", { name: field.name });
 
       const popup = new maplibregl.Popup({ offset: 24, closeButton: false }).setText(popupText);
 
@@ -152,21 +150,28 @@ export function MapView({ markers }: MapViewProps) {
       marker.getElement().addEventListener("click", () => setSelectedFieldId(field.id));
       markerRefs.current.push(marker);
     }
-  }, [overlayOn, markers]);
+  }, [overlayOn, markers, t, locale]);
 
   const selectedField = markers.find((f) => f.id === selectedFieldId);
   const description =
     markers.length === 0
-      ? "No fields to show on the map."
+      ? t("agri.map.descNone")
       : overlayOn
-        ? `Map showing ${markers.length} field${markers.length === 1 ? "" : "s"}. ${markers
-            .map((f) =>
-              f.moistureValue !== undefined
-                ? `${f.name}: ${moistureLabel(f.moistureValue)} (${f.moistureValue.toFixed(2)} on a 0 to 1 scale)`
-                : `${f.name}: no current reading`,
-            )
-            .join(". ")}.`
-        : `Map showing ${markers.length} field${markers.length === 1 ? "" : "s"}. Soil moisture overlay is currently hidden.`;
+        ? t("agri.map.descOn", {
+            count: markers.length,
+            items: `${markers
+              .map((f) =>
+                f.moistureValue !== undefined
+                  ? t("agri.map.descItem", {
+                      name: f.name,
+                      label: t(moistureLabelKey(f.moistureValue)),
+                      value: formatReading(f.moistureValue, locale),
+                    })
+                  : t("agri.map.descItemNoReading", { name: f.name }),
+              )
+              .join(". ")}.`,
+          })
+        : t("agri.map.descOff", { count: markers.length });
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
@@ -212,13 +217,15 @@ export function MapView({ markers }: MapViewProps) {
           checked={overlayOn}
           onChange={(e) => setOverlayOn(e.target.checked)}
         />
-        Soil moisture ({markers.length} field{markers.length === 1 ? "" : "s"})
+        {t("agri.map.toggle", { count: markers.length })}
       </label>
       {selectedField && (
         <div
           style={{
             position: "absolute",
-            bottom: "var(--wv-space-sm)",
+            // Above MapLibre's attribution bar (bottom-right, a physical corner): in a
+            // right-to-left page this panel starts at the right and would sit on top of it.
+            bottom: "2.25rem",
             left: "var(--wv-space-sm)",
             right: "var(--wv-space-sm)",
             backgroundColor: "var(--wv-surface)",
@@ -231,7 +238,11 @@ export function MapView({ markers }: MapViewProps) {
           }}
         >
           <strong>{selectedField.name}</strong>
-          <div style={{ color: "var(--wv-text-secondary)", marginTop: "0.25rem" }}>
+          <div
+            // The engine's sentence is written in English; marked as such on a translated page.
+            {...(locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const))}
+            style={{ color: "var(--wv-text-secondary)", marginTop: "0.25rem" }}
+          >
             {selectedField.summary}
           </div>
         </div>

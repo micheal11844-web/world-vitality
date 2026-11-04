@@ -8,6 +8,7 @@ import {
   updateFieldCommentAction,
   deleteFieldCommentAction,
 } from "./field-actions";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 
 export interface FieldCommentsProps {
   fieldId: string;
@@ -36,6 +37,7 @@ function CommentRow({
   fieldId: string;
   isOwnComment: boolean;
 }) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(comment.body);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -49,7 +51,7 @@ function CommentRow({
       if (result.ok) {
         setEditing(false);
       } else {
-        setError(result.error ?? "Failed to update comment.");
+        setError(result.error ?? t("common.genericError"));
       }
     });
   }
@@ -63,7 +65,7 @@ function CommentRow({
     startTransition(async () => {
       const result = await deleteFieldCommentAction(comment.id, fieldId);
       if (!result.ok) {
-        setError(result.error ?? "Failed to delete comment.");
+        setError(result.error ?? t("common.genericError"));
         setConfirmingDelete(false);
       }
       // On success, revalidatePath refreshes the page and this row
@@ -74,10 +76,14 @@ function CommentRow({
   if (editing) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-xs)" }}>
-        <Input label="Comment" value={body} onChange={(e) => setBody(e.target.value)} />
+        <Input
+          label={t("agri.comments.label")}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+        />
         <div style={{ display: "flex", gap: "var(--wv-space-xs)" }}>
           <Button onClick={handleSave} loading={isPending}>
-            Save
+            {t("resource.save")}
           </Button>
           <Button
             variant="secondary"
@@ -87,7 +93,7 @@ function CommentRow({
             }}
             disabled={isPending}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
         {error && (
@@ -103,7 +109,7 @@ function CommentRow({
     <div>
       <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
         {comment.displayName ?? comment.email} · {comment.createdAt.slice(0, 10)}
-        {comment.updatedAt ? " (edited)" : ""}
+        {comment.updatedAt ? ` ${t("agri.comments.edited")}` : ""}
       </Text>
       <Text variant="body">{comment.body}</Text>
       {isOwnComment && (
@@ -111,10 +117,10 @@ function CommentRow({
           style={{ display: "flex", gap: "var(--wv-space-xs)", marginTop: "var(--wv-space-xs)" }}
         >
           <Button variant="secondary" onClick={() => setEditing(true)} disabled={isPending}>
-            Edit
+            {t("resource.edit")}
           </Button>
           <Button variant="destructive" onClick={handleDeleteClick} disabled={isPending}>
-            {confirmingDelete ? "Confirm Delete?" : "Delete"}
+            {confirmingDelete ? t("resource.confirmDelete") : t("resource.delete")}
           </Button>
         </div>
       )}
@@ -153,6 +159,7 @@ export function FieldComments({
   canComment,
   currentUserId,
 }: FieldCommentsProps) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +173,7 @@ export function FieldComments({
       if (result.ok) {
         setBody("");
       } else {
-        setError(result.error ?? "Failed to post comment.");
+        setError(result.error ?? t("common.genericError"));
       }
     });
   }
@@ -174,14 +181,16 @@ export function FieldComments({
   return (
     <div style={{ marginTop: "var(--wv-space-sm)" }}>
       <Button variant="secondary" onClick={() => setExpanded((v) => !v)}>
-        {expanded ? "Hide comments" : `Comments (${initialComments.length})`}
+        {expanded
+          ? t("agri.comments.hide")
+          : t("agri.comments.show", { count: initialComments.length })}
       </Button>
 
       {expanded && (
         <div style={{ marginTop: "var(--wv-space-sm)" }}>
           {initialComments.length === 0 ? (
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              No comments yet.
+              {t("agri.comments.none")}
             </Text>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-xs)" }}>
@@ -209,13 +218,13 @@ export function FieldComments({
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <Input
-                  label="Add a comment"
+                  label={t("agri.comments.add")}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                 />
               </div>
               <Button type="submit" loading={isPending}>
-                Post
+                {t("agri.comments.post")}
               </Button>
             </form>
           )}

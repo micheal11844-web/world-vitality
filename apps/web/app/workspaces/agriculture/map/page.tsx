@@ -4,6 +4,7 @@ import { WorkspaceShell } from "../workspace-shell";
 import { getFieldStatus } from "../field-status";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../../lib/organization-data";
+import { getTranslator } from "../../../../lib/i18n/server";
 import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,7 @@ const WORKSPACE_ID = "agriculture";
  *   harder-to-review change touching every workspace at once.
  */
 export default async function AgricultureMapPage() {
+  const { t } = await getTranslator();
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
   const allFields = await getOrganizationData(membership).listFields(WORKSPACE_ID);
@@ -77,8 +79,8 @@ export default async function AgricultureMapPage() {
       {markers.length === 0 ? (
         <StateDisplay
           status="empty"
-          title="No fields visible"
-          description="There are no fields to show on the map yet. Add a field from the workspace home page."
+          title={t("agri.report.noFieldsTitle")}
+          description={t("agri.map.noFieldsBody")}
         />
       ) : (
         <div

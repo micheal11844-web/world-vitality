@@ -8,6 +8,7 @@ import { savedItemLimitMessage } from "../../../lib/plan-limits";
 import { getSessionUserId } from "../../../lib/get-session-user-id";
 import { logSecurity } from "../../../lib/logger";
 import { notifyFieldCommentOwner } from "../../../lib/notification-events";
+import { tServer } from "../../../lib/i18n/server";
 
 export interface CreateFieldResult {
   ok: boolean;
@@ -32,23 +33,23 @@ export async function createFieldAction(
   longitude: number,
 ): Promise<CreateFieldResult> {
   if (!name.trim()) {
-    return { ok: false, error: "Enter a field name." };
+    return { ok: false, error: await tServer("agri.err.nameRequired") };
   }
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    return { ok: false, error: "Latitude must be a number between -90 and 90." };
+    return { ok: false, error: await tServer("resource.latitudeRange") };
   }
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    return { ok: false, error: "Longitude must be a number between -180 and 180." };
+    return { ok: false, error: await tServer("resource.longitudeRange") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
   if (!can(membership.role, "data:edit")) {
-    return { ok: false, error: "You do not have permission to add fields in this workspace." };
+    return { ok: false, error: await tServer("agri.err.noPermissionAdd") };
   }
 
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+    return { ok: false, error: await tServer("resource.sessionUnverified") };
   }
 
   const data = getOrganizationData(membership);
@@ -71,7 +72,7 @@ export async function createFieldAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("create_field_failed", err, { workspaceId: WORKSPACE_ID });
-    return { ok: false, error: "Failed to create field. Please try again." };
+    return { ok: false, error: await tServer("agri.err.createFailed") };
   }
 }
 
@@ -91,13 +92,13 @@ export async function updateFieldAction(
   longitude: number,
 ): Promise<CreateFieldResult> {
   if (!name.trim()) {
-    return { ok: false, error: "Enter a field name." };
+    return { ok: false, error: await tServer("agri.err.nameRequired") };
   }
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    return { ok: false, error: "Latitude must be a number between -90 and 90." };
+    return { ok: false, error: await tServer("resource.latitudeRange") };
   }
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    return { ok: false, error: "Longitude must be a number between -180 and 180." };
+    return { ok: false, error: await tServer("resource.longitudeRange") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
@@ -107,7 +108,7 @@ export async function updateFieldAction(
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to edit this field." };
+    return { ok: false, error: await tServer("agri.err.noPermissionEdit") };
   }
 
   try {
@@ -120,7 +121,7 @@ export async function updateFieldAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("update_field_failed", err, { workspaceId: WORKSPACE_ID, fieldId });
-    return { ok: false, error: "Failed to update field. Please try again." };
+    return { ok: false, error: await tServer("agri.err.updateFailed") };
   }
 }
 
@@ -138,7 +139,7 @@ export async function deleteFieldAction(fieldId: string): Promise<CreateFieldRes
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to delete this field." };
+    return { ok: false, error: await tServer("agri.err.noPermissionDelete") };
   }
 
   try {
@@ -147,7 +148,7 @@ export async function deleteFieldAction(fieldId: string): Promise<CreateFieldRes
     return { ok: true };
   } catch (err) {
     logSecurity.error("delete_field_failed", err, { workspaceId: WORKSPACE_ID, fieldId });
-    return { ok: false, error: "Failed to delete field. Please try again." };
+    return { ok: false, error: await tServer("agri.err.deleteFailed") };
   }
 }
 
@@ -164,7 +165,7 @@ export async function createFieldCommentAction(
   body: string,
 ): Promise<CreateFieldResult> {
   if (!body.trim()) {
-    return { ok: false, error: "Comment can't be empty." };
+    return { ok: false, error: await tServer("agri.err.commentEmpty") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
@@ -174,12 +175,12 @@ export async function createFieldCommentAction(
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to comment on this field." };
+    return { ok: false, error: await tServer("agri.err.noPermissionComment") };
   }
 
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+    return { ok: false, error: await tServer("resource.sessionUnverified") };
   }
 
   try {
@@ -203,7 +204,7 @@ export async function createFieldCommentAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("create_field_comment_failed", err, { workspaceId: WORKSPACE_ID, fieldId });
-    return { ok: false, error: "Failed to post comment. Please try again." };
+    return { ok: false, error: await tServer("agri.err.postFailed") };
   }
 }
 
@@ -225,7 +226,7 @@ export async function updateFieldCommentAction(
   body: string,
 ): Promise<CreateFieldResult> {
   if (!body.trim()) {
-    return { ok: false, error: "Comment can't be empty." };
+    return { ok: false, error: await tServer("agri.err.commentEmpty") };
   }
 
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
@@ -235,12 +236,12 @@ export async function updateFieldCommentAction(
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to comment on this field." };
+    return { ok: false, error: await tServer("agri.err.noPermissionComment") };
   }
 
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+    return { ok: false, error: await tServer("resource.sessionUnverified") };
   }
 
   try {
@@ -253,7 +254,7 @@ export async function updateFieldCommentAction(
       fieldId,
       commentId,
     });
-    return { ok: false, error: "You can only edit your own comments." };
+    return { ok: false, error: await tServer("agri.err.editOwnOnly") };
   }
 }
 
@@ -276,12 +277,12 @@ export async function deleteFieldCommentAction(
       scopedResourceIds: membership.scopedResourceIds,
     })
   ) {
-    return { ok: false, error: "You do not have permission to comment on this field." };
+    return { ok: false, error: await tServer("agri.err.noPermissionComment") };
   }
 
   const userId = await getSessionUserId();
   if (!userId) {
-    return { ok: false, error: "Your session could not be verified. Please sign in again." };
+    return { ok: false, error: await tServer("resource.sessionUnverified") };
   }
 
   try {
@@ -294,6 +295,6 @@ export async function deleteFieldCommentAction(
       fieldId,
       commentId,
     });
-    return { ok: false, error: "You can only delete your own comments." };
+    return { ok: false, error: await tServer("agri.err.deleteOwnOnly") };
   }
 }

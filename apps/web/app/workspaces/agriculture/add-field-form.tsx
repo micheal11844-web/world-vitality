@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button, Card, Input, Text } from "@world-vitality/ui-components";
 import { createFieldAction } from "./field-actions";
 import { UpgradeLink } from "../../upgrade-link";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 
 /**
  * "Add a field" form (BUILD_PLAN "STAGE — AGRICULTURE FIELDS"). Only
@@ -16,6 +17,7 @@ import { UpgradeLink } from "../../upgrade-link";
  * button, which looked broken on a desktop screen).
  */
 export function AddFieldForm() {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -34,12 +36,12 @@ export function AddFieldForm() {
     startTransition(async () => {
       const result = await createFieldAction(name, lat, lon);
       if (result.ok) {
-        setSuccess(`"${name}" added.`);
+        setSuccess(t("agri.add.success", { name }));
         setName("");
         setLatitude("");
         setLongitude("");
       } else {
-        setError(result.error ?? "Failed to add field.");
+        setError(result.error ?? t("common.genericError"));
         setUpgrade(Boolean(result.upgrade));
       }
     });
@@ -48,7 +50,7 @@ export function AddFieldForm() {
   return (
     <Card style={{ marginBottom: "var(--wv-space-lg)" }}>
       <Text variant="sectionTitle" as="h2" style={{ marginBottom: "var(--wv-space-sm)" }}>
-        Add a field
+        {t("agri.add.title")}
       </Text>
       <form
         onSubmit={handleSubmit}
@@ -62,7 +64,7 @@ export function AddFieldForm() {
         <div style={{ flex: "1 1 10rem", maxWidth: "16rem" }}>
           <Input
             id="field-name"
-            label="Name"
+            label={t("resource.name")}
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -71,7 +73,7 @@ export function AddFieldForm() {
         <div style={{ width: "8rem" }}>
           <Input
             id="field-lat"
-            label="Latitude"
+            label={t("resource.latitude")}
             type="number"
             step="any"
             required
@@ -82,7 +84,7 @@ export function AddFieldForm() {
         <div style={{ width: "8rem" }}>
           <Input
             id="field-lon"
-            label="Longitude"
+            label={t("resource.longitude")}
             type="number"
             step="any"
             required
@@ -91,7 +93,7 @@ export function AddFieldForm() {
           />
         </div>
         <Button type="submit" loading={isPending}>
-          Add Field
+          {t("agri.add.button")}
         </Button>
       </form>
       {error && (

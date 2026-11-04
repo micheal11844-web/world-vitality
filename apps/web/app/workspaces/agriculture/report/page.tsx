@@ -8,6 +8,7 @@ import { PrintButton } from "./print-button";
 import { CsvExportButton, type CsvRow } from "./csv-export-button";
 import { featureLockedFor } from "../../../../lib/plan-features";
 import { FeatureLockedNote } from "../../../plan-notice";
+import { getTranslator } from "../../../../lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,8 @@ const WORKSPACE_ID = "agriculture";
  *   yet, not dead code.
  */
 export default async function AgricultureReportPage() {
+  const { t, locale, date } = await getTranslator();
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   const membership = await getWorkspaceMembership(WORKSPACE_ID);
 
   if (!can(membership.role, "reports:create")) {
@@ -53,8 +56,8 @@ export default async function AgricultureReportPage() {
       <WorkspaceShell activeKey="report">
         <StateDisplay
           status="error"
-          title="Access denied"
-          description="This role does not have permission to create reports in this workspace."
+          title={t("report.accessDenied")}
+          description={t("report.accessDeniedBody")}
         />
       </WorkspaceShell>
     );
@@ -113,10 +116,12 @@ export default async function AgricultureReportPage() {
         >
           <div>
             <Text variant="pageTitle" as="h1">
-              Field Report
+              {t("nav.fieldReport")}
             </Text>
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              Generated {generatedAt}
+              {t("report.generated", {
+                when: date(generatedAt, { dateStyle: "long", timeStyle: "short" }),
+              })}
             </Text>
           </div>
           <div
@@ -145,16 +150,14 @@ export default async function AgricultureReportPage() {
             color: "var(--wv-text-secondary)",
           }}
         >
-          This is a current-conditions snapshot for every field you can see — not a season-end
-          summary and not a comparison against historical norms (no prior-season data exists in this
-          app). See World Vitality&apos;s data provenance documentation for source details.
+          {t("agri.report.snapshotNote")}
         </Text>
 
         {statuses.length === 0 ? (
           <StateDisplay
             status="empty"
-            title="No fields visible"
-            description="There are no fields to include in this report."
+            title={t("agri.report.noFieldsTitle")}
+            description={t("agri.report.noFieldsBody")}
           />
         ) : (
           statuses.map(({ field, weather, soilMoisture }) => (
@@ -163,17 +166,19 @@ export default async function AgricultureReportPage() {
                 <Text variant="sectionTitle" as="h2">
                   {field.name}
                 </Text>
-                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                  {weather.summary}
-                </Text>
-                {!weather.unableToAnswer && <ConfidenceBadge level={weather.confidence} />}
-                <div style={{ height: "var(--wv-space-xs)" }} />
-                <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
-                  {soilMoisture.summary}
-                </Text>
-                {!soilMoisture.unableToAnswer && (
-                  <ConfidenceBadge level={soilMoisture.confidence} />
-                )}
+                <div {...englishOnly}>
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {weather.summary}
+                  </Text>
+                  {!weather.unableToAnswer && <ConfidenceBadge level={weather.confidence} />}
+                  <div style={{ height: "var(--wv-space-xs)" }} />
+                  <Text variant="body" style={{ margin: "var(--wv-space-xs) 0" }}>
+                    {soilMoisture.summary}
+                  </Text>
+                  {!soilMoisture.unableToAnswer && (
+                    <ConfidenceBadge level={soilMoisture.confidence} />
+                  )}
+                </div>
               </Card>
             </div>
           ))
