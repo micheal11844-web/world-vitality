@@ -757,6 +757,225 @@ export const en = {
   "logistics.outlook": "Route risk outlook (next 7 days)",
   "logistics.disruptionReports": "Disruption reports",
   "logistics.noDisruptions": "No disruption history yet",
+
+  // ---- Research workspace (v107)
+  "research.aiPanel.title": "No AI interpretation here, by design",
+  "research.aiPanel.body":
+    "Research keeps this panel deliberately raw — data appears in the Dataset Explorer table with full provenance, not summarized by an AI layer.",
+  "research.aiPanel.provenance":
+    "Every record's own provenance (source, license, retrieval time, known limitations) is shown inline in the table instead.",
+  "research.dataset": "Dataset",
+  "research.metrics": "Metrics",
+  "research.results": "Results",
+  "research.relationships": "Data relationships",
+  "research.source.nasaPower.label": "NASA POWER — Current Conditions",
+  "research.source.nasaPower.description": "Public-domain observational data, no API key required.",
+  "research.source.openMeteo.label": "Open-Meteo — 7-Day Forecast",
+  "research.source.openMeteo.description":
+    "Free-tier, non-commercial-use license (see this dataset's own License column).",
+  "research.fetch": "Fetch dataset",
+  "research.fetchFailed": "Couldn't fetch that dataset. Please try again.",
+  "research.col.metric": "Metric",
+  "research.col.value": "Value",
+  "research.col.unit": "Unit",
+  "research.col.timestamp": "Timestamp",
+  "research.col.type": "Type",
+  "research.col.source": "Source",
+  "research.col.license": "License",
+  "research.col.limitations": "Known limitations",
+  "research.type.observed": "observed",
+  "research.type.forecast": "forecast",
+  "research.noneStated": "None stated",
+  "research.records": "{count, plural, one {# record} other {# records}}",
+  "research.gapsReported": "{count, plural, one {# gap reported} other {# gaps reported}}",
+  "research.recordsAndGaps": "{records} — {gaps}",
+  "research.empty.title": "No dataset loaded yet",
+  "research.empty.body": "Pick a dataset above and click “Fetch dataset”.",
+  "research.rel.intro":
+    "Every raw metric this platform ingests, and which workspace(s) it actually feeds — derived directly from this platform's real capability wiring (ADR-0004, Phase 1), not a hypothetical model.",
+  "research.rel.feeds": "Feeds: {workspaces}",
+  "research.rel.feedsMany":
+    "Feeds: {workspaces} — the same reading, interpreted differently by domain.",
+  "research.metric.T2M.label": "Temperature (T2M)",
+  "research.metric.T2M.description":
+    "NASA POWER's “Temperature at 2 Meters” — also fetched as a daily forecast via Open-Meteo.",
+  "research.metric.WS2M.label": "Wind Speed (WS2M)",
+  "research.metric.WS2M.description":
+    "NASA POWER's “Wind Speed at 2 Meters” — also fetched as a daily forecast via Open-Meteo, explicitly in m/s so both sources are directly comparable.",
+  "research.metric.GWETROOT.label": "Root-Zone Soil Wetness (GWETROOT)",
+  "research.metric.GWETROOT.description":
+    "NASA POWER's root-zone soil moisture index, 0 (dry) to 1 (saturated).",
+
+  // ---- Education workspace (v107)
+  "edu.role.admin_owner": "Educator/Admin",
+  "edu.role.operational_user": "Educator",
+  "edu.role.scoped_field_user": "Limited Access",
+  "edu.role.viewer_external": "Guest (read-only)",
+  "edu.aiPanel.title": "No AI side-panel here",
+  "edu.aiPanel.body":
+    "This workspace's data explanations appear inline on the page, not in a side panel.",
+  "edu.intro":
+    "Real current data, explained at the grade level you pick. For educators to use in class; no student accounts or data are collected anywhere in this workspace.",
+  "edu.demoLocation": "Demo Classroom Location",
+  "edu.explainFor": "Explain for",
+  "edu.grade.k2": "Grades K–2",
+  "edu.grade.g35": "Grades 3–5",
+  "edu.grade.g68": "Grades 6–8",
+  "edu.grade.g912": "Grades 9–12",
+  "edu.card.temperature": "Temperature",
+  "edu.card.soilMoisture": "Soil Moisture",
+  "edu.talkAbout": "Talk about it: {prompt}",
+  "edu.intro.k2.weather": "Let's find out: is it hot or cold outside right now?",
+  "edu.intro.k2.soil":
+    "Let's find out: is the ground thirsty (dry) or full of water (wet) right now?",
+  "edu.intro.g35.weather":
+    "Here's what real satellite data tells us about the air temperature at this location today.",
+  "edu.intro.g35.soil":
+    "Here's what real satellite data tells us about how wet the soil is at this location today.",
+  "edu.intro.g68.weather":
+    "This is a real, current reading of the air temperature at this location, from NASA satellite data.",
+  "edu.intro.g68.soil":
+    "This is a real, current reading of how wet the soil is at this location, from NASA satellite data.",
+  "edu.intro.g912.weather":
+    "Current-conditions reading for the air temperature at this location, sourced from NASA POWER satellite data:",
+  "edu.intro.g912.soil":
+    "Current-conditions reading for how wet the soil is at this location, sourced from NASA POWER satellite data:",
+  "edu.conf.insufficientKid":
+    "We don't have enough information to know yet — that's okay, scientists say 'I don't know' too!",
+  "edu.conf.insufficient": "There isn't enough recent data to answer this confidently right now.",
+  "edu.conf.high": "This is based on several recent readings, so we're fairly confident.",
+  "edu.conf.moderate":
+    "This is based on a couple of recent readings, so it's a reasonable estimate.",
+  "edu.conf.low": "This is based on just one recent reading, so treat it as a rough estimate.",
+  "edu.conf.kid.high": "We checked this a few times, so we're pretty sure!",
+  "edu.conf.kid.moderate": "We checked this a couple of times, so it's a good guess.",
+  "edu.conf.kid.low": "We only checked this once, so it's just a first guess.",
+  "edu.followUp.k2.weather": "What are you wearing outside today? Does it match?",
+  "edu.followUp.k2.soil": "Have you seen a puddle or dry, cracked dirt near you lately?",
+  "edu.followUp.g35.weather":
+    "How does today's temperature compare to what you'd expect for this time of year?",
+  "edu.followUp.g35.soil": "Why might farmers care about how wet or dry the soil is?",
+  "edu.followUp.g68.weather":
+    "What factors might cause temperature to vary between two nearby locations?",
+  "edu.followUp.g68.soil":
+    "How might soil moisture affect the plants and animals living in this area?",
+  "edu.followUp.g912.weather":
+    "This reading reflects current conditions only, not a trend. What additional data would you need to identify a climate trend rather than day-to-day weather?",
+  "edu.followUp.g912.soil":
+    "This provider's moisture bands are the platform's own threshold interpretation, not a cited agronomic standard (see its source code documentation). Why does that distinction matter when using this data for a real decision?",
+  "edu.lesson.title": "Sample Lesson Plan",
+  "edu.lesson.intro":
+    "A starting point, grounded in real current data. Contains no real student names or data — adapt it for your own class.",
+  "edu.lesson.gradeLevel": "Grade level",
+  "edu.lesson.download": "Download Lesson Plan",
+  "edu.lesson.accessDeniedBody":
+    "This role does not have permission to generate lesson plan documents in this workspace.",
+  "edu.doc.title": "Sample lesson plan",
+  "edu.doc.subtitle": "Exploring Our Local Environment",
+  "edu.doc.gradeLevel": "Grade level: {grade}",
+  "edu.doc.location": "Location used: {place}",
+  "edu.doc.asOf": "Data current as of: {when}",
+  "edu.doc.disclaimer":
+    "This is a sample/starting-point lesson plan generated from real, current environmental data. It contains no real student data or names — adapt it for your own class.",
+  "edu.doc.objective": "Objective",
+  "edu.doc.objective.k2":
+    "Students will observe and describe real weather and ground conditions at a real place on Earth.",
+  "edu.doc.objective.g35":
+    "Students will interpret real environmental data and connect it to observable conditions.",
+  "edu.doc.objective.g68":
+    "Students will analyze real environmental data, including its confidence level, and discuss factors affecting it.",
+  "edu.doc.objective.g912":
+    "Students will critically evaluate a real environmental dataset, including its stated confidence and known limitations, and identify what additional data would be needed for deeper analysis.",
+  "edu.doc.materials": "Materials",
+  "edu.doc.materials.app": "- World Vitality {workspace} workspace ({explain} / {map})",
+  "edu.doc.materials.discussion": "- Class discussion space",
+  "edu.doc.procedure": "Procedure",
+  "edu.doc.step.open": "Open the {explain} page and select this grade band.",
+  "edu.doc.step.weather": "Review the temperature reading together: “{sentence}”",
+  "edu.doc.step.soil": "Review the soil moisture reading together: “{sentence}”",
+  "edu.doc.discuss": "Discuss: {prompt}",
+  "edu.doc.step.map": "Open the {map} page and explore the same location visually.",
+  "edu.doc.step.confidence":
+    "Ask students to note the stated confidence level for each reading and discuss what would increase or decrease it.",
+  "edu.doc.step.surprise": "Ask students to share one thing that surprised them about the data.",
+  "edu.doc.notes": "Notes for the educator",
+  "edu.doc.notes.body":
+    "All data shown is real and current, sourced from NASA POWER satellite data (see this platform's data-provenance documentation). This is a single demo location, not necessarily your own class's location. This tool does not collect or store any student data.",
+
+  // ---- Disaster Monitoring workspace (v107)
+  "dm.aiPanel.title": "No AI interpretation here, by design",
+  "dm.aiPanel.body":
+    "Alerts are shown exactly as issued by the National Weather Service — not summarized, scored, or reinterpreted by this app.",
+  "dm.aiPanel.ethics":
+    "This workspace carries the platform's highest ethical weight (Constitution Section 7 and 9, zero tolerance). Always follow guidance from local authorities.",
+  "dm.place": "Los Angeles, CA",
+  "dm.notSubstitute":
+    "This is not a substitute for official guidance — always follow instructions from local authorities.",
+  "dm.caveat.original": "Original wording from the source (English):",
+  "dm.alerts.subtitle":
+    "{place} · Source: National Weather Service (weather.gov) · U.S. and territories only",
+  "dm.alerts.failedTitle": "Couldn't reach the National Weather Service",
+  "dm.alerts.failedBody":
+    "Alerts couldn't be fetched right now. Please check weather.gov directly for official information.",
+  "dm.alerts.noneTitle": "No active alerts",
+  "dm.alerts.noneBody": "No National Weather Service alerts are currently active for {place}.",
+  "dm.floods.title": "Flood Impact Locations",
+  "dm.floods.subtitle": "{state} · Source: USGS Real-Time Flood Impact API",
+  "dm.floods.notice":
+    "This information is preliminary/provisional and has not received final USGS approval. Not to be used for decisions concerning personal or public safety.",
+  "dm.floods.failedTitle": "Couldn't reach the USGS Flood Impact API",
+  "dm.floods.failedBody":
+    "Flood data couldn't be fetched right now. Please check waterdata.usgs.gov directly.",
+  "dm.floods.noneTitle": "No flood impact locations currently active",
+  "dm.floods.noneBody": "No currently-flooding USGS reference locations reported in {state}.",
+  "dm.shelters.title": "Nearby Designated Shelters",
+  "dm.shelters.subtitle": "Within 25 miles of {place} · Source: FEMA / American Red Cross (HIFLD)",
+  "dm.shelters.caveat":
+    "This layer should not be used to determine the operational status of a facility during an active emergency. — FEMA/HIFLD",
+  "dm.shelters.failedTitle": "Couldn't reach the shelter facilities service",
+  "dm.shelters.failedBody": "Shelter data couldn't be fetched right now.",
+  "dm.shelters.noneTitle": "No designated shelters found within range",
+  "dm.shelters.capacity": "Evacuation capacity (designated): {count}",
+  "dm.fires.title": "Active Fire Detections",
+  "dm.fires.subtitle":
+    "Within ~1° of {place} · Source: NASA FIRMS (VIIRS satellite), last 24 hours",
+  "dm.fires.caveat":
+    "These are satellite-detected thermal anomalies (elevated surface temperature), not confirmed wildfires. Agricultural burning and other heat sources can also appear here. — NASA FIRMS",
+  "dm.fires.notConfiguredTitle": "Fire detection data not configured",
+  "dm.fires.notConfiguredBody":
+    "Set NASA_FIRMS_MAP_KEY in this app's environment variables to enable this section.",
+  "dm.fires.failedTitle": "Couldn't reach NASA FIRMS",
+  "dm.fires.failedBody": "Fire detection data couldn't be fetched right now.",
+  "dm.fires.noneTitle": "No fire detections in range",
+  "dm.fires.noneBody": "No satellite thermal anomalies detected near {place} in the last 24 hours.",
+  "dm.fires.lineDay": "Confidence: {confidence} · Day detection · Satellite: {satellite}",
+  "dm.fires.lineNight": "Confidence: {confidence} · Night detection · Satellite: {satellite}",
+  "dm.fires.unknown": "unknown",
+  "dm.fires.detected": "Detected {when} UTC",
+  "dm.fires.frp": "Fire Radiative Power: {value} MW",
+  "dm.fire.day": "Day",
+  "dm.fire.night": "Night",
+  "dm.map.kind.flood": "Flood impact location",
+  "dm.map.kind.shelter": "Designated shelter",
+  "dm.map.kind.fire": "Fire detection",
+  "dm.map.layer.flood": "Flood impact locations ({count})",
+  "dm.map.layer.shelter": "Designated shelters ({count})",
+  "dm.map.layer.fire": "Fire detections ({count})",
+  "dm.map.popup": "{name} — {kind}",
+  "dm.map.desc.none": "No flood, shelter, or fire data to show on the map.",
+  "dm.map.desc.allHidden": "All hazard layers are currently hidden.",
+  "dm.map.desc.showing":
+    "{count, plural, one {Map showing # location: {items}.} other {Map showing # locations: {items}.}}",
+  "dm.map.item.flood":
+    "{count, plural, one {# flood impact location} other {# flood impact locations}}",
+  "dm.map.item.shelter":
+    "{count, plural, one {# designated shelter} other {# designated shelters}}",
+  "dm.map.item.fire": "{count, plural, one {# fire detection} other {# fire detections}}",
+  "dm.map.fallback.flood": "Currently-flooding location, per USGS's last check.",
+  "dm.map.fallback.shelter": "Designated shelter facility (reference location only).",
+  "dm.map.fireName": "Fire detection ({confidence} confidence)",
+  "dm.map.fireSummary":
+    "Thermal anomaly, {satellite}, {date} ({dayNight}). Not a confirmed wildfire.",
 } as const;
 
 export type MessageKey = keyof typeof en;

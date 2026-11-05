@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import type { MessageKey } from "@world-vitality/i18n";
 import { StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import type { Role } from "@world-vitality/identity-service";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 import { AppBrand } from "../../app-brand";
 import { buildAppSidebar } from "../workspace-nav";
 
@@ -18,11 +20,11 @@ export interface WorkspaceShellProps {
 // mapped here, onto this app's generic four-role model, same approach
 // `government-ngos` and `insurance` used for their own PRD-specific
 // role names.
-const ROLE_LABEL: Record<Role, string> = {
-  admin_owner: "Educator/Admin",
-  operational_user: "Educator",
-  scoped_field_user: "Limited Access",
-  viewer_external: "Guest (read-only)",
+const ROLE_LABEL: Record<Role, MessageKey> = {
+  admin_owner: "edu.role.admin_owner",
+  operational_user: "edu.role.operational_user",
+  scoped_field_user: "edu.role.scoped_field_user",
+  viewer_external: "edu.role.viewer_external",
 };
 
 /**
@@ -36,7 +38,8 @@ const ROLE_LABEL: Record<Role, string> = {
  */
 export function WorkspaceShell({ activeKey, children, role }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
-  const sidebar = buildAppSidebar({ workspaceKey: "education", subKey: activeKey });
+  const { t } = useI18n();
+  const sidebar = buildAppSidebar({ workspaceKey: "education", subKey: activeKey, t });
 
   return (
     <AppShell
@@ -48,12 +51,12 @@ export function WorkspaceShell({ activeKey, children, role }: WorkspaceShellProp
       aiPanelContent={
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
           <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            Signed in as: {ROLE_LABEL[role]}
+            {t("workspace.signedInAs", { role: t(ROLE_LABEL[role]) })}
           </Text>
           <StateDisplay
             status="empty"
-            title="No AI side-panel here"
-            description="This workspace's data explanations appear inline on the page, not in a side panel."
+            title={t("edu.aiPanel.title")}
+            description={t("edu.aiPanel.body")}
           />
         </div>
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@world-vitality/ui-components";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 import type { GradeBand } from "../lib/simplify-explanation";
 
 export interface LessonPlanDownloadButtonProps {
@@ -16,6 +17,7 @@ export interface LessonPlanDownloadButtonProps {
  * mechanism introduced for this workspace.
  */
 export function LessonPlanDownloadButton({ gradeBand, content }: LessonPlanDownloadButtonProps) {
+  const { t } = useI18n();
   function handleClick() {
     const blob = new Blob([content], { type: "text/plain;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -26,5 +28,5 @@ export function LessonPlanDownloadButton({ gradeBand, content }: LessonPlanDownl
     URL.revokeObjectURL(url);
   }
 
-  return <Button onClick={handleClick}>Download Lesson Plan</Button>;
+  return <Button onClick={handleClick}>{t("edu.lesson.download")}</Button>;
 }

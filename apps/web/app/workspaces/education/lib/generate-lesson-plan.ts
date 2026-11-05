@@ -1,8 +1,10 @@
 import type { ConfidenceLevel } from "@world-vitality/interpretation-engine";
+import type { Translate } from "@world-vitality/i18n";
 import { simplifyExplanation, type GradeBand, GRADE_BANDS } from "./simplify-explanation";
 
 export interface LessonPlanInput {
   locationLabel: string;
+  /** When the data was read, already written out in the educator's language. */
   generatedAt: string;
   weather: { summary: string; confidence: ConfidenceLevel; unableToAnswer: boolean };
   soilMoisture: { summary: string; confidence: ConfidenceLevel; unableToAnswer: boolean };
@@ -18,37 +20,53 @@ export interface LessonPlanInput {
  * novel text an evaluation framework would need to check. Contains no
  * real student names or data — this is a sample/starting-point document
  * for an educator to adapt, not a record of any actual class.
+ *
+ * Written in the educator's language. Headings that are capitals in English
+ * are stored in sentence case and capitalised here (`toLocaleUpperCase`),
+ * because not every script has capitals. The two data sentences quoted in the
+ * steps are the engine's own English text and are left as they are.
  */
-export function generateLessonPlan(input: LessonPlanInput, gradeBand: GradeBand): string {
-  const gradeLabel = GRADE_BANDS.find((g) => g.value === gradeBand)?.label ?? gradeBand;
+export function generateLessonPlan(
+  input: LessonPlanInput,
+  gradeBand: GradeBand,
+  t: Translate,
+  locale: string,
+): string {
+  const gradeKey = GRADE_BANDS.find((g) => g.value === gradeBand)?.labelKey;
+  const gradeLabel = gradeKey ? t(gradeKey) : gradeBand;
+  const caps = (text: string) => text.toLocaleUpperCase(locale);
   const lines: string[] = [];
 
-  lines.push(`SAMPLE LESSON PLAN — Exploring Our Local Environment`);
-  lines.push(`Grade level: ${gradeLabel}`);
-  lines.push(`Location used: ${input.locationLabel}`);
-  lines.push(`Data current as of: ${input.generatedAt}`);
+  lines.push(`${caps(t("edu.doc.title"))} — ${t("edu.doc.subtitle")}`);
+  lines.push(t("edu.doc.gradeLevel", { grade: gradeLabel }));
+  lines.push(t("edu.doc.location", { place: input.locationLabel }));
+  lines.push(t("edu.doc.asOf", { when: input.generatedAt }));
   lines.push("");
-  lines.push(
-    "This is a sample/starting-point lesson plan generated from real, current environmental data. It contains no real student data or names — adapt it for your own class.",
-  );
+  lines.push(t("edu.doc.disclaimer"));
   lines.push("");
-  lines.push("OBJECTIVE");
+  lines.push(caps(t("edu.doc.objective")));
   lines.push(
     gradeBand === "k-2"
-      ? "Students will observe and describe real weather and ground conditions at a real place on Earth."
+      ? t("edu.doc.objective.k2")
       : gradeBand === "3-5"
-        ? "Students will interpret real environmental data and connect it to observable conditions."
+        ? t("edu.doc.objective.g35")
         : gradeBand === "6-8"
-          ? "Students will analyze real environmental data, including its confidence level, and discuss factors affecting it."
-          : "Students will critically evaluate a real environmental dataset, including its stated confidence and known limitations, and identify what additional data would be needed for deeper analysis.",
+          ? t("edu.doc.objective.g68")
+          : t("edu.doc.objective.g912"),
   );
   lines.push("");
-  lines.push("MATERIALS");
-  lines.push("- World Vitality Education workspace (Explain This Data / Map)");
-  lines.push("- Class discussion space");
+  lines.push(caps(t("edu.doc.materials")));
+  lines.push(
+    t("edu.doc.materials.app", {
+      workspace: t("workspace.education.name"),
+      explain: t("nav.explainThisData"),
+      map: t("nav.map"),
+    }),
+  );
+  lines.push(t("edu.doc.materials.discussion"));
   lines.push("");
-  lines.push("PROCEDURE");
-  lines.push("1. Open the Explain This Data page and select this grade band.");
+  lines.push(caps(t("edu.doc.procedure")));
+  lines.push(`1. ${t("edu.doc.step.open", { explain: t("nav.explainThisData") })}`);
 
   if (!input.weather.unableToAnswer) {
     const weatherExplanation = simplifyExplanation(
@@ -56,9 +74,10 @@ export function generateLessonPlan(input: LessonPlanInput, gradeBand: GradeBand)
       gradeBand,
       input.weather.summary,
       input.weather.confidence,
+      t,
     );
-    lines.push(`2. Review the temperature reading together: "${weatherExplanation.dataSentence}"`);
-    lines.push(`   Discuss: ${weatherExplanation.followUpPrompt}`);
+    lines.push(`2. ${t("edu.doc.step.weather", { sentence: weatherExplanation.dataSentence })}`);
+    lines.push(`   ${t("edu.doc.discuss", { prompt: weatherExplanation.followUpPrompt })}`);
   }
 
   if (!input.soilMoisture.unableToAnswer) {
@@ -67,22 +86,19 @@ export function generateLessonPlan(input: LessonPlanInput, gradeBand: GradeBand)
       gradeBand,
       input.soilMoisture.summary,
       input.soilMoisture.confidence,
+      t,
     );
-    lines.push(`3. Review the soil moisture reading together: "${soilExplanation.dataSentence}"`);
-    lines.push(`   Discuss: ${soilExplanation.followUpPrompt}`);
+    lines.push(`3. ${t("edu.doc.step.soil", { sentence: soilExplanation.dataSentence })}`);
+    lines.push(`   ${t("edu.doc.discuss", { prompt: soilExplanation.followUpPrompt })}`);
   }
 
-  lines.push("4. Open the Map page and explore the same location visually.");
+  lines.push(`4. ${t("edu.doc.step.map", { map: t("nav.map") })}`);
   lines.push(
-    gradeBand === "9-12"
-      ? "5. Ask students to note the stated confidence level for each reading and discuss what would increase or decrease it."
-      : "5. Ask students to share one thing that surprised them about the data.",
+    `5. ${gradeBand === "9-12" ? t("edu.doc.step.confidence") : t("edu.doc.step.surprise")}`,
   );
   lines.push("");
-  lines.push("NOTES FOR THE EDUCATOR");
-  lines.push(
-    "All data shown is real and current, sourced from NASA POWER satellite data (see this platform's data-provenance documentation). This is a single demo location, not necessarily your own class's location. This tool does not collect or store any student data.",
-  );
+  lines.push(caps(t("edu.doc.notes")));
+  lines.push(t("edu.doc.notes.body"));
 
   return lines.join("\n");
 }

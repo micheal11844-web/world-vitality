@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   Button,
   Card,
@@ -9,23 +9,55 @@ import {
   StateDisplay,
   type TableColumn,
 } from "@world-vitality/ui-components";
+import type { MessageKey } from "@world-vitality/i18n";
 import type { NormalizedDataRecord } from "@world-vitality/data-schemas";
 import { METRIC_NODES, workspacesUsingMetric } from "@world-vitality/knowledge-graph";
 import { fetchDatasetAction, type DatasetSource } from "../../../lib/research-actions";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 import { WorkspaceShell } from "./workspace-shell";
 
-const SOURCE_OPTIONS: Array<{ value: DatasetSource; label: string; description: string }> = [
-  {
-    value: "nasa-power",
-    label: "NASA POWER — Current Conditions",
-    description: "Public-domain observational data, no API key required.",
+const SOURCE_OPTIONS: Array<{ value: DatasetSource; label: MessageKey; description: MessageKey }> =
+  [
+    {
+      value: "nasa-power",
+      label: "research.source.nasaPower.label",
+      description: "research.source.nasaPower.description",
+    },
+    {
+      value: "open-meteo",
+      label: "research.source.openMeteo.label",
+      description: "research.source.openMeteo.description",
+    },
+  ];
+
+/**
+ * The data catalog's own metric entries (English, from the knowledge graph)
+ * and the translated wording for the ones this page knows. A metric or
+ * workspace the catalog adds later falls back to its English label until a
+ * key is added here.
+ */
+const METRIC_TEXT: Record<string, { label: MessageKey; description: MessageKey }> = {
+  "metric:T2M": {
+    label: "research.metric.T2M.label",
+    description: "research.metric.T2M.description",
   },
-  {
-    value: "open-meteo",
-    label: "Open-Meteo — 7-Day Forecast",
-    description: "Free-tier, non-commercial-use license (see this dataset's own License column).",
+  "metric:WS2M": {
+    label: "research.metric.WS2M.label",
+    description: "research.metric.WS2M.description",
   },
-];
+  "metric:GWETROOT": {
+    label: "research.metric.GWETROOT.label",
+    description: "research.metric.GWETROOT.description",
+  },
+};
+
+const WORKSPACE_NAME: Record<string, MessageKey> = {
+  "workspace:agriculture": "workspace.agriculture.name",
+  "workspace:weather": "workspace.weather.name",
+  "workspace:construction": "workspace.construction.name",
+  "workspace:renewable-energy": "workspace.renewable-energy.name",
+  "workspace:research": "workspace.research.name",
+};
 
 function toCsv(records: NormalizedDataRecord[]): string {
   const headers = [
@@ -72,24 +104,6 @@ function downloadCsv(records: NormalizedDataRecord[], filename: string) {
   URL.revokeObjectURL(url);
 }
 
-const columns: TableColumn<NormalizedDataRecord>[] = [
-  { key: "metric", header: "Metric", render: (r) => r.metric },
-  { key: "value", header: "Value", render: (r) => r.value.toFixed(2), align: "right" },
-  { key: "unit", header: "Unit", render: (r) => r.unit },
-  { key: "timestamp", header: "Timestamp", render: (r) => r.timestamp.slice(0, 10) },
-  { key: "recordType", header: "Type", render: (r) => r.recordType ?? "observed" },
-  { key: "source", header: "Source", render: (r) => r.provenance.sourceName },
-  { key: "license", header: "License", render: (r) => r.provenance.license },
-  {
-    key: "limitations",
-    header: "Known Limitations",
-    render: (r) =>
-      r.provenance.knownLimitations.length > 0
-        ? r.provenance.knownLimitations.join("; ")
-        : "None stated",
-  },
-];
-
 /**
  * Research Workspace Home — the **Dataset Explorer** (BUILD_PLAN Stage
  * 14, the fifth workspace), the PRD's own named first-run experience
@@ -133,12 +147,71 @@ const columns: TableColumn<NormalizedDataRecord>[] = [
  * this build environment** — same caveat as every other workspace.
  */
 export function DatasetExplorer() {
+  const { t, locale } = useI18n();
   const [source, setSource] = useState<DatasetSource>("nasa-power");
   const [metrics, setMetrics] = useState<Array<"T2M" | "WS2M">>(["T2M", "WS2M"]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState<string | undefined>();
   const [records, setRecords] = useState<NormalizedDataRecord[]>([]);
   const [gapCount, setGapCount] = useState(0);
+
+  // The readings are the researcher's raw numbers, shown with two decimals in
+  // the reader's own numerals. The provenance columns are the data sources'
+  // own wording (English), so on a translated page they are marked as such;
+  // codes, units and dates are isolated so they keep their order in Arabic.
+  const columns = useMemo<TableColumn<NormalizedDataRecord>[]>(() => {
+    const value = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const english = (text: string): ReactNode =>
+      locale === "en" ? (
+        text
+      ) : (
+        <span lang="en" dir="ltr">
+          {text}
+        </span>
+      );
+    return [
+      { key: "metric", header: t("research.col.metric"), render: (r) => <bdi>{r.metric}</bdi> },
+      {
+        key: "value",
+        header: t("research.col.value"),
+        render: (r) => value.format(r.value),
+        align: "right",
+      },
+      { key: "unit", header: t("research.col.unit"), render: (r) => <bdi>{r.unit}</bdi> },
+      {
+        key: "timestamp",
+        header: t("research.col.timestamp"),
+        render: (r) => <bdi>{r.timestamp.slice(0, 10)}</bdi>,
+      },
+      {
+        key: "recordType",
+        header: t("research.col.type"),
+        render: (r) =>
+          t(r.recordType === "forecast" ? "research.type.forecast" : "research.type.observed"),
+      },
+      {
+        key: "source",
+        header: t("research.col.source"),
+        render: (r) => english(r.provenance.sourceName),
+      },
+      {
+        key: "license",
+        header: t("research.col.license"),
+        render: (r) => english(r.provenance.license),
+      },
+      {
+        key: "limitations",
+        header: t("research.col.limitations"),
+        render: (r) =>
+          r.provenance.knownLimitations.length > 0
+            ? english(r.provenance.knownLimitations.join("; "))
+            : t("research.noneStated"),
+      },
+    ];
+  }, [t, locale]);
 
   async function handleFetch() {
     setStatus("loading");
@@ -162,11 +235,13 @@ export function DatasetExplorer() {
   return (
     <WorkspaceShell activeKey="home">
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-lg)" }}>
-        Dataset Explorer
+        {t("nav.datasetExplorer")}
       </Text>
 
       <Card style={{ marginBottom: "var(--wv-space-md)" }}>
-        <Text variant="caption">DATASET</Text>
+        <Text variant="caption" style={{ textTransform: "uppercase" }}>
+          {t("research.dataset")}
+        </Text>
         <div
           style={{
             display: "flex",
@@ -183,20 +258,20 @@ export function DatasetExplorer() {
               <input
                 type="radio"
                 name="source"
-                aria-label={opt.label}
+                aria-label={t(opt.label)}
                 checked={source === opt.value}
                 onChange={() => setSource(opt.value)}
                 style={{ marginTop: "0.25rem" }}
               />
               <span>
                 <Text variant="body" style={{ fontWeight: 500 }}>
-                  {opt.label}
+                  {t(opt.label)}
                 </Text>
                 <Text
                   variant="caption"
                   style={{ display: "block", color: "var(--wv-text-secondary)" }}
                 >
-                  {opt.description}
+                  {t(opt.description)}
                 </Text>
               </span>
             </label>
@@ -205,7 +280,9 @@ export function DatasetExplorer() {
 
         {source === "nasa-power" && (
           <>
-            <Text variant="caption">METRICS</Text>
+            <Text variant="caption" style={{ textTransform: "uppercase" }}>
+              {t("research.metrics")}
+            </Text>
             <div
               style={{ display: "flex", gap: "var(--wv-space-md)", margin: "var(--wv-space-sm) 0" }}
             >
@@ -215,7 +292,7 @@ export function DatasetExplorer() {
                   checked={metrics.includes("T2M")}
                   onChange={() => toggleMetric("T2M")}
                 />
-                <Text variant="body">Temperature (T2M)</Text>
+                <Text variant="body">{t("research.metric.T2M.label")}</Text>
               </label>
               <label style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-xs)" }}>
                 <input
@@ -223,7 +300,7 @@ export function DatasetExplorer() {
                   checked={metrics.includes("WS2M")}
                   onChange={() => toggleMetric("WS2M")}
                 />
-                <Text variant="body">Wind Speed (WS2M)</Text>
+                <Text variant="body">{t("research.metric.WS2M.label")}</Text>
               </label>
             </div>
           </>
@@ -235,7 +312,7 @@ export function DatasetExplorer() {
           disabled={source === "nasa-power" && metrics.length === 0}
           style={{ marginTop: "var(--wv-space-sm)" }}
         >
-          Fetch dataset
+          {t("research.fetch")}
         </Button>
         {status === "error" && (
           <Text
@@ -256,10 +333,18 @@ export function DatasetExplorer() {
             marginBottom: "var(--wv-space-sm)",
           }}
         >
-          <Text variant="caption">
+          <Text
+            variant="caption"
+            style={records.length > 0 ? undefined : { textTransform: "uppercase" }}
+          >
             {records.length > 0
-              ? `${records.length} record(s)${gapCount > 0 ? ` — ${gapCount} gap(s) reported` : ""}`
-              : "RESULTS"}
+              ? gapCount > 0
+                ? t("research.recordsAndGaps", {
+                    records: t("research.records", { count: records.length }),
+                    gaps: t("research.gapsReported", { count: gapCount }),
+                  })
+                : t("research.records", { count: records.length })
+              : t("research.results")}
           </Text>
           {records.length > 0 && (
             <Button
@@ -267,15 +352,15 @@ export function DatasetExplorer() {
               size="sm"
               onClick={() => downloadCsv(records, `world-vitality-${source}-export.csv`)}
             >
-              Download CSV
+              {t("report.downloadCsv")}
             </Button>
           )}
         </div>
         {records.length === 0 ? (
           <StateDisplay
             status="empty"
-            title="No dataset loaded yet"
-            description="Pick a dataset above and click Fetch dataset."
+            title={t("research.empty.title")}
+            description={t("research.empty.body")}
           />
         ) : (
           <Table columns={columns} rows={records} getRowKey={(r) => r.id} compact />
@@ -283,18 +368,25 @@ export function DatasetExplorer() {
       </Card>
 
       <Card style={{ marginTop: "var(--wv-space-md)" }}>
-        <Text variant="caption">DATA RELATIONSHIPS</Text>
+        <Text variant="caption" style={{ textTransform: "uppercase" }}>
+          {t("research.relationships")}
+        </Text>
         <Text
           variant="body"
           style={{ color: "var(--wv-text-secondary)", margin: "var(--wv-space-sm) 0" }}
         >
-          Every raw metric this platform ingests, and which workspace(s) it actually feeds — derived
-          directly from this platform's real capability wiring (ADR-0004, Phase 1), not a
-          hypothetical model.
+          {t("research.rel.intro")}
         </Text>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
           {METRIC_NODES.map((metric) => {
             const workspaces = workspacesUsingMetric(metric.id);
+            const text = METRIC_TEXT[metric.id];
+            const names = workspaces
+              .map((w) => {
+                const key = WORKSPACE_NAME[w.id];
+                return key ? t(key) : w.label;
+              })
+              .join(t("common.listSeparator"));
             return (
               <div
                 key={metric.id}
@@ -305,21 +397,21 @@ export function DatasetExplorer() {
                 }}
               >
                 <Text variant="body" style={{ fontWeight: 500 }}>
-                  {metric.label}
+                  {text ? t(text.label) : metric.label}
                 </Text>
                 <Text
                   variant="caption"
                   style={{ display: "block", color: "var(--wv-text-secondary)" }}
                 >
-                  {metric.description}
+                  {text ? t(text.description) : metric.description}
                 </Text>
                 <Text
                   variant="caption"
                   style={{ display: "block", marginTop: "var(--wv-space-xs)" }}
                 >
-                  Feeds: {workspaces.map((w) => w.label).join(", ")}
-                  {workspaces.length >= 3 &&
-                    " — the same reading, interpreted differently by domain."}
+                  {t(workspaces.length >= 3 ? "research.rel.feedsMany" : "research.rel.feeds", {
+                    workspaces: names,
+                  })}
                 </Text>
               </div>
             );

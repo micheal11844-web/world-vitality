@@ -1,13 +1,23 @@
 import type { ConfidenceLevel } from "@world-vitality/interpretation-engine";
+import type { MessageKey, Translate } from "@world-vitality/i18n";
 
 export type GradeBand = "k-2" | "3-5" | "6-8" | "9-12";
 
-export const GRADE_BANDS: { value: GradeBand; label: string }[] = [
-  { value: "k-2", label: "Grades K–2" },
-  { value: "3-5", label: "Grades 3–5" },
-  { value: "6-8", label: "Grades 6–8" },
-  { value: "9-12", label: "Grades 9–12" },
+/** Each grade band and the message key for its name in the reader's language. */
+export const GRADE_BANDS: { value: GradeBand; labelKey: MessageKey }[] = [
+  { value: "k-2", labelKey: "edu.grade.k2" },
+  { value: "3-5", labelKey: "edu.grade.g35" },
+  { value: "6-8", labelKey: "edu.grade.g68" },
+  { value: "9-12", labelKey: "edu.grade.g912" },
 ];
+
+/** The part of a message key that names a grade band. */
+const BAND_KEY: Record<GradeBand, "k2" | "g35" | "g68" | "g912"> = {
+  "k-2": "k2",
+  "3-5": "g35",
+  "6-8": "g68",
+  "9-12": "g912",
+};
 
 export interface SimplifiedExplanation {
   intro: string;
@@ -39,73 +49,46 @@ export interface SimplifiedExplanation {
  * later, that is a new, real interpretation capability requiring its
  * own evaluation framework per Constitution AI Principle #4 — not
  * something to fake here.
+ *
+ * The framing is written out in each language (`edu.*` messages); the data
+ * sentence is the engine's own English text and is left exactly as it is.
  */
 export function simplifyExplanation(
   topic: "weather" | "soil-moisture",
   gradeBand: GradeBand,
   dataSentence: string,
   confidence: ConfidenceLevel,
+  t: Translate,
 ): SimplifiedExplanation {
   return {
-    intro: introFor(topic, gradeBand),
+    intro: introFor(topic, gradeBand, t),
     dataSentence,
-    confidencePhrase: confidencePhraseFor(confidence, gradeBand),
-    followUpPrompt: followUpPromptFor(topic, gradeBand),
+    confidencePhrase: confidencePhraseFor(confidence, gradeBand, t),
+    followUpPrompt: followUpPromptFor(topic, gradeBand, t),
   };
 }
 
-function introFor(topic: "weather" | "soil-moisture", gradeBand: GradeBand): string {
-  const topicWord = topic === "weather" ? "the air temperature" : "how wet the soil is";
-  switch (gradeBand) {
-    case "k-2":
-      return topic === "weather"
-        ? "Let's find out: is it hot or cold outside right now?"
-        : "Let's find out: is the ground thirsty (dry) or full of water (wet) right now?";
-    case "3-5":
-      return `Here's what real satellite data tells us about ${topicWord} at this location today.`;
-    case "6-8":
-      return `This is a real, current reading of ${topicWord} at this location, from NASA satellite data.`;
-    case "9-12":
-      return `Current-conditions reading for ${topicWord} at this location, sourced from NASA POWER satellite data:`;
-  }
+function introFor(topic: "weather" | "soil-moisture", gradeBand: GradeBand, t: Translate): string {
+  const subject = topic === "weather" ? "weather" : "soil";
+  return t(`edu.intro.${BAND_KEY[gradeBand]}.${subject}` as MessageKey);
 }
 
-function confidencePhraseFor(confidence: ConfidenceLevel, gradeBand: GradeBand): string {
+function confidencePhraseFor(
+  confidence: ConfidenceLevel,
+  gradeBand: GradeBand,
+  t: Translate,
+): string {
   if (confidence === "insufficient-data") {
-    return gradeBand === "k-2"
-      ? "We don't have enough information to know yet — that's okay, scientists say 'I don't know' too!"
-      : "There isn't enough recent data to answer this confidently right now.";
+    return gradeBand === "k-2" ? t("edu.conf.insufficientKid") : t("edu.conf.insufficient");
   }
-  const plain: Record<Exclude<ConfidenceLevel, "insufficient-data">, string> = {
-    high: "This is based on several recent readings, so we're fairly confident.",
-    moderate: "This is based on a couple of recent readings, so it's a reasonable estimate.",
-    low: "This is based on just one recent reading, so treat it as a rough estimate.",
-  };
-  const kidPlain: Record<Exclude<ConfidenceLevel, "insufficient-data">, string> = {
-    high: "We checked this a few times, so we're pretty sure!",
-    moderate: "We checked this a couple of times, so it's a good guess.",
-    low: "We only checked this once, so it's just a first guess.",
-  };
-  return gradeBand === "k-2" ? kidPlain[confidence] : plain[confidence];
+  return gradeBand === "k-2" ? t(`edu.conf.kid.${confidence}`) : t(`edu.conf.${confidence}`);
 }
 
-function followUpPromptFor(topic: "weather" | "soil-moisture", gradeBand: GradeBand): string {
-  if (gradeBand === "k-2") {
-    return topic === "weather"
-      ? "What are you wearing outside today? Does it match?"
-      : "Have you seen a puddle or dry, cracked dirt near you lately?";
-  }
-  if (gradeBand === "3-5") {
-    return topic === "weather"
-      ? "How does today's temperature compare to what you'd expect for this time of year?"
-      : "Why might farmers care about how wet or dry the soil is?";
-  }
-  if (gradeBand === "6-8") {
-    return topic === "weather"
-      ? "What factors might cause temperature to vary between two nearby locations?"
-      : "How might soil moisture affect the plants and animals living in this area?";
-  }
-  return topic === "weather"
-    ? "This reading reflects current conditions only, not a trend. What additional data would you need to identify a climate trend rather than day-to-day weather?"
-    : "This provider's moisture bands are the platform's own threshold interpretation, not a cited agronomic standard (see its source code documentation). Why does that distinction matter when using this data for a real decision?";
+function followUpPromptFor(
+  topic: "weather" | "soil-moisture",
+  gradeBand: GradeBand,
+  t: Translate,
+): string {
+  const subject = topic === "weather" ? "weather" : "soil";
+  return t(`edu.followUp.${BAND_KEY[gradeBand]}.${subject}` as MessageKey);
 }

@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 import { AppBrand } from "../../app-brand";
 import { buildAppSidebar } from "../workspace-nav";
 
@@ -30,7 +31,8 @@ export interface WorkspaceShellProps {
  */
 export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
-  const sidebar = buildAppSidebar({ workspaceKey: "research", subKey: activeKey });
+  const { t } = useI18n();
+  const sidebar = buildAppSidebar({ workspaceKey: "research", subKey: activeKey, t });
 
   return (
     <AppShell
@@ -43,12 +45,11 @@ export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
           <StateDisplay
             status="empty"
-            title="No AI interpretation here, by design"
-            description="Research keeps this panel deliberately raw — data appears in the Dataset Explorer table with full provenance, not summarized by an AI layer."
+            title={t("research.aiPanel.title")}
+            description={t("research.aiPanel.body")}
           />
           <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            Every record's own provenance (source, license, retrieval time, known limitations) is
-            shown inline in the table instead.
+            {t("research.aiPanel.provenance")}
           </Text>
         </div>
       }

@@ -8,6 +8,7 @@ import {
 import { Text } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "./workspace-shell";
 import { ExplainThisDataClient } from "./explain-this-data-client";
+import { getTranslator } from "../../../lib/i18n/server";
 import { getWorkspaceRole } from "../../../lib/get-workspace-role";
 import { logTelemetry } from "../../../lib/logger";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/home-location";
@@ -102,22 +103,24 @@ async function getExplainableData(location: WorkspaceLocation) {
 export default async function EducationWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: WORKSPACE_ID });
   const role = await getWorkspaceRole(WORKSPACE_ID);
-  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
+  const { t } = await getTranslator();
+  const resolved = await resolveWorkspaceLocation(DEMO_LOCATION);
+  // The demo place is named in the reader's language; a home place keeps its own name.
+  const location = resolved.isHome ? resolved : { ...resolved, label: t("edu.demoLocation") };
   const { weather, soilMoisture } = await getExplainableData(location);
 
   return (
     <WorkspaceShell activeKey="home" role={role}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-        Explain This Data
+        {t("nav.explainThisData")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        Real current data, explained at the grade level you pick. For educators to use in class; no
-        student accounts or data are collected anywhere in this workspace.
+        {t("edu.intro")}
       </Text>
-      <LocationNote location={location} />
+      <LocationNote location={location} t={t} />
 
       <ExplainThisDataClient
         weather={{

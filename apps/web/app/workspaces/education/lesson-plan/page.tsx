@@ -9,6 +9,7 @@ import { can } from "@world-vitality/identity-service";
 import { Text, StateDisplay } from "@world-vitality/ui-components";
 import { WorkspaceShell } from "../workspace-shell";
 import { LessonPlanClient } from "./lesson-plan-client";
+import { getTranslator } from "../../../../lib/i18n/server";
 import { getWorkspaceRole } from "../../../../lib/get-workspace-role";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../../lib/home-location";
 
@@ -58,34 +59,36 @@ async function getLessonData(location: WorkspaceLocation) {
  */
 export default async function EducationLessonPlanPage() {
   const role = await getWorkspaceRole(WORKSPACE_ID);
+  const { t } = await getTranslator();
 
   if (!can(role, "export:data")) {
     return (
       <WorkspaceShell activeKey="lesson-plan" role={role}>
         <StateDisplay
           status="error"
-          title="Access denied"
-          description="This role does not have permission to generate lesson plan documents in this workspace."
+          title={t("report.accessDenied")}
+          description={t("edu.lesson.accessDeniedBody")}
         />
       </WorkspaceShell>
     );
   }
 
-  const location = await resolveWorkspaceLocation(DEMO_LOCATION);
+  const resolved = await resolveWorkspaceLocation(DEMO_LOCATION);
+  // The demo place is named in the reader's language; a home place keeps its own name.
+  const location = resolved.isHome ? resolved : { ...resolved, label: t("edu.demoLocation") };
   const { weather, soilMoisture } = await getLessonData(location);
   const generatedAt = new Date().toISOString();
 
   return (
     <WorkspaceShell activeKey="lesson-plan" role={role}>
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-        Sample Lesson Plan
+        {t("edu.lesson.title")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        A starting point, grounded in real current data. Contains no real student names or data —
-        adapt it for your own class.
+        {t("edu.lesson.intro")}
       </Text>
       <LessonPlanClient
         locationLabel={location.label}

@@ -776,4 +776,238 @@ export const fr: Messages = {
   "logistics.outlook": "Perspectives du risque de l’itinéraire (7 prochains jours)",
   "logistics.disruptionReports": "Signalements de perturbations",
   "logistics.noDisruptions": "Aucun historique de perturbations pour le moment",
+
+  // ---- Research workspace (v107)
+  "research.aiPanel.title": "Pas d’interprétation de l’IA ici, volontairement",
+  "research.aiPanel.body":
+    "Recherche garde volontairement ce panneau brut : les données apparaissent dans le tableau de l’Explorateur de données avec toute leur provenance, sans résumé par une couche d’IA.",
+  "research.aiPanel.provenance":
+    "À la place, la provenance de chaque enregistrement (source, licence, heure de récupération, limites connues) est affichée directement dans le tableau.",
+  "research.dataset": "Jeu de données",
+  "research.metrics": "Métriques",
+  "research.results": "Résultats",
+  "research.relationships": "Relations entre les données",
+  "research.source.nasaPower.label": "NASA POWER — Conditions actuelles",
+  "research.source.nasaPower.description":
+    "Données d’observation du domaine public, sans clé d’API requise.",
+  "research.source.openMeteo.label": "Open-Meteo — Prévisions à 7 jours",
+  "research.source.openMeteo.description":
+    "Offre gratuite, licence d’usage non commercial (voir la colonne Licence de ce jeu de données).",
+  "research.fetch": "Récupérer les données",
+  "research.fetchFailed": "Impossible de récupérer ce jeu de données. Veuillez réessayer.",
+  "research.col.metric": "Métrique",
+  "research.col.value": "Valeur",
+  "research.col.unit": "Unité",
+  "research.col.timestamp": "Horodatage",
+  "research.col.type": "Type",
+  "research.col.source": "Source",
+  "research.col.license": "Licence",
+  "research.col.limitations": "Limites connus",
+  "research.type.observed": "observé",
+  "research.type.forecast": "prévision",
+  "research.noneStated": "Aucune indiquée",
+  "research.records": "{count, plural, one {# enregistrement} other {# enregistrements}}",
+  "research.gapsReported": "{count, plural, one {# lacune signalée} other {# lacunes signalées}}",
+  "research.recordsAndGaps": "{records} — {gaps}",
+  "research.empty.title": "Aucun jeu de données chargé pour l’instant",
+  "research.empty.body":
+    "Choisissez un jeu de données ci-dessus, puis cliquez sur « Récupérer les données ».",
+  "research.rel.intro":
+    "Chaque métrique brute que cette plateforme ingère, et les espaces de travail qu’elle alimente réellement, déduits directement du câblage réel des capacités de la plateforme (ADR-0004, phase 1), et non d’un modèle hypothétique.",
+  "research.rel.feeds": "Alimente : {workspaces}",
+  "research.rel.feedsMany":
+    "Alimente : {workspaces} — la même mesure, interprétée différemment selon le domaine.",
+  "research.metric.T2M.label": "Température (T2M)",
+  "research.metric.T2M.description":
+    "La « température à 2 mètres » de NASA POWER, également obtenue sous forme de prévision quotidienne via Open-Meteo.",
+  "research.metric.WS2M.label": "Vitesse du vent (WS2M)",
+  "research.metric.WS2M.description":
+    "La « vitesse du vent à 2 mètres » de NASA POWER, également obtenue sous forme de prévision quotidienne via Open-Meteo, explicitement en m/s pour que les deux sources soient directement comparables.",
+  "research.metric.GWETROOT.label": "Humidité du sol en zone racinaire (GWETROOT)",
+  "research.metric.GWETROOT.description":
+    "L’indice d’humidité du sol en zone racinaire de NASA POWER, de 0 (sec) à 1 (saturé).",
+
+  // ---- Education workspace (v107)
+  "edu.role.admin_owner": "Enseignant/Administrateur",
+  "edu.role.operational_user": "Enseignant",
+  "edu.role.scoped_field_user": "Accès limité",
+  "edu.role.viewer_external": "Invité (lecture seule)",
+  "edu.aiPanel.title": "Pas de panneau latéral d’IA ici",
+  "edu.aiPanel.body":
+    "Les explications des données de cet espace de travail s’affichent directement dans la page, pas dans un panneau latéral.",
+  "edu.intro":
+    "Des données réelles et actuelles, expliquées au niveau scolaire que vous choisissez. Conçu pour les enseignants, en classe ; aucun compte ni donnée d’élève n’est collecté dans cet espace de travail.",
+  "edu.demoLocation": "Lieu de classe de démonstration",
+  "edu.explainFor": "Expliquer pour",
+  "edu.grade.k2": "Niveaux K–2",
+  "edu.grade.g35": "Niveaux 3–5",
+  "edu.grade.g68": "Niveaux 6–8",
+  "edu.grade.g912": "Niveaux 9–12",
+  "edu.card.temperature": "Température",
+  "edu.card.soilMoisture": "Humidité du sol",
+  "edu.talkAbout": "Parlons-en : {prompt}",
+  "edu.intro.k2.weather": "Découvrons : fait-il chaud ou froid dehors en ce moment ?",
+  "edu.intro.k2.soil":
+    "Découvrons : le sol a-t-il soif (il est sec) ou est-il plein d’eau (il est mouillé) en ce moment ?",
+  "edu.intro.g35.weather":
+    "Voici ce que de vraies données satellites nous disent sur la température de l’air à cet endroit aujourd’hui.",
+  "edu.intro.g35.soil":
+    "Voici ce que de vraies données satellites nous disent sur l’humidité du sol à cet endroit aujourd’hui.",
+  "edu.intro.g68.weather":
+    "Ceci est une mesure réelle et actuelle de la température de l’air à cet endroit, issue de données satellites de la NASA.",
+  "edu.intro.g68.soil":
+    "Ceci est une mesure réelle et actuelle de l’humidité du sol à cet endroit, issue de données satellites de la NASA.",
+  "edu.intro.g912.weather":
+    "Mesure actuelle de la température de l’air à cet endroit, issue des données satellites de NASA POWER :",
+  "edu.intro.g912.soil":
+    "Mesure actuelle de l’humidité du sol à cet endroit, issue des données satellites de NASA POWER :",
+  "edu.conf.insufficientKid":
+    "Nous n’avons pas encore assez d’informations pour le savoir — ce n’est pas grave, les scientifiques disent aussi « je ne sais pas » !",
+  "edu.conf.insufficient":
+    "Il n’y a pas assez de données récentes pour répondre avec confiance pour le moment.",
+  "edu.conf.high": "Cela repose sur plusieurs mesures récentes, nous sommes donc plutôt confiants.",
+  "edu.conf.moderate":
+    "Cela repose sur quelques mesures récentes, c’est donc une estimation raisonnable.",
+  "edu.conf.low":
+    "Cela repose sur une seule mesure récente, considérez-le donc comme une estimation approximative.",
+  "edu.conf.kid.high": "Nous l’avons vérifié plusieurs fois, alors nous en sommes presque sûrs !",
+  "edu.conf.kid.moderate":
+    "Nous l’avons vérifié deux ou trois fois, c’est donc une bonne estimation.",
+  "edu.conf.kid.low":
+    "Nous ne l’avons vérifié qu’une seule fois, ce n’est donc qu’une première estimation.",
+  "edu.followUp.k2.weather": "Que portes-tu dehors aujourd’hui ? Est-ce que cela correspond ?",
+  "edu.followUp.k2.soil":
+    "As-tu vu récemment une flaque ou de la terre sèche et craquelée près de chez toi ?",
+  "edu.followUp.g35.weather":
+    "Comment la température d’aujourd’hui se compare-t-elle à ce que tu attendrais à cette période de l’année ?",
+  "edu.followUp.g35.soil":
+    "Pourquoi les agriculteurs pourraient-ils se soucier de l’humidité ou de la sécheresse du sol ?",
+  "edu.followUp.g68.weather":
+    "Quels facteurs pourraient faire varier la température entre deux endroits proches ?",
+  "edu.followUp.g68.soil":
+    "Comment l’humidité du sol pourrait-elle influencer les plantes et les animaux qui vivent dans cette région ?",
+  "edu.followUp.g912.weather":
+    "Cette mesure ne reflète que les conditions actuelles, pas une tendance. De quelles données supplémentaires auriez-vous besoin pour identifier une tendance climatique plutôt que la météo du quotidien ?",
+  "edu.followUp.g912.soil":
+    "Les niveaux d’humidité de ce fournisseur sont l’interprétation par seuils propre à la plateforme, et non une norme agronomique citée (voir la documentation de son code source). Pourquoi cette distinction compte-t-elle lorsqu’on utilise ces données pour une décision réelle ?",
+  "edu.lesson.title": "Exemple de plan de cours",
+  "edu.lesson.intro":
+    "Un point de départ fondé sur des données réelles et actuelles. Il ne contient aucun nom ni donnée d’élève réels : adaptez-le à votre propre classe.",
+  "edu.lesson.gradeLevel": "Niveau scolaire",
+  "edu.lesson.download": "Télécharger le plan de cours",
+  "edu.lesson.accessDeniedBody":
+    "Ce rôle n’a pas l’autorisation de générer des plans de cours dans cet espace de travail.",
+  "edu.doc.title": "Exemple de plan de cours",
+  "edu.doc.subtitle": "À la découverte de notre environnement local",
+  "edu.doc.gradeLevel": "Niveau scolaire : {grade}",
+  "edu.doc.location": "Lieu utilisé : {place}",
+  "edu.doc.asOf": "Données à jour au : {when}",
+  "edu.doc.disclaimer":
+    "Ceci est un exemple de plan de cours, un point de départ généré à partir de données environnementales réelles et actuelles. Il ne contient aucune donnée ni aucun nom d’élève réels : adaptez-le à votre propre classe.",
+  "edu.doc.objective": "Objectif",
+  "edu.doc.objective.k2":
+    "Les élèves observeront et décriront la météo et l’état du sol réels en un lieu réel de la Terre.",
+  "edu.doc.objective.g35":
+    "Les élèves interpréteront des données environnementales réelles et les relieront à des conditions observables.",
+  "edu.doc.objective.g68":
+    "Les élèves analyseront des données environnementales réelles, y compris leur niveau de confiance, et discuteront des facteurs qui les influencent.",
+  "edu.doc.objective.g912":
+    "Les élèves évalueront de façon critique un jeu de données environnementales réelles, y compris son niveau de confiance annoncé et ses limites connues, et détermineront quelles données supplémentaires seraient nécessaires pour une analyse plus approfondie.",
+  "edu.doc.materials": "Matériel",
+  "edu.doc.materials.app": "- Espace de travail {workspace} de World Vitality ({explain} / {map})",
+  "edu.doc.materials.discussion": "- Un espace de discussion en classe",
+  "edu.doc.procedure": "Déroulement",
+  "edu.doc.step.open": "Ouvrez la page « {explain} » et sélectionnez ce niveau.",
+  "edu.doc.step.weather": "Examinez ensemble la mesure de la température : « {sentence} »",
+  "edu.doc.step.soil": "Examinez ensemble la mesure de l’humidité du sol : « {sentence} »",
+  "edu.doc.discuss": "Discutez : {prompt}",
+  "edu.doc.step.map": "Ouvrez la page « {map} » et explorez visuellement le même lieu.",
+  "edu.doc.step.confidence":
+    "Demandez aux élèves de noter le niveau de confiance indiqué pour chaque mesure et de discuter de ce qui l’augmenterait ou le diminuerait.",
+  "edu.doc.step.surprise":
+    "Demandez aux élèves de partager une chose qui les a surpris dans les données.",
+  "edu.doc.notes": "Notes pour l’enseignant",
+  "edu.doc.notes.body":
+    "Toutes les données affichées sont réelles et actuelles, issues des données satellites de NASA POWER (voir la documentation de provenance des données de cette plateforme). Il s’agit d’un seul lieu de démonstration, pas nécessairement celui de votre propre classe. Cet outil ne collecte ni ne conserve aucune donnée d’élève.",
+
+  // ---- Disaster Monitoring workspace (v107)
+  "dm.aiPanel.title": "Pas d’interprétation de l’IA ici, volontairement",
+  "dm.aiPanel.body":
+    "Les alertes sont affichées exactement telles que les émet le Service météorologique national des États-Unis (NWS), sans être résumées, notées ni réinterprétées par cette application.",
+  "dm.aiPanel.ethics":
+    "Cet espace de travail porte le poids éthique le plus élevé de la plateforme (Constitution, sections 7 et 9, tolérance zéro). Suivez toujours les consignes des autorités locales.",
+  "dm.place": "Los Angeles, Californie",
+  "dm.notSubstitute":
+    "Ceci ne remplace pas les consignes officielles : suivez toujours les instructions des autorités locales.",
+  "dm.caveat.original": "Texte original de la source (en anglais) :",
+  "dm.alerts.subtitle":
+    "{place} · Source : Service météorologique national des États-Unis (weather.gov) · États-Unis et territoires uniquement",
+  "dm.alerts.failedTitle": "Impossible de joindre le Service météorologique national",
+  "dm.alerts.failedBody":
+    "Les alertes n’ont pas pu être récupérées pour le moment. Consultez directement weather.gov pour obtenir des informations officielles.",
+  "dm.alerts.noneTitle": "Aucune alerte active",
+  "dm.alerts.noneBody":
+    "Aucune alerte du Service météorologique national n’est actuellement active pour {place}.",
+  "dm.floods.title": "Sites touchés par des inondations",
+  "dm.floods.subtitle": "{state} · Source : API d’impact des inondations en temps réel de l’USGS",
+  "dm.floods.notice":
+    "Ces informations sont préliminaires ou provisoires et n’ont pas reçu l’approbation finale de l’USGS. Elles ne doivent pas servir à prendre des décisions concernant la sécurité personnelle ou publique.",
+  "dm.floods.failedTitle": "Impossible de joindre l’API d’impact des inondations de l’USGS",
+  "dm.floods.failedBody":
+    "Les données sur les inondations n’ont pas pu être récupérées pour le moment. Consultez directement waterdata.usgs.gov.",
+  "dm.floods.noneTitle": "Aucun site touché par des inondations n’est actuellement actif",
+  "dm.floods.noneBody":
+    "Aucun site de référence de l’USGS actuellement inondé n’est signalé en {state}.",
+  "dm.shelters.title": "Abris désignés à proximité",
+  "dm.shelters.subtitle":
+    "À moins de 25 miles (environ 40 km) de {place} · Source : FEMA / Croix-Rouge américaine (HIFLD)",
+  "dm.shelters.caveat":
+    "Cette couche ne doit pas servir à déterminer l’état de fonctionnement d’une installation pendant une urgence en cours. — FEMA/HIFLD",
+  "dm.shelters.failedTitle": "Impossible de joindre le service des installations d’abri",
+  "dm.shelters.failedBody":
+    "Les données sur les abris n’ont pas pu être récupérées pour le moment.",
+  "dm.shelters.noneTitle": "Aucun abri désigné trouvé dans le rayon",
+  "dm.shelters.capacity": "Capacité d’évacuation (désignée) : {count}",
+  "dm.fires.title": "Détections d’incendies actifs",
+  "dm.fires.subtitle":
+    "À ~1° de {place} · Source : NASA FIRMS (satellite VIIRS), dernières 24 heures",
+  "dm.fires.caveat":
+    "Il s’agit d’anomalies thermiques détectées par satellite (température de surface élevée), et non d’incendies de forêt confirmés. Les brûlages agricoles et d’autres sources de chaleur peuvent aussi apparaître ici. — NASA FIRMS",
+  "dm.fires.notConfiguredTitle": "Données de détection d’incendies non configurées",
+  "dm.fires.notConfiguredBody":
+    "Définissez NASA_FIRMS_MAP_KEY dans les variables d’environnement de cette application pour activer cette section.",
+  "dm.fires.failedTitle": "Impossible de joindre NASA FIRMS",
+  "dm.fires.failedBody":
+    "Les données de détection d’incendies n’ont pas pu être récupérées pour le moment.",
+  "dm.fires.noneTitle": "Aucune détection d’incendie dans le rayon",
+  "dm.fires.noneBody":
+    "Aucune anomalie thermique détectée par satellite près de {place} au cours des dernières 24 heures.",
+  "dm.fires.lineDay": "Confiance : {confidence} · Détection de jour · Satellite : {satellite}",
+  "dm.fires.lineNight": "Confiance : {confidence} · Détection de nuit · Satellite : {satellite}",
+  "dm.fires.unknown": "non précisé",
+  "dm.fires.detected": "Détecté le {when} UTC",
+  "dm.fires.frp": "Puissance radiative du feu : {value} MW",
+  "dm.fire.day": "Jour",
+  "dm.fire.night": "Nuit",
+  "dm.map.kind.flood": "Site touché par une inondation",
+  "dm.map.kind.shelter": "Abri désigné",
+  "dm.map.kind.fire": "Détection d’incendie",
+  "dm.map.layer.flood": "Sites touchés par des inondations ({count})",
+  "dm.map.layer.shelter": "Abris désignés ({count})",
+  "dm.map.layer.fire": "Détections d’incendies ({count})",
+  "dm.map.popup": "{name} — {kind}",
+  "dm.map.desc.none": "Aucune donnée d’inondation, d’abri ou d’incendie à afficher sur la carte.",
+  "dm.map.desc.allHidden": "Toutes les couches de dangers sont actuellement masquées.",
+  "dm.map.desc.showing":
+    "{count, plural, one {Carte affichant # site : {items}.} other {Carte affichant # sites : {items}.}}",
+  "dm.map.item.flood":
+    "{count, plural, one {# site touché par une inondation} other {# sites touchés par des inondations}}",
+  "dm.map.item.shelter": "{count, plural, one {# abri désigné} other {# abris désignés}}",
+  "dm.map.item.fire":
+    "{count, plural, one {# détection d’incendie} other {# détections d’incendies}}",
+  "dm.map.fallback.flood": "Site actuellement inondé, selon la dernière vérification de l’USGS.",
+  "dm.map.fallback.shelter": "Installation d’abri désignée (lieu de référence uniquement).",
+  "dm.map.fireName": "Détection d’incendie (confiance : {confidence})",
+  "dm.map.fireSummary":
+    "Anomalie thermique, {satellite}, {date} ({dayNight}). Ce n’est pas un incendie de forêt confirmé.",
 };

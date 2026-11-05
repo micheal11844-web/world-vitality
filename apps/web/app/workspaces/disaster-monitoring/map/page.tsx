@@ -4,6 +4,7 @@ import { fetchActiveFireDetections } from "../../../../lib/nasa-firms";
 import { WorkspaceShell } from "../workspace-shell";
 import { MapView, type HazardMarker } from "./MapView";
 import { logSecurity } from "../../../../lib/logger";
+import { getTranslator } from "../../../../lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,7 @@ const DEMO_LOCATION = { latitude: 34.0522, longitude: -118.2437, stateCode: "CA"
  * at all, same as every other page in this workspace.
  */
 export default async function DisasterMonitoringMapPage() {
+  const { t } = await getTranslator();
   let floods: Awaited<ReturnType<typeof fetchFloodingLocations>> = [];
   try {
     floods = await fetchFloodingLocations(DEMO_LOCATION.stateCode);
@@ -85,7 +87,9 @@ export default async function DisasterMonitoringMapPage() {
         name: f.name,
         latitude: f.latitude as number,
         longitude: f.longitude as number,
-        summary: f.description ?? "Currently-flooding location, per USGS's last check.",
+        nameIsSourceText: true,
+        summary: f.description ?? t("dm.map.fallback.flood"),
+        summaryIsSourceText: f.description !== null && f.description !== "",
       })),
     ...shelters.map((s) => ({
       id: `shelter-${s.id}`,
@@ -93,15 +97,21 @@ export default async function DisasterMonitoringMapPage() {
       name: s.name,
       latitude: s.latitude,
       longitude: s.longitude,
-      summary: s.address ?? "Designated shelter facility (reference location only).",
+      nameIsSourceText: true,
+      summary: s.address ?? t("dm.map.fallback.shelter"),
+      summaryIsSourceText: s.address !== null && s.address !== "",
     })),
     ...fires.map((f, i) => ({
       id: `fire-${i}`,
       kind: "fire" as const,
-      name: `Fire detection (${f.confidence} confidence)`,
+      name: t("dm.map.fireName", { confidence: f.confidence }),
       latitude: f.latitude,
       longitude: f.longitude,
-      summary: `Thermal anomaly, ${f.satellite}, ${f.acquiredDate} (${f.dayNight}). Not a confirmed wildfire.`,
+      summary: t("dm.map.fireSummary", {
+        satellite: f.satellite,
+        date: f.acquiredDate,
+        dayNight: t(f.dayNight === "N" ? "dm.fire.night" : "dm.fire.day"),
+      }),
     })),
   ];
 

@@ -11,6 +11,8 @@ import {
   type FireDetection,
 } from "../../../lib/nasa-firms";
 import { Card, Text, StateDisplay } from "@world-vitality/ui-components";
+import { createTranslator, type MessageKey, type Translate } from "@world-vitality/i18n";
+import { getTranslator } from "../../../lib/i18n/server";
 import { WorkspaceShell } from "./workspace-shell";
 import { logTelemetry, logSecurity } from "../../../lib/logger";
 
@@ -24,9 +26,70 @@ export const dynamic = "force-dynamic";
 const DEMO_LOCATION = {
   latitude: 34.0522,
   longitude: -118.2437,
-  label: "Los Angeles, CA",
   stateCode: "CA",
 };
+
+/**
+ * An alert's own time, in UTC and labelled as such. (The page used to print
+ * it in whatever zone the server runs in, with no zone shown.) A time that
+ * does not parse is shown as it came, never as an error.
+ */
+function alertTime(iso: string): string {
+  const when = new Date(iso);
+  if (Number.isNaN(when.getTime())) return iso || "—";
+  return `${when.toLocaleString("en-US", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" })} UTC`;
+}
+
+/**
+ * A safety statement from a data source. In English it is the source's own
+ * wording. In another language it is shown translated so it can be understood,
+ * with the source's original English underneath exactly as issued — the
+ * translation never replaces it.
+ */
+function SourceCaveat({
+  original,
+  translatedKey,
+  t,
+  locale,
+  bold = false,
+}: {
+  original: string;
+  translatedKey: MessageKey;
+  t: Translate;
+  locale: string;
+  bold?: boolean;
+}) {
+  const style = {
+    display: "block",
+    color: "var(--wv-text-secondary)",
+    ...(bold ? { fontWeight: 600 } : {}),
+  } as const;
+  if (locale === "en") {
+    return (
+      <Text variant="caption" style={{ ...style, marginBottom: "var(--wv-space-lg)" }}>
+        {original}
+      </Text>
+    );
+  }
+  return (
+    <div style={{ marginBottom: "var(--wv-space-lg)" }}>
+      <Text variant="caption" style={style}>
+        {t(translatedKey)}
+      </Text>
+      <Text
+        variant="caption"
+        style={{ ...style, fontWeight: 400, marginTop: "var(--wv-space-xs)" }}
+      >
+        {t("dm.caveat.original")}
+      </Text>
+      <div lang="en" dir="ltr">
+        <Text variant="caption" style={{ ...style, fontWeight: 400 }}>
+          {original}
+        </Text>
+      </div>
+    </div>
+  );
+}
 
 const SEVERITY_ORDER: Record<string, number> = {
   Extreme: 0,
@@ -82,6 +145,11 @@ const SEVERITY_ORDER: Record<string, number> = {
  */
 export default async function DisasterMonitoringWorkspaceHome() {
   logTelemetry.event("workspace_viewed", { workspace: "disaster-monitoring" });
+  const { t, locale } = await getTranslator();
+  const place = t("dm.place");
+  // Official text from the agencies is shown exactly as issued, in English.
+  const english = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
+  const originalNotice = createTranslator("en").t("dm.floods.notice");
 
   let alerts: NwsAlert[] = [];
   let alertsFailed = false;
@@ -135,14 +203,13 @@ export default async function DisasterMonitoringWorkspaceHome() {
   return (
     <WorkspaceShell activeKey="home">
       <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-        Active Alerts
+        {t("nav.activeAlerts")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
       >
-        {DEMO_LOCATION.label} · Source: National Weather Service (weather.gov) · U.S. and
-        territories only
+        {t("dm.alerts.subtitle", { place })}
       </Text>
       <Text
         variant="caption"
@@ -152,16 +219,15 @@ export default async function DisasterMonitoringWorkspaceHome() {
           color: "var(--wv-text-secondary)",
         }}
       >
-        This is not a substitute for official guidance — always follow instructions from local
-        authorities.
+        {t("dm.notSubstitute")}
       </Text>
 
       {alertsFailed && (
         <Card>
           <StateDisplay
             status="error"
-            title="Couldn't reach the National Weather Service"
-            description="Alerts couldn't be fetched right now. Please check weather.gov directly for official information."
+            title={t("dm.alerts.failedTitle")}
+            description={t("dm.alerts.failedBody")}
           />
         </Card>
       )}
@@ -170,8 +236,8 @@ export default async function DisasterMonitoringWorkspaceHome() {
         <Card>
           <StateDisplay
             status="success"
-            title="No active alerts"
-            description={`No National Weather Service alerts are currently active for ${DEMO_LOCATION.label}.`}
+            title={t("dm.alerts.noneTitle")}
+            description={t("dm.alerts.noneBody", { place })}
           />
         </Card>
       )}
@@ -180,39 +246,41 @@ export default async function DisasterMonitoringWorkspaceHome() {
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" }}>
           {alerts.map((alert) => (
             <Card key={alert.id}>
-              <Text variant="caption">
-                {alert.severity.toUpperCase()} · {alert.urgency} · {alert.certainty}
-              </Text>
-              <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
-                {alert.headline || alert.event}
-              </Text>
-              <Text variant="body" style={{ whiteSpace: "pre-wrap" }}>
-                {alert.description}
-              </Text>
-              {alert.instruction && (
+              {/* The whole alert is the issuing agency's own text; it is not translated. */}
+              <div {...english}>
+                <Text variant="caption">
+                  {alert.severity.toUpperCase()} · {alert.urgency} · {alert.certainty}
+                </Text>
+                <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
+                  {alert.headline || alert.event}
+                </Text>
+                <Text variant="body" style={{ whiteSpace: "pre-wrap" }}>
+                  {alert.description}
+                </Text>
+                {alert.instruction && (
+                  <Text
+                    variant="body"
+                    style={{
+                      marginTop: "var(--wv-space-sm)",
+                      fontWeight: 600,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {alert.instruction}
+                  </Text>
+                )}
                 <Text
-                  variant="body"
+                  variant="caption"
                   style={{
+                    display: "block",
                     marginTop: "var(--wv-space-sm)",
-                    fontWeight: 600,
-                    whiteSpace: "pre-wrap",
+                    color: "var(--wv-text-secondary)",
                   }}
                 >
-                  {alert.instruction}
+                  {alert.areaDesc} · Issued by {alert.senderName} · Effective{" "}
+                  {alertTime(alert.effective)} · Expires {alertTime(alert.expires)}
                 </Text>
-              )}
-              <Text
-                variant="caption"
-                style={{
-                  display: "block",
-                  marginTop: "var(--wv-space-sm)",
-                  color: "var(--wv-text-secondary)",
-                }}
-              >
-                {alert.areaDesc} · Issued by {alert.senderName} · Effective{" "}
-                {new Date(alert.effective).toLocaleString()} · Expires{" "}
-                {new Date(alert.expires).toLocaleString()}
-              </Text>
+              </div>
             </Card>
           ))}
         </div>
@@ -223,32 +291,27 @@ export default async function DisasterMonitoringWorkspaceHome() {
         as="h2"
         style={{ margin: "var(--wv-space-xl) 0 var(--wv-space-xs)" }}
       >
-        Flood Impact Locations
+        {t("dm.floods.title")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
       >
-        {DEMO_LOCATION.stateCode} · Source: USGS Real-Time Flood Impact API
+        {t("dm.floods.subtitle", { state: DEMO_LOCATION.stateCode })}
       </Text>
-      <Text
-        variant="caption"
-        style={{
-          display: "block",
-          marginBottom: "var(--wv-space-lg)",
-          color: "var(--wv-text-secondary)",
-        }}
-      >
-        This information is preliminary/provisional and has not received final USGS approval. Not to
-        be used for decisions concerning personal or public safety.
-      </Text>
+      <SourceCaveat
+        original={originalNotice}
+        translatedKey="dm.floods.notice"
+        t={t}
+        locale={locale}
+      />
 
       {floodsFailed && (
         <Card>
           <StateDisplay
             status="error"
-            title="Couldn't reach the USGS Flood Impact API"
-            description="Flood data couldn't be fetched right now. Please check waterdata.usgs.gov directly."
+            title={t("dm.floods.failedTitle")}
+            description={t("dm.floods.failedBody")}
           />
         </Card>
       )}
@@ -256,8 +319,8 @@ export default async function DisasterMonitoringWorkspaceHome() {
         <Card>
           <StateDisplay
             status="success"
-            title="No flood impact locations currently active"
-            description={`No currently-flooding USGS reference locations reported in ${DEMO_LOCATION.stateCode}.`}
+            title={t("dm.floods.noneTitle")}
+            description={t("dm.floods.noneBody", { state: DEMO_LOCATION.stateCode })}
           />
         </Card>
       )}
@@ -265,10 +328,12 @@ export default async function DisasterMonitoringWorkspaceHome() {
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
           {floods.map((location) => (
             <Card key={location.id}>
-              <Text variant="sectionTitle" as="p">
-                {location.name}
-              </Text>
-              {location.description && <Text variant="body">{location.description}</Text>}
+              <div {...english}>
+                <Text variant="sectionTitle" as="p">
+                  {location.name}
+                </Text>
+                {location.description && <Text variant="body">{location.description}</Text>}
+              </div>
             </Card>
           ))}
         </div>
@@ -279,51 +344,49 @@ export default async function DisasterMonitoringWorkspaceHome() {
         as="h2"
         style={{ margin: "var(--wv-space-xl) 0 var(--wv-space-xs)" }}
       >
-        Nearby Designated Shelters
+        {t("dm.shelters.title")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
       >
-        Within 25 miles of {DEMO_LOCATION.label} · Source: FEMA / American Red Cross (HIFLD)
+        {t("dm.shelters.subtitle", { place })}
       </Text>
-      <Text
-        variant="caption"
-        style={{
-          display: "block",
-          marginBottom: "var(--wv-space-lg)",
-          color: "var(--wv-text-secondary)",
-          fontWeight: 600,
-        }}
-      >
-        {SHELTER_STATUS_CAVEAT}
-      </Text>
+      <SourceCaveat
+        original={SHELTER_STATUS_CAVEAT}
+        translatedKey="dm.shelters.caveat"
+        t={t}
+        locale={locale}
+        bold
+      />
 
       {sheltersFailed && (
         <Card>
           <StateDisplay
             status="error"
-            title="Couldn't reach the shelter facilities service"
-            description="Shelter data couldn't be fetched right now."
+            title={t("dm.shelters.failedTitle")}
+            description={t("dm.shelters.failedBody")}
           />
         </Card>
       )}
       {!sheltersFailed && shelters.length === 0 && (
         <Card>
-          <StateDisplay status="empty" title="No designated shelters found within range" />
+          <StateDisplay status="empty" title={t("dm.shelters.noneTitle")} />
         </Card>
       )}
       {!sheltersFailed && shelters.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
           {shelters.map((shelter) => (
             <Card key={shelter.id}>
-              <Text variant="sectionTitle" as="p">
-                {shelter.name}
-              </Text>
-              {shelter.address && <Text variant="body">{shelter.address}</Text>}
+              <div {...english}>
+                <Text variant="sectionTitle" as="p">
+                  {shelter.name}
+                </Text>
+                {shelter.address && <Text variant="body">{shelter.address}</Text>}
+              </div>
               {shelter.evacuationCapacity !== null && (
                 <Text variant="caption">
-                  Evacuation capacity (designated): {shelter.evacuationCapacity}
+                  {t("dm.shelters.capacity", { count: shelter.evacuationCapacity })}
                 </Text>
               )}
             </Card>
@@ -336,31 +399,27 @@ export default async function DisasterMonitoringWorkspaceHome() {
         as="h2"
         style={{ margin: "var(--wv-space-xl) 0 var(--wv-space-xs)" }}
       >
-        Active Fire Detections
+        {t("dm.fires.title")}
       </Text>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
       >
-        Within ~1° of {DEMO_LOCATION.label} · Source: NASA FIRMS (VIIRS satellite), last 24 hours
+        {t("dm.fires.subtitle", { place })}
       </Text>
-      <Text
-        variant="caption"
-        style={{
-          display: "block",
-          marginBottom: "var(--wv-space-lg)",
-          color: "var(--wv-text-secondary)",
-        }}
-      >
-        {FIRE_DETECTION_CAVEAT}
-      </Text>
+      <SourceCaveat
+        original={FIRE_DETECTION_CAVEAT}
+        translatedKey="dm.fires.caveat"
+        t={t}
+        locale={locale}
+      />
 
       {fireDetectionsNotConfigured && (
         <Card>
           <StateDisplay
             status="empty"
-            title="Fire detection data not configured"
-            description="Set NASA_FIRMS_MAP_KEY in this app's environment variables to enable this section."
+            title={t("dm.fires.notConfiguredTitle")}
+            description={t("dm.fires.notConfiguredBody")}
           />
         </Card>
       )}
@@ -368,8 +427,8 @@ export default async function DisasterMonitoringWorkspaceHome() {
         <Card>
           <StateDisplay
             status="error"
-            title="Couldn't reach NASA FIRMS"
-            description="Fire detection data couldn't be fetched right now."
+            title={t("dm.fires.failedTitle")}
+            description={t("dm.fires.failedBody")}
           />
         </Card>
       )}
@@ -377,8 +436,8 @@ export default async function DisasterMonitoringWorkspaceHome() {
         <Card>
           <StateDisplay
             status="success"
-            title="No fire detections in range"
-            description={`No satellite thermal anomalies detected near ${DEMO_LOCATION.label} in the last 24 hours.`}
+            title={t("dm.fires.noneTitle")}
+            description={t("dm.fires.noneBody", { place })}
           />
         </Card>
       )}
@@ -387,19 +446,24 @@ export default async function DisasterMonitoringWorkspaceHome() {
           {fireDetections.map((detection, i) => (
             <Card key={`${detection.latitude},${detection.longitude},${i}`}>
               <Text variant="sectionTitle" as="p">
-                {detection.latitude.toFixed(4)}, {detection.longitude.toFixed(4)}
+                <bdi>
+                  {detection.latitude.toFixed(4)}, {detection.longitude.toFixed(4)}
+                </bdi>
               </Text>
               <Text variant="caption">
-                Confidence: {detection.confidence || "unknown"} ·{" "}
-                {detection.dayNight === "N" ? "Night" : "Day"} detection · Satellite:{" "}
-                {detection.satellite || "unknown"}
+                {t(detection.dayNight === "N" ? "dm.fires.lineNight" : "dm.fires.lineDay", {
+                  confidence: detection.confidence || t("dm.fires.unknown"),
+                  satellite: detection.satellite || t("dm.fires.unknown"),
+                })}
               </Text>
               <Text
                 variant="caption"
                 style={{ display: "block", color: "var(--wv-text-secondary)" }}
               >
-                Detected {detection.acquiredDate} {detection.acquiredTime} UTC
-                {detection.frp !== null ? ` · Fire Radiative Power: ${detection.frp} MW` : ""}
+                {t("dm.fires.detected", {
+                  when: `${detection.acquiredDate} ${detection.acquiredTime}`,
+                })}
+                {detection.frp !== null ? ` · ${t("dm.fires.frp", { value: detection.frp })}` : ""}
               </Text>
             </Card>
           ))}

@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
+import { useI18n } from "../../../lib/i18n/i18n-provider";
 import { AppBrand } from "../../app-brand";
 import { buildAppSidebar } from "../workspace-nav";
 
@@ -32,7 +33,8 @@ export interface WorkspaceShellProps {
  */
 export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
-  const sidebar = buildAppSidebar({ workspaceKey: "disaster-monitoring", subKey: activeKey });
+  const { t } = useI18n();
+  const sidebar = buildAppSidebar({ workspaceKey: "disaster-monitoring", subKey: activeKey, t });
 
   return (
     <AppShell
@@ -45,12 +47,11 @@ export function WorkspaceShell({ activeKey, children }: WorkspaceShellProps) {
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
           <StateDisplay
             status="empty"
-            title="No AI interpretation here, by design"
-            description="Alerts are shown exactly as issued by the National Weather Service — not summarized, scored, or reinterpreted by this app."
+            title={t("dm.aiPanel.title")}
+            description={t("dm.aiPanel.body")}
           />
           <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            This workspace carries the platform's highest ethical weight (Constitution Section 7 and
-            9, zero tolerance). Always follow guidance from local authorities.
+            {t("dm.aiPanel.ethics")}
           </Text>
         </div>
       }

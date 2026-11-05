@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { MessageKey } from "@world-vitality/i18n";
 import { maplibregl } from "../../../../lib/maps/maplibre";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 
 export type HazardKind = "flood" | "shelter" | "fire";
 
@@ -12,6 +14,10 @@ export interface HazardMarker {
   latitude: number;
   longitude: number;
   summary: string;
+  /** `true` when `name` / `summary` are the data source's own (English) text
+   *  rather than wording written by this app, so they can be marked as such. */
+  nameIsSourceText?: boolean;
+  summaryIsSourceText?: boolean;
 }
 
 export interface MapViewProps {
@@ -30,16 +36,24 @@ const KIND_COLOR: Record<HazardKind, string> = {
   fire: "#c2410c",
 };
 
-const KIND_LABEL: Record<HazardKind, string> = {
-  flood: "Flood impact location",
-  shelter: "Designated shelter",
-  fire: "Fire detection",
+const KIND_LABEL: Record<HazardKind, MessageKey> = {
+  flood: "dm.map.kind.flood",
+  shelter: "dm.map.kind.shelter",
+  fire: "dm.map.kind.fire",
 };
 
-const KIND_LABEL_PLURAL: Record<HazardKind, string> = {
-  flood: "flood impact locations",
-  shelter: "designated shelters",
-  fire: "fire detections",
+/** "Flood impact locations (3)" — the layer's checkbox label. */
+const KIND_LAYER: Record<HazardKind, MessageKey> = {
+  flood: "dm.map.layer.flood",
+  shelter: "dm.map.layer.shelter",
+  fire: "dm.map.layer.fire",
+};
+
+/** "3 flood impact locations" — for the spoken description of the map. */
+const KIND_ITEM: Record<HazardKind, MessageKey> = {
+  flood: "dm.map.item.flood",
+  shelter: "dm.map.item.shelter",
+  fire: "dm.map.item.fire",
 };
 
 /**
@@ -62,6 +76,8 @@ const KIND_LABEL_PLURAL: Record<HazardKind, string> = {
  * viewport to every visible marker's bounds on load.
  */
 export function MapView({ markers }: MapViewProps) {
+  const { t, locale } = useI18n();
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRefs = useRef<maplibregl.Marker[]>([]);
@@ -122,7 +138,7 @@ export function MapView({ markers }: MapViewProps) {
       if (!visibleKinds[hazard.kind]) continue;
 
       const popup = new maplibregl.Popup({ offset: 24, closeButton: false }).setText(
-        `${hazard.name} — ${KIND_LABEL[hazard.kind]}`,
+        t("dm.map.popup", { name: hazard.name, kind: t(KIND_LABEL[hazard.kind]) }),
       );
 
       const marker = new maplibregl.Marker({ color: KIND_COLOR[hazard.kind] })
@@ -133,7 +149,7 @@ export function MapView({ markers }: MapViewProps) {
       marker.getElement().addEventListener("click", () => setSelectedMarkerId(hazard.id));
       markerRefs.current.push(marker);
     }
-  }, [visibleKinds, markers]);
+  }, [visibleKinds, markers, t]);
 
   const selectedMarker = markers.find((m) => m.id === selectedMarkerId);
   const visibleMarkers = markers.filter((m) => visibleKinds[m.kind]);
@@ -142,15 +158,16 @@ export function MapView({ markers }: MapViewProps) {
 
   const description =
     markers.length === 0
-      ? "No flood, shelter, or fire data to show on the map."
+      ? t("dm.map.desc.none")
       : visibleMarkers.length === 0
-        ? "All hazard layers are currently hidden."
-        : `Map showing ${visibleMarkers.length} location${visibleMarkers.length === 1 ? "" : "s"}: ${(
-            ["flood", "shelter", "fire"] as const
-          )
-            .filter((k) => visibleKinds[k] && counts[k] > 0)
-            .map((k) => `${counts[k]} ${KIND_LABEL_PLURAL[k]}`)
-            .join(", ")}.`;
+        ? t("dm.map.desc.allHidden")
+        : t("dm.map.desc.showing", {
+            count: visibleMarkers.length,
+            items: (["flood", "shelter", "fire"] as const)
+              .filter((k) => visibleKinds[k] && counts[k] > 0)
+              .map((k) => t(KIND_ITEM[k], { count: counts[k] }))
+              .join(t("common.listSeparator")),
+          });
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
@@ -206,7 +223,7 @@ export function MapView({ markers }: MapViewProps) {
                 backgroundColor: KIND_COLOR[kind],
               }}
             />
-            {KIND_LABEL[kind]}s ({counts[kind]})
+            {t(KIND_LAYER[kind], { count: counts[kind] })}
           </label>
         ))}
       </div>
@@ -226,8 +243,13 @@ export function MapView({ markers }: MapViewProps) {
             maxWidth: "24rem",
           }}
         >
-          <strong>{selectedMarker.name}</strong>
-          <div style={{ color: "var(--wv-text-secondary)", marginTop: "0.25rem" }}>
+          <strong {...(selectedMarker.nameIsSourceText ? englishOnly : {})}>
+            {selectedMarker.name}
+          </strong>
+          <div
+            {...(selectedMarker.summaryIsSourceText ? englishOnly : {})}
+            style={{ color: "var(--wv-text-secondary)", marginTop: "0.25rem" }}
+          >
             {selectedMarker.summary}
           </div>
         </div>
