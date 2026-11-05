@@ -10,39 +10,41 @@ use the dashboard's search box or Paystack's help centre
 
 ## What you need first
 
-- A Paystack login. **If you already have one for another project, use it —
-  there is nothing to sign up for.** Read "You already use Paystack for
-  another project" below before touching any settings, because one setting is
-  shared and changing it would affect that project.
+- A Paystack login — **the one you already have for your other project;
+  there is nothing to sign up for.** Read "Give World Vitality its own
+  business" below before touching any settings, because one setting is shared
+  and changing it would affect that project.
+- The older Paystack dashboard that Paystack support gave you, the one that
+  has the **Add a Business** button. (Where that button sits in that
+  dashboard I have not seen; Paystack's help pages put it at the arrow beside
+  your business name, top left, so look there first.)
 - The Vercel project `world-vitality` (team `micheal6`).
 - The prices in `billing.md` ("The prices").
 
-## You already use Paystack for another project
+## Give World Vitality its own business (Add a Business)
 
-Your existing project's payments are live and working, so the aim is to
-add this app **without touching anything it relies on**. The one thing that
-is shared is easy to trip over: **a Paystack business has a single webhook
-URL** (one for test mode, one for live mode). It currently points at your
-other project. If World Vitality used the same business, there would be
-nowhere to send its payment events without redirecting the other project's.
-
-**Recommended: give World Vitality its own business under the same login.**
-Paystack lets one login manage several businesses, and each keeps its own
-API keys, webhook URL, plans, subscriptions, customers, settlement details
-and activation status (source:
+Your existing project's payments are live and working, so the aim is to add
+this app **without touching anything it relies on**. The one thing that is
+shared is easy to trip over: **a Paystack business has a single webhook URL**
+(one for test mode, one for live mode), and yours already points at your other
+project. So World Vitality gets **its own business under the same login**.
+Each business keeps its own API keys, webhook URL, plans, subscriptions,
+customers, settlement details and activation status (source:
 <https://support.paystack.com/en/articles/10643330>). Nothing in your
 existing business changes, and the two projects' payments never mix.
 
-1. Paystack Dashboard → click the arrow next to your business name and
+1. In the older dashboard, click the arrow next to your business name and
    Business ID (top left) → **Add a Business**.
 2. Choose **Duplicate an existing business** (it copies your compliance
    details, which saves re-entering documents; the source must be in the same
-   country) or **Create a new business**.
+   country) or **Create a new business**. If the wording is different on your
+   screen, the two choices are still "copy my existing one" and "start a
+   fresh one".
 3. Enter the trading name (for example _World Vitality_), review, and
-   **Create Business**. You are switched into it; check the name at the top
-   left before every step below, because every key, plan and webhook setting
-   in this guide must be made **inside the World Vitality business**, not
-   your existing one.
+   **Create Business**. You are switched into it. **Read the name at the top
+   left before every step below**, because every key, plan and webhook
+   setting in this guide must be made **inside the World Vitality business**,
+   not your existing one.
 4. Test mode works in the new business **straight away** — do steps 1–5
    below now. For **live** payments the new business must be reviewed and
    activated by Paystack (even when duplicated), and you add payout details
@@ -52,108 +54,41 @@ existing business changes, and the two projects' payments never mix.
 (Payout can go to the same bank account as your other business, if you want
 the money in one place; that is a setting inside the new business.)
 
-### What Paystack's chat bot said (2 November 2026)
+**Why not share one business.** The webhook receives every event of the
+business. If World Vitality used your existing one, your other project would
+start receiving World Vitality's subscription and payment events (with
+customer emails) and could mistake them for its own. World Vitality's side is
+safe — it ignores events that are not its own (an unknown plan or customer is
+acknowledged and recorded as `ignored`, never acted on) — so the risk would be
+entirely on the other project, and the only fix would be to change that
+project. Do not reuse a secret key by copying it between businesses, and never
+paste one into chat.
 
-Asked about adding a business, Paystack's in-dashboard chat bot told the
-owner "You can't create a second business entity under the same login in
-Paystack", and pointed to Settings (Profile, Payments, Payouts, Team). That
-**contradicts Paystack's own help pages**, which describe **Add a Business**
-on the same login and say "you can use the same documents and settlement
-account information to create each of these new businesses"
-(<https://support2.paystack.com/hc/en-us/articles/360009973679-Can-I-use-the-same-payout-account-and-business-registration-document-for-multiple-businesses>).
-A bot can be wrong, or it can be reacting to something about that login. One
-possibility is the role: the owner sees **Admin** on the existing business, and
-Paystack says each business has **one Business Owner** and that Admins "can
-manage most business settings" (<https://support.paystack.com/en/articles/10643266>).
-**But Paystack support later wrote that the Business Owner also carries the
-Admin role, so the label alone does not show who the Owner is.** Support also
-said Add a Business is at the top left of the dashboard. The owner's screenshot
-(31 October) of that switcher for the business "Joelflowstack" shows only a
-search box and "No businesses found", with no Add a Business option, so the two
-do not agree and the cause is unknown from here. Two things to settle: whether
-that business is the owner's own or someone else's (its money settles to the
-Owner's payout account, which is not where World Vitality's customers' money
-should go unless that is deliberate), and why the option is missing. So, in
-order:
+### How we got here (for the record)
 
-1. Find out who the **Owner** is (Settings → Team). If it is another email that
-   is also yours, sign in with that one and use **Add a Business**.
-2. If the existing business belongs to someone else, or the Owner login is
-   not available, **sign up a new Paystack account** for World Vitality with an
-   email you control: its own keys, webhook, plans and payout account, nothing
-   shared. Live payments need that account to be activated; test mode does not
-   (confirm once you are in).
-3. If the bot is simply wrong and you are the Owner, ask support for a person
-   and quote the two help pages above.
+On 2 November 2026 Paystack's in-dashboard chat bot told the owner a second
+business could not be created under the same login, which contradicted
+Paystack's own help pages (<https://support.paystack.com/en/articles/10643330>).
+Paystack support then wrote that the Business Owner also carries the Admin
+role and that Add a Business is at the top left of the dashboard; the owner's
+31 October screenshot of the business switcher showed only a search box and
+"No businesses found". Support then supplied the **older dashboard**, which
+has the **Add a Business** button, and that is the route above. If the button
+ever goes missing again: ask Paystack support for a person (not the bot) and
+quote the article above, and meanwhile use the stop-gap below. Before adding
+anything, check that the business you are looking at is your own (Settings →
+Team shows who the Owner is): its money settles to the Owner's payout account.
 
-### If "Add a Business" is not available to you
-
-Paystack's own article says anyone who can open the business switcher can add
-a business (<https://support.paystack.com/en/articles/10643330>), and it does
-not say what hides the option, so from here I cannot tell why yours is
-missing. In order:
-
-0. **The Paystack mobile app.** Worth one look, but I could not confirm it.
-   Paystack's two help pages on adding a business
-   (<https://support.paystack.com/en/articles/10643330> and
-   <https://support2.paystack.com/hc/en-us/articles/360009973759>) describe
-   **only the web dashboard** (the arrow beside the business name, top left)
-   and never mention the app; its Merchant app page
-   (<https://support2.paystack.com/hc/en-us/articles/360016122699-Paystack-Merchant-App-Account>)
-   covers account setup and profile editing and says nothing about adding or
-   switching businesses, only that the app lets an _active_ business log in.
-   So nothing says the app is the only place. Looking costs nothing: open the
-   app, go to its profile or business screen, and look for a business switcher
-   or **Add a business**. If it is there, use it and carry on from step 2 of
-   the recommended route above; if not, go on to 1 to 4 below.
-1. **Try the article's own checks:** refresh and reopen the switcher (the
-   arrow beside the business name, top left); sign in with the email that
-   _created_ the business, not a login you were invited to as a team member;
-   use a desktop browser or a private window; read any email from Paystack
-   asking for more information. If **Duplicate** is greyed out or refuses,
-   choose **Create a new business** instead (duplicating only works from a
-   business in the same country and copies compliance documents; creating
-   asks for them again).
-2. **Ask Paystack** — in-dashboard chat or <https://support.paystack.com> —
-   "the Add a Business option is not available on my account". They can see
-   why. Send them the exact words on your screen, and send them to me too if
-   you want help reading it.
-3. **A second, separate Paystack account under a different email.** This
-   works the same way (own keys, webhook, plans) but I could not confirm from
-   Paystack's pages what they require when two accounts share a legal entity
-   or payout account — ask support before relying on it.
-4. **Test mode only, inside your existing business — a stop-gap, not the
-   plan.** A business has a separate _Test_ webhook URL and _Live_ webhook
-   URL. If the **Test Webhook URL** in your existing business is **empty**
-   (look, do not change anything yet), World Vitality can use that business's
-   _test_ keys and test webhook for the whole test-payment phase without
-   touching your live project at all; test plans and test payments are
-   separate from live ones. Stop if that field already holds an address: your
-   other project (or its staging site) is using it. Two cautions: enabling
-   Google Pay or any other channel in Settings → Preferences changes
-   checkout for **both** projects in a shared business; and this does not get
-   you to live payments — going live still needs World Vitality's own
-   business (or a shared live webhook, below).
-
-**If you would rather stay on one business**, the cost is the shared webhook:
-you would have to keep one URL and make one project forward the other's
-events (or put a forwarding service in front of both). That means changing
-your working project, so this guide does not recommend it. For what it is
-worth, World Vitality ignores events that are not its own — an unknown plan
-or unknown customer is acknowledged and recorded as `ignored`, never acted
-on — so forwarding the other project's events _to_ it would be harmless; the
-risk is on the other side.
-
-**Why a shared _live_ business is the one thing to avoid.** The webhook
-receives every event of the business. Your other project would start
-receiving World Vitality's subscription and payment events (with customer
-emails) at its own webhook and could mistake them for its own — that is the
-way this app could affect it. World Vitality's side is safe (it ignores
-events that are not its own), so the risk is entirely on the other project.
-
-**Either way:** do not reuse a secret key by copying it between projects
-unless both genuinely use the same business (a test key in the stop-gap above
-is the one reasonable exception), and never paste one into chat.
+**Stop-gap only — test mode inside your existing business.** A business has
+a separate _Test_ webhook URL and _Live_ webhook URL. If the **Test Webhook
+URL** in your existing business is **empty** (look, do not change anything
+yet), World Vitality can use that business's _test_ keys and test webhook for
+the test-payment phase without touching your live project; test plans and test
+payments are separate from live ones. Stop if that field already holds an
+address. Two cautions: enabling Google Pay or any other channel in Settings →
+Preferences changes checkout for **both** projects in a shared business; and
+this does not get you to live payments, which need World Vitality's own
+business.
 
 ### Before you click anything — a checklist that keeps your other project safe
 
@@ -170,21 +105,18 @@ is the one reasonable exception), and never paste one into chat.
 - **Nothing here needs a live transaction.** Do not make a real payment to
   "see if the other project still works"; if you want reassurance, use that
   project's own test mode, or simply leave it alone — none of the steps
-  above touch it.
+  touch it.
 - **When in doubt, stop and ask me** — and never paste a key into chat.
 
 ## 0. Which business am I in? (the gate)
 
 Before steps 1–5, read the business name at the top left of the Paystack
-dashboard and the **Test Webhook URL** (Settings → API Keys & Webhooks, Test
-mode). Then:
+dashboard. Then:
 
 - **World Vitality's own business** → go ahead.
-- **Your existing business, and its Test Webhook URL is empty** → fine for
-  test mode only (see "If Add a Business is not available" above). Do not
-  touch Live mode or Settings → Preferences.
-- **Your existing business, and its Test Webhook URL already holds an
-  address** → stop. Something of yours is using it.
+- **Your existing business** → stop and switch (the arrow beside the name).
+  The only exception is the stop-gap above, and only if its Test Webhook URL
+  is empty; if it already holds an address, something of yours is using it.
 
 ## 1. Get the test secret key
 
@@ -198,22 +130,44 @@ mode). Then:
 Keep that tab open: you will paste it into Vercel in step 4. You do not need
 the public key — the app never uses it.
 
-## 2. Create the four plans
+## 2. Create the four plans (on the Plans page — not Products)
 
-Dashboard (still in **test mode**) → **Products → Plans** → **New plan**. A
-plan fixes the amount, the currency and how often it charges, so each price
-is its own plan. Create exactly these, leaving "invoice limit" blank (charge
-until cancelled):
+**Open the Plans page, not Products.** In the left menu look for **Plans**,
+or go straight to <https://dashboard.paystack.com/#/plans> (the address
+Paystack's own help gives), then click **New Plan**. If the older dashboard
+has no Plans entry in its menu, send me what its left menu shows.
 
-| Name                              | Amount (₦) | Interval | Currency |
-| --------------------------------- | ---------- | -------- | -------- |
-| World Vitality Standard — monthly | 7,500      | Monthly  | NGN      |
-| World Vitality Standard — annual  | 75,000     | Annually | NGN      |
-| World Vitality Premium — monthly  | 25,000     | Monthly  | NGN      |
-| World Vitality Premium — annual   | 250,000    | Annually | NGN      |
+> **The "New Product" form is the wrong one.** It has Name, Description,
+> Price (NGN), Quantity (Unlimited / Limited) and a "This product contains
+> one or more physical goods" switch. That form is for selling one-off items
+> (a product link, payment page or storefront) and never repeats a charge, so
+> a subscription made there would not renew. Press **Cancel** and do not
+> create anything there.
 
-(The dashboard asks in naira. Paystack's API counts in kobo, so in the API
-these are 750000, 7500000, 2500000 and 25000000.)
+The **New Plan** form asks for:
+
+| Field                                    | What to enter                                                       |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| Plan Name                                | From the table below                                                |
+| Description                              | Optional; leave blank                                               |
+| Plan Amount                              | In naira (see the table)                                            |
+| Interval                                 | Monthly or Annually (the choices run hourly to annually)            |
+| Max. Number of Payments                  | **Leave blank** — charge until cancelled                            |
+| Create a Subscription Page for this Plan | **Leave unticked** — the app has its own checkout and uses the code |
+
+Create exactly these four, in test mode (the plan fixes the amount, the
+currency and how often it charges, so each price is its own plan):
+
+| Plan Name                         | Plan Amount (₦) | Interval |
+| --------------------------------- | --------------- | -------- |
+| World Vitality Standard — monthly | 7,500           | Monthly  |
+| World Vitality Standard — annual  | 75,000          | Annually |
+| World Vitality Premium — monthly  | 25,000          | Monthly  |
+| World Vitality Premium — annual   | 250,000         | Annually |
+
+The currency is naira (NGN) — it is the business's currency, not a field on
+the form. (The dashboard asks in naira. Paystack's API counts in kobo, so in
+the API these are 750000, 7500000, 2500000 and 25000000.)
 
 After saving each, open it and copy its **plan code** (it starts with
 `PLN_`). Plan codes are identifiers, not secrets — it is fine to share them.
@@ -255,9 +209,9 @@ emails use), so there is nothing to add for it. Do **not** add
 effect on a new deployment: after saving, redeploy (Deployments → the latest
 → ⋯ → Redeploy), or push any change.
 
-(If you would rather not handle even the plan codes, send them to me and I
-will add `PAYSTACK_PLAN_CODES` through the Vercel connector. The secret key
-you add yourself — I will not take it in chat.)
+(If you would rather not handle even the plan codes, send me the four `PLN_`
+codes and I will add `PAYSTACK_PLAN_CODES` through the Vercel connector and
+redeploy. The secret key you add yourself — I will not take it in chat.)
 
 ## 5. Point Paystack at the webhook
 
@@ -300,9 +254,10 @@ The plan screen (`/billing`) exists and appears only once billing is on:
    "Putting a customer on Enterprise" in `billing.md` — same SQL with
    `'standard'`).
 3. Make a test payment with one of Paystack's test cards
-   (<https://paystack.com/docs/payments/test-payments/>) — Subscribe on
-   `/billing` as the organisation's owner (sign in as yourself). Then check, in
-   the Supabase SQL editor:
+   (<https://paystack.com/docs/payments/test-payments/> lists them with the
+   expiry and security code to use; the one planned is `4084 0840 8408 4081`) —
+   Subscribe on `/billing` as the organisation's owner (sign in as yourself).
+   Then check, in the Supabase SQL editor:
 
    ```sql
    select user_id, plan, status, source, paystack_subscription_code
@@ -319,13 +274,11 @@ The plan screen (`/billing`) exists and appears only once billing is on:
 ## Going live (later)
 
 1. Get the World Vitality business activated (its Compliance section;
-   Paystack reviews it, and you add payout details). If you skipped the
-   separate business and are sharing your existing one, activation is
-   already done — but see the webhook caveat above.
-2. In the **live** side of that business, repeat steps 1–2 and 5: the live
-   secret key (`sk_live_…`), the same four plans created again (live and
-   test plans are separate, so the codes differ), and the **Live Webhook
-   URL**.
+   Paystack reviews it, and you add payout details).
+2. In the **live** side of that business, repeat steps 1, 2 and 5: the live
+   secret key (`sk_live_…`), the same four plans created again on the Plans
+   page (live and test plans are separate, so the codes differ), and the
+   **Live Webhook URL**.
 3. Replace `PAYSTACK_SECRET_KEY` and `PAYSTACK_PLAN_CODES` in Vercel with the
    live values and redeploy.
 4. Subscribe to Open-Meteo and set `OPEN_METEO_API_KEY` first
