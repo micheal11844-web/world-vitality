@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { buttonStyle, Text } from "@world-vitality/ui-components";
+import { AppDownloadsLink } from "./app-downloads-link";
 
 export default function LandingPage() {
   return (
@@ -41,6 +42,9 @@ export default function LandingPage() {
           <Link href="/login" style={buttonStyle("primary")}>
             Sign in
           </Link>
+        </div>
+        <div style={{ marginTop: "var(--wv-space-md)" }}>
+          <AppDownloadsLink />
         </div>
       </div>
     </main>

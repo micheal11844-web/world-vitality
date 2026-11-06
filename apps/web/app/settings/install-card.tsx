@@ -1,11 +1,9 @@
 "use client";
 
 import { Button, Card, Text } from "@world-vitality/ui-components";
+import { DOWNLOADS_URL } from "../../lib/downloads-url";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { useInstallState } from "../../lib/pwa/install";
-
-/** The separate downloads website (sites/download, Decision #024). */
-const DOWNLOADS_URL = "https://world-vitality-downloads.vercel.app";
 
 const sectionGap = { display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" } as const;
 

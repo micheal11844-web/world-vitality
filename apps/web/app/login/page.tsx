@@ -21,6 +21,7 @@ import {
   signInWithGoogleAction,
 } from "../../lib/actions";
 import { isNativeShellUserAgent } from "../../lib/pwa/native-shell";
+import { AppDownloadsLink } from "../app-downloads-link";
 
 /**
  * Maps the form's real states onto the Guide Character's moods (Stage
@@ -401,6 +402,9 @@ function LoginForm() {
           )}
         </Text>
       </form>
+      <div style={{ marginTop: "var(--wv-space-md)", textAlign: "center" }}>
+        <AppDownloadsLink />
+      </div>
     </Card>
   );
 }
