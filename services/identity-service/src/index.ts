@@ -56,6 +56,7 @@ export {
   officialAlertToNotification,
   fieldCommentNotification,
   membershipAddedNotification,
+  paymentFailedNotification,
   isStillActive,
   isNwsCoverageCountry,
   isSyncDue,

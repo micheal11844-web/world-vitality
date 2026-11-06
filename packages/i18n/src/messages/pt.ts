@@ -1044,4 +1044,9 @@ export const pt: Messages = {
 
   // ---- Team page — members without a profile (v108)
   "team.noProfile": "(perfil não encontrado)",
+
+  // ---- Failed-payment notice (v109)
+  "notifications.msg.paymentFailed.title": "Seu pagamento não foi concluído",
+  "notifications.msg.paymentFailed.body":
+    "Não conseguimos renovar o seu plano {plan}. Atualize seu cartão para mantê-lo.",
 };

@@ -32,7 +32,13 @@ export const TIER_LABELS: Record<NotificationTier, string> = {
   info: "Informational",
 };
 
-export type NotificationSource = "official_alert" | "collaboration";
+/**
+ * Where a notification comes from. `billing` is the app telling the owner
+ * something about their plan (a failed payment). It is neither an agency's
+ * alert nor a teammate's activity, so neither of the settings that narrow
+ * those two (`officialMinTier`, `collaborationEnabled`) hides it.
+ */
+export type NotificationSource = "official_alert" | "collaboration" | "billing";
 
 /**
  * What a notification *says*, as data, for the ones the app writes
@@ -41,12 +47,12 @@ export type NotificationSource = "official_alert" | "collaboration";
  * `title`/`body` keep the English rendering as the fallback. Official
  * alerts have none — the agency's own text is never re-worded.
  */
-export type NotificationMessageKey = "field_comment" | "member_added";
+export type NotificationMessageKey = "field_comment" | "member_added" | "payment_failed";
 
 export type NotificationMessageParams = Record<string, string>;
 
 export function isNotificationMessageKey(value: unknown): value is NotificationMessageKey {
-  return value === "field_comment" || value === "member_added";
+  return value === "field_comment" || value === "member_added" || value === "payment_failed";
 }
 
 export interface Notification {
@@ -201,6 +207,9 @@ export function visibleNotifications(
   return all.filter((n) => {
     if (n.dismissedAt) return false;
     if (!isStillActive(n.expiresAt, now)) return false;
+    // A plan notice is the owner's own business and about money: settings
+    // that quiet teammates' activity or informational weather do not apply.
+    if (n.source === "billing") return true;
     if (n.source === "collaboration") return settings.collaborationEnabled;
     if (n.tier === "info" && settings.officialMinTier === "alert") return false;
     return true;
@@ -408,6 +417,36 @@ export function membershipAddedNotification(input: {
       roleId: input.roleId,
       roleLabel: input.roleLabel,
     },
+  };
+}
+
+/**
+ * "Your payment didn't go through." Written when Paystack reports that a
+ * renewal charge failed. An `alert`, not `critical`: it needs attention
+ * soon (the plan keeps working through a grace period) but is not a safety
+ * matter. One per subscription per day however often Paystack retries.
+ * Links to the plan screen, where the card can be updated.
+ */
+export function paymentFailedNotification(input: {
+  subscriptionCode: string;
+  /** The plan id (e.g. `standard`) — rendered in the reader's language. */
+  plan: string;
+  /** English name of the plan, the stored fallback. */
+  planLabel: string;
+  now: Date;
+}): NewNotification {
+  return {
+    source: "billing",
+    tier: "alert",
+    title: truncateText("Your payment didn't go through", TITLE_MAX),
+    body: truncateText(
+      `We couldn't renew your ${input.planLabel} plan. Update your card to keep it.`,
+      BODY_MAX,
+    ),
+    href: "/billing",
+    dedupeKey: `payment_failed:${input.subscriptionCode}:${input.now.toISOString().slice(0, 10)}`,
+    messageKey: "payment_failed",
+    messageParams: { plan: input.plan, planLabel: input.planLabel },
   };
 }
 

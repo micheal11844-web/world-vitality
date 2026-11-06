@@ -270,3 +270,38 @@ test("if saving fails, the error surfaces (so Paystack retries) and the event is
   const { deps: healthy } = setup(inner);
   assert.deepEqual(await send(healthy, create()), { status: 200, outcome: "applied" });
 });
+
+test("onApplied hears about an applied event, once, with the subscription as it now is", async () => {
+  const { deps } = setup();
+  const heard: { userId: string; type: string; plan: string; status: string }[] = [];
+  deps.onApplied = (e) => {
+    heard.push({ userId: e.userId, type: e.type, plan: e.state.plan, status: e.state.status });
+  };
+  await send(deps, create());
+  await send(deps, failed());
+  assert.deepEqual(heard, [
+    { userId: USER, type: "subscription.create", plan: "standard", status: "active" },
+    { userId: USER, type: "invoice.payment_failed", plan: "standard", status: "past_due" },
+  ]);
+  // The same event again is a duplicate: nothing applied, so nobody is told twice.
+  assert.equal((await send(deps, failed())).status === 200 && heard.length, 2);
+});
+
+test("onApplied is not called for an event that is ignored, and cannot break the webhook if it throws", async () => {
+  const { deps } = setup();
+  let calls = 0;
+  deps.onApplied = () => {
+    calls++;
+    throw new Error("notification store down");
+  };
+  // Unknown subscription: ignored, no call.
+  assert.deepEqual(await send(deps, failed("SUB_NOPE")), {
+    status: 200,
+    outcome: "ignored",
+    reason: "no_matching_subscription",
+  });
+  assert.equal(calls, 0);
+  // Applied: the callback throws, the webhook still answers as applied.
+  assert.deepEqual(await send(deps, create()), { status: 200, outcome: "applied" });
+  assert.equal(calls, 1);
+});

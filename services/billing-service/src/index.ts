@@ -79,4 +79,9 @@ export {
   type BillingStore,
   type BillingEventRecord,
 } from "./store.js";
-export { handlePaystackWebhook, type WebhookDeps, type WebhookResult } from "./webhook.js";
+export {
+  handlePaystackWebhook,
+  type AppliedEvent,
+  type WebhookDeps,
+  type WebhookResult,
+} from "./webhook.js";

@@ -1068,4 +1068,9 @@ export const fr: Messages = {
 
   // ---- Team page — members without a profile (v108)
   "team.noProfile": "(profil introuvable)",
+
+  // ---- Failed-payment notice (v109)
+  "notifications.msg.paymentFailed.title": "Votre paiement n’a pas abouti",
+  "notifications.msg.paymentFailed.body":
+    "Nous n’avons pas pu renouveler votre offre {plan}. Mettez à jour votre carte pour la conserver.",
 };

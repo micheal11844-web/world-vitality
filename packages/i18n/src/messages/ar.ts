@@ -1016,4 +1016,9 @@ export const ar: Messages = {
 
   // ---- Team page — members without a profile (v108)
   "team.noProfile": "(لم يُعثر على ملف شخصي)",
+
+  // ---- Failed-payment notice (v109)
+  "notifications.msg.paymentFailed.title": "لم تتم عملية الدفع",
+  "notifications.msg.paymentFailed.body":
+    "تعذّر تجديد خطة {plan} الخاصة بك. حدّث بطاقتك للاحتفاظ بها.",
 };

@@ -111,3 +111,32 @@ test("an official alert (no message id) is never re-worded in any language", () 
     });
   }
 });
+
+test("a failed-payment notice is re-written in the reader's language with the plan name translated", () => {
+  const n = {
+    title: "Your payment didn't go through",
+    body: "We couldn't renew your Standard plan. Update your card to keep it.",
+    messageKey: "payment_failed",
+    messageParams: { plan: "standard", planLabel: "Standard" },
+  };
+  const es = localizeNotificationText(n, createTranslator("es"));
+  assert.equal(es.title, "No se pudo procesar tu pago");
+  assert.equal(
+    es.body,
+    createTranslator("es").t("notifications.msg.paymentFailed.body", {
+      plan: createTranslator("es").t("billing.plan.standard"),
+    }),
+    "the plan is named the way the plan screen names it",
+  );
+  const ar = localizeNotificationText(n, createTranslator("ar"));
+  assert.ok(ar.title.includes("الدفع"));
+  assert.equal(
+    localizeNotificationText(n, createTranslator("en")).title,
+    "Your payment didn’t go through",
+  );
+  // Without the plan it degrades to the stored English text.
+  assert.deepEqual(localizeNotificationText({ ...n, messageParams: {} }, createTranslator("fr")), {
+    title: n.title,
+    body: n.body,
+  });
+});

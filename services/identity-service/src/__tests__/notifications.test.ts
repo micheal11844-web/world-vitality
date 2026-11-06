@@ -4,12 +4,14 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   fieldCommentNotification,
   groupByTier,
+  isNotificationMessageKey,
   isNwsCoverageCountry,
   isStillActive,
   isSyncDue,
   membershipAddedNotification,
   officialAlertTier,
   officialAlertToNotification,
+  paymentFailedNotification,
   safeInternalHref,
   summarize,
   timeAgo,
@@ -367,4 +369,40 @@ test("isNwsCoverageCountry: U.S. and territories yes, elsewhere no, unknown null
   assert.equal(isNwsCoverageCountry("Canada"), false);
   assert.equal(isNwsCoverageCountry(null), null);
   assert.equal(isNwsCoverageCountry(""), null);
+});
+
+test("a failed-payment notice is an alert that links to the plan screen, once per subscription per day", () => {
+  const input = { subscriptionCode: "SUB_1", plan: "standard", planLabel: "Standard", now: NOW };
+  const a = paymentFailedNotification(input);
+  assert.equal(a.source, "billing");
+  assert.equal(a.tier, "alert");
+  assert.equal(a.href, "/billing");
+  assert.equal(a.messageKey, "payment_failed");
+  assert.deepEqual(a.messageParams, { plan: "standard", planLabel: "Standard" });
+  assert.equal(a.body, "We couldn't renew your Standard plan. Update your card to keep it.");
+  assert.equal(a.dedupeKey, "payment_failed:SUB_1:2026-10-13");
+  // Paystack retries a failed charge: the same day gives the same key (so the
+  // store keeps one row), the next day a new one.
+  assert.equal(
+    paymentFailedNotification({ ...input, now: new Date("2026-10-13T23:59:00Z") }).dedupeKey,
+    a.dedupeKey,
+  );
+  assert.notEqual(
+    paymentFailedNotification({ ...input, now: new Date("2026-10-14T00:01:00Z") }).dedupeKey,
+    a.dedupeKey,
+  );
+  assert.equal(isNotificationMessageKey("payment_failed"), true);
+});
+
+test("a plan notice is shown whatever the notification settings say, until it is dismissed", () => {
+  const notice = n({ source: "billing", tier: "alert" });
+  const quiet = { officialMinTier: "alert" as const, collaborationEnabled: false };
+  assert.equal(visibleNotifications([notice], quiet, NOW).length, 1);
+  assert.equal(visibleNotifications([{ ...notice, tier: "info" }], quiet, NOW).length, 1);
+  assert.equal(
+    visibleNotifications([{ ...notice, dismissedAt: NOW.toISOString() }], quiet, NOW).length,
+    0,
+  );
+  // The settings still narrow what they are meant to narrow.
+  assert.equal(visibleNotifications([n({ source: "collaboration" })], quiet, NOW).length, 0);
 });

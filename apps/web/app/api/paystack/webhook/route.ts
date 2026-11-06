@@ -1,7 +1,30 @@
 import { NextResponse } from "next/server";
-import { handlePaystackWebhook } from "@world-vitality/billing-service";
+import { PLANS, handlePaystackWebhook, type AppliedEvent } from "@world-vitality/billing-service";
+import { paymentFailedNotification } from "@world-vitality/identity-service";
 import { billingEnabled, getBillingStore, planForCode } from "../../../../lib/billing";
 import { logApplication, logSecurity } from "../../../../lib/logger";
+import { notifyUser } from "../../../../lib/notification-sync";
+
+/**
+ * After an event has been applied: tell the owner when a renewal charge
+ * failed, so they hear about it without opening the plan screen. Best effort
+ * (`notifyUser` swallows and logs a failure): the webhook must still answer
+ * 200, because Paystack's retry would only re-apply what already happened.
+ * Paystack may retry a failed charge for days; the notification is keyed to
+ * the day, so it is one per subscription per day at most.
+ */
+async function afterApplied(event: AppliedEvent): Promise<void> {
+  if (event.type !== "invoice.payment_failed" || !event.state.subscriptionCode) return;
+  await notifyUser(
+    event.userId,
+    paymentFailedNotification({
+      subscriptionCode: event.state.subscriptionCode,
+      plan: event.state.plan,
+      planLabel: PLANS[event.state.plan].label,
+      now: new Date(),
+    }),
+  );
+}
 
 // `node:crypto` (signature check) needs the Node runtime, and a webhook
 // must never be cached.
@@ -47,7 +70,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await handlePaystackWebhook(
-      { secret, store: getBillingStore(), planFor: planForCode },
+      { secret, store: getBillingStore(), planFor: planForCode, onApplied: afterApplied },
       raw,
       request.headers.get("x-paystack-signature"),
     );

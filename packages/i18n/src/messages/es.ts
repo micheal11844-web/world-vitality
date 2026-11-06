@@ -1052,4 +1052,9 @@ export const es: Messages = {
 
   // ---- Team page — members without a profile (v108)
   "team.noProfile": "(perfil no encontrado)",
+
+  // ---- Failed-payment notice (v109)
+  "notifications.msg.paymentFailed.title": "No se pudo procesar tu pago",
+  "notifications.msg.paymentFailed.body":
+    "No pudimos renovar tu plan {plan}. Actualiza tu tarjeta para conservarlo.",
 };

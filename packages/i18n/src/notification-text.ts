@@ -19,7 +19,7 @@ export interface LocalizableNotification {
  * reader's language.
  *
  * Notifications the app writes itself (a teammate's comment, a new
- * workspace membership) were saved as *what happened* — an id plus
+ * workspace membership, a failed payment) were saved as *what happened* — an id plus
  * parameters — so they read in whatever language is chosen when the
  * inbox is opened, not the one in force when they were created. If the
  * data is missing or unrecognised, the stored English text is shown:
@@ -63,6 +63,17 @@ export function localizeNotificationText(
     return {
       title: t("notifications.msg.memberAdded.title", { workspace }),
       body: t("notifications.msg.memberAdded.body", { role }),
+    };
+  }
+
+  if (notification.messageKey === "payment_failed") {
+    const planId = params?.plan;
+    if (!planId) return stored;
+    const planKey = `billing.plan.${planId}`;
+    const plan = isMessageKey(planKey) ? t(planKey) : params?.planLabel || planId;
+    return {
+      title: t("notifications.msg.paymentFailed.title"),
+      body: t("notifications.msg.paymentFailed.body", { plan }),
     };
   }
 

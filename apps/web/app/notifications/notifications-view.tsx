@@ -18,7 +18,7 @@ import {
 export interface NotificationItemView {
   id: string;
   tier: NotificationTier;
-  source: "official_alert" | "collaboration";
+  source: "official_alert" | "collaboration" | "billing";
   title: string;
   body: string | null;
   detail: string | null;

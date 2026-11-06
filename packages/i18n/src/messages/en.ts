@@ -1030,6 +1030,11 @@ export const en = {
 
   // ---- Team page — members without a profile (v108)
   "team.noProfile": "(no profile found)",
+
+  // ---- Failed-payment notice (v109)
+  "notifications.msg.paymentFailed.title": "Your payment didn’t go through",
+  "notifications.msg.paymentFailed.body":
+    "We couldn’t renew your {plan} plan. Update your card to keep it.",
 } as const;
 
 export type MessageKey = keyof typeof en;

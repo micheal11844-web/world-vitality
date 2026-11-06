@@ -1,5 +1,5 @@
 import { parsePaystackEvent, verifyPaystackSignature } from "./paystack.js";
-import { applyPaystackEvent } from "./subscription.js";
+import { applyPaystackEvent, type SubscriptionState } from "./subscription.js";
 import type { PaidPlanId } from "./plans.js";
 import type { BillingStore } from "./store.js";
 
@@ -26,11 +26,28 @@ import type { BillingStore } from "./store.js";
  * Paystack treats any non-200 as a failure and keeps retrying.
  */
 
+/** What an applied event changed, for the courtesies that follow it. */
+export interface AppliedEvent {
+  userId: string;
+  /** Paystack's event name, e.g. `invoice.payment_failed`. */
+  type: string;
+  /** The subscription as it is now. */
+  state: SubscriptionState;
+}
+
 export interface WebhookDeps {
   secret: string;
   store: BillingStore;
   planFor: (planCode: string | null) => PaidPlanId | null;
   now?: () => Date;
+  /**
+   * Called once an event has been applied and recorded, for things that
+   * follow from it (telling the owner their payment failed). Never part of
+   * the event's success: if it throws, the error is dropped and Paystack
+   * still gets its 200, because a retry would re-apply a transition that
+   * already happened. It must do its own logging.
+   */
+  onApplied?: (event: AppliedEvent) => Promise<void> | void;
 }
 
 export type WebhookResult =
@@ -84,5 +101,13 @@ export async function handlePaystackWebhook(
   if (result.outcome === "ignored") return finish("ignored", result.reason, userId);
 
   await store.saveSubscription(result.state);
-  return finish("applied", null, userId);
+  const done = await finish("applied", null, userId);
+  if (deps.onApplied) {
+    try {
+      await deps.onApplied({ userId, type: event.type, state: result.state });
+    } catch {
+      // A courtesy after the fact; see `WebhookDeps.onApplied`.
+    }
+  }
+  return done;
 }
