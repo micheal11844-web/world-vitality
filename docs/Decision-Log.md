@@ -652,8 +652,8 @@ CSV and forecast are left open: it is a raw-data tool by design. The
 not subscribed (including the owner's own account) loses the forecast cards
 and the report downloads until they do, so existing customers should be put on
 a plan first if that is not wanted (`billing.md`, "Putting a customer on
-Enterprise (invoiced, by hand)", with `'standard'` in place of `'enterprise'`). The note is English only, like the other workspace-page limit
-text.
+Enterprise (invoiced, by hand)", with `'standard'` in place of `'enterprise'`). The note was English only, like the other workspace-page limit
+text (translated since v104).
 
 **Status:** Accepted.
 

@@ -153,8 +153,8 @@ changes (Decision #022). The check is `featureLockedFor(feature)` in
 - **Billing off ⇒ nothing is locked and the plan is not looked up. If the
   plan cannot be read ⇒ nothing is locked** (logged). One plan lookup per page,
   however many switches it asks about.
-- The note is hidden when the report is printed, and is English only like the
-  other workspace-page limit text.
+- The note is hidden when the report is printed, and is written in the
+  reader's language like the other limit text.
 - **Not wired, on purpose:** `teamTools` (Basic's one seat already stops
   invitations, with a clearer message), `auditLog` (no customer-facing screen
   exists), `auditableReport` (the Insurance report is one page; there is no
