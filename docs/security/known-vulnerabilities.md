@@ -62,16 +62,29 @@ production build; all 18 main pages load with no script errors (including
 the globe); the logo is still served through the image endpoint; the billing,
 organisation, admin and plan-feature browser checks pass.
 
+## Fixed on 2026-11-06 (zod 3 to 4)
+
+`zod` (`data-schemas`' only dependency) went from 3.25.76 to 4.6.7, which
+closes [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)
+(memory exhaustion when validating oversized collections that have size
+limits). It was a major version, but the package uses a small part of the
+library: three schema files (`provenance`, `ingestion-gap`, `record`) with
+strings, numbers, enums, arrays, `.datetime()` and `.url()`. Nothing else in
+the repository imports zod. Before the change the checks that matter were
+written down as tests (`provenance.test.ts`: required fields, UTC-only
+date-times, URL and enum checks) and pass on both versions. After it: 627
+tests, lint, format and type checks, and a production build. `pnpm audit`
+now reports 13 findings (none critical) and zod is not among them.
+
 ## Currently accepted
 
-| Package         | Installed     | Patched             | Severity               | Where it comes from                  |
-| --------------- | ------------- | ------------------- | ---------------------- | ------------------------------------ |
-| postcss         | 8.4.31        | >=8.5.23            | High (2), Moderate (2) | Pinned exactly inside `next@15.5.28` |
-| nanoid          | 3.3.17        | >=3.3.18            | High                   | Inside `next` (through `postcss`)    |
-| source-map-js   | 1.2.1         | >=1.2.2             | High                   | Inside `next` (through `postcss`)    |
-| zod             | 3.25.76       | >=4.6.6 (one major) | High                   | Direct dependency (`data-schemas`)   |
-| brace-expansion | 1.1.18, 5.0.9 | >=1.1.21, >=5.0.12  | High (4), Moderate (2) | Dev tooling: ESLint and its plugins  |
-| minimatch       | 10.2.6, 3.1.5 | >=11.0.1            | Moderate               | Dev tooling: ESLint and its plugins  |
+| Package         | Installed     | Patched            | Severity               | Where it comes from                  |
+| --------------- | ------------- | ------------------ | ---------------------- | ------------------------------------ |
+| postcss         | 8.4.31        | >=8.5.23           | High (2), Moderate (2) | Pinned exactly inside `next@15.5.28` |
+| nanoid          | 3.3.17        | >=3.3.18           | High                   | Inside `next` (through `postcss`)    |
+| source-map-js   | 1.2.1         | >=1.2.2            | High                   | Inside `next` (through `postcss`)    |
+| brace-expansion | 1.1.18, 5.0.9 | >=1.1.21, >=5.0.12 | High (4), Moderate (2) | Dev tooling: ESLint and its plugins  |
+| minimatch       | 10.2.6, 3.1.5 | >=11.0.1           | Moderate               | Dev tooling: ESLint and its plugins  |
 
 Why each is accepted for now:
 
@@ -81,12 +94,6 @@ Why each is accepted for now:
   closes them. An override was tried before and reverted (~300 lockfile lines
   changed, an unrelated major jump in ESLint); not worth the risk for a
   build-time-only path.
-- **zod** ([GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)):
-  memory exhaustion when validating oversized collections that have size
-  limits. `data-schemas` validates responses from the weather, soil and
-  alert providers the app calls itself; an attacker cannot choose what those
-  send. Zod 3 to 4 is a major change touching every schema, so it waits for
-  its own change with its own tests.
 - **brace-expansion, minimatch**: pulled in by ESLint and its plugins, which
   run on developers' machines and in CI over this repository's own files,
   never on user input and never in the deployed site. They would only matter
