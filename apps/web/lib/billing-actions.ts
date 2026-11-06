@@ -151,6 +151,10 @@ export async function startCheckoutAction(input: {
   if (!result.ok) {
     logApplication.error("billing_checkout_failed", new Error(result.reason), {
       userId: context.userId,
+      // Paystack's own words for the refusal (never the key), so the cause
+      // can be read from the log instead of guessed.
+      ...(result.httpStatus !== undefined ? { httpStatus: result.httpStatus } : {}),
+      ...(result.detail ? { paystackMessage: result.detail } : {}),
     });
     return { ok: false, error: await tServer("billing.subscribe.failed") };
   }

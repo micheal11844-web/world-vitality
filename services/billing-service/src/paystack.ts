@@ -230,12 +230,23 @@ export interface CheckoutInput {
 
 export type CheckoutResult =
   | { ok: true; authorizationUrl: string; reference: string }
-  | { ok: false; reason: "unavailable" | "paystack_error" | "network_error" };
+  | {
+      ok: false;
+      reason: "unavailable" | "paystack_error" | "network_error";
+      /**
+       * For `paystack_error`: the HTTP status and Paystack's own `message`
+       * ("Invalid key", "Plan not found"), cut short. For the operator's log
+       * only, never shown to a customer. Paystack's message describes the
+       * refusal and does not echo the key.
+       */
+      httpStatus?: number;
+      detail?: string;
+    };
 
 type FetchLike = (
   url: string,
   init: { method: string; headers: Record<string, string>; body: string },
-) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
+) => Promise<{ ok: boolean; status?: number; json(): Promise<unknown> }>;
 
 /**
  * Asks Paystack for a hosted checkout page that, once paid, creates the
@@ -286,7 +297,13 @@ export async function startCheckout(
   const url = text(pick(payload, "data", "authorization_url"));
   const reference = text(pick(payload, "data", "reference"));
   if (!response.ok || pick(payload, "status") !== true || !url || !reference) {
-    return { ok: false, reason: "paystack_error" };
+    const message = text(pick(payload, "message"));
+    return {
+      ok: false,
+      reason: "paystack_error",
+      ...(typeof response.status === "number" ? { httpStatus: response.status } : {}),
+      ...(message ? { detail: message.slice(0, 200) } : {}),
+    };
   }
   return { ok: true, authorizationUrl: url, reference };
 }

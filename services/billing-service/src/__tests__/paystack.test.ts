@@ -248,6 +248,7 @@ test("checkout reports a Paystack refusal, an odd response, and a network failur
     {
       ok: false,
       reason: "paystack_error",
+      detail: "Invalid key",
     },
   );
   const odd = fetchReturning({ status: true, data: {} });
