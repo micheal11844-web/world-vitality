@@ -12,6 +12,8 @@ import {
   type TableColumn,
 } from "@world-vitality/ui-components";
 import type { Role, WorkspaceMemberSummary } from "@world-vitality/identity-service";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
+import { roleLabel } from "../../../../lib/i18n/labels";
 import { inviteMemberAction, removeMemberAction } from "./team-actions";
 import { UpgradeLink } from "../../../upgrade-link";
 
@@ -48,12 +50,18 @@ export interface TeamClientProps {
   availableResources: ScopableResource[];
 }
 
-const ROLE_OPTIONS: { value: Role; label: string }[] = [
-  { value: "admin_owner", label: "Admin/Owner" },
-  { value: "operational_user", label: "Operational User" },
-  { value: "scoped_field_user", label: "Scoped/Field User" },
-  { value: "viewer_external", label: "Viewer/External" },
+/** The roles an invite can give, in the order the picker lists them. Their
+ *  names come from the catalog (`role.*`), the same words the rest of the
+ *  app uses for them. */
+const ROLE_VALUES: Role[] = [
+  "admin_owner",
+  "operational_user",
+  "scoped_field_user",
+  "viewer_external",
 ];
+
+/** What the data layer shows for a member whose profile row is missing. */
+const NO_PROFILE_EMAIL = "(no profile found)";
 
 /**
  * Team management client component (BUILD_PLAN "STAGE — TEAM/INVITE
@@ -69,6 +77,7 @@ export function TeamClient({
   initialMembers,
   availableResources,
 }: TeamClientProps) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("operational_user");
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
@@ -90,11 +99,11 @@ export function TeamClient({
     startTransition(async () => {
       const result = await inviteMemberAction(workspaceId, email, role, scopedResourceIds);
       if (result.ok) {
-        setFormSuccess(`Invite sent to ${email}.`);
+        setFormSuccess(t("team.invite.sent", { email }));
         setEmail("");
         setSelectedResourceIds([]);
       } else {
-        setFormError(result.error ?? "Failed to send invite.");
+        setFormError(result.error ?? t("team.err.inviteFailed"));
         setUpgrade(Boolean(result.upgrade));
       }
     });
@@ -111,33 +120,34 @@ export function TeamClient({
     startTransition(async () => {
       const result = await removeMemberAction(workspaceId, userId);
       if (!result.ok) {
-        setRemoveError(result.error ?? "Failed to remove member.");
+        setRemoveError(result.error ?? t("team.err.removeFailed"));
       }
     });
   }
 
   const columns: TableColumn<WorkspaceMemberSummary>[] = [
-    { key: "email", header: "Email", render: (m) => m.email },
     {
-      key: "role",
-      header: "Role",
-      render: (m) => ROLE_OPTIONS.find((r) => r.value === m.role)?.label ?? m.role,
+      key: "email",
+      header: t("team.email"),
+      // An address reads left to right even inside an Arabic page.
+      render: (m) => (m.email === NO_PROFILE_EMAIL ? t("team.noProfile") : <bdi>{m.email}</bdi>),
     },
+    { key: "role", header: t("team.role"), render: (m) => roleLabel(m.role, t) },
     {
       key: "actions",
       header: "",
       render: (m) =>
         m.userId === currentUserId ? (
           <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            {m.isOrganizationOwner ? "(you · owner)" : "(you)"}
+            {m.isOrganizationOwner ? t("team.youOwner") : t("team.you")}
           </Text>
         ) : m.isOrganizationOwner ? (
           <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-            (owner)
+            {t("team.owner")}
           </Text>
         ) : (
           <Button variant="destructive" onClick={() => handleRemove(m.userId)} disabled={isPending}>
-            Remove
+            {t("team.remove")}
           </Button>
         ),
     },
@@ -147,7 +157,7 @@ export function TeamClient({
     <div>
       <Card style={{ marginBottom: "var(--wv-space-lg)" }}>
         <Text variant="sectionTitle" as="h2" style={{ marginBottom: "var(--wv-space-sm)" }}>
-          Invite someone
+          {t("team.invite.title")}
         </Text>
         <form
           onSubmit={handleInvite}
@@ -161,7 +171,7 @@ export function TeamClient({
           <div style={{ flex: "1 1 16rem", maxWidth: "24rem" }}>
             <Input
               id="invite-email"
-              label="Email"
+              label={t("team.email")}
               type="email"
               required
               value={email}
@@ -170,18 +180,18 @@ export function TeamClient({
           </div>
           <Select
             id="invite-role"
-            label="Role"
+            label={t("team.role")}
             value={role}
             onChange={(e) => setRole(e.target.value as Role)}
           >
-            {ROLE_OPTIONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
+            {ROLE_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {roleLabel(value, t)}
               </option>
             ))}
           </Select>
           <Button type="submit" loading={isPending}>
-            Send Invite
+            {t("team.invite.send")}
           </Button>
         </form>
         {role === "scoped_field_user" && availableResources.length > 0 && (
@@ -190,7 +200,7 @@ export function TeamClient({
               variant="caption"
               style={{ display: "block", marginBottom: "var(--wv-space-xs)" }}
             >
-              Scope to specific resources (optional — leave unchecked for workspace-wide access):
+              {t("team.invite.scope")}
             </Text>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--wv-space-sm)" }}>
               {availableResources.map((resource) => (
@@ -203,7 +213,10 @@ export function TeamClient({
                     checked={selectedResourceIds.includes(resource.id)}
                     onChange={() => toggleResource(resource.id)}
                   />
-                  <Text variant="caption">{resource.label}</Text>
+                  {/* The label is typed by a person and can be in another script. */}
+                  <Text variant="caption" style={{ unicodeBidi: "isolate" }}>
+                    {resource.label}
+                  </Text>
                 </label>
               ))}
             </div>
@@ -248,8 +261,8 @@ export function TeamClient({
       {initialMembers.length === 0 ? (
         <StateDisplay
           status="empty"
-          title="No members yet"
-          description="Invite someone above to get started."
+          title={t("team.empty.title")}
+          description={t("team.empty.body")}
         />
       ) : (
         <Table columns={columns} rows={initialMembers} getRowKey={(m) => m.userId} />

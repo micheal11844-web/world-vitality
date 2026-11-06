@@ -5,6 +5,7 @@ import {
   checkLimit,
   effectivePlan,
   entitlementsFor,
+  featureLockedDetails,
   featureLockedMessage,
   hasFeature,
   isFeatureBuilt,
@@ -170,6 +171,21 @@ test("a locked feature says which plan includes it and which plan the person is 
     featureLockedMessage(entitlementsFor("standard"), "auditLog"),
     "The audit log is included in the Premium plan and above. Your plan is Standard.",
   );
+});
+
+test("the facts behind a locked-feature sentence are available for writing it in another language", () => {
+  assert.deepEqual(featureLockedDetails(entitlementsFor("basic"), "forecastOutlooks"), {
+    plural: true,
+    lowest: "standard",
+    plan: "basic",
+  });
+  assert.deepEqual(featureLockedDetails(entitlementsFor("standard"), "auditLog"), {
+    plural: false,
+    lowest: "premium",
+    plan: "standard",
+  });
+  assert.equal(featureLockedDetails(entitlementsFor("premium"), "auditLog"), null);
+  assert.equal(featureLockedDetails(unlimitedEntitlements("billing_off"), "csvExport"), null);
 });
 
 test("nothing is locked for a plan that has the feature, while billing is off, or if billing could not be read", () => {

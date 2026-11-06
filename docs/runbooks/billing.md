@@ -354,9 +354,15 @@ call to the real service.
   switches").
 - Receipts, invoices, tax/VAT, refunds, failed-payment emails. (Paystack
   emails its own receipts; ours are not built.)
-- The plan limit text ("Your Basic plan includes up to 3 saved items…")
-  and the workspace pages around it are English only; the plan screen itself
-  is in all five languages, machine-drafted and unreviewed.
+- The plan limit and feature-locked sentences ("Your Basic plan includes up
+  to 3 saved items…"), the workspace pages around them and the plan screen
+  are all in the five languages (English, Spanish, French, Brazilian
+  Portuguese, Arabic), machine-drafted and unreviewed by native speakers.
+  The limit sentence is written from the catalog (`billing.limit.reached.*`),
+  the feature sentence from `billing.feature.*`; in English they read exactly
+  as the billing service's own `limitReachedMessage` and
+  `featureLockedMessage`, apart from numbers of 1,000 or more getting a
+  thousands separator.
 - USD charging needs a USD settlement account on the Paystack side.
 
 ## Putting a customer on Enterprise (invoiced, by hand)

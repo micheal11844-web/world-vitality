@@ -198,12 +198,26 @@ export function lowestPlanWith(feature: FeatureKey): PlanId | null {
  * someone's data.
  */
 export function featureLockedMessage(e: Entitlements, feature: FeatureKey): string | null {
-  if (hasFeature(e, feature)) return null;
+  const locked = featureLockedDetails(e, feature);
+  if (!locked) return null;
   const { name, plural } = FEATURE_NAMES[feature];
   const verb = plural ? "are" : "is";
-  const lowest = lowestPlanWith(feature);
-  if (!lowest) return `${name} ${verb} not part of the ${PLANS[e.plan].label} plan.`;
-  return `${name} ${verb} included in the ${PLANS[lowest].label} plan and above. Your plan is ${PLANS[e.plan].label}.`;
+  if (!locked.lowest) return `${name} ${verb} not part of the ${PLANS[locked.plan].label} plan.`;
+  return `${name} ${verb} included in the ${PLANS[locked.lowest].label} plan and above. Your plan is ${PLANS[locked.plan].label}.`;
+}
+
+/**
+ * The facts behind `featureLockedMessage`, for a screen that writes the
+ * sentence in another language: whether the feature's name is plural, the
+ * cheapest plan that includes it (`null` when no plan does) and the plan the
+ * person is on. `null` when they have the feature.
+ */
+export function featureLockedDetails(
+  e: Entitlements,
+  feature: FeatureKey,
+): { plural: boolean; lowest: PlanId | null; plan: PlanId } | null {
+  if (hasFeature(e, feature)) return null;
+  return { plural: FEATURE_NAMES[feature].plural, lowest: lowestPlanWith(feature), plan: e.plan };
 }
 
 /** Is the feature built at all? Anything that is not must not be offered. */

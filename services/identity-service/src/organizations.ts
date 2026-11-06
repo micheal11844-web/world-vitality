@@ -290,6 +290,22 @@ export function emptyOrganizationData(): OrganizationData {
 }
 
 /**
+ * Thrown by `removeMember` when the removal is refused on purpose (as opposed
+ * to a database failure): the organisation's owner cannot be removed, and a
+ * workspace must keep at least one `admin_owner`. The message stays English
+ * for logs; a screen picks its own wording from `reason`, so no id or
+ * database text ever reaches a reader.
+ */
+export class RemoveMemberRefusedError extends Error {
+  readonly reason: "organization_owner" | "last_admin";
+  constructor(reason: "organization_owner" | "last_admin", message: string) {
+    super(message);
+    this.name = "RemoveMemberRefusedError";
+    this.reason = reason;
+  }
+}
+
+/**
  * Thrown when an organisation's owner tries to delete their account while
  * other people are still in it: deleting the owner deletes the organisation
  * and everything saved in it, which would silently take the other members'

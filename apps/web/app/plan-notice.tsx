@@ -9,7 +9,8 @@ import { UpgradeLink } from "./upgrade-link";
  * separate check. Only ever has text while billing is on, so `/billing`
  * exists whenever the link is shown.
  *
- * Workspace pages are English-only (see `billing.md`), and so is this.
+ * The message arrives already written in the reader's language
+ * (`featureLockedFor` in `lib/plan-features.ts`); this only displays it.
  */
 export function FeatureLockedNote({
   message,

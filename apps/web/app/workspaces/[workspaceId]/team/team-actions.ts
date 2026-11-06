@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import type { Role } from "@world-vitality/identity-service";
-import { can } from "@world-vitality/identity-service";
+import { RemoveMemberRefusedError, can } from "@world-vitality/identity-service";
+import { tServer } from "../../../../lib/i18n/server";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../../lib/organization-data";
 import { seatLimitMessage } from "../../../../lib/plan-limits";
@@ -39,15 +40,15 @@ export async function inviteMemberAction(
   scopedResourceIds?: string[],
 ): Promise<TeamActionResult> {
   if (!email || !email.includes("@")) {
-    return { ok: false, error: "Enter a valid email address." };
+    return { ok: false, error: await tServer("team.err.email") };
   }
   if (!VALID_ROLES.includes(role as Role)) {
-    return { ok: false, error: "Choose a valid role." };
+    return { ok: false, error: await tServer("team.err.role") };
   }
 
   const membership = await getWorkspaceMembership(workspaceId);
   if (!can(membership.role, "workspace:manage_team") || !membership.organizationId) {
-    return { ok: false, error: "You do not have permission to invite people to this workspace." };
+    return { ok: false, error: await tServer("team.err.noInvite") };
   }
 
   // The invitation carries the INVITER's organisation, taken from their own
@@ -70,16 +71,17 @@ export async function inviteMemberAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("invite_member_failed", err, { workspaceId });
-    return { ok: false, error: "Failed to send invite. Please try again." };
+    return { ok: false, error: await tServer("team.err.inviteFailed") };
   }
 }
 
 /**
- * Removes a member from a workspace. `AccountService.removeMember`
- * itself refuses to remove a workspace's last `admin_owner` — that
- * error message is surfaced to the caller as-is rather than replaced
- * with a generic one, since it's the one case where the specific reason
- * matters to the person clicking the button.
+ * Removes a member from a workspace. The data layer refuses to remove the
+ * organisation's owner or a workspace's last `admin_owner`, and says which
+ * with a typed error; those two reasons matter to the person clicking the
+ * button, so each gets its own sentence in their language. Anything else
+ * (a database failure) gets a generic one — the raw message, which can
+ * carry an id or database text, is logged and never shown.
  */
 export async function removeMemberAction(
   workspaceId: string,
@@ -87,10 +89,7 @@ export async function removeMemberAction(
 ): Promise<TeamActionResult> {
   const membership = await getWorkspaceMembership(workspaceId);
   if (!can(membership.role, "workspace:manage_team")) {
-    return {
-      ok: false,
-      error: "You do not have permission to remove people from this workspace.",
-    };
+    return { ok: false, error: await tServer("team.err.noRemove") };
   }
 
   try {
@@ -99,6 +98,16 @@ export async function removeMemberAction(
     return { ok: true };
   } catch (err) {
     logSecurity.error("remove_member_failed", err, { workspaceId, targetUserId: userId });
-    return { ok: false, error: err instanceof Error ? err.message : "Failed to remove member." };
+    if (err instanceof RemoveMemberRefusedError) {
+      return {
+        ok: false,
+        error: await tServer(
+          err.reason === "organization_owner"
+            ? "team.err.ownerCannotBeRemoved"
+            : "team.err.lastAdmin",
+        ),
+      };
+    }
+    return { ok: false, error: await tServer("team.err.removeFailed") };
   }
 }

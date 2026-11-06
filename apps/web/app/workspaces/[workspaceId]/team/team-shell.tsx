@@ -2,6 +2,7 @@
 
 import { AppShell } from "@world-vitality/ui-components";
 import { useState, type ReactNode } from "react";
+import { useI18n } from "../../../../lib/i18n/i18n-provider";
 import { AppBrand } from "../../../app-brand";
 import { buildAppSidebar } from "../../workspace-nav";
 
@@ -30,7 +31,8 @@ export interface TeamShellProps {
  */
 export function TeamShell({ workspaceId, children }: TeamShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
-  const sidebar = buildAppSidebar({ workspaceKey: workspaceId, subKey: "team" });
+  const { t } = useI18n();
+  const sidebar = buildAppSidebar({ workspaceKey: workspaceId, subKey: "team", t });
 
   return (
     <AppShell

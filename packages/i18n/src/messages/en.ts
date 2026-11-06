@@ -976,6 +976,60 @@ export const en = {
   "dm.map.fireName": "Fire detection ({confidence} confidence)",
   "dm.map.fireSummary":
     "Thermal anomaly, {satellite}, {date} ({dayNight}). Not a confirmed wildfire.",
+
+  // ---- Team page, plan limits and plan notices (v108)
+  "team.title": "Team — {workspace}",
+  "team.intro": "Invite people to this workspace and manage their access.",
+  "team.denied.body":
+    "This role does not have permission to manage team members for this workspace.",
+  "team.invite.title": "Invite someone",
+  "team.email": "Email",
+  "team.role": "Role",
+  "team.invite.send": "Send Invite",
+  "team.invite.sent": "Invite sent to {email}.",
+  "team.invite.scope":
+    "Scope to specific resources (optional — leave unchecked for workspace-wide access):",
+  "team.you": "(you)",
+  "team.youOwner": "(you · owner)",
+  "team.owner": "(owner)",
+  "team.remove": "Remove",
+  "team.empty.title": "No members yet",
+  "team.empty.body": "Invite someone above to get started.",
+  "team.err.email": "Enter a valid email address.",
+  "team.err.role": "Choose a valid role.",
+  "team.err.noInvite": "You do not have permission to invite people to this workspace.",
+  "team.err.inviteFailed": "Failed to send invite. Please try again.",
+  "team.err.noRemove": "You do not have permission to remove people from this workspace.",
+  "team.err.removeFailed": "Failed to remove member.",
+  "team.err.ownerCannotBeRemoved": "The organisation's owner can't be removed.",
+  "team.err.lastAdmin": "You can't remove the last owner or admin of this workspace.",
+  "billing.limit.reached.seats":
+    "Your {plan} plan includes up to {limit, plural, one {# person} other {# people}}. Upgrade your plan to add more.",
+  "billing.limit.reached.savedItems":
+    "Your {plan} plan includes up to {limit, plural, one {# saved item} other {# saved items}} (fields, insured properties and monitored locations count together). Upgrade your plan to add more.",
+  "billing.limit.reached.workspaces":
+    "Your {plan} plan includes up to {limit, plural, one {# workspace} other {# workspaces}}. Upgrade your plan to add more.",
+  "billing.feature.included":
+    "{name} is included in the {lowest} plan and above. Your plan is {plan}.",
+  "billing.feature.includedMany":
+    "{name} are included in the {lowest} plan and above. Your plan is {plan}.",
+  "billing.feature.notPart": "{name} is not part of the {plan} plan.",
+  "billing.feature.notPartMany": "{name} are not part of the {plan} plan.",
+  "billing.feature.name.forecastOutlooks": "Forecast outlooks",
+  "billing.feature.name.csvExport": "CSV export",
+  "billing.feature.name.printReport": "Print and PDF export",
+  "billing.feature.name.auditableReport": "The auditable report",
+  "billing.feature.name.teamTools": "Team tools",
+  "billing.feature.name.emailAlerts": "Email alerts",
+  "billing.feature.name.smsAlerts": "SMS alerts",
+  "billing.feature.name.auditLog": "The audit log",
+  "billing.feature.name.bulkExport": "Bulk export",
+  "billing.feature.name.apiAccess": "API access",
+  "billing.feature.name.integrations": "Integrations",
+  "billing.feature.name.sso": "Single sign-on",
+
+  // ---- Team page — members without a profile (v108)
+  "team.noProfile": "(no profile found)",
 } as const;
 
 export type MessageKey = keyof typeof en;

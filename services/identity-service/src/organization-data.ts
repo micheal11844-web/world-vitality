@@ -7,6 +7,7 @@ import type {
   WorkspaceMemberSummary,
 } from "./account.js";
 import {
+  RemoveMemberRefusedError,
   normaliseOrganizationName,
   type OrganizationData,
   type OrganizationPerson,
@@ -578,11 +579,15 @@ export class SupabaseOrganizationData implements OrganizationData {
       return;
     }
     if (target.isOrganizationOwner) {
-      throw new Error("The organisation's owner can't be removed.");
+      throw new RemoveMemberRefusedError(
+        "organization_owner",
+        "The organisation's owner can't be removed.",
+      );
     }
     const otherAdmins = members.filter((m) => m.userId !== userId && m.role === "admin_owner");
     if (target.role === "admin_owner" && otherAdmins.length === 0) {
-      throw new Error(
+      throw new RemoveMemberRefusedError(
+        "last_admin",
         `Cannot remove ${userId}: they are the last admin_owner in workspace ${workspaceId}.`,
       );
     }

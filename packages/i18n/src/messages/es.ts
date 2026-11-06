@@ -997,4 +997,59 @@ export const es: Messages = {
   "dm.map.fireName": "Detección de incendio (confianza {confidence})",
   "dm.map.fireSummary":
     "Anomalía térmica, {satellite}, {date} ({dayNight}). No es un incendio forestal confirmado.",
+
+  // ---- Team page, plan limits and plan notices (v108)
+  "team.title": "Equipo — {workspace}",
+  "team.intro": "Invita a personas a este espacio de trabajo y gestiona su acceso.",
+  "team.denied.body":
+    "Este rol no tiene permiso para gestionar a los miembros del equipo de este espacio de trabajo.",
+  "team.invite.title": "Invitar a alguien",
+  "team.email": "Correo electrónico",
+  "team.role": "Rol",
+  "team.invite.send": "Enviar invitación",
+  "team.invite.sent": "Invitación enviada a {email}.",
+  "team.invite.scope":
+    "Limitar a recursos concretos (opcional: déjalo sin marcar para dar acceso a todo el espacio de trabajo):",
+  "team.you": "(tú)",
+  "team.youOwner": "(tú · propietario)",
+  "team.owner": "(propietario)",
+  "team.remove": "Quitar",
+  "team.empty.title": "Aún no hay miembros",
+  "team.empty.body": "Invita a alguien arriba para empezar.",
+  "team.err.email": "Escribe una dirección de correo válida.",
+  "team.err.role": "Elige un rol válido.",
+  "team.err.noInvite": "No tienes permiso para invitar a personas a este espacio de trabajo.",
+  "team.err.inviteFailed": "No se pudo enviar la invitación. Inténtalo de nuevo.",
+  "team.err.noRemove": "No tienes permiso para quitar a personas de este espacio de trabajo.",
+  "team.err.removeFailed": "No se pudo quitar al miembro.",
+  "team.err.ownerCannotBeRemoved": "No se puede quitar al propietario de la organización.",
+  "team.err.lastAdmin":
+    "No puedes quitar al último propietario o administrador de este espacio de trabajo.",
+  "billing.limit.reached.seats":
+    "Tu plan {plan} incluye hasta {limit, plural, one {# persona} other {# personas}}. Mejora tu plan para añadir más.",
+  "billing.limit.reached.savedItems":
+    "Tu plan {plan} incluye hasta {limit, plural, one {# elemento guardado} other {# elementos guardados}} (los campos, las propiedades aseguradas y las ubicaciones monitoreadas se cuentan juntos). Mejora tu plan para añadir más.",
+  "billing.limit.reached.workspaces":
+    "Tu plan {plan} incluye hasta {limit, plural, one {# espacio de trabajo} other {# espacios de trabajo}}. Mejora tu plan para añadir más.",
+  "billing.feature.included":
+    "La función «{name}» está incluida en el plan {lowest} y superiores. Tu plan es {plan}.",
+  "billing.feature.includedMany":
+    "La función «{name}» está incluida en el plan {lowest} y superiores. Tu plan es {plan}.",
+  "billing.feature.notPart": "La función «{name}» no forma parte del plan {plan}.",
+  "billing.feature.notPartMany": "La función «{name}» no forma parte del plan {plan}.",
+  "billing.feature.name.forecastOutlooks": "Previsiones",
+  "billing.feature.name.csvExport": "Exportación a CSV",
+  "billing.feature.name.printReport": "Impresión y exportación a PDF",
+  "billing.feature.name.auditableReport": "Informe auditable",
+  "billing.feature.name.teamTools": "Herramientas de equipo",
+  "billing.feature.name.emailAlerts": "Alertas por correo electrónico",
+  "billing.feature.name.smsAlerts": "Alertas por SMS",
+  "billing.feature.name.auditLog": "Registro de auditoría",
+  "billing.feature.name.bulkExport": "Exportación masiva",
+  "billing.feature.name.apiAccess": "Acceso a la API",
+  "billing.feature.name.integrations": "Integraciones",
+  "billing.feature.name.sso": "Inicio de sesión único",
+
+  // ---- Team page — members without a profile (v108)
+  "team.noProfile": "(perfil no encontrado)",
 };

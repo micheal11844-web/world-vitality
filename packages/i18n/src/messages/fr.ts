@@ -1010,4 +1010,62 @@ export const fr: Messages = {
   "dm.map.fireName": "Détection d’incendie (confiance : {confidence})",
   "dm.map.fireSummary":
     "Anomalie thermique, {satellite}, {date} ({dayNight}). Ce n’est pas un incendie de forêt confirmé.",
+
+  // ---- Team page, plan limits and plan notices (v108)
+  "team.title": "Équipe — {workspace}",
+  "team.intro": "Invitez des personnes dans cet espace de travail et gérez leur accès.",
+  "team.denied.body":
+    "Ce rôle n’a pas l’autorisation de gérer les membres de l’équipe de cet espace de travail.",
+  "team.invite.title": "Inviter quelqu’un",
+  "team.email": "E-mail",
+  "team.role": "Rôle",
+  "team.invite.send": "Envoyer l’invitation",
+  "team.invite.sent": "Invitation envoyée à {email}.",
+  "team.invite.scope":
+    "Limiter à certaines ressources (facultatif : laissez décoché pour un accès à tout l’espace de travail) :",
+  "team.you": "(vous)",
+  "team.youOwner": "(vous · propriétaire)",
+  "team.owner": "(propriétaire)",
+  "team.remove": "Retirer",
+  "team.empty.title": "Aucun membre pour l’instant",
+  "team.empty.body": "Invitez quelqu’un ci-dessus pour commencer.",
+  "team.err.email": "Saisissez une adresse e-mail valide.",
+  "team.err.role": "Choisissez un rôle valide.",
+  "team.err.noInvite":
+    "Vous n’avez pas l’autorisation d’inviter des personnes dans cet espace de travail.",
+  "team.err.inviteFailed": "L’invitation n’a pas pu être envoyée. Veuillez réessayer.",
+  "team.err.noRemove":
+    "Vous n’avez pas l’autorisation de retirer des personnes de cet espace de travail.",
+  "team.err.removeFailed": "Le membre n’a pas pu être retiré.",
+  "team.err.ownerCannotBeRemoved": "Le propriétaire de l’organisation ne peut pas être retiré.",
+  "team.err.lastAdmin":
+    "Vous ne pouvez pas retirer le dernier propriétaire ou administrateur de cet espace de travail.",
+  "billing.limit.reached.seats":
+    "Votre offre {plan} inclut jusqu’à {limit, plural, one {# personne} other {# personnes}}. Passez à une offre supérieure pour en ajouter.",
+  "billing.limit.reached.savedItems":
+    "Votre offre {plan} inclut jusqu’à {limit, plural, one {# élément enregistré} other {# éléments enregistrés}} (les champs, les propriétés assurées et les lieux surveillés sont comptés ensemble). Passez à une offre supérieure pour en ajouter.",
+  "billing.limit.reached.workspaces":
+    "Votre offre {plan} inclut jusqu’à {limit, plural, one {# espace de travail} other {# espaces de travail}}. Passez à une offre supérieure pour en ajouter.",
+  "billing.feature.included":
+    "La fonctionnalité « {name} » est incluse dans l’offre {lowest} et les offres supérieures. Votre offre est {plan}.",
+  "billing.feature.includedMany":
+    "La fonctionnalité « {name} » est incluse dans l’offre {lowest} et les offres supérieures. Votre offre est {plan}.",
+  "billing.feature.notPart": "La fonctionnalité « {name} » ne fait pas partie de l’offre {plan}.",
+  "billing.feature.notPartMany":
+    "La fonctionnalité « {name} » ne fait pas partie de l’offre {plan}.",
+  "billing.feature.name.forecastOutlooks": "Prévisions",
+  "billing.feature.name.csvExport": "Export CSV",
+  "billing.feature.name.printReport": "Impression et export PDF",
+  "billing.feature.name.auditableReport": "Rapport auditable",
+  "billing.feature.name.teamTools": "Outils d’équipe",
+  "billing.feature.name.emailAlerts": "Alertes par e-mail",
+  "billing.feature.name.smsAlerts": "Alertes par SMS",
+  "billing.feature.name.auditLog": "Journal d’audit",
+  "billing.feature.name.bulkExport": "Export en masse",
+  "billing.feature.name.apiAccess": "Accès à l’API",
+  "billing.feature.name.integrations": "Intégrations",
+  "billing.feature.name.sso": "Authentification unique",
+
+  // ---- Team page — members without a profile (v108)
+  "team.noProfile": "(profil introuvable)",
 };

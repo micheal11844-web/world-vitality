@@ -5,9 +5,9 @@ import { useOptionalI18n } from "../lib/i18n/i18n-provider";
 
 /**
  * The "See plans" link shown beside a plan-limit message ("Your Basic plan
- * includes up to 3 saved items…"). Workspace pages are not translated yet,
- * so this speaks the reader's language when it can and stays English when it
- * cannot, instead of throwing (`useOptionalI18n`). Only ever rendered when a
+ * includes up to 3 saved items…"). It speaks the reader's language and, on
+ * the rare screen with no language provider above it, stays English instead
+ * of throwing (`useOptionalI18n`). Only ever rendered when a
  * limit was actually hit, which can only happen while billing is on, so
  * `/billing` always exists when this is shown.
  */

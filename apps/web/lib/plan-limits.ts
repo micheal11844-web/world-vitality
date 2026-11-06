@@ -1,6 +1,13 @@
-import { checkLimit, limitReachedMessage } from "@world-vitality/billing-service";
+import {
+  checkLimit,
+  type Entitlements,
+  type LimitKey,
+  type PlanId,
+} from "@world-vitality/billing-service";
+import type { MessageKey } from "@world-vitality/i18n";
 import type { OrganizationData } from "@world-vitality/identity-service";
 import { getEntitlementsForOrganization } from "./billing";
+import { getTranslator } from "./i18n/server";
 import { logApplication } from "./logger";
 
 /**
@@ -20,6 +27,35 @@ import { logApplication } from "./logger";
  * rules in `plans.ts`), and only ADDING more is refused.
  */
 
+/** The plan's name in the catalog (`billing.plan.*`). */
+export const PLAN_NAME_KEYS: Record<PlanId, MessageKey> = {
+  basic: "billing.plan.basic",
+  standard: "billing.plan.standard",
+  premium: "billing.plan.premium",
+  enterprise: "billing.plan.enterprise",
+};
+
+const LIMIT_REACHED_KEYS: Record<LimitKey, MessageKey> = {
+  workspaces: "billing.limit.reached.workspaces",
+  seats: "billing.limit.reached.seats",
+  savedItems: "billing.limit.reached.savedItems",
+};
+
+/**
+ * What to tell someone who has hit a limit, in their language: the plan, the
+ * number, and how to get past it. Same sentence as the billing service's
+ * `limitReachedMessage` in English; this one is written from the catalog so
+ * the other languages read naturally.
+ */
+export async function limitReachedText(
+  entitlements: Entitlements,
+  key: LimitKey,
+  limit: number,
+): Promise<string> {
+  const { t } = await getTranslator();
+  return t(LIMIT_REACHED_KEYS[key], { plan: t(PLAN_NAME_KEYS[entitlements.plan]), limit });
+}
+
 /** May this organisation save one more field / property / location? */
 export async function savedItemLimitMessage(
   organizationId: string,
@@ -29,7 +65,7 @@ export async function savedItemLimitMessage(
     const entitlements = await getEntitlementsForOrganization(organizationId);
     if (!entitlements.enforced || entitlements.limits.savedItems === null) return null;
     const check = checkLimit(entitlements, "savedItems", await data.countSavedItems());
-    return check.allowed ? null : limitReachedMessage(entitlements, "savedItems", check.limit);
+    return check.allowed ? null : await limitReachedText(entitlements, "savedItems", check.limit);
   } catch (err) {
     logApplication.error("saved_item_limit_check_failed", err);
     return null;
@@ -45,7 +81,7 @@ export async function seatLimitMessage(
     const entitlements = await getEntitlementsForOrganization(organizationId);
     if (!entitlements.enforced || entitlements.limits.seats === null) return null;
     const check = checkLimit(entitlements, "seats", await data.countMembers());
-    return check.allowed ? null : limitReachedMessage(entitlements, "seats", check.limit);
+    return check.allowed ? null : await limitReachedText(entitlements, "seats", check.limit);
   } catch (err) {
     logApplication.error("seat_limit_check_failed", err);
     return null;

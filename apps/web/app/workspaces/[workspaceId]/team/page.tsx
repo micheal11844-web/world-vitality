@@ -5,6 +5,8 @@ import { WORKSPACE_LINKS } from "../../workspace-nav";
 import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership";
 import { getOrganizationData } from "../../../../lib/organization-data";
 import { getSessionUserId } from "../../../../lib/get-session-user-id";
+import { getTranslator } from "../../../../lib/i18n/server";
+import { workspaceName } from "../../../../lib/i18n/labels";
 import { TeamShell } from "./team-shell";
 import { TeamClient, type ScopableResource } from "./team-client";
 export const dynamic = "force-dynamic";
@@ -35,14 +37,15 @@ export default async function TeamPage({ params }: { params: Promise<{ workspace
   }
 
   const membership = await getWorkspaceMembership(workspaceId);
+  const { t } = await getTranslator();
 
   if (!can(membership.role, "workspace:manage_team")) {
     return (
       <TeamShell workspaceId={workspaceId}>
         <StateDisplay
           status="error"
-          title="Access denied"
-          description="This role does not have permission to manage team members for this workspace."
+          title={t("report.accessDenied")}
+          description={t("team.denied.body")}
         />
       </TeamShell>
     );
@@ -85,13 +88,13 @@ export default async function TeamPage({ params }: { params: Promise<{ workspace
     <TeamShell workspaceId={workspaceId}>
       <div>
         <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-          Team — {workspace.label}
+          {t("team.title", { workspace: workspaceName(workspaceId, t, workspace.label) })}
         </Text>
         <Text
           variant="body"
           style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
         >
-          Invite people to this workspace and manage their access.
+          {t("team.intro")}
         </Text>
         <TeamClient
           workspaceId={workspaceId}

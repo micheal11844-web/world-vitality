@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseOrganizationData } from "../organization-data.js";
+import { RemoveMemberRefusedError } from "../organizations.js";
 
 /**
  * `SupabaseOrganizationData` talks to the database with the service-role
@@ -365,7 +366,10 @@ test("the organisation's owner can never be removed", async () => {
   const { client, calls } = removeSetup(0);
   await assert.rejects(
     () => new SupabaseOrganizationData(client, ORG).removeMember("agriculture", "u-owner"),
-    /owner can't be removed/,
+    (err: unknown) =>
+      err instanceof RemoveMemberRefusedError &&
+      err.reason === "organization_owner" &&
+      /owner can't be removed/.test(err.message),
   );
   assert.ok(!calls.some((c) => c.ops.some(([m]) => m === "delete")));
 });

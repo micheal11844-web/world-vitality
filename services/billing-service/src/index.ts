@@ -25,6 +25,7 @@ export {
   hasFeature,
   lowestPlanWith,
   featureLockedMessage,
+  featureLockedDetails,
   isFeatureBuilt,
   type Entitlements,
   type EntitlementDeps,

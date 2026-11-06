@@ -19,6 +19,7 @@ export {
   MAX_ORGANIZATION_NAME_LENGTH,
   NoOrganizationError,
   OrganizationHasMembersError,
+  RemoveMemberRefusedError,
   emptyOrganizationData,
   normaliseOrganizationName,
   resolveWorkspaceMembership,
