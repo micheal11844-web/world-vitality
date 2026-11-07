@@ -301,18 +301,92 @@ Logs, search `billing_checkout_failed`.
   business is enabled for (Nigeria: NGN).
 - Anything else: send me the `paystackMessage` text.
 
-## Going live (later)
+## Going live
 
-1. Get the World Vitality business activated (its Compliance section;
-   Paystack reviews it, and you add payout details).
-2. In the **live** side of that business, repeat steps 1, 2 and 5: the live
-   secret key (`sk_live_…`), the same four plans created again on the Plans
-   page (live and test plans are separate, so the codes differ), and the
-   **Live Webhook URL**.
-3. Replace `PAYSTACK_SECRET_KEY` and `PAYSTACK_PLAN_CODES` in Vercel with the
-   live values and redeploy.
-4. Subscribe to Open-Meteo and set `OPEN_METEO_API_KEY` first
-   (`billing.md`, "Weather data licence").
+Test payments work (2026-11-07). Going live changes **four things that must
+change together**: the secret key, the plan codes, the webhook URL (in
+Paystack), and the business being activated. The app needs no code change.
+
+**Before you start**
+
+- The business name at the top left of the Paystack dashboard must be the one
+  that owns these plans and keys. A Paystack business has **one Live Webhook
+  URL**: if it already holds another project's address, stop and ask me; do
+  not overwrite it.
+- Paystack has activated the business for live payments (Compliance, payout
+  details). Until then the live key exists but live payments are refused.
+- Open-Meteo: the free tier is non-commercial. Subscribe and set
+  `OPEN_METEO_API_KEY` before charging customers (`billing.md`, "Weather data
+  licence"). This is the owner's decision.
+
+**1. Check the live plans (Paystack, Live mode, Plans).** The codes recorded
+for live are below. Open each and check the **amount and the interval**: the
+app cannot tell if they differ, and would charge what Paystack's plan says.
+
+| Plan key               | Must be (Live mode)             | Code                  |
+| ---------------------- | ------------------------------- | --------------------- |
+| `standard.NGN.monthly` | World Vitality Standard, 7,500  | `PLN_byaqpuelsez6yjo` |
+| `standard.NGN.annual`  | World Vitality Standard, 75,000 | `PLN_738u9gsms3uq4dn` |
+| `premium.NGN.monthly`  | World Vitality Premium, 25,000  | `PLN_ke5gy2dz0d5q2w0` |
+| `premium.NGN.annual`   | World Vitality Premium, 250,000 | `PLN_c64r8bzadfts71b` |
+
+(Monthly rows are NGN per month, annual rows NGN per year, as in
+`billing.md`, "The prices".) These codes are the first set the owner created;
+they were refused with "Plan not found" while the key was a **test** key, which
+fits plans that exist only in Live mode, but that was not confirmed from here.
+
+**2. The live webhook (Paystack, Live mode).** Settings → **API Keys &
+Webhooks**. Make sure the **Live** toggle is on and the business name is
+right. Set **Live Webhook URL** to
+`https://world-vitality.vercel.app/api/paystack/webhook` and Save. Leave the
+Live Callback URL alone: the app sends its own return address with every
+payment. While you are in Live mode, look at Settings → Preferences too (for
+example Google Pay): the live settings are separate from the test ones as far
+as we know, so check rather than assume.
+
+**3. Vercel (project `world-vitality`, team `micheal6`, Production).** Change
+both, then redeploy once (Deployments → latest → ⋯ → Redeploy). Changing only
+one makes checkout fail until the other catches up.
+
+- `PAYSTACK_SECRET_KEY` → the live key (`sk_live_…`), as a Sensitive variable.
+- `PAYSTACK_PLAN_CODES` →
+
+  ```json
+  {
+    "standard.NGN.monthly": "PLN_byaqpuelsez6yjo",
+    "standard.NGN.annual": "PLN_738u9gsms3uq4dn",
+    "premium.NGN.monthly": "PLN_ke5gy2dz0d5q2w0",
+    "premium.NGN.annual": "PLN_c64r8bzadfts71b"
+  }
+  ```
+
+**4. Clear the test subscription on the owner's own account** (a test
+payment left Standard active until 2026-12-07 with no real payment behind it).
+Ask me; it removes that one `billing_subscriptions` row. Do this before the
+first live payment, because the plan screen will not offer Subscribe to an
+account that already has a plan.
+
+**5. First live payment.** Subscribe to Standard monthly on `/billing` with a
+real card (NGN 7,500). Ask me to read back the subscription and events; you
+want `status = active` and `subscription.create` applied. Then cancel on
+`/billing` and refund the payment from the Paystack dashboard (Transactions →
+the payment → Refund) if you do not want to keep it.
+
+**Back out (if anything is wrong).** Put the test key and the test codes back
+in Vercel and redeploy. Test codes:
+
+```json
+{
+  "standard.NGN.monthly": "PLN_w4jj6dgulbo39ss",
+  "standard.NGN.annual": "PLN_edqhz5f757lcj6c",
+  "premium.NGN.monthly": "PLN_91ox3mlgr7i2vhl",
+  "premium.NGN.annual": "PLN_vdu6s5nvp96tss3"
+}
+```
+
+Nobody is charged by a failed checkout (the customer sees "Couldn't start the
+payment, and nothing was charged"); `billing_checkout_failed` in the Vercel
+logs says why.
 
 ## What the app does once it is on
 
