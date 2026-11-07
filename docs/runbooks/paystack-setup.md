@@ -279,8 +279,11 @@ payment, and nothing was charged"). The reason is in the production log as
 the HTTP status in `httpStatus` (never the key). In Vercel: Project →
 Logs, search `billing_checkout_failed`.
 
-- **404, "Plan not found."** Paystack looked for the plan code the app sent
-  and has no such plan **in the account and mode the secret key belongs to**.
+- **404, "Plan not found."** (What happened on 2026-11-07: the first four plan
+  codes were rejected; the same key accepted four plans created again in Test
+  mode, so the plans were the problem, not the key.) Paystack looked for the
+  plan code the app sent and has no such plan **in the account and mode the
+  secret key belongs to**.
   Paystack keeps **Test** and **Live** completely separate, and each business
   has its own plans. Check both, in this order:
   1. In the Paystack dashboard, switch to **Test mode** (the toggle at the top)

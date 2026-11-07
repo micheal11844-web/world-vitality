@@ -5,10 +5,12 @@ set at the owner's explicit request on 2026-11-06, with Paystack in **test
 mode** and the test secret key, so no real money moves). While that switch is
 unset, nothing in the app charges anyone, limits anyone, or reads the billing
 tables (BUILD_PLAN v90, v93, v94; the reasoning is Decisions #018, #019,
-#020). **As of 2026-11-07 the first test payment has not succeeded**: the
-checkout fails with Paystack's "Plan not found" (see `paystack-setup.md`,
-"If checkout says it couldn't start the payment"); nothing has been charged
-and no subscription exists.
+#020). **The first test payment succeeded on 2026-11-07** (see "First test
+payment" below for what that confirmed and what is still unchecked). It first
+failed with Paystack's "Plan not found" (`paystack-setup.md`, "If checkout says
+it couldn't start the payment"); creating the four plans again in Test mode and
+swapping the codes into `PAYSTACK_PLAN_CODES` fixed it, so the key was fine and
+the first set of plan codes was not visible to it.
 This page says what exists, what does not, the prices, and the order to turn
 it on. The click-by-click for Paystack is in `paystack-setup.md`.
 
@@ -293,10 +295,25 @@ it appears on a _plan_ checkout specifically — check in test mode.
 
 ## First test payment
 
-The plan screen has been exercised in a browser against a stand-in Paystack
-and a stand-in database, but **no call has been made to the real Paystack**
-from the build environment, so these are the things to confirm with a real
-test-mode payment. If one is wrong, the fix is small and local.
+**Result, 2026-11-07 (Standard, monthly, Paystack test card).** Read back from
+the live database afterwards: one `billing_subscriptions` row for the owner,
+`plan = standard`, `status = active`, `currency = NGN`, a Paystack customer and
+subscription code, `current_period_end` one month ahead, `past_due_since`
+empty. `billing_events` shows `subscription.create` **applied** and
+`charge.success` **ignored** with reason `no_change` (it arrived a moment
+before the subscription existed, so there was nothing for it to change; that is
+the designed outcome, not an error). So these are now **confirmed against the
+real service**: Subscribe reaches Paystack's checkout with a plan code; the
+`subscription.create` event carries the fields the reader expects; the
+signature check accepts Paystack's real signature; the plan appears on the
+plan screen. **Still unchecked against the real service:** Update card, Cancel
+and the `subscription.not_renew` event, a failed renewal, a redelivery, Google
+Pay on a plan checkout, and anything in live mode.
+
+The plan screen was first exercised in a browser against a stand-in Paystack
+and a stand-in database. The list below was the checklist for the first real
+test-mode payment; the items marked above as confirmed are done. If one of the
+others is wrong, the fix is small and local.
 
 - Subscribing from `/billing` lands on Paystack's checkout and returns to
   `/billing?checkout=return`; the plan appears within a minute.
