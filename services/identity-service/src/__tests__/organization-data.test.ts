@@ -20,9 +20,18 @@ const ORG = "org-A";
 type Call = { table: string; ops: Array<[string, unknown[]]> };
 type Reply = { data?: unknown; error?: { message: string } | null; count?: number | null };
 
-function makeClient(reply: (call: Call) => Reply = () => ({ data: [] })) {
+function makeClient(
+  reply: (call: Call) => Reply = () => ({ data: [] }),
+  rpcReply: (name: string, args: Record<string, unknown>) => Reply = () => ({ data: null }),
+) {
   const calls: Call[] = [];
+  const rpcCalls: Array<{ name: string; args: Record<string, unknown> }> = [];
   const client = {
+    rpc(name: string, args: Record<string, unknown>) {
+      rpcCalls.push({ name, args });
+      const r = rpcReply(name, args);
+      return Promise.resolve({ data: r.data ?? null, error: r.error ?? null });
+    },
     from(table: string) {
       const call: Call = { table, ops: [] };
       calls.push(call);
@@ -60,7 +69,7 @@ function makeClient(reply: (call: Call) => Reply = () => ({ data: [] })) {
       return builder;
     },
   };
-  return { client: client as unknown as SupabaseClient, calls };
+  return { client: client as unknown as SupabaseClient, calls, rpcCalls };
 }
 
 const has = (call: Call, method: string, ...args: unknown[]) =>
@@ -437,6 +446,61 @@ test("a rename database error is thrown, not reported as success", async () => {
     () => new SupabaseOrganizationData(client, ORG).renameOrganization("owner-1", "Acme"),
     /Failed to rename organisation/,
   );
+});
+
+test("handing over the organisation is one database call that names the organisation, the acting owner, the new owner and where the old owner stays", async () => {
+  const { client, calls, rpcCalls } = makeClient(undefined, () => ({ data: "transferred" }));
+  const result = await new SupabaseOrganizationData(client, ORG).transferOwnership(
+    "owner-1",
+    "member-2",
+    ["agriculture", "weather"],
+  );
+  assert.equal(result, "transferred");
+  assert.equal(calls.length, 0, "no separate table writes: the swap is atomic in the database");
+  assert.deepEqual(rpcCalls, [
+    {
+      name: "transfer_organization_ownership",
+      args: {
+        p_organization_id: ORG,
+        p_from_user_id: "owner-1",
+        p_to_user_id: "member-2",
+        p_keep_workspaces: ["agriculture", "weather"],
+      },
+    },
+  ]);
+});
+
+test("every refusal the database gives is passed on unchanged", async () => {
+  for (const answer of ["not_owner", "same_person", "not_member"] as const) {
+    const { client } = makeClient(undefined, () => ({ data: answer }));
+    assert.equal(
+      await new SupabaseOrganizationData(client, ORG).transferOwnership("a", "b", []),
+      answer,
+    );
+  }
+});
+
+test("an organisation that has vanished reads as one the person does not own", async () => {
+  const { client } = makeClient(undefined, () => ({ data: "not_found" }));
+  assert.equal(
+    await new SupabaseOrganizationData(client, ORG).transferOwnership("a", "b", []),
+    "not_owner",
+  );
+});
+
+test("a handover database error or an unknown answer is thrown, never read as success", async () => {
+  const failing = makeClient(undefined, () => ({ error: { message: "boom" } }));
+  await assert.rejects(
+    () => new SupabaseOrganizationData(failing.client, ORG).transferOwnership("a", "b", []),
+    /Failed to hand over organisation/,
+  );
+  for (const odd of [null, "ok", true, 7]) {
+    const { client } = makeClient(undefined, () => ({ data: odd }));
+    await assert.rejects(
+      () => new SupabaseOrganizationData(client, ORG).transferOwnership("a", "b", []),
+      /Unexpected answer handing over organisation/,
+    );
+  }
 });
 
 test("listing people is confined to the organisation, owner first, owner with no role rows", async () => {

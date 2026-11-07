@@ -271,6 +271,33 @@ The plan screen (`/billing`) exists and appears only once billing is on:
    send it to me and it is a small fix (`billing.md`, "First test payment",
    lists what to confirm).
 
+## If checkout says it couldn't start the payment
+
+The message the customer sees is deliberately plain ("Couldn't start the
+payment, and nothing was charged"). The reason is in the production log as
+`billing_checkout_failed`, with Paystack's own words in `paystackMessage` and
+the HTTP status in `httpStatus` (never the key). In Vercel: Project →
+Logs, search `billing_checkout_failed`.
+
+- **404, "Plan not found."** Paystack looked for the plan code the app sent
+  and has no such plan **in the account and mode the secret key belongs to**.
+  Paystack keeps **Test** and **Live** completely separate, and each business
+  has its own plans. Check both, in this order:
+  1. In the Paystack dashboard, switch to **Test mode** (the toggle at the top)
+     and open **Plans**. The four plans must be listed there, not only under
+     Live. If they are only under Live, create them again in Test mode and send
+     me the new `PLN_` codes (I swap `PAYSTACK_PLAN_CODES` and redeploy).
+  2. **Settings → API Keys & Webhooks**, still in Test mode, in the **World
+     Vitality** business (not your other business): the **Test Secret Key**
+     must be the one copied from there. A key from another business cannot see
+     these plans.
+- **401, "Invalid key."** The secret key is wrong, from the wrong mode, or has
+  a stray space or line break. Paste it again in Vercel (as a Sensitive
+  variable) and redeploy.
+- **400 about the amount or currency.** The plan's currency must be one your
+  business is enabled for (Nigeria: NGN).
+- Anything else: send me the `paystackMessage` text.
+
 ## Going live (later)
 
 1. Get the World Vitality business activated (its Compliance section;

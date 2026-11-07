@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Button,
   ButtonLink,
   Card,
   Checkbox,
   Input,
+  Select,
   Text,
   AppShell,
 } from "@world-vitality/ui-components";
@@ -22,6 +24,7 @@ import {
   updateDisplayNameAction,
   deleteAccountAction,
   renameOrganizationAction,
+  transferOrganizationAction,
 } from "../../lib/account-actions";
 import { clearHomePlaceAction } from "../../lib/onboarding-actions";
 import { saveNotificationSettingsAction } from "../../lib/notification-actions";
@@ -30,6 +33,15 @@ import {
   MAX_ORGANIZATION_NAME_LENGTH,
   DELETE_CONFIRMATION_WORD,
 } from "../../lib/account-constants";
+
+/**
+ * Wraps text that comes from outside the catalog (an email address) so it
+ * keeps its own direction inside a sentence in another script: first-strong
+ * isolate marks, which the browser honours in running text and in `<option>`s.
+ */
+function isolate(value: string): string {
+  return `\u2068${value}\u2069`;
+}
 
 export interface SettingsViewProps {
   email: string;
@@ -140,6 +152,41 @@ export function SettingsView({
     } else {
       setOrgStatus("error");
       setOrgError(result.error);
+    }
+  }
+
+  const router = useRouter();
+  const [transferTo, setTransferTo] = useState("");
+  const [confirmingTransfer, setConfirmingTransfer] = useState(false);
+  const [transferring, setTransferring] = useState(false);
+  const [transferError, setTransferError] = useState<string | undefined>();
+  const [handedOverTo, setHandedOverTo] = useState<string | null>(null);
+  // Everyone but the owner (you) can receive the organisation.
+  const transferCandidates = (organisation?.people ?? []).filter((p) => !p.isOwner && !p.isYou);
+  const transferTarget = transferCandidates.find((p) => p.userId === transferTo) ?? null;
+
+  // The card gets shorter once you are no longer the owner, which can leave
+  // the confirmation above the visible area: bring it into view.
+  useEffect(() => {
+    if (handedOverTo) {
+      document.querySelector("[data-transfer-done]")?.scrollIntoView({ block: "center" });
+    }
+  }, [handedOverTo]);
+
+  async function handOver() {
+    if (!transferTarget) return;
+    setTransferring(true);
+    setTransferError(undefined);
+    const result = await transferOrganizationAction(transferTarget.userId);
+    setTransferring(false);
+    if (result.ok) {
+      setHandedOverTo(transferTarget.email);
+      setConfirmingTransfer(false);
+      setTransferTo("");
+      // The page was drawn for the owner; ask the server to draw it again for what you are now.
+      router.refresh();
+    } else {
+      setTransferError(result.error);
     }
   }
 
@@ -398,6 +445,16 @@ export function SettingsView({
               <Text variant="sectionTitle" as="h2">
                 {t("settings.org.title")}
               </Text>
+              {handedOverTo && (
+                <Text
+                  variant="body"
+                  role="status"
+                  data-transfer-done=""
+                  style={{ color: "var(--wv-accent)" }}
+                >
+                  {t("settings.org.transfer.done", { email: isolate(handedOverTo) })}
+                </Text>
+              )}
               {organisation.isOwner ? (
                 <>
                   <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
@@ -484,6 +541,79 @@ export function SettingsView({
                   <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
                     {t("settings.org.people.hint")}
                   </Text>
+                  {transferCandidates.length > 0 && (
+                    <div style={sectionGap} data-transfer-section="">
+                      <Text variant="sectionTitle" as="h3">
+                        {t("settings.org.transfer.title")}
+                      </Text>
+                      <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
+                        {t("settings.org.transfer.intro")}
+                      </Text>
+                      <Select
+                        id="transfer-to"
+                        label={t("settings.org.transfer.selectLabel")}
+                        value={transferTo}
+                        disabled={transferring}
+                        onChange={(e) => {
+                          setTransferTo(e.target.value);
+                          setConfirmingTransfer(false);
+                          setTransferError(undefined);
+                        }}
+                      >
+                        <option value="">{t("settings.org.transfer.selectPlaceholder")}</option>
+                        {transferCandidates.map((p) => (
+                          <option key={p.userId} value={p.userId}>
+                            {isolate(p.email)}
+                          </option>
+                        ))}
+                      </Select>
+                      {!confirmingTransfer ? (
+                        <div>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={!transferTarget}
+                            onClick={() => setConfirmingTransfer(true)}
+                          >
+                            {t("settings.org.transfer.start")}
+                          </Button>
+                        </div>
+                      ) : (
+                        transferTarget && (
+                          <div role="group" data-transfer-confirm="" style={sectionGap}>
+                            <Text variant="body" role="alert">
+                              {t("settings.org.transfer.confirm", {
+                                email: isolate(transferTarget.email),
+                              })}
+                            </Text>
+                            <div style={{ display: "flex", gap: "var(--wv-space-sm)" }}>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                loading={transferring}
+                                onClick={handOver}
+                              >
+                                {t("settings.org.transfer.yes")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                disabled={transferring}
+                                onClick={() => setConfirmingTransfer(false)}
+                              >
+                                {t("common.cancel")}
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      )}
+                      {transferError && (
+                        <Text variant="body" role="alert" style={{ color: "var(--wv-critical)" }}>
+                          {transferError}
+                        </Text>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <>

@@ -77,5 +77,15 @@ export function localizeNotificationText(
     };
   }
 
+  if (notification.messageKey === "ownership_received") {
+    const organisation = params?.organisation;
+    if (!organisation) return stored;
+    const who = params?.who || t("notifications.msg.someone");
+    return {
+      title: t("notifications.msg.ownershipReceived.title", { who, organisation }),
+      body: t("notifications.msg.ownershipReceived.body"),
+    };
+  }
+
   return stored;
 }

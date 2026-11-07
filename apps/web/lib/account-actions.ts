@@ -6,13 +6,18 @@ import {
   OrganizationHasMembersError,
   normaliseOrganizationName,
 } from "@world-vitality/identity-service";
+import { summariseBilling } from "@world-vitality/billing-service";
+import { WORKSPACE_LINKS } from "../app/workspaces/workspace-nav";
 import { getAccountService } from "./account";
 import { getAccessContext } from "./get-access-context";
+import { billingEnabled, getBillingStore } from "./billing";
 import { cancelPaystackSubscriptionBeforeDeletion } from "./billing-cancel";
 import { getSessionUserId } from "./get-session-user-id";
 import { tServer } from "./i18n/server";
 import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
 import { logSecurity, logTelemetry } from "./logger";
+import { notifyOwnershipReceived } from "./notification-events";
+import { PLAN_NAME_KEYS } from "./plan-limits";
 import { MAX_DISPLAY_NAME_LENGTH, DELETE_CONFIRMATION_WORD } from "./account-constants";
 
 export interface AccountActionResult {
@@ -162,5 +167,94 @@ export async function renameOrganizationAction(name: string): Promise<RenameOrga
   } catch (err) {
     logSecurity.error("organization_rename_failed", err, { userId });
     return { ok: false, error: await tServer("errors.orgRenameFailed") };
+  }
+}
+
+/**
+ * Hands the signed-in owner's organisation to another person in it.
+ *
+ * Who is acting always comes from the session, never from the browser, and
+ * only the owner may do this — enforced here from the session's own
+ * organisation and again inside the database function, which checks the
+ * acting person is the owner and the new owner is already a member, and does
+ * the whole swap in one statement (migration 0021).
+ *
+ * The plan belongs to the owner and a subscription does not move between
+ * people, so while billing is on the hand-over is refused for as long as the
+ * owner's plan is in effect (any state but free: active, ending, past due, or
+ * granted by staff). Handing over would otherwise drop the organisation to
+ * the Free plan without warning. If the plan cannot be read the answer is
+ * "couldn't", not "go ahead": nothing has changed at that point.
+ *
+ * The previous owner stays on as an admin everywhere (so they are never
+ * locked out), the new owner gets a notice, and the whole thing is written to
+ * the security log.
+ */
+export async function transferOrganizationAction(
+  newOwnerUserId: string,
+): Promise<AccountActionResult> {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return { ok: false, error: await tServer("errors.sessionExpired") };
+  }
+  if (typeof newOwnerUserId !== "string" || newOwnerUserId.trim() === "") {
+    return { ok: false, error: await tServer("errors.orgTransferNotMember") };
+  }
+  try {
+    const access = await getAccessContext();
+    if (!access || access.organization.role !== "owner" || access.organization.ownerId !== userId) {
+      return { ok: false, error: await tServer("errors.orgTransferOwnerOnly") };
+    }
+    const { organizationId, name: organizationName } = access.organization;
+
+    if (billingEnabled()) {
+      const summary = summariseBilling(await getBillingStore().getSubscription(userId), new Date());
+      if (summary.state !== "free") {
+        return {
+          ok: false,
+          error: await tServer("errors.orgTransferPaidPlan", {
+            plan: await tServer(PLAN_NAME_KEYS[summary.plan]),
+          }),
+        };
+      }
+    }
+
+    const account = getAccountService();
+    const result = await account.forOrganization(organizationId).transferOwnership(
+      userId,
+      newOwnerUserId.trim(),
+      WORKSPACE_LINKS.map((w) => w.key),
+    );
+    if (result === "not_owner") {
+      return { ok: false, error: await tServer("errors.orgTransferOwnerOnly") };
+    }
+    if (result === "not_member" || result === "same_person") {
+      return { ok: false, error: await tServer("errors.orgTransferNotMember") };
+    }
+
+    logSecurity.info("organization_ownership_transferred", {
+      userId,
+      organizationId,
+      newOwnerId: newOwnerUserId.trim(),
+    });
+
+    // A courtesy on top of a change that has already happened: best effort,
+    // and never able to fail the hand-over.
+    try {
+      const previous = await account.getProfile(userId);
+      await notifyOwnershipReceived({
+        newOwnerId: newOwnerUserId.trim(),
+        organizationId,
+        organizationName,
+        fromDisplayName: previous.displayName,
+        fromEmail: previous.email,
+      });
+    } catch (err) {
+      logSecurity.error("organization_ownership_notice_failed", err, { userId });
+    }
+    return { ok: true };
+  } catch (err) {
+    logSecurity.error("organization_transfer_failed", err, { userId });
+    return { ok: false, error: await tServer("errors.orgTransferFailed") };
   }
 }

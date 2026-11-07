@@ -29,6 +29,7 @@ export {
   type OrganizationPerson,
   type OrganizationRole,
   type RenameOrganizationResult,
+  type TransferOwnershipResult,
 } from "./organizations.js";
 export { buildUserDataExport, type UserDataExport } from "./data-export.js";
 export {
@@ -57,6 +58,7 @@ export {
   fieldCommentNotification,
   membershipAddedNotification,
   paymentFailedNotification,
+  ownershipReceivedNotification,
   isStillActive,
   isNwsCoverageCountry,
   isSyncDue,

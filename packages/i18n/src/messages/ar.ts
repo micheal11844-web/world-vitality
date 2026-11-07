@@ -265,7 +265,7 @@ export const ar: Messages = {
   "settings.download.button": "تنزيل بياناتي",
   "settings.delete.title": "احذف حسابك",
   "settings.delete.body":
-    "يؤدي هذا إلى حذف حسابك وعضوياتك وإشعاراتك والتعليقات التي كتبتها نهائيًا وفورًا. وإذا كنت مالك مؤسستك، فتُحذف أيضًا الحقول والعقارات والمواقع المحفوظة فيها (ولا يمكن ذلك إلا بعد إزالة جميع الأعضاء الآخرين منها). وإذا كنت عضوًا في مؤسسة شخص آخر، فما أضفتَه يبقى هناك دون اسمك. لا يمكن التراجع عن ذلك؛ نزّل بياناتك أولًا إذا أردت نسخة.",
+    "يؤدي هذا إلى حذف حسابك وعضوياتك وإشعاراتك والتعليقات التي كتبتها نهائيًا وفورًا. وإذا كنت مالك مؤسستك، فتُحذف أيضًا الحقول والعقارات والمواقع المحفوظة فيها (ولا يمكن ذلك إلا بعد إزالة جميع الأعضاء الآخرين منها؛ ولإبقائها كما هي، انقل ملكيتها أولًا إلى أحد أعضائها). وإذا كنت عضوًا في مؤسسة شخص آخر، فما أضفتَه يبقى هناك دون اسمك. لا يمكن التراجع عن ذلك؛ نزّل بياناتك أولًا إذا أردت نسخة.",
   "settings.delete.confirmLabel": "اكتب {word} للتأكيد",
   "settings.delete.button": "حذف حسابي",
 
@@ -332,7 +332,7 @@ export const ar: Messages = {
   "errors.typeToConfirm": "اكتب {word} للتأكيد.",
   "errors.deleteFailed": "تعذّر حذف حسابك. يُرجى المحاولة مرة أخرى.",
   "errors.deleteOrganizationHasMembers":
-    "ما زال لدى مؤسستك أعضاء آخرون ({count}). أزِلهم أولًا من صفحة «الفريق» ثم احذف حسابك.",
+    "ما زال لدى مؤسستك أعضاء آخرون ({count}). انقل ملكيتها إلى أحدهم، أو أزِلهم من صفحة «الفريق»، ثم احذف حسابك.",
 
   // ---- plan & billing (v95)
   "billing.title": "الخطة والفوترة",
@@ -1021,4 +1021,26 @@ export const ar: Messages = {
   "notifications.msg.paymentFailed.title": "لم تتم عملية الدفع",
   "notifications.msg.paymentFailed.body":
     "تعذّر تجديد خطة {plan} الخاصة بك. حدّث بطاقتك للاحتفاظ بها.",
+
+  // ---- Hand over ownership of the organisation (v105)
+  "settings.org.transfer.title": "نقل الملكية",
+  "settings.org.transfer.intro":
+    "سلّم مؤسستك إلى شخص آخر ينتمي إليها. يصبح مالكها ويتولى خطتها وفريقها، وتبقى أنت مسؤولًا فيها إلى أن يزيلك.",
+  "settings.org.transfer.selectLabel": "المالك الجديد",
+  "settings.org.transfer.selectPlaceholder": "اختر شخصًا",
+  "settings.org.transfer.start": "نقل الملكية…",
+  "settings.org.transfer.confirm":
+    "هل تريد أن يصبح {email} مالك مؤسستك؟ سيتحكم في خطتها وفريقها وكل ما حُفظ فيها. تبقى أنت مسؤولًا، لكنه يستطيع إزالتك، ولا أحد غيره يستطيع إعادتها إليك.",
+  "settings.org.transfer.yes": "نعم، انقلها",
+  "settings.org.transfer.done": "أصبح {email} مالك مؤسستك. وأنت الآن مسؤول فيها.",
+  "errors.orgTransferOwnerOnly": "مالك المؤسسة وحده يستطيع نقل ملكيتها.",
+  "errors.orgTransferNotMember": "هذا الشخص ليس في مؤسستك، لذا لا يمكن نقل ملكيتها إليه.",
+  "errors.orgTransferPaidPlan":
+    "مؤسستك على الخطة {plan}، وهي تخص مالكها ولا يمكن نقلها إلى شخص آخر بعد. يمكنك نقل الملكية بعد انتهاء الخطة.",
+  "errors.orgTransferFailed": "تعذّر نقل ملكية مؤسستك. لم يتغير شيء. حاول مرة أخرى.",
+
+  // ---- Ownership-received notice (v105)
+  "notifications.msg.ownershipReceived.title": "جعلك {who} مالك {organisation}",
+  "notifications.msg.ownershipReceived.body":
+    "أصبحت الآن تدير خطتها وفريقها. افتح الإعدادات لرؤية الأشخاص المنتمين إليها.",
 };

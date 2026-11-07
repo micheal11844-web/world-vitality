@@ -2,6 +2,7 @@ import {
   can,
   fieldCommentNotification,
   membershipAddedNotification,
+  ownershipReceivedNotification,
   resolveWorkspaceMembership,
 } from "@world-vitality/identity-service";
 import { WORKSPACE_LINKS } from "../app/workspaces/workspace-nav";
@@ -103,5 +104,29 @@ export async function notifyMembershipAdded(input: {
     );
   } catch (err) {
     logApplication.error("notify_membership_added_failed", err);
+  }
+}
+
+/** Tells someone an organisation was just handed over to them. */
+export async function notifyOwnershipReceived(input: {
+  newOwnerId: string;
+  organizationId: string;
+  organizationName: string;
+  fromDisplayName: string | null;
+  fromEmail: string | null;
+}): Promise<void> {
+  try {
+    await notifyUser(
+      input.newOwnerId,
+      ownershipReceivedNotification({
+        organizationId: input.organizationId,
+        organizationName: input.organizationName,
+        fromDisplayName: input.fromDisplayName,
+        fromEmail: input.fromEmail,
+        now: new Date(),
+      }),
+    );
+  } catch (err) {
+    logApplication.error("notify_ownership_received_failed", err);
   }
 }

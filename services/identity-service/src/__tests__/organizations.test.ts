@@ -145,4 +145,8 @@ test("the empty handle lists nobody and refuses to rename", async () => {
   const data = emptyOrganizationData();
   assert.deepEqual(await data.listPeople(), []);
   await assert.rejects(() => data.renameOrganization("u1", "Acme"), NoOrganizationError);
+  await assert.rejects(
+    () => data.transferOwnership("u1", "u2", ["agriculture"]),
+    NoOrganizationError,
+  );
 });

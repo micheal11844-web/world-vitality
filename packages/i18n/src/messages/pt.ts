@@ -269,7 +269,7 @@ export const pt: Messages = {
   "settings.download.button": "Baixar meus dados",
   "settings.delete.title": "Excluir sua conta",
   "settings.delete.body":
-    "Isso exclui permanentemente e na hora sua conta, suas participações, suas notificações e os comentários que você escreveu. Se você é o proprietário da sua organização, os campos, propriedades e locais salvos nela também são excluídos (só é possível quando não restar mais ninguém nela). Se você é membro da organização de outra pessoa, o que você adicionou permanece lá, sem o seu nome. Isso não pode ser desfeito; baixe seus dados antes se quiser uma cópia.",
+    "Isso exclui permanentemente e na hora sua conta, suas participações, suas notificações e os comentários que você escreveu. Se você é o proprietário da sua organização, os campos, propriedades e locais salvos nela também são excluídos (só é possível quando não restar mais ninguém nela; para deixá-la como está, passe-a antes a alguém que faça parte dela). Se você é membro da organização de outra pessoa, o que você adicionou permanece lá, sem o seu nome. Isso não pode ser desfeito; baixe seus dados antes se quiser uma cópia.",
   "settings.delete.confirmLabel": "Digite {word} para confirmar",
   "settings.delete.button": "Excluir minha conta",
 
@@ -339,7 +339,7 @@ export const pt: Messages = {
   "errors.typeToConfirm": "Digite {word} para confirmar.",
   "errors.deleteFailed": "Não foi possível excluir sua conta. Tente novamente.",
   "errors.deleteOrganizationHasMembers":
-    "Sua organização ainda tem outros membros ({count}). Remova-os primeiro na página “Equipe” e depois exclua sua conta.",
+    "Sua organização ainda tem outros membros ({count}). Transfira-a para um deles, ou remova-os na página “Equipe”, e depois exclua sua conta.",
 
   // ---- plan & billing (v95)
   "billing.title": "Plano e cobrança",
@@ -1049,4 +1049,29 @@ export const pt: Messages = {
   "notifications.msg.paymentFailed.title": "Seu pagamento não foi concluído",
   "notifications.msg.paymentFailed.body":
     "Não conseguimos renovar o seu plano {plan}. Atualize seu cartão para mantê-lo.",
+
+  // ---- Hand over ownership of the organisation (v105)
+  "settings.org.transfer.title": "Transferir a propriedade",
+  "settings.org.transfer.intro":
+    "Passe sua organização para outra pessoa que já faça parte dela. Ela se torna a proprietária e assume o plano e a equipe; você continua como administrador até que ela remova você.",
+  "settings.org.transfer.selectLabel": "Novo proprietário",
+  "settings.org.transfer.selectPlaceholder": "Escolha uma pessoa",
+  "settings.org.transfer.start": "Transferir a propriedade…",
+  "settings.org.transfer.confirm":
+    "Tornar {email} o proprietário da sua organização? Essa pessoa vai controlar o plano, a equipe e tudo o que está salvo nela. Você continua como administrador, mas ela pode remover você, e só ela pode devolver a organização.",
+  "settings.org.transfer.yes": "Sim, transferir",
+  "settings.org.transfer.done":
+    "{email} agora é o proprietário da sua organização. Você é administrador.",
+  "errors.orgTransferOwnerOnly": "Somente o proprietário da organização pode transferi-la.",
+  "errors.orgTransferNotMember":
+    "Essa pessoa não faz parte da sua organização, então não é possível passá-la a ela.",
+  "errors.orgTransferPaidPlan":
+    "Sua organização está no plano {plan}, que pertence ao proprietário e ainda não pode ser passado a outra pessoa. Você poderá transferi-la quando o plano terminar.",
+  "errors.orgTransferFailed":
+    "Não foi possível transferir sua organização. Nada foi alterado. Tente novamente.",
+
+  // ---- Ownership-received notice (v105)
+  "notifications.msg.ownershipReceived.title": "{who} tornou você o proprietário de {organisation}",
+  "notifications.msg.ownershipReceived.body":
+    "Agora você gerencia o plano e a equipe dela. Abra Configurações para ver as pessoas que fazem parte dela.",
 };

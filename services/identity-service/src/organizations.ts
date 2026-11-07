@@ -67,6 +67,14 @@ export interface OrganizationPerson {
 /** `renamed`; `invalid_name` (empty, too long, control characters); `not_owner` (changed nothing). */
 export type RenameOrganizationResult = "renamed" | "invalid_name" | "not_owner";
 
+/**
+ * What handing the organisation to someone else can answer (migration 0021).
+ * `transferred`; `not_owner` (the acting person is not its owner, or the
+ * organisation is gone); `same_person`; `not_member` (the new owner must
+ * already be in the organisation). Every refusal changed nothing.
+ */
+export type TransferOwnershipResult = "transferred" | "not_owner" | "same_person" | "not_member";
+
 export interface OrganizationMembership {
   organizationId: string;
   name: string;
@@ -245,6 +253,22 @@ export interface OrganizationData {
    * so a caller that got the check wrong still cannot rename someone else's.
    */
   renameOrganization(actingUserId: string, name: string): Promise<RenameOrganizationResult>;
+  /**
+   * Hands the organisation to another of its members, in one database
+   * statement (`transfer_organization_ownership`, migration 0021): the roles
+   * swap, the new owner's own role rows go (the owner is admin everywhere
+   * without them) and the previous owner stays on as `admin_owner` in
+   * `keepWorkspaces`, so handing over is never a lock-out. `actingUserId`
+   * must be the current owner — the database checks it again.
+   *
+   * It does NOT move a subscription: the plan belongs to the owner. Callers
+   * refuse a transfer while the owner's plan is in effect.
+   */
+  transferOwnership(
+    actingUserId: string,
+    newOwnerUserId: string,
+    keepWorkspaces: readonly string[],
+  ): Promise<TransferOwnershipResult>;
 }
 
 /** Thrown by the empty handle's writes: there is no organisation to write into. */
@@ -286,6 +310,7 @@ export function emptyOrganizationData(): OrganizationData {
     countMembers: async () => 0,
     listPeople: async () => [],
     renameOrganization: refuse("rename the organisation"),
+    transferOwnership: refuse("hand over the organisation"),
   };
 }
 

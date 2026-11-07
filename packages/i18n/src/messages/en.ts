@@ -268,7 +268,7 @@ export const en = {
   "settings.download.button": "Download my data",
   "settings.delete.title": "Delete your account",
   "settings.delete.body":
-    "This permanently deletes your account, memberships, notifications and the comments you wrote, right away. If you own your organisation, the fields, properties and locations saved in it are deleted too (you can only do this once everyone else has been removed from it). If you are a member of someone else’s organisation, what you added stays there, without your name on it. This can’t be undone; download your data first if you want a copy.",
+    "This permanently deletes your account, memberships, notifications and the comments you wrote, right away. If you own your organisation, the fields, properties and locations saved in it are deleted too (you can only do this once everyone else has been removed from it; to leave it as it is, hand it over to someone in it first). If you are a member of someone else’s organisation, what you added stays there, without your name on it. This can’t be undone; download your data first if you want a copy.",
   "settings.delete.confirmLabel": "Type {word} to confirm",
   "settings.delete.button": "Delete my account",
 
@@ -338,7 +338,7 @@ export const en = {
   "errors.typeToConfirm": "Type {word} to confirm.",
   "errors.deleteFailed": "Couldn’t delete your account. Please try again.",
   "errors.deleteOrganizationHasMembers":
-    "Your organisation still has other members ({count}). Remove them on the Team page first, then delete your account.",
+    "Your organisation still has other members ({count}). Hand it over to one of them, or remove them on the Team page, then delete your account.",
 
   // ---- plan & billing (v95)
   "billing.title": "Plan & billing",
@@ -1035,6 +1035,30 @@ export const en = {
   "notifications.msg.paymentFailed.title": "Your payment didn’t go through",
   "notifications.msg.paymentFailed.body":
     "We couldn’t renew your {plan} plan. Update your card to keep it.",
+
+  // ---- Hand over ownership of the organisation (v105)
+  "settings.org.transfer.title": "Hand over ownership",
+  "settings.org.transfer.intro":
+    "Give your organisation to someone else in it. They become its owner and take over its plan and team; you stay on as an admin until they remove you.",
+  "settings.org.transfer.selectLabel": "New owner",
+  "settings.org.transfer.selectPlaceholder": "Choose a person",
+  "settings.org.transfer.start": "Hand over ownership…",
+  "settings.org.transfer.confirm":
+    "Make {email} the owner of your organisation? They will control its plan, its team and everything saved in it. You stay on as an admin, but they can remove you, and only they can hand it back.",
+  "settings.org.transfer.yes": "Yes, hand it over",
+  "settings.org.transfer.done": "{email} is now the owner of your organisation. You’re an admin.",
+  "errors.orgTransferOwnerOnly": "Only the owner of the organisation can hand it over.",
+  "errors.orgTransferNotMember":
+    "That person isn’t in your organisation, so it can’t be handed to them.",
+  "errors.orgTransferPaidPlan":
+    "Your organisation is on the {plan} plan, which belongs to its owner and can’t be moved to someone else yet. You can hand it over once the plan has ended.",
+  "errors.orgTransferFailed":
+    "Couldn’t hand over your organisation. Nothing was changed. Please try again.",
+
+  // ---- Ownership-received notice (v105)
+  "notifications.msg.ownershipReceived.title": "{who} made you the owner of {organisation}",
+  "notifications.msg.ownershipReceived.body":
+    "You now manage its plan and team. Open Settings to see the people in it.",
 } as const;
 
 export type MessageKey = keyof typeof en;

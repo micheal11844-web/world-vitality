@@ -275,7 +275,7 @@ export const fr: Messages = {
   "settings.download.button": "Télécharger mes données",
   "settings.delete.title": "Supprimer votre compte",
   "settings.delete.body":
-    "Cela supprime définitivement et immédiatement votre compte, vos appartenances, vos notifications et les commentaires que vous avez écrits. Si vous êtes propriétaire de votre organisation, les parcelles, propriétés et emplacements qui y sont enregistrés sont supprimés aussi (possible uniquement lorsqu’il n’y reste plus personne d’autre). Si vous êtes membre de l’organisation de quelqu’un d’autre, ce que vous avez ajouté y reste, sans votre nom. Cette action est irréversible ; téléchargez d’abord vos données si vous en voulez une copie.",
+    "Cela supprime définitivement et immédiatement votre compte, vos appartenances, vos notifications et les commentaires que vous avez écrits. Si vous êtes propriétaire de votre organisation, les parcelles, propriétés et emplacements qui y sont enregistrés sont supprimés aussi (possible uniquement lorsqu’il n’y reste plus personne d’autre ; pour la laisser intacte, transférez-la d’abord à quelqu’un qui en fait partie). Si vous êtes membre de l’organisation de quelqu’un d’autre, ce que vous avez ajouté y reste, sans votre nom. Cette action est irréversible ; téléchargez d’abord vos données si vous en voulez une copie.",
   "settings.delete.confirmLabel": "Saisissez {word} pour confirmer",
   "settings.delete.button": "Supprimer mon compte",
 
@@ -349,7 +349,7 @@ export const fr: Messages = {
   "errors.typeToConfirm": "Saisissez {word} pour confirmer.",
   "errors.deleteFailed": "Impossible de supprimer votre compte. Veuillez réessayer.",
   "errors.deleteOrganizationHasMembers":
-    "Votre organisation compte encore d’autres membres ({count}). Retirez-les d’abord depuis la page « Équipe », puis supprimez votre compte.",
+    "Votre organisation compte encore d’autres membres ({count}). Transférez-la à l’un d’eux, ou retirez-les depuis la page « Équipe », puis supprimez votre compte.",
 
   // ---- plan & billing (v95)
   "billing.title": "Offre et facturation",
@@ -1073,4 +1073,30 @@ export const fr: Messages = {
   "notifications.msg.paymentFailed.title": "Votre paiement n’a pas abouti",
   "notifications.msg.paymentFailed.body":
     "Nous n’avons pas pu renouveler votre offre {plan}. Mettez à jour votre carte pour la conserver.",
+
+  // ---- Hand over ownership of the organisation (v105)
+  "settings.org.transfer.title": "Transférer la propriété",
+  "settings.org.transfer.intro":
+    "Confiez votre organisation à une autre personne qui en fait partie. Elle en devient propriétaire et reprend son offre et son équipe ; vous restez administrateur jusqu’à ce qu’elle vous retire.",
+  "settings.org.transfer.selectLabel": "Nouveau propriétaire",
+  "settings.org.transfer.selectPlaceholder": "Choisissez une personne",
+  "settings.org.transfer.start": "Transférer la propriété…",
+  "settings.org.transfer.confirm":
+    "Faire de {email} le propriétaire de votre organisation ? Cette personne en contrôlera l’offre, l’équipe et tout ce qui y est enregistré. Vous restez administrateur, mais elle peut vous retirer, et elle seule peut vous la rendre.",
+  "settings.org.transfer.yes": "Oui, la transférer",
+  "settings.org.transfer.done":
+    "{email} est maintenant propriétaire de votre organisation. Vous en êtes administrateur.",
+  "errors.orgTransferOwnerOnly": "Seul le propriétaire de l’organisation peut la transférer.",
+  "errors.orgTransferNotMember":
+    "Cette personne ne fait pas partie de votre organisation ; elle ne peut pas en devenir propriétaire.",
+  "errors.orgTransferPaidPlan":
+    "Votre organisation a l’offre {plan}, qui appartient à son propriétaire et ne peut pas encore être transmise à quelqu’un d’autre. Vous pourrez la transférer une fois l’offre terminée.",
+  "errors.orgTransferFailed":
+    "Impossible de transférer votre organisation. Rien n’a été modifié. Veuillez réessayer.",
+
+  // ---- Ownership-received notice (v105)
+  "notifications.msg.ownershipReceived.title":
+    "{who} a fait de vous le propriétaire de {organisation}",
+  "notifications.msg.ownershipReceived.body":
+    "Vous gérez désormais son offre et son équipe. Ouvrez Paramètres pour voir les personnes qui en font partie.",
 };

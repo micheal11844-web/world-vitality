@@ -47,12 +47,18 @@ export type NotificationSource = "official_alert" | "collaboration" | "billing";
  * `title`/`body` keep the English rendering as the fallback. Official
  * alerts have none — the agency's own text is never re-worded.
  */
-export type NotificationMessageKey = "field_comment" | "member_added" | "payment_failed";
+export type NotificationMessageKey =
+  "field_comment" | "member_added" | "payment_failed" | "ownership_received";
 
 export type NotificationMessageParams = Record<string, string>;
 
 export function isNotificationMessageKey(value: unknown): value is NotificationMessageKey {
-  return value === "field_comment" || value === "member_added" || value === "payment_failed";
+  return (
+    value === "field_comment" ||
+    value === "member_added" ||
+    value === "payment_failed" ||
+    value === "ownership_received"
+  );
 }
 
 export interface Notification {
@@ -447,6 +453,37 @@ export function paymentFailedNotification(input: {
     dedupeKey: `payment_failed:${input.subscriptionCode}:${input.now.toISOString().slice(0, 10)}`,
     messageKey: "payment_failed",
     messageParams: { plan: input.plan, planLabel: input.planLabel },
+  };
+}
+
+/**
+ * "<someone> made you the owner of <organisation>." Written for the person an
+ * organisation was handed to, so they learn it from the app and not by
+ * finding Settings changed. Informational (the organisation and its people
+ * are the same as yesterday; what moved is who is responsible for its plan).
+ * Names the previous owner by display name, falling back to the part of their
+ * email before the "@" — never the full address. One per hand-over: the key
+ * carries the moment, so a hand-back later the same day still tells them.
+ */
+export function ownershipReceivedNotification(input: {
+  organizationId: string;
+  organizationName: string;
+  fromDisplayName: string | null;
+  fromEmail: string | null;
+  now: Date;
+}): NewNotification {
+  const named = input.fromDisplayName?.trim() || input.fromEmail?.split("@")[0]?.trim() || "";
+  const who = named || "Someone";
+  return {
+    source: "collaboration",
+    tier: "info",
+    title: truncateText(`${who} made you the owner of ${input.organizationName}`, TITLE_MAX),
+    body: "You now manage its plan and team. Open Settings to see the people in it.",
+    href: "/settings",
+    dedupeKey: `ownership:${input.organizationId}:${input.now.toISOString()}`.slice(0, 190),
+    messageKey: "ownership_received",
+    // `who` is "" when the previous owner is unknown, so the reader's language supplies "Someone".
+    messageParams: { who: named, organisation: input.organizationName },
   };
 }
 

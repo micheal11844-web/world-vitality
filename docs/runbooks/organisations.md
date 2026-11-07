@@ -64,9 +64,11 @@ own work.)
 - Removing someone's last role in the organisation also frees their seat.
 - The owner cannot be removed, and the last admin cannot be removed.
 - **An owner cannot delete their account while other people are still in
-  the organisation.** They are told how many remain and to remove them on
-  the Team page first. Deleting the account then deletes the organisation's
-  saved items too. A member deleting their account leaves the organisation
+  the organisation.** They are told how many remain and that they can hand
+  the organisation to one of them (below) or remove them on the Team page
+  first. Deleting the account while still the owner deletes the
+  organisation's saved items too; after handing it over, the person is no
+  longer the owner and can leave without taking anything with them. A member deleting their account leaves the organisation
   and their comments go; items they created stay with the organisation.
 - With billing on, an owner's Paystack subscription is cancelled first, and
   the account is left alone if that cannot be confirmed
@@ -96,6 +98,62 @@ select 'fields' as t, id from public.fields where organization_id is null
 union all select 'properties', id from public.insurance_properties where organization_id is null
 union all select 'locations', id from public.government_ngos_locations where organization_id is null;
 ```
+
+## Handing an organisation to another member (v105)
+
+An organisation has exactly one owner, and until v105 nothing could change
+who. An owner who wanted out could not leave (see above) and could not give
+the organisation away. Now: **Settings → "Your organisation" → "Hand over
+ownership"**, shown only to the owner and only when someone else is in the
+organisation. Choose a person, press "Hand over ownership…", read the
+confirmation, press "Yes, hand it over". Two steps, and the second spells
+out what changes.
+
+What happens, in one database call (`transfer_organization_ownership`,
+migration 0021, so a crash or a race can never leave the organisation with no
+owner or two):
+
+- **The new owner must already be a member.** A person outside the
+  organisation, or yourself, is refused. There is no "pending offer" to
+  accept: the new owner is told with a notice in their inbox ("<name> made
+  you the owner of <organisation>", linking to Settings), which is informational
+  and follows their collaboration-notices setting.
+- The owner and member roles swap, and `organizations.owner_id` follows.
+- **The previous owner stays on as an admin in every workspace**, so handing
+  over is never a lock-out. The new owner can remove them from a workspace's
+  Team page like anyone else; once their last role is gone they have left the
+  organisation, and (no longer an owner) they can delete their account.
+- The new owner's own role rows are removed: the owner is admin everywhere
+  without them.
+- Saved items, comments and seats do not change.
+
+**While billing is on, a hand-over is refused for as long as the current
+owner's plan is in effect** (anything but Free: active, ending, past due, or
+set by staff). The plan belongs to its owner and a Paystack subscription does
+not move between people, so handing over would otherwise drop the
+organisation to Free without warning. The message names the plan and says to
+hand over once it has ended. If the plan cannot be read the answer is
+"couldn't hand over", not "go ahead". With billing off there is no plan check.
+This is a rule to revisit (moving a subscription, or letting the new owner
+subscribe first), not a law: see Decision #025 in `docs/Decision-Log.md`.
+
+Every hand-over is written to the security log as
+`organization_ownership_transferred`. Handing it back is the same action in
+the other direction.
+
+**By hand (SQL), if the owner cannot reach the screen:**
+
+```sql
+select public.transfer_organization_ownership(
+  '<organisation id>', '<current owner id>', '<new owner id>',
+  array['agriculture','weather','construction','renewable-energy','research',
+        'logistics','disaster-monitoring','government-ngos','insurance','education']
+);  -- 'transferred', or the reason it refused
+```
+
+The last argument is the list of workspaces the previous owner stays admin
+in (the workspace keys are in `apps/web/app/workspaces/workspace-nav.ts`).
+This does not check billing; look at the owner's plan first.
 
 ## Things staff may need to do by hand
 
@@ -140,12 +198,14 @@ where it was: open a workspace and choose Team.
 
 ## Not built
 
-- Ownership transfer (hand an organisation to someone else). It needs an
-  atomic database function and a decision on whose plan and subscription
-  follow the organisation, so it is not built yet.
+- Moving a **subscription** with an organisation (v105 hands over the
+  organisation but refuses while the owner's plan is in effect).
+- A hand-over the receiver has to accept, and asking the owner to confirm with
+  their password again. Today it is immediate, to someone already inside, with a
+  notice and a security-log line.
 - More than one organisation per person; an organisation switcher.
 - A per-workspace **workspaces** limit: the plan catalogue defines
   `workspaces`, but only three workspaces hold saved items, so it is not
   enforced. Seats and saved items are.
-- `NOT NULL` on `organization_id` (a later migration, once the new code has
-  run a while and the "no organisation" query stays empty).
+- `NOT NULL` on `organization_id` is written and tested (migration 0020) and
+  waits for approval to apply; see `docs/runbooks/apply-migrations.md`.

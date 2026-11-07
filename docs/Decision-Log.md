@@ -780,3 +780,62 @@ not make the installers signed; the warnings are explained on the page, not
 removed.
 
 **Status:** Accepted.
+
+## Decision #025 — Handing an organisation to another member, and why it waits for the plan to end
+
+**Context:** An organisation has one owner (Decision #019) and the plan is the
+owner's (Decisions #018 and #021). Nothing could change who the owner was, which
+trapped the owner: they cannot delete their account while other people are in
+the organisation, and could not give the organisation away either. A transfer
+also touches money, because a Paystack subscription belongs to a person and
+does not move.
+
+**Chosen:**
+
+- **One atomic database function** (`transfer_organization_ownership`,
+  migration 0021) does the whole swap, so a crash or a race cannot leave an
+  organisation with no owner or two. It checks again, inside the database, that
+  the caller is the owner and that the new owner is already a member; the
+  application checks too, from the session's own id.
+- **The new owner must already be a member.** There is no invitation to accept.
+  They get an inbox notice and the change is in the security log.
+- **The previous owner stays on as an admin in every workspace** instead of
+  being removed or demoted, so handing over can never lock them out of their own
+  work. The new owner can remove them like anyone else.
+- **While billing is on, a transfer is refused for as long as the owner's plan
+  is in effect** (anything but Free), with a message that names the plan and
+  says to hand over once it ends. If the plan cannot be read, the answer is "we
+  couldn't", never "go ahead". With billing off there is no check.
+- A two-step confirmation on the screen that says what changes and that only the
+  new owner can hand it back.
+
+**Alternatives considered:**
+
+- _Let the transfer go through and drop the organisation to Free._ The new
+  owner would find limits applied that the old owner had paid to avoid, with the
+  caps possibly exceeded, and the old owner would still be charged. Rejected.
+- _Move the subscription with the organisation._ Paystack has no way to change
+  the customer on a subscription; it would mean cancelling and re-creating it,
+  with a charge in between. Not worth building before anyone has paid.
+- _Let the new owner subscribe first, then allow the transfer._ Reasonable, but
+  needs a way to know they have, and a window where both are charged. Left for
+  when it is asked for.
+- _A pending offer the receiver must accept._ Safer against being handed an
+  organisation you do not want, but needs a table of pending offers, expiry and
+  a second screen. The receiver is already inside the organisation and the owner
+  can be handed it back, so the plain version was judged enough for now.
+- _Ask for the owner's password again._ The app has no password re-check today;
+  it would be a separate piece of work for all sensitive actions.
+
+**Trade-offs, stated honestly:** an owner on a paid plan cannot leave until the
+plan ends (cancelling keeps the plan until the end of the period they paid for,
+so that is up to a month or a year). The transfer is immediate, so a mistaken
+choice is undone only by the new owner handing it back. Handing it over leaves
+the previous owner with admin rights everywhere until the new owner removes
+them, which is deliberate (no lock-out) but means "I handed it over" and "I have
+left" are two separate steps.
+
+**Revisit when:** the first paying customer asks to hand over, or to leave,
+while on a paid plan.
+
+**Status:** Accepted.

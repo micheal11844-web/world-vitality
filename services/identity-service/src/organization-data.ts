@@ -13,6 +13,7 @@ import {
   type OrganizationPerson,
   type OrganizationRole,
   type RenameOrganizationResult,
+  type TransferOwnershipResult,
 } from "./organizations.js";
 import type { Role } from "./roles.js";
 
@@ -709,7 +710,37 @@ export class SupabaseOrganizationData implements OrganizationData {
     }
     return Array.isArray(data) && data.length > 0 ? "renamed" : "not_owner";
   }
+
+  async transferOwnership(
+    actingUserId: string,
+    newOwnerUserId: string,
+    keepWorkspaces: readonly string[],
+  ): Promise<TransferOwnershipResult> {
+    const { data, error } = await this.client.rpc("transfer_organization_ownership", {
+      p_organization_id: this.organizationId,
+      p_from_user_id: actingUserId,
+      p_to_user_id: newOwnerUserId,
+      p_keep_workspaces: [...keepWorkspaces],
+    });
+    if (error) {
+      throw new Error(`Failed to hand over organisation ${this.organizationId}: ${error.message}`);
+    }
+    // An organisation that has vanished is, to the person asking, one they do
+    // not own.
+    if (data === "not_found") return "not_owner";
+    if (typeof data === "string" && TRANSFER_RESULTS.has(data)) {
+      return data as TransferOwnershipResult;
+    }
+    throw new Error(`Unexpected answer handing over organisation ${this.organizationId}`);
+  }
 }
+
+const TRANSFER_RESULTS: ReadonlySet<string> = new Set<TransferOwnershipResult>([
+  "transferred",
+  "not_owner",
+  "same_person",
+  "not_member",
+]);
 
 /* -------------------------------------------------------------------- */
 /* Row mapping                                                           */

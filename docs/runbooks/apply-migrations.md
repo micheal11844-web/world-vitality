@@ -1,87 +1,113 @@
-# Applying migrations 0016, 0017 and 0018
+# Applying database migrations
 
-Three database changes are written and **not yet applied to the live
-Supabase project**. This page is the paste-it-yourself way to apply them
-(the Supabase connector was declined when asked, so nothing was applied for
-you).
+Migrations live in `services/identity-service/supabase/migrations/` and are
+applied to the live Supabase project (`jjiceqlxayasthrrzlhc`) **in file
+order, only with the owner's approval**: every one is written and tested
+here first (on a real Postgres engine, running the whole chain), and none is
+applied to the live database without asking.
 
-| #    | What it adds                                                | Needed for                                                                                                                             | Safe to apply early?                                    |
-| ---- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| 0016 | Staff accounts and an audit log                             | The admin console (`/admin`)                                                                                                           | Yes — nothing reads it until you grant a staff role     |
-| 0017 | Billing tables                                              | Paystack (still switched off)                                                                                                          | Yes — nothing reads it until `BILLING_ENABLED=true`     |
-| 0018 | Organisations; every saved item and role now belongs to one | **The privacy fix** — without it, any signed-in person can see every other customer's saved fields, properties, locations and comments | Yes — it is additive and the app now live keeps working |
+## Where things stand
 
-**Order matters: 0016, then 0017, then 0018.** The script below has all
-three, in that order, inside one transaction: either everything applies or
-nothing does. Running it twice is harmless (every statement is guarded).
+Checked read-only against the live project on 2026-11-07 (0019 and 0020 were applied that day, at the owner's request, through the Supabase connector; the connector's confirmation for 0021 timed out unanswered, so 0021 is still to do).
 
-## Steps
+| #         | What it does                                                                                                                               | State       | If you wait                                                                                                                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0016–0018 | Staff accounts, billing tables, organisations (every saved item and role belongs to one)                                                   | **Applied** | —                                                                                                                                                                                              |
+| 0019      | Lets the app save the "your payment didn't go through" notice (widens `notifications_source_check` to allow `billing`)                     | **Applied** | A failed renewal is still recorded and the plan still lapses correctly; only the in-app notice is not saved (logged as `notify_user_failed`, the webhook still answers 200).                   |
+| 0020      | Makes `organization_id` mandatory on fields, insured properties, monitored locations and workspace roles, closing a hole in the role check | **Applied** | Nothing breaks. The rule is already followed by every insert the app makes; this makes the database refuse a row that breaks it.                                                               |
+| 0021      | Adds the function that hands an organisation to another member                                                                             | **Pending** | The "Hand over ownership" section only shows to an owner with at least one other person in the organisation (today nobody). If it were used, the button says it couldn't, and nothing changes. |
 
-1. Open the Supabase dashboard → your project (`jjiceqlxayasthrrzlhc`) →
-   **SQL Editor** → **New query**.
-2. Open `world-vitality-apply-0016-0018.sql` (the file attached to the
-   message that sent you here; it is the three migration files joined, in
-   order, between `begin;` and `commit;`), select all, copy, paste into the
-   editor.
-3. Press **Run**. Supabase will show a warning that the query contains a
-   destructive operation (it is the `drop policy` on `fields`, which removes
-   the "any signed-in user may read fields" rule — that is the point of
-   0018). Confirm.
-4. Expect "Success. No rows returned." If you see an error instead, nothing
-   was applied; copy the error text and send it to me.
+Supabase's own migration history list stops at 0015 because 0016–0018 were
+pasted in by hand (the objects exist; the list is informational and nothing
+in the app reads it). Migrations applied through the connector do appear in
+it.
+
+**0021 is the only one still pending.** It is safe to apply while the site
+is live. (0019 and 0020 were independent of it and of each other.)
+
+## What each one checked before it changed anything
+
+- **0019** only replaces one check constraint with a wider one.
+- **0020 is all or nothing.** It first checks that no row lacks an
+  organisation. The only rows it ever removes are saved items with no
+  organisation _and_ no creator (the demo rows seeded by migrations
+  0006/0011/0012 on a database that never had an account; the app never shows
+  them). If any other row lacks an organisation it stops with a message that
+  counts them and changes nothing. **On the live database today that count is
+  zero** (fields, properties, locations and roles), so it will go straight
+  through.
+- **0021** only adds a function (service role only).
+
+## Ways to apply
+
+**1. Ask me (recommended).** Say "apply 0021". I apply it through the Supabase
+connector and run the read-only checks below. The connector asks you to
+confirm the change in the app; **answer that prompt within two minutes**, or it
+expires and nothing is applied (that is what happened the first time).
+
+**2. Paste them yourself.** Supabase dashboard → project → **SQL Editor** →
+**New query**; open the migration file, copy all of it, paste, **Run**. Do
+0019, then 0020, then 0021, one query each. For 0020 Supabase warns that the
+query contains a destructive operation (the guarded `delete` of unowned demo
+rows described above, which matches nothing here); confirm. "Success. No rows
+returned." means it worked. An error means nothing was applied; copy the text
+and send it to me. Running any of them twice is harmless.
 
 ## Check it worked
 
-Paste each of these into a new query. They only read.
+Each only reads.
 
 ```sql
--- 1. The six new tables exist (expect 6 rows)
-select table_name from information_schema.tables
-where table_schema = 'public'
-  and table_name in ('platform_staff','staff_audit_log','billing_subscriptions',
-                     'billing_events','organizations','organization_members')
-order by 1;
+-- 0019: the allowed sources now include billing (expect the list to contain 'billing')
+select pg_get_constraintdef(oid) from pg_constraint
+where conname = 'notifications_source_check';
 
--- 2. Every account has an organisation, and exactly one owner each
---    (expect: accounts = organisations = owners)
+-- 0020: all five columns are mandatory (expect is_nullable = 'NO' on every row)
+select table_name, is_nullable from information_schema.columns
+where table_schema = 'public' and column_name = 'organization_id'
+order by table_name;
+
+-- 0021: the function exists (expect 1), and the public roles cannot run it (expect false, false, true)
+select count(*) from pg_proc where proname = 'transfer_organization_ownership';
 select
-  (select count(*) from auth.users)                                          as accounts,
-  (select count(*) from public.organizations)                                as organisations,
-  (select count(*) from public.organization_members where role = 'owner')    as owners;
-
--- 3. Nothing is left without an organisation (expect 0, 0, 0, 0)
-select
-  (select count(*) from public.fields                 where organization_id is null) as fields,
-  (select count(*) from public.insurance_properties   where organization_id is null) as properties,
-  (select count(*) from public.government_ngos_locations where organization_id is null) as locations,
-  (select count(*) from public.workspace_members      where organization_id is null) as roles;
-
--- 4. The open read rule on fields is gone (expect 0 rows)
-select policyname from pg_policies
-where schemaname = 'public' and tablename = 'fields';
+  has_function_privilege('anon', 'public.transfer_organization_ownership(uuid,uuid,uuid,text[])', 'execute') as anon,
+  has_function_privilege('authenticated', 'public.transfer_organization_ownership(uuid,uuid,uuid,text[])', 'execute') as signed_in,
+  has_function_privilege('service_role', 'public.transfer_organization_ownership(uuid,uuid,uuid,text[])', 'execute') as service;
 ```
 
-## After applying 0018
+## Before applying 0020 on another database (staging, a copy)
 
-Tell me it is done. I then check it read-only, push the code that uses it,
-and confirm the deploy. **That code is not pushed before you apply 0018,**
-on purpose: it reads the new tables, so deploying it first would show every
-customer an empty app.
+Run this first. It should return zeros; anything else means 0020 will stop
+and tell you which rows need an organisation.
 
-Until the new code is live, the code that is live today keeps working with
-0018 applied: the database fills in `organization_id` for anything it saves.
+```sql
+select
+  (select count(*) from public.fields where organization_id is null and created_by is not null) as fields,
+  (select count(*) from public.insurance_properties where organization_id is null and created_by is not null) as properties,
+  (select count(*) from public.government_ngos_locations where organization_id is null and created_by is not null) as locations,
+  (select count(*) from public.workspace_members where organization_id is null) as roles;
+```
+
+## Undoing one (only if something unexpected shows up)
+
+```sql
+-- 0021: remove the function (the hand-over button then reports it couldn't)
+drop function if exists public.transfer_organization_ownership(uuid, uuid, uuid, text[]);
+
+-- 0020: make the columns optional again (rows are untouched)
+alter table public.fields alter column organization_id drop not null;
+alter table public.insurance_properties alter column organization_id drop not null;
+alter table public.government_ngos_locations alter column organization_id drop not null;
+alter table public.workspace_members alter column organization_id drop not null;
+
+-- 0019: only safe while no billing notice has been saved
+alter table public.notifications drop constraint notifications_source_check;
+alter table public.notifications add constraint notifications_source_check
+  check (source in ('official_alert', 'collaboration'));
+```
 
 ## Granting yourself the admin console (0016)
 
-After 0016 is applied, follow `docs/runbooks/admin-console.md` ("How staff
-access is granted — SQL only") to make your own account a `platform_admin`.
-
-## Housekeeping
-
-- The dashboard does not record these in Supabase's own migration history
-  (the connector would have). That history is informational; nothing in the
-  app reads it. Later migrations should be applied the same way, in file
-  order.
-- Migration 0018 leaves `organization_id` nullable on purpose. A later
-  migration can add `NOT NULL` once the new code has run for a while and
-  query 3 above still shows zeros.
+0016 is applied, but `platform_staff` has no rows, so nobody can open the
+admin console yet. Follow `docs/runbooks/admin-console.md` ("How staff access
+is granted — SQL only") to make your own account a `platform_admin`.

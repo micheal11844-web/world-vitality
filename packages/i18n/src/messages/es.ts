@@ -270,7 +270,7 @@ export const es: Messages = {
   "settings.download.button": "Descargar mis datos",
   "settings.delete.title": "Eliminar tu cuenta",
   "settings.delete.body":
-    "Esto elimina de forma permanente y al instante tu cuenta, tus membresías, tus notificaciones y los comentarios que escribiste. Si eres propietario de tu organización, los campos, propiedades y ubicaciones guardados en ella también se eliminan (solo puedes hacerlo cuando ya no quede nadie más en ella). Si eres miembro de la organización de otra persona, lo que añadiste se queda allí, sin tu nombre. No se puede deshacer; descarga tus datos antes si quieres una copia.",
+    "Esto elimina de forma permanente y al instante tu cuenta, tus membresías, tus notificaciones y los comentarios que escribiste. Si eres propietario de tu organización, los campos, propiedades y ubicaciones guardados en ella también se eliminan (solo puedes hacerlo cuando ya no quede nadie más en ella; para dejarla como está, cédesela antes a alguien de ella). Si eres miembro de la organización de otra persona, lo que añadiste se queda allí, sin tu nombre. No se puede deshacer; descarga tus datos antes si quieres una copia.",
   "settings.delete.confirmLabel": "Escribe {word} para confirmar",
   "settings.delete.button": "Eliminar mi cuenta",
 
@@ -340,7 +340,7 @@ export const es: Messages = {
   "errors.typeToConfirm": "Escribe {word} para confirmar.",
   "errors.deleteFailed": "No se pudo eliminar tu cuenta. Inténtalo de nuevo.",
   "errors.deleteOrganizationHasMembers":
-    "Tu organización aún tiene otros miembros ({count}). Quítalos primero en la página «Equipo» y luego elimina tu cuenta.",
+    "Tu organización aún tiene otros miembros ({count}). Cédesela a uno de ellos, o quítalos en la página «Equipo», y luego elimina tu cuenta.",
 
   // ---- plan & billing (v95)
   "billing.title": "Plan y facturación",
@@ -1057,4 +1057,29 @@ export const es: Messages = {
   "notifications.msg.paymentFailed.title": "No se pudo procesar tu pago",
   "notifications.msg.paymentFailed.body":
     "No pudimos renovar tu plan {plan}. Actualiza tu tarjeta para conservarlo.",
+
+  // ---- Hand over ownership of the organisation (v105)
+  "settings.org.transfer.title": "Ceder la propiedad",
+  "settings.org.transfer.intro":
+    "Entrega tu organización a otra persona que ya esté en ella. Esa persona pasa a ser la propietaria y se encarga del plan y del equipo; tú sigues como administrador hasta que te quite.",
+  "settings.org.transfer.selectLabel": "Nuevo propietario",
+  "settings.org.transfer.selectPlaceholder": "Elige una persona",
+  "settings.org.transfer.start": "Ceder la propiedad…",
+  "settings.org.transfer.confirm":
+    "¿Quieres que {email} pase a ser el propietario de tu organización? Controlará su plan, su equipo y todo lo guardado en ella. Tú sigues como administrador, pero puede quitarte, y solo esa persona puede devolvértela.",
+  "settings.org.transfer.yes": "Sí, cederla",
+  "settings.org.transfer.done":
+    "{email} ahora es el propietario de tu organización. Tú eres administrador.",
+  "errors.orgTransferOwnerOnly": "Solo el propietario de la organización puede cederla.",
+  "errors.orgTransferNotMember":
+    "Esa persona no está en tu organización, así que no se le puede ceder.",
+  "errors.orgTransferPaidPlan":
+    "Tu organización tiene el plan {plan}, que pertenece a su propietario y todavía no se puede pasar a otra persona. Podrás cederla cuando el plan haya terminado.",
+  "errors.orgTransferFailed":
+    "No se pudo ceder tu organización. No se cambió nada. Inténtalo de nuevo.",
+
+  // ---- Ownership-received notice (v105)
+  "notifications.msg.ownershipReceived.title": "{who} te ha hecho propietario de {organisation}",
+  "notifications.msg.ownershipReceived.body":
+    "Ahora gestionas su plan y su equipo. Abre Ajustes para ver a las personas que forman parte de ella.",
 };

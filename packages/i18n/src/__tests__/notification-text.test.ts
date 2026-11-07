@@ -112,6 +112,31 @@ test("an official alert (no message id) is never re-worded in any language", () 
   }
 });
 
+test("an ownership notice is re-written in the reader's language, with Someone supplied when the name is unknown", () => {
+  const n = {
+    title: "Chidi made you the owner of Acme Farms",
+    body: "You now manage its plan and team. Open Settings to see the people in it.",
+    messageKey: "ownership_received",
+    messageParams: { who: "Chidi", organisation: "Acme Farms" },
+  };
+  for (const locale of ["en", "es", "fr", "pt", "ar"] as const) {
+    const t = createTranslator(locale);
+    const out = localizeNotificationText(n, t);
+    assert.ok(out.title.includes("Chidi") && out.title.includes("Acme Farms"), locale);
+    assert.equal(out.body, t.t("notifications.msg.ownershipReceived.body"), locale);
+  }
+  const es = createTranslator("es");
+  assert.equal(
+    localizeNotificationText({ ...n, messageParams: { who: "", organisation: "Acme" } }, es).title,
+    "Alguien te ha hecho propietario de Acme",
+  );
+  // Without the organisation it degrades to the stored English text.
+  assert.deepEqual(
+    localizeNotificationText({ ...n, messageParams: { who: "Chidi" } }, createTranslator("fr")),
+    { title: n.title, body: n.body },
+  );
+});
+
 test("a failed-payment notice is re-written in the reader's language with the plan name translated", () => {
   const n = {
     title: "Your payment didn't go through",

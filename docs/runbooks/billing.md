@@ -1,8 +1,14 @@
 # Billing Runbook
 
-Billing is built but **switched off**: nothing in the app charges anyone,
-limits anyone, or reads the billing tables until `BILLING_ENABLED=true`
-(BUILD_PLAN v90, v93, v94; the reasoning is Decisions #018, #019, #020).
+Billing is built and **switched on in production** (`BILLING_ENABLED=true`,
+set at the owner's explicit request on 2026-11-06, with Paystack in **test
+mode** and the test secret key, so no real money moves). While that switch is
+unset, nothing in the app charges anyone, limits anyone, or reads the billing
+tables (BUILD_PLAN v90, v93, v94; the reasoning is Decisions #018, #019,
+#020). **As of 2026-11-07 the first test payment has not succeeded**: the
+checkout fails with Paystack's "Plan not found" (see `paystack-setup.md`,
+"If checkout says it couldn't start the payment"); nothing has been charged
+and no subscription exists.
 This page says what exists, what does not, the prices, and the order to turn
 it on. The click-by-click for Paystack is in `paystack-setup.md`.
 
@@ -256,6 +262,18 @@ beside any plan-limit message. It exists only while `BILLING_ENABLED` is
   restrict channels, so whatever is switched on in the Paystack dashboard
   (Settings → Preferences) is what a customer sees — including **Google
   Pay** if you enable it there (below).
+- **A failed renewal leaves a notice in the owner's inbox** (v105): "Your
+  payment didn't go through — we couldn't renew your <plan> plan. Update your
+  card to keep it", linking here, in the owner's language with the plan name
+  translated, always shown whatever the notification settings say. One per
+  subscription per day however often Paystack retries (the key is
+  `payment_failed:<subscription>:<date>`). It is added after the
+  `invoice.payment_failed` webhook has been applied and can never make the
+  webhook fail; it needs migration 0019 (until then it is logged as
+  `notify_user_failed` and the plan still moves to past due as before).
+- **Handing the organisation to someone else is refused while the owner's
+  plan is in effect** (see `docs/runbooks/organisations.md`): a subscription
+  does not move between people.
 - Enterprise is invoiced and set by hand (below); the screen shows such a
   plan as "set up by agreement" with nothing to manage, and does not
   advertise a contact route because none exists yet.
@@ -352,8 +370,10 @@ call to the real service.
 - The `workspaces` limit, and the feature switches for team tools, the audit
   log and the auditable report (see "Where limits are enforced" and "Feature
   switches").
-- Receipts, invoices, tax/VAT, refunds, failed-payment emails. (Paystack
-  emails its own receipts; ours are not built.)
+- Receipts, invoices, tax/VAT, refunds, failed-payment **emails** (the
+  in-app notice exists since v105). (Paystack emails its own receipts; ours
+  are not built.)
+- Moving a subscription to another owner.
 - The plan limit and feature-locked sentences ("Your Basic plan includes up
   to 3 saved items…"), the workspace pages around them and the plan screen
   are all in the five languages (English, Spanish, French, Brazilian

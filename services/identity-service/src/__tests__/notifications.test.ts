@@ -12,6 +12,7 @@ import {
   officialAlertTier,
   officialAlertToNotification,
   paymentFailedNotification,
+  ownershipReceivedNotification,
   safeInternalHref,
   summarize,
   timeAgo,
@@ -392,6 +393,46 @@ test("a failed-payment notice is an alert that links to the plan screen, once pe
     a.dedupeKey,
   );
   assert.equal(isNotificationMessageKey("payment_failed"), true);
+});
+
+test("an ownership notice names the previous owner by display name or the start of their email, and links to Settings", () => {
+  const base = {
+    organizationId: "org-1",
+    organizationName: "Acme Farms",
+    fromDisplayName: "Chidi Customer",
+    fromEmail: "customer@example.com",
+    now: NOW,
+  };
+  const a = ownershipReceivedNotification(base);
+  assert.equal(a.source, "collaboration");
+  assert.equal(a.tier, "info");
+  assert.equal(a.href, "/settings");
+  assert.equal(a.title, "Chidi Customer made you the owner of Acme Farms");
+  assert.equal(a.messageKey, "ownership_received");
+  assert.deepEqual(a.messageParams, { who: "Chidi Customer", organisation: "Acme Farms" });
+  assert.equal(isNotificationMessageKey("ownership_received"), true);
+  // No display name: the part before the "@", never the whole address.
+  const b = ownershipReceivedNotification({ ...base, fromDisplayName: " " });
+  assert.equal(b.messageParams?.who, "customer");
+  assert.ok(!JSON.stringify(b).includes("example.com"));
+  // Nobody known: stored English says "Someone", the stored param is empty so
+  // the reader's own language supplies the word.
+  const c = ownershipReceivedNotification({ ...base, fromDisplayName: null, fromEmail: null });
+  assert.equal(c.title, "Someone made you the owner of Acme Farms");
+  assert.equal(c.messageParams?.who, "");
+});
+
+test("each hand-over gets its own notice, even if it is handed back the same day", () => {
+  const input = {
+    organizationId: "org-1",
+    organizationName: "Acme",
+    fromDisplayName: null,
+    fromEmail: "a@b.test",
+  };
+  const first = ownershipReceivedNotification({ ...input, now: new Date("2026-10-13T10:00:00Z") });
+  const back = ownershipReceivedNotification({ ...input, now: new Date("2026-10-13T16:30:00Z") });
+  assert.notEqual(first.dedupeKey, back.dedupeKey);
+  assert.ok((first.dedupeKey ?? "").length <= 190);
 });
 
 test("a plan notice is shown whatever the notification settings say, until it is dismissed", () => {
