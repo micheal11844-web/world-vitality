@@ -1043,4 +1043,11 @@ export const ar: Messages = {
   "notifications.msg.ownershipReceived.title": "جعلك {who} مالك {organisation}",
   "notifications.msg.ownershipReceived.body":
     "أصبحت الآن تدير خطتها وفريقها. افتح الإعدادات لرؤية الأشخاص المنتمين إليها.",
+
+  // ---- Landing page (v106)
+  "landing.tagline": "رؤى بيئية فورية، مشروحة بوضوح.",
+  "landing.explore": "استكشف الكوكب",
+  "landing.signIn": "تسجيل الدخول",
+  "landing.appsPrompt": "تفضّل تطبيقًا؟",
+  "landing.appsLink": "احصل على تطبيق سطح المكتب أو أندرويد",
 };

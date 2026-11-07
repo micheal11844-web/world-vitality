@@ -1099,4 +1099,11 @@ export const fr: Messages = {
     "{who} a fait de vous le propriétaire de {organisation}",
   "notifications.msg.ownershipReceived.body":
     "Vous gérez désormais son offre et son équipe. Ouvrez Paramètres pour voir les personnes qui en font partie.",
+
+  // ---- Landing page (v106)
+  "landing.tagline": "L’intelligence environnementale en temps réel, expliquée simplement.",
+  "landing.explore": "Explorer la planète",
+  "landing.signIn": "Se connecter",
+  "landing.appsPrompt": "Vous préférez une application ?",
+  "landing.appsLink": "Obtenir l’application pour ordinateur ou Android",
 };

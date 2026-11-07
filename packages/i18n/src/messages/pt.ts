@@ -1074,4 +1074,11 @@ export const pt: Messages = {
   "notifications.msg.ownershipReceived.title": "{who} tornou você o proprietário de {organisation}",
   "notifications.msg.ownershipReceived.body":
     "Agora você gerencia o plano e a equipe dela. Abra Configurações para ver as pessoas que fazem parte dela.",
+
+  // ---- Landing page (v106)
+  "landing.tagline": "Inteligência ambiental em tempo real, explicada com clareza.",
+  "landing.explore": "Explorar o planeta",
+  "landing.signIn": "Entrar",
+  "landing.appsPrompt": "Prefere um app?",
+  "landing.appsLink": "Baixar o app para computador ou Android",
 };

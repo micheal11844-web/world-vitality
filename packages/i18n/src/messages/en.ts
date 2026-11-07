@@ -1059,6 +1059,13 @@ export const en = {
   "notifications.msg.ownershipReceived.title": "{who} made you the owner of {organisation}",
   "notifications.msg.ownershipReceived.body":
     "You now manage its plan and team. Open Settings to see the people in it.",
+
+  // ---- Landing page (v106)
+  "landing.tagline": "Real-time environmental intelligence, interpreted plainly.",
+  "landing.explore": "Explore the planet",
+  "landing.signIn": "Sign in",
+  "landing.appsPrompt": "Prefer an app?",
+  "landing.appsLink": "Get the desktop or Android app",
 } as const;
 
 export type MessageKey = keyof typeof en;
