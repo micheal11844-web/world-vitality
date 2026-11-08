@@ -18,10 +18,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Notifications — World Vitality",
-  robots: { index: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getTranslator();
+  return {
+    title: `${t("notifications.title")} — World Vitality`,
+    robots: { index: false },
+  };
+}
 
 function toItemView(n: Notification, now: Date, translator: Translator): NotificationItemView {
   // The app's own notifications (a teammate's comment, a new membership)

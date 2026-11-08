@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslator } from "../../lib/i18n/server";
 import { getMyPreferences } from "../../lib/preferences";
 import { WelcomeView } from "./welcome-view";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Welcome — World Vitality",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getTranslator();
+  return {
+    title: `${t("welcome.pageTitle")} — World Vitality`,
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * Adaptive onboarding (PRD B.1). First sign-in lands here (the

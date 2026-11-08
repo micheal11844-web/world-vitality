@@ -1170,4 +1170,37 @@ export const fr: Messages = {
     "Votre lien de réinitialisation a expiré. Veuillez en demander un nouveau.",
   "auth.err.updateFailed": "Impossible de mettre à jour votre mot de passe. Veuillez réessayer.",
   "auth.err.mismatch": "Les mots de passe ne correspondent pas.",
+
+  // ---- public Explorer and the Globe
+  "explore.title": "Explorez votre planète",
+  "explore.intro":
+    "Recherchez n’importe quel lieu sur Terre pour obtenir un aperçu réel et honnête de ses conditions actuelles, sans compte nécessaire.",
+  "explore.placeLabel": "Nom du lieu",
+  "explore.placePlaceholder": "Essayez une ville, un village ou une région…",
+  "explore.submit": "Explorer",
+  "explore.searching": "Recherche…",
+  "explore.empty.title": "Aucun lieu exploré pour l’instant",
+  "explore.empty.body":
+    "Recherchez un lieu ci-dessus pour découvrir quelque chose de vrai à son sujet.",
+  "explore.aiPanel.emptyTitle": "Rien à interpréter pour l’instant",
+  "explore.aiPanel.emptyBody":
+    "Recherchez un lieu pour voir une analyse générée par l’IA à son sujet.",
+  "explore.err.enterPlace": "Saisissez le nom d’un lieu à explorer.",
+  "explore.err.lookupFailed":
+    "Impossible de rechercher ce lieu pour le moment. Veuillez réessayer.",
+  "explore.err.invalidLink":
+    "Ce lien de lieu n’est pas valide. Essayez de le rechercher à nouveau.",
+  "explore.err.dataFailed":
+    "Ce lieu a été trouvé, mais ses données environnementales n’ont pas pu être récupérées pour le moment. Veuillez réessayer dans un instant.",
+  "globe.title": "Le globe",
+  "globe.summary":
+    "{count, plural, one {# lieu} other {# lieux}} dans tous les espaces de travail auxquels vous avez accès : champs agricoles, biens assurés et lieux surveillés. Le détail des dangers et des statuts se trouve dans chaque espace de travail ; ceci est une vue d’ensemble, pas un remplacement.",
+  "globe.loading": "Chargement du globe…",
+  "globe.empty.title": "Aucun lieu à afficher",
+  "globe.empty.body":
+    "Rien de ce à quoi vous avez accès dans Agriculture, Assurance ou Gouvernement et ONG n’a encore de lieu.",
+  "globe.fireDetection": "Détection d’incendie (confiance : {confidence})",
+
+  // ---- browser-tab title
+  "welcome.pageTitle": "Bienvenue",
 };

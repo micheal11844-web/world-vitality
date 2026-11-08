@@ -1152,4 +1152,33 @@ export const es: Messages = {
     "El enlace para restablecer tu contraseña ha caducado. Solicita uno nuevo.",
   "auth.err.updateFailed": "No se pudo actualizar tu contraseña. Inténtalo de nuevo.",
   "auth.err.mismatch": "Las contraseñas no coinciden.",
+
+  // ---- public Explorer and the Globe
+  "explore.title": "Explora tu planeta",
+  "explore.intro":
+    "Busca cualquier lugar de la Tierra y obtén una imagen real y honesta de sus condiciones actuales, sin necesidad de cuenta.",
+  "explore.placeLabel": "Nombre del lugar",
+  "explore.placePlaceholder": "Prueba con una ciudad, un pueblo o una región…",
+  "explore.submit": "Explorar",
+  "explore.searching": "Buscando…",
+  "explore.empty.title": "Aún no has explorado ningún lugar",
+  "explore.empty.body": "Busca un lugar arriba para ver algo verdadero sobre él.",
+  "explore.aiPanel.emptyTitle": "Aún no hay nada que interpretar",
+  "explore.aiPanel.emptyBody": "Busca un lugar para ver una interpretación generada por IA.",
+  "explore.err.enterPlace": "Escribe el nombre de un lugar para explorarlo.",
+  "explore.err.lookupFailed": "Ahora mismo no se pudo buscar ese lugar. Inténtalo de nuevo.",
+  "explore.err.invalidLink": "Ese enlace de lugar no es válido. Prueba a buscarlo de nuevo.",
+  "explore.err.dataFailed":
+    "Encontramos ese lugar, pero ahora mismo no se pudieron obtener sus datos ambientales. Inténtalo de nuevo en unos momentos.",
+  "globe.title": "El globo",
+  "globe.summary":
+    "{count, plural, one {# ubicación} other {# ubicaciones}} en todos los espacios de trabajo a los que tienes acceso: campos agrícolas, propiedades aseguradas y lugares monitoreados. El detalle de peligros y estados está en cada espacio de trabajo; esto es una vista general, no un sustituto.",
+  "globe.loading": "Cargando el globo…",
+  "globe.empty.title": "No hay ubicaciones que mostrar",
+  "globe.empty.body":
+    "Nada a lo que tienes acceso en Agricultura, Seguros o Gobierno y ONG tiene todavía una ubicación.",
+  "globe.fireDetection": "Detección de fuego (confianza: {confidence})",
+
+  // ---- browser-tab title
+  "welcome.pageTitle": "Bienvenida",
 };

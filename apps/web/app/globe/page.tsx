@@ -4,6 +4,7 @@ import { getOrganizationData } from "../../lib/organization-data";
 import { fetchFloodingLocations } from "../../lib/usgs-flood-impacts";
 import { fetchNearbyShelters } from "../../lib/fema-shelters";
 import { fetchActiveFireDetections } from "../../lib/nasa-firms";
+import { getTranslator } from "../../lib/i18n/server";
 import { logTelemetry, logSecurity } from "../../lib/logger";
 import { GlobeShell } from "./globe-shell";
 import type { GlobePin } from "./globe-viewer";
@@ -71,6 +72,7 @@ const DISASTER_MONITORING_DEMO_LOCATION = {
  */
 export default async function GlobePage() {
   logTelemetry.event("globe_viewed");
+  const { t } = await getTranslator();
 
   const [agricultureMembership, insuranceMembership, governmentNgosMembership] = await Promise.all([
     getWorkspaceMembership("agriculture"),
@@ -190,7 +192,8 @@ export default async function GlobePage() {
     })),
     ...fires.map((f, i) => ({
       id: `disaster-monitoring-fire-${i}`,
-      label: `Fire detection (${f.confidence} confidence)`,
+      // The confidence is FIRMS's own wording and is shown as issued.
+      label: t("globe.fireDetection", { confidence: f.confidence || t("dm.fires.unknown") }),
       latitude: f.latitude,
       longitude: f.longitude,
       workspaceKey: "disaster-monitoring-fire",

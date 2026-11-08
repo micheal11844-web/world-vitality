@@ -17,10 +17,13 @@ export const dynamic = "force-dynamic";
 
 // Result pages are personal-ish (people search for places and topics)
 // and have no value in a search engine's index.
-export const metadata: Metadata = {
-  title: "Search — World Vitality",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getTranslator();
+  return {
+    title: `${t("search.title")} — World Vitality`,
+    robots: { index: false, follow: false },
+  };
+}
 
 const MAX_QUERY_LENGTH = 200;
 

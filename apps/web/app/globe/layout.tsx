@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { requireSession } from "../../lib/require-session";
 
 // Same reasoning as dashboard/layout.tsx — this segment reads cookies
@@ -20,5 +21,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function GlobeLayout({ children }: { children: ReactNode }) {
   await requireSession();
-  return <>{children}</>;
+  // The page's own text is translated; pin names are the owner's own data and
+  // official source names, which are shown as written.
+  return <LocaleBoundary>{children}</LocaleBoundary>;
 }

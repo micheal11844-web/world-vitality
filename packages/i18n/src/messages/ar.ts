@@ -341,26 +341,26 @@ export const ar: Messages = {
   "billing.plan.basic": "الأساسية",
   "billing.plan.standard": "القياسية",
   "billing.plan.premium": "المميزة",
-  "billing.plan.enterprise": "المؤسسات",
+  "billing.plan.enterprise": "المؤسسية",
   "billing.current.title": "خطتك",
   "billing.state.free": "أنت على الخطة الأساسية المجانية.",
   "billing.state.lapsed":
     "لم تنجح عملية الدفع الأخيرة، لذا أنت على الخطة الأساسية حاليًا. يمكنك تحديث بطاقتك أدناه.",
-  "billing.state.active": "أنت مشترك في خطة {plan}. يتجدد الاشتراك تلقائيًا.",
+  "billing.state.active": "أنت مشترك في الخطة {plan}. يتجدد الاشتراك تلقائيًا.",
   "billing.state.ending":
-    "تم إلغاء خطة {plan}. تحتفظ بها حتى {date} ثم تنتقل إلى الخطة الأساسية. لا يُحذف أي شيء.",
+    "تم إلغاء الخطة {plan}. تحتفظ بها حتى {date} ثم تنتقل إلى الخطة الأساسية. لا يُحذف أي شيء.",
   "billing.state.endingNoDate":
-    "تم إلغاء خطة {plan}. تحتفظ بها حتى نهاية الفترة التي دفعت ثمنها ثم تنتقل إلى الخطة الأساسية. لا يُحذف أي شيء.",
+    "تم إلغاء الخطة {plan}. تحتفظ بها حتى نهاية الفترة التي دفعت ثمنها ثم تنتقل إلى الخطة الأساسية. لا يُحذف أي شيء.",
   "billing.state.pastDue":
-    "لم تنجح عملية الدفع الأخيرة. تبقى خطة {plan} فعّالة حتى {date} ريثما تحدّث بطاقتك.",
+    "لم تنجح عملية الدفع الأخيرة. تبقى الخطة {plan} فعّالة حتى {date} ريثما تحدّث بطاقتك.",
   "billing.state.pastDueNoDate":
-    "لم تنجح عملية الدفع الأخيرة. تبقى خطة {plan} فعّالة لبضعة أيام ريثما تحدّث بطاقتك.",
-  "billing.state.manual": "تم الاتفاق على خطة {plan} معنا مباشرة، لذا لا يوجد ما تديره هنا.",
-  "billing.member.note": "مالك مؤسستك هو من يدير خطتها. أنت تستخدم خطة {plan} الخاصة به.",
+    "لم تنجح عملية الدفع الأخيرة. تبقى الخطة {plan} فعّالة لبضعة أيام ريثما تحدّث بطاقتك.",
+  "billing.state.manual": "تم الاتفاق على الخطة {plan} معنا مباشرة، لذا لا يوجد ما تديره هنا.",
+  "billing.member.note": "مالك مؤسستك هو من يدير خطتها. أنت تستخدم الخطة {plan} الخاصة به.",
   "billing.return.confirming":
     "شكرًا لك. نتأكد من دفعتك لدى Paystack، وهذا يستغرق عادةً بضع ثوانٍ. إذا لم تتغير خطتك بعد، فحدّث هذه الصفحة.",
   "billing.return.refresh": "تحديث",
-  "billing.return.done": "تم تأكيد الدفع. أنت الآن على خطة {plan}.",
+  "billing.return.done": "تم تأكيد الدفع. أنت الآن على الخطة {plan}.",
   "billing.limit.seats": "الأشخاص في مؤسستك",
   "billing.limit.savedItems": "الحقول والعقارات والمواقع المحفوظة",
   "billing.limit.unlimited": "بلا حد محدد",
@@ -378,7 +378,7 @@ export const ar: Messages = {
   "billing.currency.USD": "الدولار الأمريكي ($)",
   "billing.price.monthly": "{price} / شهريًا",
   "billing.price.annual": "{price} / سنويًا",
-  "billing.subscribe": "الاشتراك في خطة {plan}",
+  "billing.subscribe": "الاشتراك في الخطة {plan}",
   "billing.subscribe.failed":
     "تعذّر بدء عملية الدفع ولم يُخصم أي مبلغ. يُرجى المحاولة مرة أخرى بعد قليل.",
   "billing.payNote":
@@ -401,7 +401,7 @@ export const ar: Messages = {
   "billing.manage.cancelFailed":
     "تعذّر الإلغاء الآن ولم يتغير شيء. يُرجى المحاولة مرة أخرى بعد قليل.",
   "settings.billing.title": "الخطة والفوترة",
-  "settings.billing.body": "أنت على خطة {plan}.",
+  "settings.billing.body": "أنت على الخطة {plan}.",
   "settings.billing.link": "عرض الخطة والفوترة",
   "settings.delete.billingNote":
     "إذا كان لديك اشتراك مدفوع، فنلغيه لدى Paystack أولًا حتى لا يُخصم منك مبلغ مرة أخرى.",
@@ -992,15 +992,16 @@ export const ar: Messages = {
   "team.err.ownerCannotBeRemoved": "لا يمكن إزالة مالك المؤسسة.",
   "team.err.lastAdmin": "لا يمكنك إزالة آخر مالك أو مسؤول في مساحة العمل هذه.",
   "billing.limit.reached.seats":
-    "تتضمن خطة {plan} الخاصة بك ما يصل إلى {limit, plural, one {شخص واحد} two {شخصين} few {# أشخاص} many {# شخصًا} other {# شخص}}. قم بترقية خطتك لإضافة المزيد.",
+    "تتضمن الخطة {plan} الخاصة بك ما يصل إلى {limit, plural, one {شخص واحد} two {شخصين} few {# أشخاص} many {# شخصًا} other {# شخص}}. قم بترقية خطتك لإضافة المزيد.",
   "billing.limit.reached.savedItems":
-    "تتضمن خطة {plan} الخاصة بك ما يصل إلى {limit, plural, one {عنصر واحد محفوظ} two {عنصرين محفوظين} few {# عناصر محفوظة} many {# عنصرًا محفوظًا} other {# عنصر محفوظ}} (تُحتسب الحقول والعقارات المؤمَّن عليها والمواقع المراقَبة معًا). قم بترقية خطتك لإضافة المزيد.",
+    "تتضمن الخطة {plan} الخاصة بك ما يصل إلى {limit, plural, one {عنصر واحد محفوظ} two {عنصرين محفوظين} few {# عناصر محفوظة} many {# عنصرًا محفوظًا} other {# عنصر محفوظ}} (تُحتسب الحقول والعقارات المؤمَّن عليها والمواقع المراقَبة معًا). قم بترقية خطتك لإضافة المزيد.",
   "billing.limit.reached.workspaces":
-    "تتضمن خطة {plan} الخاصة بك ما يصل إلى {limit, plural, one {مساحة عمل واحدة} two {مساحتي عمل} few {# مساحات عمل} many {# مساحة عمل} other {# مساحة عمل}}. قم بترقية خطتك لإضافة المزيد.",
-  "billing.feature.included": "ميزة «{name}» متاحة في خطة {lowest} وما فوقها. خطتك هي {plan}.",
-  "billing.feature.includedMany": "ميزة «{name}» متاحة في خطة {lowest} وما فوقها. خطتك هي {plan}.",
-  "billing.feature.notPart": "ميزة «{name}» ليست جزءًا من خطة {plan}.",
-  "billing.feature.notPartMany": "ميزة «{name}» ليست جزءًا من خطة {plan}.",
+    "تتضمن الخطة {plan} الخاصة بك ما يصل إلى {limit, plural, one {مساحة عمل واحدة} two {مساحتي عمل} few {# مساحات عمل} many {# مساحة عمل} other {# مساحة عمل}}. قم بترقية خطتك لإضافة المزيد.",
+  "billing.feature.included": "ميزة «{name}» متاحة في الخطة {lowest} وما فوقها. خطتك هي {plan}.",
+  "billing.feature.includedMany":
+    "ميزة «{name}» متاحة في الخطة {lowest} وما فوقها. خطتك هي {plan}.",
+  "billing.feature.notPart": "ميزة «{name}» ليست جزءًا من الخطة {plan}.",
+  "billing.feature.notPartMany": "ميزة «{name}» ليست جزءًا من الخطة {plan}.",
   "billing.feature.name.forecastOutlooks": "التوقعات",
   "billing.feature.name.csvExport": "تصدير CSV",
   "billing.feature.name.printReport": "الطباعة والتصدير بصيغة PDF",
@@ -1020,7 +1021,7 @@ export const ar: Messages = {
   // ---- Failed-payment notice (v109)
   "notifications.msg.paymentFailed.title": "لم تتم عملية الدفع",
   "notifications.msg.paymentFailed.body":
-    "تعذّر تجديد خطة {plan} الخاصة بك. حدّث بطاقتك للاحتفاظ بها.",
+    "تعذّر تجديد الخطة {plan} الخاصة بك. حدّث بطاقتك للاحتفاظ بها.",
 
   // ---- Hand over ownership of the organisation (v105)
   "settings.org.transfer.title": "نقل الملكية",
@@ -1036,7 +1037,7 @@ export const ar: Messages = {
   "errors.orgTransferOwnerOnly": "مالك المؤسسة وحده يستطيع نقل ملكيتها.",
   "errors.orgTransferNotMember": "هذا الشخص ليس في مؤسستك، لذا لا يمكن نقل ملكيتها إليه.",
   "errors.orgTransferPaidPlan":
-    "مؤسستك على الخطة {plan}، وهي تخص مالكها ولا يمكن نقلها إلى شخص آخر بعد. يمكنك نقل الملكية بعد انتهاء الخطة.",
+    "مؤسستك على الالخطة {plan}، وهي تخص مالكها ولا يمكن نقلها إلى شخص آخر بعد. يمكنك نقل الملكية بعد انتهاء الخطة.",
   "errors.orgTransferFailed": "تعذّر نقل ملكية مؤسستك. لم يتغير شيء. حاول مرة أخرى.",
 
   // ---- Ownership-received notice (v105)
@@ -1109,4 +1110,33 @@ export const ar: Messages = {
   "auth.err.resetExpired": "انتهت صلاحية رابط إعادة تعيين كلمة المرور. يُرجى طلب رابط جديد.",
   "auth.err.updateFailed": "تعذّر تحديث كلمة المرور. يُرجى المحاولة مرة أخرى.",
   "auth.err.mismatch": "كلمتا المرور غير متطابقتين.",
+
+  // ---- public Explorer and the Globe
+  "explore.title": "استكشف كوكبك",
+  "explore.intro":
+    "ابحث عن أي مكان على الأرض لتحصل على لمحة حقيقية وصادقة عن ظروفه الحالية، دون الحاجة إلى حساب.",
+  "explore.placeLabel": "اسم المكان",
+  "explore.placePlaceholder": "جرّب مدينة أو بلدة أو منطقة…",
+  "explore.submit": "استكشف",
+  "explore.searching": "جارٍ البحث…",
+  "explore.empty.title": "لم يتم استكشاف أي مكان بعد",
+  "explore.empty.body": "ابحث عن مكان أعلاه لترى شيئًا صحيحًا عنه.",
+  "explore.aiPanel.emptyTitle": "لا شيء لتفسيره بعد",
+  "explore.aiPanel.emptyBody": "ابحث عن مكان لترى تحليلًا مولَّدًا بالذكاء الاصطناعي عنه.",
+  "explore.err.enterPlace": "أدخل اسم مكان لاستكشافه.",
+  "explore.err.lookupFailed": "تعذّر البحث عن هذا المكان الآن. يُرجى المحاولة مرة أخرى.",
+  "explore.err.invalidLink": "رابط هذا المكان غير صالح. جرّب البحث عنه مرة أخرى.",
+  "explore.err.dataFailed":
+    "تم العثور على هذا المكان، لكن تعذّر جلب بياناته البيئية الآن. يُرجى المحاولة مرة أخرى بعد قليل.",
+  "globe.title": "الكرة الأرضية",
+  "globe.summary":
+    "{count, plural, zero {لا مواقع} one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}} عبر كل مساحات العمل التي يمكنك الوصول إليها: حقول زراعية وعقارات مؤمَّن عليها ومواقع مراقَبة. تفاصيل المخاطر والحالة موجودة في كل مساحة عمل؛ هذه نظرة عامة وليست بديلًا عنها.",
+  "globe.loading": "جارٍ تحميل الكرة الأرضية…",
+  "globe.empty.title": "لا توجد مواقع لعرضها",
+  "globe.empty.body":
+    "لا شيء يمكنك الوصول إليه في الزراعة أو التأمين أو الحكومة والمنظمات غير الحكومية له موقع بعد.",
+  "globe.fireDetection": "رصد حريق (الثقة: {confidence})",
+
+  // ---- browser-tab title
+  "welcome.pageTitle": "مرحبًا بك",
 };

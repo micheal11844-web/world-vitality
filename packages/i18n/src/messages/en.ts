@@ -1127,6 +1127,35 @@ export const en = {
   "auth.err.resetExpired": "Your password reset link has expired. Please request a new one.",
   "auth.err.updateFailed": "Couldn't update your password. Please try again.",
   "auth.err.mismatch": "Passwords don't match.",
+
+  // ---- public Explorer and the Globe
+  "explore.title": "Explore Your Planet",
+  "explore.intro":
+    "Search any place on Earth for a real, honest snapshot of its current conditions — no account needed.",
+  "explore.placeLabel": "Place name",
+  "explore.placePlaceholder": "Try a city, town, or region…",
+  "explore.submit": "Explore",
+  "explore.searching": "Searching…",
+  "explore.empty.title": "Nowhere explored yet",
+  "explore.empty.body": "Search a place above to see something true about it.",
+  "explore.aiPanel.emptyTitle": "Nothing to interpret yet",
+  "explore.aiPanel.emptyBody": "Search a place to see an AI-generated insight about it.",
+  "explore.err.enterPlace": "Enter a place name to explore.",
+  "explore.err.lookupFailed": "Couldn’t look up that place right now. Please try again.",
+  "explore.err.invalidLink": "That place link isn’t valid. Try searching for it again.",
+  "explore.err.dataFailed":
+    "Found that place, but couldn’t fetch its environmental data right now. Please try again shortly.",
+  "globe.title": "The Globe",
+  "globe.summary":
+    "{count, plural, one {# location} other {# locations}} across every workspace you have access to — Agriculture fields, insured properties, and monitored locations. Individual hazard/status detail lives in each workspace; this is an overview, not a replacement.",
+  "globe.loading": "Loading the globe…",
+  "globe.empty.title": "No locations to show",
+  "globe.empty.body":
+    "Nothing you have access to across Agriculture, Insurance, or Government & NGOs has a location yet.",
+  "globe.fireDetection": "Fire detection ({confidence} confidence)",
+
+  // ---- browser-tab title
+  "welcome.pageTitle": "Welcome",
 } as const;
 
 export type MessageKey = keyof typeof en;

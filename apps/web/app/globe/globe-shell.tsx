@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Text, StateDisplay, AppShell } from "@world-vitality/ui-components";
+import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
 import type { GlobePin } from "./globe-viewer";
@@ -14,16 +15,21 @@ import type { GlobePin } from "./globe-viewer";
 // crash during SSR and papering over that with a try/catch.
 const GlobeViewer = dynamic(() => import("./globe-viewer").then((m) => m.GlobeViewer), {
   ssr: false,
-  loading: () => (
+  loading: () => <GlobeLoading />,
+});
+
+function GlobeLoading() {
+  const { t } = useI18n();
+  return (
     <div
       style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}
     >
       <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-        Loading the globe…
+        {t("globe.loading")}
       </Text>
     </div>
-  ),
-});
+  );
+}
 
 /**
  * Client half of the "God's Eye" global view (BUILD_PLAN "STAGE —
@@ -46,7 +52,8 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
   // globe is a visualization, not an interpretation result to
   // summarize.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
-  const sidebar = buildAppSidebar();
+  const { t } = useI18n();
+  const sidebar = buildAppSidebar({ t });
 
   return (
     <AppShell
@@ -66,12 +73,10 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
       >
         <div>
           <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-            The Globe
+            {t("globe.title")}
           </Text>
           <Text variant="caption" style={{ display: "block", color: "var(--wv-text-secondary)" }}>
-            {pins.length} location{pins.length === 1 ? "" : "s"} across every workspace you have
-            access to — Agriculture fields, insured properties, and monitored locations. Individual
-            hazard/status detail lives in each workspace; this is an overview, not a replacement.
+            {t("globe.summary", { count: pins.length })}
           </Text>
         </div>
         <div
@@ -80,8 +85,8 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
           {pins.length === 0 ? (
             <StateDisplay
               status="empty"
-              title="No locations to show"
-              description="Nothing you have access to across Agriculture, Insurance, or Government & NGOs has a location yet."
+              title={t("globe.empty.title")}
+              description={t("globe.empty.body")}
             />
           ) : (
             <GlobeViewer pins={pins} />

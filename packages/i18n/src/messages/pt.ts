@@ -1142,4 +1142,33 @@ export const pt: Messages = {
   "auth.err.resetExpired": "O link para redefinir sua senha expirou. Solicite um novo.",
   "auth.err.updateFailed": "Não foi possível atualizar sua senha. Tente novamente.",
   "auth.err.mismatch": "As senhas não coincidem.",
+
+  // ---- public Explorer and the Globe
+  "explore.title": "Explore o seu planeta",
+  "explore.intro":
+    "Busque qualquer lugar da Terra e veja um retrato real e honesto das condições atuais, sem precisar de conta.",
+  "explore.placeLabel": "Nome do lugar",
+  "explore.placePlaceholder": "Tente uma cidade, um povoado ou uma região…",
+  "explore.submit": "Explorar",
+  "explore.searching": "Buscando…",
+  "explore.empty.title": "Nenhum lugar explorado ainda",
+  "explore.empty.body": "Busque um lugar acima para ver algo verdadeiro sobre ele.",
+  "explore.aiPanel.emptyTitle": "Nada para interpretar ainda",
+  "explore.aiPanel.emptyBody": "Busque um lugar para ver uma análise gerada por IA sobre ele.",
+  "explore.err.enterPlace": "Digite o nome de um lugar para explorar.",
+  "explore.err.lookupFailed": "Não foi possível buscar esse lugar agora. Tente novamente.",
+  "explore.err.invalidLink": "Esse link de lugar não é válido. Tente buscá-lo novamente.",
+  "explore.err.dataFailed":
+    "Encontramos esse lugar, mas não foi possível obter os dados ambientais dele agora. Tente novamente em instantes.",
+  "globe.title": "O globo",
+  "globe.summary":
+    "{count, plural, one {# local} other {# locais}} em todos os espaços de trabalho aos quais você tem acesso: campos agrícolas, imóveis segurados e locais monitorados. O detalhe de perigos e situação fica em cada espaço de trabalho; esta é uma visão geral, não uma substituição.",
+  "globe.loading": "Carregando o globo…",
+  "globe.empty.title": "Nenhum local para mostrar",
+  "globe.empty.body":
+    "Nada a que você tem acesso em Agricultura, Seguros ou Governo e ONGs tem um local ainda.",
+  "globe.fireDetection": "Detecção de fogo (confiança: {confidence})",
+
+  // ---- browser-tab title
+  "welcome.pageTitle": "Boas-vindas",
 };

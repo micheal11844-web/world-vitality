@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from "react";
 import { ConfidenceBadge, StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
+import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
 
@@ -35,8 +36,12 @@ export interface ExploreShellProps {
  */
 export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) {
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  const { t, locale } = useI18n();
   // Anonymous-capable: only the Workspaces group, no Home/Notifications/Settings.
-  const sidebar = buildAppSidebar({ signedIn: false });
+  const sidebar = buildAppSidebar({ signedIn: false, t });
+  // The interpretation is written in English by the engine, so on a translated
+  // page it is marked as English text (same convention as the Weather page).
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
 
   return (
     <AppShell
@@ -49,7 +54,10 @@ export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) 
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       aiPanelContent={
         aiInterpretation ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}>
+          <div
+            {...englishOnly}
+            style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-sm)" }}
+          >
             <Text variant="body">{aiInterpretation.summary}</Text>
             <ConfidenceBadge level={aiInterpretation.confidence} showDescription />
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
@@ -59,8 +67,8 @@ export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) 
         ) : (
           <StateDisplay
             status="empty"
-            title="Nothing to interpret yet"
-            description="Search a place to see an AI-generated insight about it."
+            title={t("explore.aiPanel.emptyTitle")}
+            description={t("explore.aiPanel.emptyBody")}
           />
         )
       }

@@ -16,6 +16,8 @@ import {
 } from "../../lib/explore-actions";
 import type { GeocodedLocation } from "../../lib/geocode";
 import { placeLabel } from "../../lib/explore-link";
+import { useI18n } from "../../lib/i18n/i18n-provider";
+import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 import { ExploreShell } from "./explore-shell";
 
 /**
@@ -47,6 +49,9 @@ import { ExploreShell } from "./explore-shell";
  * outbound access to power.larc.nasa.gov or geocoding-api.open-meteo.com).
  */
 export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLocation | null }) {
+  const { t, locale } = useI18n();
+  // The engine's sentences are English; mark them so they are read (and laid out) as English.
+  const englishOnly = locale === "en" ? {} : ({ lang: "en", dir: "ltr" } as const);
   const [query, setQuery] = useState(initialLocation?.name ?? "");
   const [pending, setPending] = useState(Boolean(initialLocation));
   const [result, setResult] = useState<ExploreLocationResult | null>(null);
@@ -76,15 +81,27 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
 
   return (
     <ExploreShell aiInterpretation={result?.ok ? result.interpretation : undefined}>
-      <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-        Explore Your Planet
-      </Text>
+      {/* Anonymous visitors have no Settings page, so the language picker lives here. */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "var(--wv-space-sm)",
+          flexWrap: "wrap",
+          marginBottom: "var(--wv-space-xs)",
+        }}
+      >
+        <Text variant="pageTitle" as="h1" style={{ margin: 0 }}>
+          {t("explore.title")}
+        </Text>
+        <LanguageSwitcher compact />
+      </div>
       <Text
         variant="body"
         style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-lg)" }}
       >
-        Search any place on Earth for a real, honest snapshot of its current conditions — no account
-        needed.
+        {t("explore.intro")}
       </Text>
 
       <form
@@ -100,14 +117,14 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
       >
         <div style={{ flex: 1 }}>
           <Input
-            label="Place name"
-            placeholder="Try a city, town, or region…"
+            label={t("explore.placeLabel")}
+            placeholder={t("explore.placePlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
         <Button type="submit" disabled={pending || !query.trim()}>
-          {pending ? "Searching…" : "Explore"}
+          {pending ? t("explore.searching") : t("explore.submit")}
         </Button>
       </form>
 
@@ -115,8 +132,8 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
         {!result && !pending && (
           <StateDisplay
             status="empty"
-            title="Nowhere explored yet"
-            description="Search a place above to see something true about it."
+            title={t("explore.empty.title")}
+            description={t("explore.empty.body")}
           />
         )}
 
@@ -130,25 +147,29 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
 
         {result && result.ok && result.location && result.interpretation && (
           <Card>
-            <Text variant="caption">{placeLabel(result.location)}</Text>
-            <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
-              Current Conditions
+            <Text variant="caption">
+              <bdi>{placeLabel(result.location)}</bdi>
             </Text>
-            {result.interpretation.unableToAnswer ? (
-              <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
-                {result.interpretation.summary}
-              </Text>
-            ) : (
-              <>
-                <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
+            <Text variant="sectionTitle" as="p" style={{ margin: "var(--wv-space-xs) 0" }}>
+              {t("weather.currentConditions")}
+            </Text>
+            <div {...englishOnly}>
+              {result.interpretation.unableToAnswer ? (
+                <Text variant="body" style={{ color: "var(--wv-text-secondary)" }}>
                   {result.interpretation.summary}
                 </Text>
-                <ConfidenceBadge level={result.interpretation.confidence} showDescription />
-              </>
-            )}
+              ) : (
+                <>
+                  <Text variant="body" style={{ marginBottom: "var(--wv-space-xs)" }}>
+                    {result.interpretation.summary}
+                  </Text>
+                  <ConfidenceBadge level={result.interpretation.confidence} showDescription />
+                </>
+              )}
+            </div>
             {typeof result.ingestionGapCount === "number" && result.ingestionGapCount > 0 && (
               <Text variant="caption" style={{ display: "block", marginTop: "var(--wv-space-sm)" }}>
-                {result.ingestionGapCount} day(s) had no data available.
+                {t("workspace.gaps", { count: result.ingestionGapCount })}
               </Text>
             )}
           </Card>

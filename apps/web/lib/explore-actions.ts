@@ -7,6 +7,7 @@ import {
   type InterpretationResult,
 } from "@world-vitality/interpretation-engine";
 import { geocodeLocation, type GeocodedLocation } from "./geocode";
+import { tServer } from "./i18n/server";
 import { logTelemetry, logSecurity } from "./logger";
 
 export interface ExploreLocationResult {
@@ -42,7 +43,7 @@ export interface ExploreLocationResult {
  */
 export async function exploreLocationAction(query: string): Promise<ExploreLocationResult> {
   if (!query || !query.trim()) {
-    return { ok: false, error: "Enter a place name to explore." };
+    return { ok: false, error: await tServer("explore.err.enterPlace") };
   }
 
   let location: GeocodedLocation | null;
@@ -50,13 +51,13 @@ export async function exploreLocationAction(query: string): Promise<ExploreLocat
     location = await geocodeLocation(query);
   } catch (err) {
     logSecurity.error("explore_geocode_failed", err);
-    return { ok: false, error: "Couldn't look up that place right now. Please try again." };
+    return { ok: false, error: await tServer("explore.err.lookupFailed") };
   }
 
   if (!location) {
     return {
       ok: false,
-      error: `No place found matching "${query.trim()}". Try a different spelling or a nearby city.`,
+      error: await tServer("errors.noPlaceFound", { query: query.trim() }),
     };
   }
 
@@ -87,7 +88,7 @@ export async function exploreResolvedLocationAction(
     longitude < -180 ||
     longitude > 180
   ) {
-    return { ok: false, error: "That place link isn't valid. Try searching for it again." };
+    return { ok: false, error: await tServer("explore.err.invalidLink") };
   }
   return interpretLocation({
     name,
@@ -137,8 +138,7 @@ async function interpretLocation(location: GeocodedLocation): Promise<ExploreLoc
     logSecurity.error("explore_interpretation_failed", err);
     return {
       ok: false,
-      error:
-        "Found that place, but couldn't fetch its environmental data right now. Please try again shortly.",
+      error: await tServer("explore.err.dataFailed"),
     };
   }
 }
