@@ -91,12 +91,15 @@ answered with low confidence.
 
 **Guide Character ("Orbi")**
 
-The docked mascot (`GuideCharacter`) shown in the bottom-right corner of
-every page using `AppShell`, reacting to page state (idle/thinking/
-happy/concerned). "Orbi" is a provisional name, not yet confirmed with
-the project owner — see the component's own doc comment. A real 3D
-version was attempted, crashed in production, and was reverted — see
-Decision #007.
+The mascot (`GuideCharacter`): a small globe with a sprouting leaf, a
+gold ring around it and two mitten hands holding the ring. It sits docked
+in the bottom corner of every page using `AppShell`, on the sign-in,
+forgot-password and reset-password pages, the Welcome screen and the
+tutorial, reacting to page state (idle/thinking/happy/concerned). One
+drawing, one size scale (72–104 px), used everywhere. "Orbi" is a
+provisional name, not yet confirmed with the project owner. The earlier
+honey-pot bear and the unused 3D version are retired — see Decisions
+#007 and #026.
 
 ---
 

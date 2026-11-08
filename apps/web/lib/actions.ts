@@ -9,6 +9,7 @@ import { SESSION_COOKIE, REFRESH_COOKIE } from "./constants";
 import { logSecurity, logTelemetry } from "./logger";
 import { checkPasswordBreach } from "./password-breach-check";
 import { getClientIp } from "./get-client-ip";
+import { tServer } from "./i18n/server";
 
 export interface RequestMagicLinkResult {
   ok: boolean;
@@ -49,7 +50,7 @@ export interface PasswordAuthResult {
  */
 export async function requestMagicLinkAction(email: string): Promise<RequestMagicLinkResult> {
   if (!email || !email.includes("@")) {
-    return { ok: false, error: "Enter a valid email address." };
+    return { ok: false, error: await tServer("auth.err.invalidEmail") };
   }
   try {
     const auth = getAuthService();
@@ -59,7 +60,7 @@ export async function requestMagicLinkAction(email: string): Promise<RequestMagi
     return { ok: true };
   } catch (err) {
     logSecurity.error("magic_link_request_failed", err, { email });
-    return { ok: false, error: "Something went wrong sending the link. Please try again." };
+    return { ok: false, error: await tServer("auth.err.sendLink") };
   }
 }
 
@@ -75,22 +76,21 @@ export async function signUpWithPasswordAction(
   rememberMe: boolean,
 ): Promise<PasswordAuthResult> {
   if (!email || !email.includes("@")) {
-    return { ok: false, error: "Enter a valid email address." };
+    return { ok: false, error: await tServer("auth.err.invalidEmail") };
   }
   if (!password || password.length < 8) {
     // Length floor only (NIST SP 800-63B guidance researched before
     // building this — length over composition rules); the
     // PasswordStrengthMeter gives real-time feedback beyond this floor,
     // this is just the hard minimum, not the actual quality bar.
-    return { ok: false, error: "Password must be at least 8 characters." };
+    return { ok: false, error: await tServer("auth.err.shortPassword") };
   }
   const breachCheck = await checkPasswordBreach(password);
   if (breachCheck.breached) {
     logSecurity.info("password_signup_rejected_breached", { email });
     return {
       ok: false,
-      error:
-        "This password has appeared in a known data breach. Please choose a different password.",
+      error: await tServer("auth.err.breached"),
     };
   }
   try {
@@ -105,7 +105,7 @@ export async function signUpWithPasswordAction(
     logSecurity.error("password_signup_failed", err, { email });
     return {
       ok: false,
-      error: "Couldn't create your account. Check your email may need confirming, or try again.",
+      error: await tServer("auth.err.signUpFailed"),
     };
   }
 }
@@ -144,7 +144,7 @@ export async function signInWithPasswordAction(
   rememberMe: boolean,
 ): Promise<PasswordAuthResult> {
   if (!email || !password) {
-    return { ok: false, error: "Enter your email and password." };
+    return { ok: false, error: await tServer("auth.err.enterBoth") };
   }
   try {
     const auth = getAuthService();
@@ -156,7 +156,7 @@ export async function signInWithPasswordAction(
         logSecurity.info("password_signin_blocked_ip_rate_limited", { ip });
         return {
           ok: false,
-          error: "Too many failed attempts from this network. Please try again in a few minutes.",
+          error: await tServer("auth.err.lockedIp"),
         };
       }
     }
@@ -166,7 +166,7 @@ export async function signInWithPasswordAction(
       logSecurity.info("password_signin_blocked_rate_limited", { email });
       return {
         ok: false,
-        error: "Too many failed attempts. Please try again in a few minutes.",
+        error: await tServer("auth.err.locked"),
       };
     }
     try {
@@ -183,7 +183,7 @@ export async function signInWithPasswordAction(
         await auth.recordFailedSignInIp(ip);
       }
       logSecurity.error("password_signin_failed", err, { email });
-      return { ok: false, error: "Invalid email or password." };
+      return { ok: false, error: await tServer("auth.err.invalid") };
     }
   } catch (err) {
     // getAuthService() throws if Supabase env vars are missing — an
@@ -191,7 +191,7 @@ export async function signInWithPasswordAction(
     // outer safety net the original (pre-rate-limiting) version of
     // this function already had.
     logSecurity.error("password_signin_failed", err, { email });
-    return { ok: false, error: "Invalid email or password." };
+    return { ok: false, error: await tServer("auth.err.invalid") };
   }
 }
 
@@ -279,7 +279,7 @@ export async function signInWithGoogleAction(rememberMe: boolean): Promise<void>
  */
 export async function requestPasswordResetAction(email: string): Promise<RequestMagicLinkResult> {
   if (!email || !email.includes("@")) {
-    return { ok: false, error: "Enter a valid email address." };
+    return { ok: false, error: await tServer("auth.err.invalidEmail") };
   }
   try {
     const auth = getAuthService();
@@ -288,7 +288,7 @@ export async function requestPasswordResetAction(email: string): Promise<Request
       logSecurity.info("password_reset_blocked_rate_limited", { email });
       return {
         ok: false,
-        error: "Too many reset requests for this email. Please try again in a few minutes.",
+        error: await tServer("auth.err.resetRateLimited"),
       };
     }
     await auth.requestPasswordReset(email);
@@ -297,13 +297,18 @@ export async function requestPasswordResetAction(email: string): Promise<Request
     return { ok: true };
   } catch (err) {
     logSecurity.error("password_reset_request_failed", err, { email });
-    return { ok: false, error: "Something went wrong sending the link. Please try again." };
+    return { ok: false, error: await tServer("auth.err.sendLink") };
   }
 }
 
 export interface UpdatePasswordResult {
   ok: boolean;
   error?: string;
+  /**
+   * True when the failure is "the reset link has expired", so the page can offer
+   * a new link without reading the (translated) sentence.
+   */
+  expired?: boolean;
 }
 
 /**
@@ -330,33 +335,26 @@ export interface UpdatePasswordResult {
  */
 export async function updatePasswordAction(newPassword: string): Promise<UpdatePasswordResult> {
   if (!newPassword || newPassword.length < 8) {
-    return { ok: false, error: "Password must be at least 8 characters." };
+    return { ok: false, error: await tServer("auth.err.shortPassword") };
   }
   const breachCheck = await checkPasswordBreach(newPassword);
   if (breachCheck.breached) {
     logSecurity.info("password_reset_rejected_breached", {});
     return {
       ok: false,
-      error:
-        "This password has appeared in a known data breach. Please choose a different password.",
+      error: await tServer("auth.err.breached"),
     };
   }
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
   if (!sessionToken) {
-    return {
-      ok: false,
-      error: "Your password reset link has expired. Please request a new one.",
-    };
+    return { ok: false, error: await tServer("auth.err.resetExpired"), expired: true };
   }
   try {
     const auth = getAuthService();
     const session = await auth.getSession(sessionToken);
     if (!session) {
-      return {
-        ok: false,
-        error: "Your password reset link has expired. Please request a new one.",
-      };
+      return { ok: false, error: await tServer("auth.err.resetExpired"), expired: true };
     }
     await auth.updatePassword(session.userId, newPassword);
     cookieStore.delete(SESSION_COOKIE);
@@ -366,6 +364,6 @@ export async function updatePasswordAction(newPassword: string): Promise<UpdateP
     return { ok: true };
   } catch (err) {
     logSecurity.error("password_reset_failed", err);
-    return { ok: false, error: "Couldn't update your password. Please try again." };
+    return { ok: false, error: await tServer("auth.err.updateFailed") };
   }
 }

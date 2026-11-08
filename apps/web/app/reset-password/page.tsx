@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Button,
@@ -11,6 +11,8 @@ import {
   PasswordStrengthMeter,
 } from "@world-vitality/ui-components";
 import { updatePasswordAction } from "../../lib/actions";
+import { useI18n } from "../../lib/i18n/i18n-provider";
+import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 
 /**
  * Reset Password (BUILD_PLAN Stage 13 follow-up). Only reachable with a
@@ -27,16 +29,30 @@ import { updatePasswordAction } from "../../lib/actions";
  * `/dashboard`, requiring a fresh sign-in with the new password.
  */
 export default function ResetPasswordPage() {
+  const { t, locale } = useI18n();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "error">("idle");
   const [error, setError] = useState<string | undefined>();
+  // The server says when the link has run out, so the page doesn't read its sentence.
+  const [expired, setExpired] = useState(false);
+
+  // An error was written in the language of the moment; after a language change it is
+  // cleared rather than left behind in the old one.
+  const previousLocale = useRef(locale);
+  useEffect(() => {
+    if (previousLocale.current === locale) return;
+    previousLocale.current = locale;
+    setError(undefined);
+    setStatus((current) => (current === "error" ? "idle" : current));
+  }, [locale]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirmPassword) {
       setStatus("error");
-      setError("Passwords don't match.");
+      setExpired(false);
+      setError(t("auth.err.mismatch"));
       return;
     }
     setStatus("saving");
@@ -51,6 +67,7 @@ export default function ResetPasswordPage() {
     } else {
       setStatus("error");
       setError(result.error);
+      setExpired(result.expired === true);
     }
   }
 
@@ -59,62 +76,88 @@ export default function ResetPasswordPage() {
       style={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: "column",
         backgroundColor: "var(--wv-bg)",
-        padding: "var(--wv-space-lg)",
+        padding: "var(--wv-space-md) var(--wv-space-lg) var(--wv-space-lg)",
       }}
     >
-      <Card style={{ maxWidth: "26rem", width: "100%" }}>
-        <div
-          style={{ display: "flex", justifyContent: "center", marginBottom: "var(--wv-space-sm)" }}
-        >
-          <GuideCharacter mood={status === "error" ? "concerned" : "idle"} />
-        </div>
-        <Text
-          variant="sectionTitle"
-          as="h1"
-          style={{ marginBottom: "var(--wv-space-lg)", textAlign: "center" }}
-        >
-          Set a new password
-        </Text>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <LanguageSwitcher compact />
+      </div>
+      <div
+        style={{
+          margin: "auto",
+          width: "100%",
+          maxWidth: "26rem",
+          padding: "var(--wv-space-md) 0",
+        }}
+      >
+        <Card style={{ maxWidth: "26rem", width: "100%", boxSizing: "border-box" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "var(--wv-space-sm)",
+            }}
+          >
+            <GuideCharacter mood={status === "error" ? "concerned" : "idle"} size={96} />
+          </div>
+          <Text
+            variant="sectionTitle"
+            as="h1"
+            style={{ marginBottom: "var(--wv-space-lg)", textAlign: "center" }}
+          >
+            {t("auth.reset.title")}
+          </Text>
 
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" }}
-        >
-          <div>
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" }}
+          >
+            <div>
+              <Input
+                label={t("auth.reset.newPassword")}
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={status === "error" ? error : undefined}
+              />
+              <PasswordStrengthMeter
+                password={password}
+                labels={[
+                  t("auth.strength.veryWeak"),
+                  t("auth.strength.weak"),
+                  t("auth.strength.fair"),
+                  t("auth.strength.strong"),
+                  t("auth.strength.veryStrong"),
+                ]}
+                ariaLabel={(label) => t("auth.strength.aria", { label })}
+                showHints={locale === "en"}
+              />
+            </div>
             <Input
-              label="New password"
+              label={t("auth.reset.confirm")}
               type="password"
               required
               minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={status === "error" ? error : undefined}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            <PasswordStrengthMeter password={password} />
-          </div>
-          <Input
-            label="Confirm new password"
-            type="password"
-            required
-            minLength={8}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-          <Button type="submit" loading={status === "saving"}>
-            Update password
-          </Button>
-          {status === "error" && error?.includes("expired") && (
-            <Text variant="caption" style={{ textAlign: "center" }}>
-              <Link href="/forgot-password" style={{ color: "var(--wv-accent)" }}>
-                Request a new reset link
-              </Link>
-            </Text>
-          )}
-        </form>
-      </Card>
+            <Button type="submit" loading={status === "saving"}>
+              {t("auth.reset.submit")}
+            </Button>
+            {status === "error" && expired && (
+              <Text variant="caption" style={{ textAlign: "center" }}>
+                <Link href="/forgot-password" style={{ color: "var(--wv-accent)" }}>
+                  {t("auth.reset.requestNew")}
+                </Link>
+              </Text>
+            )}
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

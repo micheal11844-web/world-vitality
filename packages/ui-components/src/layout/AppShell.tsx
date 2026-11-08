@@ -55,14 +55,10 @@ export interface AppShellProps {
    */
   showGuide?: boolean;
   /**
-   * Optional replacement for the default flat-SVG `GuideCharacter` in
-   * the docked corner spot (BUILD_PLAN "STAGE — GUIDE CHARACTER 3D:
-   * EXTENDED TO APPSHELL + GUIDETUTORIAL"). Lets `apps/web` inject the
-   * WebGL `GuideCharacter3D` here via its own `next/dynamic(...,
-   * { ssr: false })` wrapper, without this framework-light package
-   * needing to know about Next.js dynamic-import mechanics — same
-   * pattern as `AuthIllustration`'s own `guideCharacter` prop. Defaults
-   * to the flat-SVG character when omitted.
+   * Optional replacement for the default `GuideCharacter` in the docked
+   * corner spot — same pattern as `AuthIllustration`'s own
+   * `guideCharacter` prop. Defaults to the standard character when
+   * omitted.
    */
   guideCharacter?: ReactNode;
   /**
@@ -694,7 +690,7 @@ export function AppShell({
             zIndex: 10,
           }}
         >
-          {guideCharacter ?? <GuideCharacter mood="idle" size={84} />}
+          {guideCharacter ?? <GuideCharacter mood="idle" size={72} />}
         </div>
       )}
     </div>

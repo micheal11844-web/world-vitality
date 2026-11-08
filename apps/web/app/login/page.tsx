@@ -20,6 +20,9 @@ import {
   signUpWithPasswordAction,
   signInWithGoogleAction,
 } from "../../lib/actions";
+import type { MessageKey } from "@world-vitality/i18n";
+import { useI18n } from "../../lib/i18n/i18n-provider";
+import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 import { isNativeShellUserAgent } from "../../lib/pwa/native-shell";
 import { AppDownloadsLink } from "../app-downloads-link";
 
@@ -45,13 +48,12 @@ function moodFor(status: "idle" | "sending" | "error"): GuideCharacterMood {
   }
 }
 
-const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
-  missing_token: "That sign-in link looks incomplete. Please request a new one.",
-  verification_failed:
-    "That sign-in link has expired or already been used. Please request a new one.",
-  oauth_failed: "Google sign-in didn't go through. Please try again.",
-  oauth_not_configured:
-    "Google sign-in isn't set up yet on this deployment. Use email sign-in for now.",
+/** What `/auth/callback` puts in `?error=`, mapped to the message to show. */
+const CALLBACK_ERROR_KEYS: Record<string, MessageKey> = {
+  missing_token: "auth.callback.missingToken",
+  verification_failed: "auth.callback.verificationFailed",
+  oauth_failed: "auth.callback.oauthFailed",
+  oauth_not_configured: "auth.callback.oauthNotConfigured",
 };
 type PasswordSubMode = "signin" | "signup";
 
@@ -83,6 +85,7 @@ function GoogleIcon() {
 }
 
 function LoginForm() {
+  const { t, locale } = useI18n();
   const searchParams = useSearchParams();
   const [passwordSubMode, setPasswordSubMode] = useState<PasswordSubMode>("signin");
   const [email, setEmail] = useState("");
@@ -90,6 +93,9 @@ function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState<string | undefined>();
+  // A failure reported by the /auth/callback redirect. Kept as the message's key
+  // (not the sentence) so it follows the language if the visitor changes it.
+  const [callbackKey, setCallbackKey] = useState<MessageKey | undefined>();
   const [googleLoading, setGoogleLoading] = useState(false);
   // Inside the World Vitality desktop or phone app Google refuses to sign
   // anyone in (it blocks sign-in from app windows), so the button is hidden
@@ -118,12 +124,24 @@ function LoginForm() {
     const callbackError = searchParams.get("error");
     if (callbackError) {
       setStatus("error");
-      setError(
-        CALLBACK_ERROR_MESSAGES[callbackError] ??
-          "Something went wrong. Please request a new sign-in link.",
-      );
+      setCallbackKey(CALLBACK_ERROR_KEYS[callbackError] ?? "auth.callback.generic");
     }
   }, [searchParams]);
+
+  // An error from a Server Action was written in the language of the moment;
+  // after a language change it would be left behind in the old one, so it is cleared
+  // (the visitor can simply submit again).
+  // (Not on first render: only when the language actually changes.)
+  const previousLocale = useRef(locale);
+  const callbackKeyRef = useRef(callbackKey);
+  callbackKeyRef.current = callbackKey;
+  useEffect(() => {
+    if (previousLocale.current === locale) return;
+    previousLocale.current = locale;
+    setError(undefined);
+    setStatus((current) => (current === "error" && !callbackKeyRef.current ? "idle" : current));
+  }, [locale]);
+  const shownError = error ?? (callbackKey ? t(callbackKey) : undefined);
 
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -163,7 +181,7 @@ function LoginForm() {
   }
 
   return (
-    <Card style={{ maxWidth: "26rem", width: "100%" }}>
+    <Card style={{ maxWidth: "26rem", width: "100%", boxSizing: "border-box" }}>
       {/* Real brand mark — research on login-page polish specifically
           calls out brand identity (logo/wordmark) reinforcing trust;
           previously this page had no branding beyond the page title
@@ -208,7 +226,7 @@ function LoginForm() {
           wave={status === "idle"}
           walkAway={leaving}
           onWalkAwayComplete={goToDashboard}
-          size={200}
+          size={104}
         />
       </div>
       <Text
@@ -216,7 +234,7 @@ function LoginForm() {
         as="h1"
         style={{ marginBottom: "var(--wv-space-lg)", textAlign: "center" }}
       >
-        {passwordSubMode === "signup" ? "Create your account" : "Sign in"}
+        {passwordSubMode === "signup" ? t("auth.signUp.title") : t("auth.signIn.title")}
       </Text>
 
       {accountDeleted && (
@@ -229,7 +247,7 @@ function LoginForm() {
             marginBottom: "var(--wv-space-md)",
           }}
         >
-          Your account has been deleted.
+          {t("auth.accountDeleted")}
         </Text>
       )}
       {resetSuccess && (
@@ -241,7 +259,7 @@ function LoginForm() {
             marginBottom: "var(--wv-space-md)",
           }}
         >
-          Your password has been updated. Please sign in.
+          {t("auth.resetSuccess")}
         </Text>
       )}
       {inApp ? (
@@ -255,8 +273,7 @@ function LoginForm() {
             marginBottom: "var(--wv-space-md)",
           }}
         >
-          In this app, sign in with your email and password. If you usually sign in with Google, use
-          “Forgot password?” to choose a password first.
+          {t("auth.inAppNote")}
         </Text>
       ) : (
         <>
@@ -275,7 +292,7 @@ function LoginForm() {
             }}
           >
             <GoogleIcon />
-            Continue with Google
+            {t("auth.google")}
           </Button>
 
           <div
@@ -288,7 +305,7 @@ function LoginForm() {
           >
             <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
-              or
+              {t("auth.or")}
             </Text>
             <div style={{ flex: 1, height: 1, backgroundColor: "var(--wv-border)" }} />
           </div>
@@ -317,7 +334,7 @@ function LoginForm() {
         style={{ display: "flex", flexDirection: "column", gap: "var(--wv-space-md)" }}
       >
         <Input
-          label="Email address"
+          label={t("auth.email")}
           type="email"
           required
           value={email}
@@ -325,16 +342,28 @@ function LoginForm() {
         />
         <div>
           <Input
-            label="Password"
+            label={t("auth.password")}
             type="password"
             required
             minLength={passwordSubMode === "signup" ? 8 : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            error={status === "error" ? error : undefined}
+            error={status === "error" ? shownError : undefined}
           />
           {passwordSubMode === "signup" && (
-            <PasswordStrengthMeter password={password} userInputs={[email]} />
+            <PasswordStrengthMeter
+              password={password}
+              userInputs={[email]}
+              labels={[
+                t("auth.strength.veryWeak"),
+                t("auth.strength.weak"),
+                t("auth.strength.fair"),
+                t("auth.strength.strong"),
+                t("auth.strength.veryStrong"),
+              ]}
+              ariaLabel={(label) => t("auth.strength.aria", { label })}
+              showHints={locale === "en"}
+            />
           )}
           {passwordSubMode === "signin" && (
             <Text
@@ -342,30 +371,30 @@ function LoginForm() {
               style={{
                 display: "block",
                 marginTop: "var(--wv-space-xs)",
-                textAlign: "right",
+                textAlign: "end",
               }}
             >
               <Link href="/forgot-password" style={{ color: "var(--wv-text-secondary)" }}>
-                Forgot password?
+                {t("auth.forgotLink")}
               </Link>
             </Text>
           )}
         </div>
 
         <Checkbox
-          label="Remember me on this device"
+          label={t("auth.remember")}
           checked={rememberMe}
           onChange={(e) => setRememberMe(e.target.checked)}
         />
 
         <Button type="submit" loading={status === "sending"}>
-          {passwordSubMode === "signup" ? "Create account" : "Sign in"}
+          {passwordSubMode === "signup" ? t("auth.signUpButton") : t("auth.signInButton")}
         </Button>
 
         <Text variant="caption" style={{ textAlign: "center" }}>
           {passwordSubMode === "signup" ? (
             <>
-              Already have an account?{" "}
+              {t("auth.haveAccount")}{" "}
               <button
                 type="button"
                 onClick={() => setPasswordSubMode("signin")}
@@ -378,12 +407,12 @@ function LoginForm() {
                   padding: 0,
                 }}
               >
-                Sign in
+                {t("auth.signInButton")}
               </button>
             </>
           ) : (
             <>
-              New here?{" "}
+              {t("auth.newHere")}{" "}
               <button
                 type="button"
                 onClick={() => setPasswordSubMode("signup")}
@@ -396,7 +425,7 @@ function LoginForm() {
                   padding: 0,
                 }}
               >
-                Create an account
+                {t("auth.createLink")}
               </button>
             </>
           )}
@@ -431,25 +460,44 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
-      <div className="wv-auth-illustration-panel" style={{ flex: 1, display: "none" }}>
+      <div
+        className="wv-auth-illustration-panel"
+        style={{ flex: 1, display: "none", minWidth: 0, overflow: "hidden" }}
+      >
         <AuthIllustration guideCharacter={null} />
       </div>
+      {/* The form column scrolls. The card is centred with `margin: auto` rather than
+          `align-items: center`: with the latter, a window shorter than the card pushes the
+          top of the card above the scrollable area where nothing can reach it (the brand
+          row and Orbi's head were cut off), whereas auto margins collapse to zero when
+          there is no room and the whole card stays reachable by scrolling. */}
       <div
         style={{
           flex: 1,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          flexDirection: "column",
           backgroundColor: "var(--wv-bg)",
-          padding: "var(--wv-space-lg)",
+          padding: "var(--wv-space-md) var(--wv-space-lg) var(--wv-space-lg)",
           minWidth: 0,
           height: "100%",
           overflowY: "auto",
         }}
       >
-        <Suspense fallback={null}>
-          <LoginForm />
-        </Suspense>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <LanguageSwitcher compact />
+        </div>
+        <div
+          style={{
+            margin: "auto",
+            width: "100%",
+            maxWidth: "26rem",
+            padding: "var(--wv-space-md) 0",
+          }}
+        >
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
+        </div>
       </div>
       <style>{`
         @media (min-width: 768px) {

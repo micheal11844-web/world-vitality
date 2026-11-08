@@ -25,18 +25,13 @@ export interface GuideTutorialProps {
   steps: GuideTutorialStep[];
   characterName?: string;
   /**
-   * Optional replacement for the default flat-SVG `GuideCharacter`
-   * (BUILD_PLAN "STAGE — GUIDE CHARACTER 3D: EXTENDED TO APPSHELL +
-   * GUIDETUTORIAL"). A render function, not a plain `ReactNode` like
-   * `AuthIllustration`'s/`AppShell`'s own `guideCharacter` override —
-   * this component's mood genuinely changes per internal step (`step
-   * .mood`), state this component owns itself, so the caller needs the
-   * current mood handed back to it rather than supplying one fixed
-   * element up front. Lets `apps/web` inject the WebGL
-   * `GuideCharacter3D` here via its own `next/dynamic(..., { ssr:
-   * false })` wrapper without this framework-light package needing to
-   * know about Next.js dynamic-import mechanics. Defaults to the
-   * flat-SVG character when omitted.
+   * Optional replacement for the default `GuideCharacter`. A render
+   * function, not a plain `ReactNode` like `AuthIllustration`'s/
+   * `AppShell`'s own `guideCharacter` override — this component's mood
+   * genuinely changes per internal step (`step.mood`), state this
+   * component owns itself, so the caller needs the current mood handed
+   * back to it rather than supplying one fixed element up front.
+   * Defaults to the standard character when omitted.
    */
   renderGuideCharacter?: (mood: GuideCharacterMood) => ReactNode;
 }
@@ -89,7 +84,7 @@ export function GuideTutorial({
         {renderGuideCharacter ? (
           renderGuideCharacter(step.mood ?? "idle")
         ) : (
-          <GuideCharacter name={characterName} mood={step.mood ?? "idle"} size={80} />
+          <GuideCharacter name={characterName} mood={step.mood ?? "idle"} size={72} />
         )}
         <Text variant="body" style={{ textAlign: "center" }}>
           {step.body}

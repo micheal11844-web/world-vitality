@@ -1106,4 +1106,68 @@ export const fr: Messages = {
   "landing.signIn": "Se connecter",
   "landing.appsPrompt": "Vous préférez une application ?",
   "landing.appsLink": "Obtenir l’application pour ordinateur ou Android",
+
+  // ---- Sign-in, forgot-password and reset-password pages (v106)
+  "auth.signIn.title": "Se connecter",
+  "auth.signUp.title": "Créez votre compte",
+  "auth.accountDeleted": "Votre compte a été supprimé.",
+  "auth.resetSuccess": "Votre mot de passe a été mis à jour. Veuillez vous connecter.",
+  "auth.inAppNote":
+    "Dans cette application, connectez-vous avec votre adresse e-mail et votre mot de passe. Si vous vous connectez habituellement avec Google, utilisez « Mot de passe oublié ? » pour choisir d’abord un mot de passe.",
+  "auth.google": "Continuer avec Google",
+  "auth.or": "ou",
+  "auth.email": "Adresse e-mail",
+  "auth.password": "Mot de passe",
+  "auth.forgotLink": "Mot de passe oublié ?",
+  "auth.remember": "Se souvenir de moi sur cet appareil",
+  "auth.signInButton": "Se connecter",
+  "auth.signUpButton": "Créer un compte",
+  "auth.haveAccount": "Vous avez déjà un compte ?",
+  "auth.newHere": "Nouveau ici ?",
+  "auth.createLink": "Créer un compte",
+  "auth.callback.missingToken":
+    "Ce lien de connexion semble incomplet. Veuillez en demander un nouveau.",
+  "auth.callback.verificationFailed":
+    "Ce lien de connexion a expiré ou a déjà été utilisé. Veuillez en demander un nouveau.",
+  "auth.callback.oauthFailed": "La connexion avec Google n’a pas abouti. Veuillez réessayer.",
+  "auth.callback.oauthNotConfigured":
+    "La connexion avec Google n’est pas encore configurée sur ce site. Utilisez l’adresse e-mail pour le moment.",
+  "auth.callback.generic":
+    "Une erreur s’est produite. Veuillez demander un nouveau lien de connexion.",
+  "auth.forgot.title": "Réinitialisez votre mot de passe",
+  "auth.forgot.sent":
+    "Consultez votre messagerie : si un compte existe pour {email}, nous avons envoyé un lien pour réinitialiser votre mot de passe.",
+  "auth.forgot.intro":
+    "Saisissez l’adresse e-mail de votre compte et nous vous enverrons un lien pour définir un nouveau mot de passe.",
+  "auth.forgot.send": "Envoyer le lien",
+  "auth.backToSignIn": "Retour à la connexion",
+  "auth.reset.title": "Définissez un nouveau mot de passe",
+  "auth.reset.newPassword": "Nouveau mot de passe",
+  "auth.reset.confirm": "Confirmez le nouveau mot de passe",
+  "auth.reset.submit": "Mettre à jour le mot de passe",
+  "auth.reset.requestNew": "Demander un nouveau lien",
+  "auth.strength.veryWeak": "Très faible",
+  "auth.strength.weak": "Faible",
+  "auth.strength.fair": "Moyen",
+  "auth.strength.strong": "Fort",
+  "auth.strength.veryStrong": "Très fort",
+  "auth.strength.aria": "Solidité du mot de passe : {label}",
+  "auth.err.invalidEmail": "Saisissez une adresse e-mail valide.",
+  "auth.err.sendLink": "Une erreur s’est produite lors de l’envoi du lien. Veuillez réessayer.",
+  "auth.err.shortPassword": "Le mot de passe doit contenir au moins 8 caractères.",
+  "auth.err.breached":
+    "Ce mot de passe a déjà été exposé dans une fuite de données connue. Veuillez en choisir un autre.",
+  "auth.err.signUpFailed":
+    "Impossible de créer votre compte. Vous devez peut-être d’abord confirmer votre adresse e-mail ; sinon, réessayez.",
+  "auth.err.enterBoth": "Saisissez votre adresse e-mail et votre mot de passe.",
+  "auth.err.lockedIp":
+    "Trop de tentatives échouées depuis ce réseau. Veuillez réessayer dans quelques minutes.",
+  "auth.err.locked": "Trop de tentatives échouées. Veuillez réessayer dans quelques minutes.",
+  "auth.err.invalid": "Adresse e-mail ou mot de passe incorrect.",
+  "auth.err.resetRateLimited":
+    "Trop de demandes de réinitialisation pour cette adresse e-mail. Veuillez réessayer dans quelques minutes.",
+  "auth.err.resetExpired":
+    "Votre lien de réinitialisation a expiré. Veuillez en demander un nouveau.",
+  "auth.err.updateFailed": "Impossible de mettre à jour votre mot de passe. Veuillez réessayer.",
+  "auth.err.mismatch": "Les mots de passe ne correspondent pas.",
 };

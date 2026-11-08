@@ -1089,4 +1089,67 @@ export const es: Messages = {
   "landing.signIn": "Iniciar sesión",
   "landing.appsPrompt": "¿Prefieres una app?",
   "landing.appsLink": "Descarga la app de escritorio o de Android",
+
+  // ---- Sign-in, forgot-password and reset-password pages (v106)
+  "auth.signIn.title": "Iniciar sesión",
+  "auth.signUp.title": "Crea tu cuenta",
+  "auth.accountDeleted": "Tu cuenta se ha eliminado.",
+  "auth.resetSuccess": "Tu contraseña se ha actualizado. Inicia sesión.",
+  "auth.inAppNote":
+    "En esta app, inicia sesión con tu correo electrónico y tu contraseña. Si sueles iniciar sesión con Google, usa «¿Olvidaste tu contraseña?» para elegir primero una contraseña.",
+  "auth.google": "Continuar con Google",
+  "auth.or": "o",
+  "auth.email": "Correo electrónico",
+  "auth.password": "Contraseña",
+  "auth.forgotLink": "¿Olvidaste tu contraseña?",
+  "auth.remember": "Recordarme en este dispositivo",
+  "auth.signInButton": "Iniciar sesión",
+  "auth.signUpButton": "Crear cuenta",
+  "auth.haveAccount": "¿Ya tienes una cuenta?",
+  "auth.newHere": "¿Primera vez aquí?",
+  "auth.createLink": "Crear una cuenta",
+  "auth.callback.missingToken":
+    "Ese enlace de inicio de sesión parece incompleto. Solicita uno nuevo.",
+  "auth.callback.verificationFailed":
+    "Ese enlace de inicio de sesión ha caducado o ya se usó. Solicita uno nuevo.",
+  "auth.callback.oauthFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
+  "auth.callback.oauthNotConfigured":
+    "El inicio de sesión con Google aún no está configurado en este sitio. Por ahora usa el correo electrónico.",
+  "auth.callback.generic": "Algo salió mal. Solicita un nuevo enlace de inicio de sesión.",
+  "auth.forgot.title": "Restablece tu contraseña",
+  "auth.forgot.sent":
+    "Revisa tu correo: si existe una cuenta para {email}, te hemos enviado un enlace para restablecer tu contraseña.",
+  "auth.forgot.intro":
+    "Introduce el correo electrónico de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.",
+  "auth.forgot.send": "Enviar enlace",
+  "auth.backToSignIn": "Volver a iniciar sesión",
+  "auth.reset.title": "Crea una contraseña nueva",
+  "auth.reset.newPassword": "Contraseña nueva",
+  "auth.reset.confirm": "Confirma la contraseña nueva",
+  "auth.reset.submit": "Actualizar contraseña",
+  "auth.reset.requestNew": "Solicitar un nuevo enlace",
+  "auth.strength.veryWeak": "Muy débil",
+  "auth.strength.weak": "Débil",
+  "auth.strength.fair": "Aceptable",
+  "auth.strength.strong": "Fuerte",
+  "auth.strength.veryStrong": "Muy fuerte",
+  "auth.strength.aria": "Seguridad de la contraseña: {label}",
+  "auth.err.invalidEmail": "Introduce un correo electrónico válido.",
+  "auth.err.sendLink": "Algo salió mal al enviar el enlace. Inténtalo de nuevo.",
+  "auth.err.shortPassword": "La contraseña debe tener al menos 8 caracteres.",
+  "auth.err.breached":
+    "Esta contraseña ha aparecido en una filtración de datos conocida. Elige otra contraseña distinta.",
+  "auth.err.signUpFailed":
+    "No se pudo crear tu cuenta. Quizá debas confirmar primero tu correo electrónico; si no, inténtalo de nuevo.",
+  "auth.err.enterBoth": "Introduce tu correo electrónico y tu contraseña.",
+  "auth.err.lockedIp":
+    "Demasiados intentos fallidos desde esta red. Inténtalo de nuevo dentro de unos minutos.",
+  "auth.err.locked": "Demasiados intentos fallidos. Inténtalo de nuevo dentro de unos minutos.",
+  "auth.err.invalid": "Correo electrónico o contraseña no válidos.",
+  "auth.err.resetRateLimited":
+    "Demasiadas solicitudes de restablecimiento para este correo. Inténtalo de nuevo dentro de unos minutos.",
+  "auth.err.resetExpired":
+    "El enlace para restablecer tu contraseña ha caducado. Solicita uno nuevo.",
+  "auth.err.updateFailed": "No se pudo actualizar tu contraseña. Inténtalo de nuevo.",
+  "auth.err.mismatch": "Las contraseñas no coinciden.",
 };

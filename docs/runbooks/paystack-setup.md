@@ -331,9 +331,11 @@ app cannot tell if they differ, and would charge what Paystack's plan says.
 | `premium.NGN.annual`   | World Vitality Premium, 250,000 | `PLN_c64r8bzadfts71b` |
 
 (Monthly rows are NGN per month, annual rows NGN per year, as in
-`billing.md`, "The prices".) These codes are the first set the owner created;
-they were refused with "Plan not found" while the key was a **test** key, which
-fits plans that exist only in Live mode, but that was not confirmed from here.
+`billing.md`, "The prices".) These codes are the first set the owner created.
+They were refused with "Plan not found" while the key was a **test** key, which
+fits plans that exist only in Live mode. **Confirmed by the owner on 2026-11-07
+from the Live Plans page:** all four codes, amounts and intervals match this
+table (no subscribers yet).
 
 **2. The live webhook (Paystack, Live mode).** Settings → **API Keys &
 Webhooks**. Make sure the **Live** toggle is on and the business name is

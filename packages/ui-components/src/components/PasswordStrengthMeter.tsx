@@ -37,6 +37,7 @@ function loadZxcvbn() {
 }
 
 const LABELS = ["Very weak", "Weak", "Fair", "Strong", "Very strong"] as const;
+type StrengthLabels = readonly [string, string, string, string, string];
 const COLORS = [
   "var(--wv-color-critical-500)",
   "var(--wv-color-critical-400)",
@@ -52,6 +53,21 @@ export interface PasswordStrengthMeterProps {
    *  is what catches "uses their own email as their password," which a
    *  naive length/character-class checker would score as strong. */
   userInputs?: string[];
+  /**
+   * The five words for score 0 to 4, in the reader's language (English when
+   * omitted). The host owns the translations; this package only receives them.
+   */
+  labels?: StrengthLabels;
+  /** The spoken name of the meter, given the current label ("Password strength: Weak"). */
+  ariaLabel?: (label: string) => string;
+  /**
+   * Show zxcvbn's own hint under the meter ("This is a top-10 common
+   * password"). Those hints exist in English only, so a host showing another
+   * language turns this off rather than putting English under translated
+   * text; the word and colour still say how strong the password is.
+   * Default: shown.
+   */
+  showHints?: boolean;
 }
 
 /**
@@ -78,7 +94,13 @@ export interface PasswordStrengthMeterProps {
  * if it happens to look structurally random. That's real, separate,
  * un-built follow-up work, not silently implied as covered.
  */
-export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStrengthMeterProps) {
+export function PasswordStrengthMeter({
+  password,
+  userInputs = [],
+  labels = LABELS,
+  ariaLabel = (label) => `Password strength: ${label}`,
+  showHints = true,
+}: PasswordStrengthMeterProps) {
   const [check, setCheck] = useState<
     ((password: string, userInputs: string[]) => ZxcvbnResult) | null
   >(null);
@@ -104,7 +126,7 @@ export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStr
   }
 
   const score = result.score; // 0-4
-  const label = LABELS[score];
+  const label = labels[score];
   const color = COLORS[score];
 
   return (
@@ -114,7 +136,7 @@ export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStr
         aria-valuenow={score}
         aria-valuemin={0}
         aria-valuemax={4}
-        aria-label={`Password strength: ${label}`}
+        aria-label={ariaLabel(label)}
         style={{
           display: "flex",
           gap: "4px",
@@ -143,7 +165,7 @@ export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStr
         }}
       >
         <span style={{ color }}>{label}</span>
-        {result.feedback.warning && (
+        {showHints && result.feedback.warning && (
           <span style={{ color: "var(--wv-text-secondary)" }}>{result.feedback.warning}</span>
         )}
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export type GuideCharacterMood = "idle" | "thinking" | "happy" | "concerned";
 
@@ -31,25 +31,26 @@ export interface GuideCharacterProps {
  * disappear into the background. A sticker-style character keeps its
  * own colors and carries a thin light halo so it reads on any surface.
  */
-const POT_COLOR = "#f0b43c"; // honey-pot body
-const POT_BELLY = "#f9d98a"; // lighter belly patch
-const POT_RIM = "#d9902a"; // pot lip + drip
-const OCEAN_COLOR = "#bfe0ee";
-const LAND_COLOR = "#4a9d5f";
+const OCEAN_COLOR = "#bfe0ee"; // the globe's sea
+const LAND_COLOR = "#4a9d5f"; // continents
+const LEAF_COLOR = "#6cc788"; // the sprout
+const RING_COLOR = "#f0b43c"; // the orbit ring
+const MITT_COLOR = "#fbe3a6"; // hands
 const INK = "#2c2620"; // outline + face
 
+/* Face, as offsets from the globe's centre so the artwork can move as a whole. */
 const MOUTH_PATH: Record<GuideCharacterMood, string> = {
-  idle: "M 60 54 Q 70 60 80 54",
-  thinking: "M 62 56 Q 70 54 78 56",
-  happy: "M 56 52 Q 70 68 84 52",
-  concerned: "M 60 59 Q 70 51 80 59",
+  idle: "M 60 97 Q 70 105 80 97",
+  thinking: "M 62 99 Q 70 97 78 99",
+  happy: "M 57 95 Q 70 110 83 95",
+  concerned: "M 61 102 Q 70 94 79 102",
 };
 
 const EYEBROW_TRANSFORM: Record<GuideCharacterMood, { left: string; right: string }> = {
-  idle: { left: "rotate(0deg)", right: "rotate(0deg)" },
-  thinking: { left: "rotate(-8deg)", right: "rotate(10deg)" },
-  happy: { left: "rotate(-4deg)", right: "rotate(4deg)" },
-  concerned: { left: "rotate(14deg)", right: "rotate(-14deg)" },
+  idle: { left: "translateY(-1px) rotate(0deg)", right: "translateY(-1px) rotate(0deg)" },
+  thinking: { left: "rotate(4deg)", right: "translateY(-3px) rotate(-8deg)" },
+  happy: { left: "translateY(-2px) rotate(-5deg)", right: "translateY(-2px) rotate(5deg)" },
+  concerned: { left: "translateY(-1px) rotate(-15deg)", right: "translateY(-1px) rotate(15deg)" },
 };
 
 /** Eyes scale around their own centre when blinking. */
@@ -59,10 +60,23 @@ const EYE_STYLE = {
   transition: "transform 90ms ease-out",
 } as const;
 
+/** The artwork is drawn in a 140 x 140 box. */
 const VIEW_W = 140;
-const VIEW_H = 190;
-const HEAD_CX = 70;
-const HEAD_CY = 40;
+const VIEW_H = 140;
+/** The globe: centre and radius. The eyes track the cursor from its centre. */
+const BODY_CX = 70;
+const BODY_CY = 84;
+const BODY_R = 42;
+/** The ring is one ellipse, tilted; the same numbers draw its back and front halves. */
+const RING_CY = 104;
+const RING_RX = 62;
+const RING_RY = 12;
+const RING_TILT = -10;
+const RING_LEFT = BODY_CX - RING_RX;
+const RING_RIGHT = BODY_CX + RING_RX;
+/** Far half (over the top) and near half (underneath, in front of the globe). */
+const RING_BACK = `M ${RING_LEFT} ${RING_CY} A ${RING_RX} ${RING_RY} 0 0 1 ${RING_RIGHT} ${RING_CY}`;
+const RING_FRONT = `M ${RING_LEFT} ${RING_CY} A ${RING_RX} ${RING_RY} 0 0 0 ${RING_RIGHT} ${RING_CY}`;
 /** How far (artwork units) the eyes travel toward the cursor. */
 const MAX_EYE_TRAVEL = 2.6;
 
@@ -75,18 +89,19 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * The Guide Character ("Orbi") — a 2D, sticker-style honey-pot bear with
- * the Earth globe as its head. Flat vector art with a heavy outline,
- * like a Telegram sticker: it works at any size, on any surface, and
- * costs one SVG instead of a WebGL canvas.
+ * The Guide Character ("Orbi") — a small 2D, sticker-style Earth: a round globe
+ * with a leaf sprouting from the top and a golden orbit ring tilted around it,
+ * the same globe, leaf and ribbon the logo is made of. Flat vector art with a
+ * heavy outline, like a Telegram sticker: it works at any size, on any surface,
+ * and costs one SVG instead of a WebGL canvas.
  *
- * Anatomy: the arms are drawn BEHIND the pot so each shoulder is tucked
- * under the belly's edge and the paw hangs clear outside it — attached
- * to the body, never overlapping the stomach.
+ * Anatomy: the ring is drawn in two halves, its far half behind the globe and
+ * its near half in front, so it reads as circling it. The two hands hold the ring
+ * at its sides; the left one lifts to wave.
  *
- * Motion is gentle (slow float, one soft wave) per the app's calm-motion
- * principle. Purely decorative: `aria-hidden`; it never carries meaning
- * that isn't also present as real text.
+ * Motion is gentle (slow float, a swaying leaf, one soft wave) per the app's
+ * calm-motion principle. Purely decorative: `aria-hidden`; it never carries
+ * meaning that isn't also present as real text.
  */
 export function GuideCharacter({
   name = "Orbi",
@@ -106,6 +121,20 @@ export function GuideCharacter({
   const blinking = useRef(false);
   const onCompleteRef = useRef(onWalkAwayComplete);
   onCompleteRef.current = onWalkAwayComplete;
+  // The clip path needs an id that is unique per Orbi (several can share a page).
+  const clipId = `wv-orbi-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  // Decided after mount, so server and first client render agree.
+  const [calm, setCalm] = useState(false);
+  useEffect(() => setCalm(still || prefersReducedMotion()), [still]);
+  // While thinking the gold of the ring becomes dashes that travel round it, so the
+  // ring seems to turn (its far half runs one way, the near half the other).
+  const ringMarch = (animationName: string) =>
+    mood === "thinking" && !calm
+      ? {
+          strokeDasharray: "12 9",
+          style: { animation: `${animationName} 1.2s linear infinite` },
+        }
+      : {};
 
   // Cursor-following eyes, idle blink and a small hop on any click.
   // Eyes are moved by writing their `style.transform` directly — a
@@ -125,9 +154,9 @@ export function GuideCharacter({
     const aimAt = (clientX: number, clientY: number) => {
       const rect = rootRef.current?.getBoundingClientRect();
       if (!rect || rect.width === 0) return;
-      // Head centre in the artwork is (70, 40) of a 140x190 box.
-      const cx = rect.left + rect.width * (HEAD_CX / VIEW_W);
-      const cy = rect.top + rect.height * (HEAD_CY / VIEW_H);
+      // The globe's centre, as a fraction of the artwork box.
+      const cx = rect.left + rect.width * (BODY_CX / VIEW_W);
+      const cy = rect.top + rect.height * (BODY_CY / VIEW_H);
       const dx = clientX - cx;
       const dy = clientY - cy;
       const dist = Math.hypot(dx, dy) || 1;
@@ -203,9 +232,7 @@ export function GuideCharacter({
     animation.onfinish = () => onCompleteRef.current?.();
     return () => animation.cancel();
   }, [walkAway]);
-  const waveStyle = wave
-    ? { transformOrigin: "38px 94px", animation: "wv-guide-wave 1.4s ease-in-out 1" }
-    : undefined;
+  const waveStyle = wave ? { animation: "wv-guide-wave 1.4s ease-in-out 1" } : undefined;
 
   return (
     <div
@@ -229,115 +256,124 @@ export function GuideCharacter({
         height="100%"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Thinking indicator — satellite orbiting the head. */}
-        {mood === "thinking" && (
-          <g style={{ transformOrigin: "70px 40px", animation: "wv-spin 2.4s linear infinite" }}>
-            <circle cx="70" cy="2" r="4" fill={LAND_COLOR} stroke={INK} strokeWidth="1.5" />
-          </g>
-        )}
+        {/* The ring's far half — behind the globe. */}
+        <g transform={`rotate(${RING_TILT} ${BODY_CX} ${RING_CY})`} data-part="ring-back">
+          <path d={RING_BACK} fill="none" stroke={INK} strokeWidth="10" strokeLinecap="round" />
+          <path
+            d={RING_BACK}
+            fill="none"
+            stroke={RING_COLOR}
+            strokeWidth="5"
+            strokeLinecap="round"
+            {...ringMarch("wv-guide-march-fwd")}
+          />
+        </g>
 
-        {/* Feet — behind the pot. */}
-        <ellipse cx="50" cy="176" rx="16" ry="9" fill={POT_RIM} stroke={INK} strokeWidth="3" />
-        <ellipse cx="90" cy="176" rx="16" ry="9" fill={POT_RIM} stroke={INK} strokeWidth="3" />
+        {/* The leaf on top — sways slowly from its base. */}
+        <g
+          data-part="sprout"
+          style={{
+            transformOrigin: `${BODY_CX}px ${BODY_CY - BODY_R}px`,
+            animation: "wv-guide-sway 5s ease-in-out infinite",
+          }}
+        >
+          <path
+            d="M 70 46 L 70 31"
+            fill="none"
+            stroke={INK}
+            strokeWidth="6"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 70 46 L 70 31"
+            fill="none"
+            stroke={LAND_COLOR}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 70 33 C 60 33 51 26 50 15 C 62 14 71 21 70 33 Z"
+            fill={LEAF_COLOR}
+            stroke={INK}
+            strokeWidth="3"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M 70 31 C 78 24 88 22 98 13 C 99 26 90 36 70 33 Z"
+            fill={LEAF_COLOR}
+            stroke={INK}
+            strokeWidth="3"
+            strokeLinejoin="round"
+          />
+        </g>
 
-        {/* Arms — behind the pot; left arm waves from the shoulder. */}
-        <line
-          x1="38"
-          y1="94"
-          x2="16"
-          y2="120"
+        {/* The globe. */}
+        <defs>
+          <clipPath id={clipId}>
+            <circle cx={BODY_CX} cy={BODY_CY} r={BODY_R} />
+          </clipPath>
+        </defs>
+        <circle
+          data-part="body"
+          cx={BODY_CX}
+          cy={BODY_CY}
+          r={BODY_R}
+          fill={OCEAN_COLOR}
           stroke={INK}
-          strokeWidth="22"
-          strokeLinecap="round"
-          style={waveStyle}
+          strokeWidth="3.5"
         />
-        <line
-          x1="38"
-          y1="94"
-          x2="16"
-          y2="120"
-          stroke={POT_COLOR}
-          strokeWidth="15"
-          strokeLinecap="round"
+        <g clipPath={`url(#${clipId})`}>
+          <path
+            d="M 34 66 Q 42 48 62 44 Q 76 42 88 47 Q 80 58 67 58 Q 62 66 50 68 Q 40 74 34 66 Z"
+            fill={LAND_COLOR}
+          />
+          <path
+            d="M 92 100 Q 104 95 114 104 Q 112 120 96 125 Q 86 112 92 100 Z"
+            fill={LAND_COLOR}
+          />
+          <path d="M 26 100 Q 36 97 42 106 Q 38 116 27 113 Z" fill={LAND_COLOR} />
+          <path
+            d="M 44 72 Q 47 63 57 56"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="3"
+            strokeLinecap="round"
+            opacity="0.55"
+          />
+        </g>
+
+        {/* The ring's near half — in front of the globe. */}
+        <g transform={`rotate(${RING_TILT} ${BODY_CX} ${RING_CY})`} data-part="ring-front">
+          <path d={RING_FRONT} fill="none" stroke={INK} strokeWidth="10" strokeLinecap="round" />
+          <path
+            d={RING_FRONT}
+            fill="none"
+            stroke={RING_COLOR}
+            strokeWidth="5"
+            strokeLinecap="round"
+            {...ringMarch("wv-guide-march-back")}
+          />
+        </g>
+
+        {/* Hands — they hold the ring at its two sides; the left one waves. */}
+        <circle
+          data-part="hand-left"
+          cx="21"
+          cy="119"
+          r="8"
+          fill={MITT_COLOR}
+          stroke={INK}
+          strokeWidth="3"
           style={waveStyle}
         />
         <circle
-          cx="14"
-          cy="122"
-          r="10"
-          fill={POT_BELLY}
+          data-part="hand-right"
+          cx="122"
+          cy="101"
+          r="8"
+          fill={MITT_COLOR}
           stroke={INK}
           strokeWidth="3"
-          style={waveStyle}
-        />
-
-        <line
-          x1="102"
-          y1="94"
-          x2="124"
-          y2="120"
-          stroke={INK}
-          strokeWidth="22"
-          strokeLinecap="round"
-        />
-        <line
-          x1="102"
-          y1="94"
-          x2="124"
-          y2="120"
-          stroke={POT_COLOR}
-          strokeWidth="15"
-          strokeLinecap="round"
-        />
-        <circle cx="126" cy="122" r="10" fill={POT_BELLY} stroke={INK} strokeWidth="3" />
-
-        {/* Honey pot body — wide, round belly with a narrower neck. */}
-        <path
-          d="M 52,76 C 38,82 26,98 24,120 C 22,144 34,168 70,170 C 106,168 118,144 116,120 C 114,98 102,82 88,76 Z"
-          fill={POT_COLOR}
-          stroke={INK}
-          strokeWidth="3.5"
-          strokeLinejoin="round"
-        />
-        {/* Belly patch */}
-        <ellipse cx="70" cy="130" rx="27" ry="28" fill={POT_BELLY} opacity="0.9" />
-        {/* Pot lip + honey drip */}
-        <rect
-          x="46"
-          y="70"
-          width="48"
-          height="12"
-          rx="6"
-          fill={POT_RIM}
-          stroke={INK}
-          strokeWidth="3"
-        />
-        <ellipse cx="62" cy="86" rx="4" ry="6" fill={POT_RIM} stroke={INK} strokeWidth="2" />
-        {/* Honey label — a small hexagon on the belly */}
-        <polygon
-          points="70,118 80,124 80,136 70,142 60,136 60,124"
-          fill={POT_COLOR}
-          stroke={INK}
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-        />
-
-        {/* Head — the globe, large and in front of the neck. */}
-        <circle cx="70" cy="40" r="34" fill={OCEAN_COLOR} stroke={INK} strokeWidth="3.5" />
-        <path
-          d="M 42 30 Q 54 18 70 26 Q 82 17 96 28 Q 90 42 76 40 Q 66 50 52 44 Q 44 40 42 30 Z"
-          fill={LAND_COLOR}
-        />
-        <path d="M 46 60 Q 58 54 66 63 Q 58 71 48 68 Z" fill={LAND_COLOR} />
-        <ellipse
-          cx="70"
-          cy="40"
-          rx="34"
-          ry="12"
-          fill="none"
-          stroke={INK}
-          strokeWidth="1"
-          opacity="0.25"
         />
 
         {/* Face */}
@@ -345,8 +381,9 @@ export function GuideCharacter({
           ref={(el) => {
             eyeRefs.current[0] = el;
           }}
-          cx="59"
-          cy="42"
+          data-part="eye"
+          cx="58"
+          cy="84"
           r="4.5"
           fill={INK}
           style={EYE_STYLE}
@@ -355,33 +392,35 @@ export function GuideCharacter({
           ref={(el) => {
             eyeRefs.current[1] = el;
           }}
-          cx="81"
-          cy="42"
+          data-part="eye"
+          cx="82"
+          cy="84"
           r="4.5"
           fill={INK}
           style={EYE_STYLE}
         />
         <line
           x1="52"
-          y1="32"
+          y1="74"
           x2="62"
-          y2="32"
+          y2="74"
           stroke={INK}
           strokeWidth="2.5"
           strokeLinecap="round"
-          style={{ transformOrigin: "57px 32px", transform: eyebrow.left }}
+          style={{ transformOrigin: "57px 74px", transform: eyebrow.left }}
         />
         <line
           x1="78"
-          y1="32"
+          y1="74"
           x2="88"
-          y2="32"
+          y2="74"
           stroke={INK}
           strokeWidth="2.5"
           strokeLinecap="round"
-          style={{ transformOrigin: "83px 32px", transform: eyebrow.right }}
+          style={{ transformOrigin: "83px 74px", transform: eyebrow.right }}
         />
         <path
+          data-part="mouth"
           d={MOUTH_PATH[mood]}
           fill="none"
           stroke={INK}

@@ -37,6 +37,7 @@ export function Checkbox({ label, id, ...rest }: CheckboxProps) {
         display: "inline-flex",
         alignItems: "center",
         gap: "var(--wv-space-xs)",
+        fontFamily: "var(--wv-font-sans)",
         fontSize: "0.875rem",
         color: "var(--wv-text-secondary)",
         cursor: "pointer",

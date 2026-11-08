@@ -839,3 +839,61 @@ left" are two separate steps.
 while on a paid plan.
 
 **Status:** Accepted.
+
+---
+
+## Decision #026 — Orbi redrawn as a globe with a leaf; the 3D version and the honey-pot bear are retired
+
+**Context:** The owner looked at the sign-in page on a real screen and sent two
+screenshots: the top of the page was cut off (Orbi's head and the space above it)
+and there was no room below the last link. They also said they no longer wanted
+the honey-bear look and asked for one consistent character across the app, smaller
+if needed. Two things were behind the cut-off page: a form column that centred its
+content with `align-items: center` (when the window is shorter than the card, the
+top of the card sits above the scrollable area where nothing can reach it), and the
+picture panel beside it being one padding wider than its column, so it painted over
+the edge of the card. Separately, a WebGL `GuideCharacter3D` still sat in the
+repository, unused since Decision #007, along with `three` and its types.
+
+**Chosen:**
+
+- **One new drawing, in plain SVG:** a pale-blue globe with green land, a sprout
+  with two leaves on top, a gold ring tilted around the middle, and two mitten hands
+  holding the ring. Original to this project, with the logo's own globe, leaf and
+  gold as its colours. The component's props (`mood`, `wave`, `walkAway`, `size`,
+  `onWalkAwayComplete`) did not change, so no caller had to.
+- **Moods are drawn, not described:** thinking shows a dashed ring that moves
+  around the globe and one raised brow, concerned has brows tilted up in the middle
+  (not down, which reads as angry), happy has a wide smile and lifted brows. Still
+  or reduced-motion settings turn the movement off and keep the expression.
+- **Smaller everywhere:** 104 px on sign-in, 96 on the other account pages and
+  Welcome, 72 docked in the app and in the tutorial, 80 in the picture panel.
+- **The 3D version is deleted,** with its `three` dependencies and lockfile entries.
+  The crash it caused is recorded in Decision #007 and it had been unused since.
+- **Account pages scroll safely:** the form column is a column with the language
+  picker on top and the card in a wrapper with `margin: auto`, so a tall card on a
+  short window scrolls from its top instead of losing it. Cards are `border-box`
+  and the picture panel is `border-box`, `min-width: 0` and clipped.
+- **Translated pages hide zxcvbn's own hints in other languages.** The password
+  meter's word and colour are translated; the extra hint line exists in English only
+  and is shown only when the page is English, rather than putting English under
+  translated text.
+
+**Alternatives considered:**
+
+- _Keep the honey-pot bear and only shrink it._ The owner asked for a new shape.
+- _Keep the 3D version for devices that can draw it._ It crashed once in
+  production, needs a large library for a small mascot and was never switched back
+  on; two characters would also make the app inconsistent.
+- _Draw a person or an animal._ A globe with a leaf says what the product is about
+  and cannot be mistaken for another company's mascot.
+
+**Trade-offs, stated honestly:** the character has fewer moving parts than a 3D
+model, so it cannot turn its head. Translated hints for weak passwords would need
+the zxcvbn language packs for each language, which are large; the label and colour
+carry the meaning meanwhile.
+
+**Revisit when:** the owner confirms or changes the name "Orbi", or wants a
+turn-around or voice for the tutorial.
+
+**Status:** Accepted.

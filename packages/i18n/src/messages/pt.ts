@@ -1081,4 +1081,65 @@ export const pt: Messages = {
   "landing.signIn": "Entrar",
   "landing.appsPrompt": "Prefere um app?",
   "landing.appsLink": "Baixar o app para computador ou Android",
+
+  // ---- Sign-in, forgot-password and reset-password pages (v106)
+  "auth.signIn.title": "Entrar",
+  "auth.signUp.title": "Crie sua conta",
+  "auth.accountDeleted": "Sua conta foi excluída.",
+  "auth.resetSuccess": "Sua senha foi atualizada. Entre novamente.",
+  "auth.inAppNote":
+    "Neste app, entre com seu e-mail e sua senha. Se você costuma entrar com o Google, use “Esqueceu a senha?” para escolher primeiro uma senha.",
+  "auth.google": "Continuar com o Google",
+  "auth.or": "ou",
+  "auth.email": "Endereço de e-mail",
+  "auth.password": "Senha",
+  "auth.forgotLink": "Esqueceu a senha?",
+  "auth.remember": "Lembrar de mim neste dispositivo",
+  "auth.signInButton": "Entrar",
+  "auth.signUpButton": "Criar conta",
+  "auth.haveAccount": "Já tem uma conta?",
+  "auth.newHere": "Primeira vez aqui?",
+  "auth.createLink": "Criar uma conta",
+  "auth.callback.missingToken": "Esse link de acesso parece incompleto. Solicite um novo.",
+  "auth.callback.verificationFailed":
+    "Esse link de acesso expirou ou já foi usado. Solicite um novo.",
+  "auth.callback.oauthFailed": "Não foi possível entrar com o Google. Tente novamente.",
+  "auth.callback.oauthNotConfigured":
+    "O acesso com o Google ainda não está configurado neste site. Por enquanto, use o e-mail.",
+  "auth.callback.generic": "Algo deu errado. Solicite um novo link de acesso.",
+  "auth.forgot.title": "Redefina sua senha",
+  "auth.forgot.sent":
+    "Verifique seu e-mail: se existir uma conta para {email}, enviamos um link para redefinir sua senha.",
+  "auth.forgot.intro":
+    "Informe o e-mail da sua conta e enviaremos um link para você criar uma nova senha.",
+  "auth.forgot.send": "Enviar link",
+  "auth.backToSignIn": "Voltar para entrar",
+  "auth.reset.title": "Crie uma nova senha",
+  "auth.reset.newPassword": "Nova senha",
+  "auth.reset.confirm": "Confirme a nova senha",
+  "auth.reset.submit": "Atualizar senha",
+  "auth.reset.requestNew": "Solicitar um novo link",
+  "auth.strength.veryWeak": "Muito fraca",
+  "auth.strength.weak": "Fraca",
+  "auth.strength.fair": "Razoável",
+  "auth.strength.strong": "Forte",
+  "auth.strength.veryStrong": "Muito forte",
+  "auth.strength.aria": "Força da senha: {label}",
+  "auth.err.invalidEmail": "Informe um e-mail válido.",
+  "auth.err.sendLink": "Algo deu errado ao enviar o link. Tente novamente.",
+  "auth.err.shortPassword": "A senha deve ter pelo menos 8 caracteres.",
+  "auth.err.breached":
+    "Esta senha já apareceu em um vazamento de dados conhecido. Escolha outra senha.",
+  "auth.err.signUpFailed":
+    "Não foi possível criar sua conta. Talvez seja preciso confirmar seu e-mail primeiro; se não, tente novamente.",
+  "auth.err.enterBoth": "Informe seu e-mail e sua senha.",
+  "auth.err.lockedIp":
+    "Muitas tentativas malsucedidas a partir desta rede. Tente novamente em alguns minutos.",
+  "auth.err.locked": "Muitas tentativas malsucedidas. Tente novamente em alguns minutos.",
+  "auth.err.invalid": "E-mail ou senha inválidos.",
+  "auth.err.resetRateLimited":
+    "Muitas solicitações de redefinição para este e-mail. Tente novamente em alguns minutos.",
+  "auth.err.resetExpired": "O link para redefinir sua senha expirou. Solicite um novo.",
+  "auth.err.updateFailed": "Não foi possível atualizar sua senha. Tente novamente.",
+  "auth.err.mismatch": "As senhas não coincidem.",
 };

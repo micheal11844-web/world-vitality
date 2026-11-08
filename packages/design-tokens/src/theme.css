@@ -199,16 +199,40 @@
 @keyframes wv-guide-wave {
   0%,
   100% {
-    transform: rotate(0deg);
+    transform: translate(0, 0);
   }
   25% {
-    transform: rotate(-14deg);
+    transform: translate(-3px, -14px);
   }
   50% {
-    transform: rotate(0deg);
+    transform: translate(0, -4px);
   }
   75% {
-    transform: rotate(-10deg);
+    transform: translate(-3px, -12px);
+  }
+}
+
+/* The sprout on top of Orbi leans a few degrees and back, slowly. */
+@keyframes wv-guide-sway {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+/* While Orbi thinks, the dashes on its ring travel round it (12 + 9 = one dash period). */
+@keyframes wv-guide-march-fwd {
+  to {
+    stroke-dashoffset: -21;
+  }
+}
+
+@keyframes wv-guide-march-back {
+  to {
+    stroke-dashoffset: 21;
   }
 }
 

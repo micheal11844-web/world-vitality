@@ -57,3 +57,37 @@ test("penalizes a password that reuses a supplied user input (e.g. email)", asyn
     "supplying user inputs should never increase the score",
   );
 });
+
+test("uses the host's words and spoken name when given them (translation)", async () => {
+  const labels = ["Muy débil", "Débil", "Aceptable", "Fuerte", "Muy fuerte"] as const;
+  const { container } = render(
+    <PasswordStrengthMeter
+      password="correct horse battery staple 7491"
+      labels={labels}
+      ariaLabel={(label) => `Seguridad de la contraseña: ${label}`}
+    />,
+  );
+  await getScore(container);
+  const meter = container.querySelector("[role='meter']");
+  const spoken = meter?.getAttribute("aria-label") ?? "";
+  assert.ok(spoken.startsWith("Seguridad de la contraseña: "), spoken);
+  assert.ok(
+    labels.some((word) => spoken.endsWith(word)),
+    spoken,
+  );
+  assert.ok(
+    !/Very|Weak|Fair|Strong/.test(container.textContent ?? ""),
+    container.textContent ?? "",
+  );
+});
+
+test("the English hint can be switched off (it exists in English only)", async () => {
+  const shown = render(<PasswordStrengthMeter password="password" />);
+  await getScore(shown.container);
+  const withHint = shown.container.textContent ?? "";
+  cleanup();
+  const hidden = render(<PasswordStrengthMeter password="password" showHints={false} />);
+  await getScore(hidden.container);
+  const withoutHint = hidden.container.textContent ?? "";
+  assert.ok(withHint.length > withoutHint.length, `${withHint} / ${withoutHint}`);
+});

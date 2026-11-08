@@ -4,21 +4,12 @@ import { GuideCharacter } from "./GuideCharacter.js";
 export interface AuthIllustrationProps {
   className?: string;
   /**
-   * Optional replacement for the default flat-SVG `GuideCharacter` in
-   * the corner spot below the logo (BUILD_PLAN "STAGE — GUIDE
-   * CHARACTER 3D: REAL FIX + REALISM PASS"). Lets `apps/web` inject
-   * the WebGL `GuideCharacter3D` here via its own `next/dynamic(...,
-   * { ssr: false })` wrapper, without this framework-light package
-   * needing to know about Next.js dynamic-import mechanics itself —
-   * same reasoning as this file's own doc comment on why it doesn't
-   * use `next/image` directly. Defaults to the existing flat-SVG
-   * character when omitted (`undefined`), so every other caller of
-   * `AuthIllustration` is unaffected — pass `null` explicitly to show
-   * no guide character here at all (BUILD_PLAN "STAGE — GUIDE
-   * CHARACTER 3D: HONEY-POT REDESIGN, SINGLE INSTANCE ON LOGIN"): the
-   * login page uses this to avoid showing Orbi twice on the same
-   * screen (once here, once already in its own form header) — real
-   * user feedback that two simultaneous instances read as one too
+   * Optional replacement for the default `GuideCharacter` in the corner
+   * spot below the logo. Defaults to the standard character when omitted
+   * (`undefined`) — pass `null` explicitly to show no guide character
+   * here at all: the login page does this to avoid showing Orbi twice on
+   * the same screen (once here, once already in its own form header) —
+   * real user feedback that two simultaneous instances read as one too
    * many, not a design intended to always show two.
    */
   guideCharacter?: ReactNode | null;
@@ -54,7 +45,7 @@ export interface AuthIllustrationProps {
  * worked.
  *
  * **New fixed "ocean blue" colors, not this app's design tokens —
- * documented deliberately, same reasoning as `GuideCharacter3D`'s own
+ * documented deliberately, same reasoning as `GuideCharacter`'s own
  * fixed identity colors.** This app's token system has a green
  * (`accent`) and orange (`critical`) family but no blue family at all
  * (nothing in `packages/design-tokens` produces one) — yet the real
@@ -99,6 +90,10 @@ export function AuthIllustration({ className, guideCharacter }: AuthIllustration
         position: "relative",
         width: "100%",
         height: "100%",
+        // Border-box: the padding below must come out of the 100%, not be added to it. Without
+        // this the panel was one padding wider than its column and painted over the sign-in
+        // card's edge (the card looked cut off down its left side, or its right side in RTL).
+        boxSizing: "border-box",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -232,7 +227,7 @@ export function AuthIllustration({ className, guideCharacter }: AuthIllustration
         />
       </div>
       <div style={{ position: "absolute", bottom: "8%", zIndex: 1 }}>
-        {guideCharacter === undefined ? <GuideCharacter size={88} mood="happy" /> : guideCharacter}
+        {guideCharacter === undefined ? <GuideCharacter size={80} mood="happy" /> : guideCharacter}
       </div>
     </div>
   );

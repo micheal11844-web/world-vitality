@@ -1066,6 +1066,67 @@ export const en = {
   "landing.signIn": "Sign in",
   "landing.appsPrompt": "Prefer an app?",
   "landing.appsLink": "Get the desktop or Android app",
+
+  // ---- Sign-in, forgot-password and reset-password pages (v106)
+  "auth.signIn.title": "Sign in",
+  "auth.signUp.title": "Create your account",
+  "auth.accountDeleted": "Your account has been deleted.",
+  "auth.resetSuccess": "Your password has been updated. Please sign in.",
+  "auth.inAppNote":
+    "In this app, sign in with your email and password. If you usually sign in with Google, use “Forgot password?” to choose a password first.",
+  "auth.google": "Continue with Google",
+  "auth.or": "or",
+  "auth.email": "Email address",
+  "auth.password": "Password",
+  "auth.forgotLink": "Forgot password?",
+  "auth.remember": "Remember me on this device",
+  "auth.signInButton": "Sign in",
+  "auth.signUpButton": "Create account",
+  "auth.haveAccount": "Already have an account?",
+  "auth.newHere": "New here?",
+  "auth.createLink": "Create an account",
+  "auth.callback.missingToken": "That sign-in link looks incomplete. Please request a new one.",
+  "auth.callback.verificationFailed":
+    "That sign-in link has expired or already been used. Please request a new one.",
+  "auth.callback.oauthFailed": "Google sign-in didn't go through. Please try again.",
+  "auth.callback.oauthNotConfigured":
+    "Google sign-in isn't set up yet on this deployment. Use email sign-in for now.",
+  "auth.callback.generic": "Something went wrong. Please request a new sign-in link.",
+  "auth.forgot.title": "Reset your password",
+  "auth.forgot.sent":
+    "Check your email — if an account exists for {email}, we've sent a link to reset your password.",
+  "auth.forgot.intro":
+    "Enter the email address on your account and we'll send you a link to set a new password.",
+  "auth.forgot.send": "Send reset link",
+  "auth.backToSignIn": "Back to sign in",
+  "auth.reset.title": "Set a new password",
+  "auth.reset.newPassword": "New password",
+  "auth.reset.confirm": "Confirm new password",
+  "auth.reset.submit": "Update password",
+  "auth.reset.requestNew": "Request a new reset link",
+  "auth.strength.veryWeak": "Very weak",
+  "auth.strength.weak": "Weak",
+  "auth.strength.fair": "Fair",
+  "auth.strength.strong": "Strong",
+  "auth.strength.veryStrong": "Very strong",
+  "auth.strength.aria": "Password strength: {label}",
+  "auth.err.invalidEmail": "Enter a valid email address.",
+  "auth.err.sendLink": "Something went wrong sending the link. Please try again.",
+  "auth.err.shortPassword": "Password must be at least 8 characters.",
+  "auth.err.breached":
+    "This password has appeared in a known data breach. Please choose a different password.",
+  "auth.err.signUpFailed":
+    "Couldn't create your account. You may need to confirm your email first, or try again.",
+  "auth.err.enterBoth": "Enter your email and password.",
+  "auth.err.lockedIp":
+    "Too many failed attempts from this network. Please try again in a few minutes.",
+  "auth.err.locked": "Too many failed attempts. Please try again in a few minutes.",
+  "auth.err.invalid": "Invalid email or password.",
+  "auth.err.resetRateLimited":
+    "Too many reset requests for this email. Please try again in a few minutes.",
+  "auth.err.resetExpired": "Your password reset link has expired. Please request a new one.",
+  "auth.err.updateFailed": "Couldn't update your password. Please try again.",
+  "auth.err.mismatch": "Passwords don't match.",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -161,7 +161,7 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
           <LanguageSwitcher compact />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--wv-space-md)" }}>
-          <GuideCharacter mood={orbiMood} wave={step === "role"} size={110} />
+          <GuideCharacter mood={orbiMood} wave={step === "role"} size={96} />
           <div style={{ flex: 1 }}>
             <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
               {t("welcome.step", {
