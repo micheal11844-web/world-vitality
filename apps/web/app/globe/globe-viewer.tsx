@@ -1,35 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type * as ResiumTypes from "resium";
+import { useEffect, useRef, useState } from "react";
+import type { CesiumComponentRef } from "resium";
 import type * as CesiumTypes from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
+import { loadCesium, type CesiumModules } from "./globe-loader";
+import { pinColor, type GlobePin } from "./globe-types";
 
-export interface GlobePin {
-  id: string;
-  label: string;
-  latitude: number;
-  longitude: number;
-  /** Which workspace this pin belongs to — drives pin color and the
-   *  "open in workspace" link, not fetched/rendered here directly. */
-  workspaceKey: string;
-  workspaceLabel: string;
-  href: string;
+/** If the opening view's pictures have not all arrived by now, show the globe anyway. */
+const READY_TIMEOUT_MS = 6000;
+
+/** Pin names are drawn only when the camera is closer than this to the pin. */
+const LABEL_MAX_DISTANCE_M = 1_500_000;
+
+/**
+ * The opening view for a set of pins: their bounding box, padded by at least
+ * 8° (a quarter of the spread, if larger) so a single pin is not a
+ * street-level zoom. `null` when there are no pins. Pins that straddle the
+ * antimeridian simply produce a wide box — acceptable for an opening view.
+ */
+export function framingRectangle(
+  pins: Pick<GlobePin, "latitude" | "longitude">[],
+): { west: number; south: number; east: number; north: number } | null {
+  if (pins.length === 0) return null;
+  let west = Infinity;
+  let south = Infinity;
+  let east = -Infinity;
+  let north = -Infinity;
+  for (const pin of pins) {
+    west = Math.min(west, pin.longitude);
+    east = Math.max(east, pin.longitude);
+    south = Math.min(south, pin.latitude);
+    north = Math.max(north, pin.latitude);
+  }
+  const padLon = Math.max(8, (east - west) * 0.25);
+  const padLat = Math.max(8, (north - south) * 0.25);
+  return {
+    west: Math.max(-180, west - padLon),
+    east: Math.min(180, east + padLon),
+    south: Math.max(-85, south - padLat),
+    north: Math.min(85, north + padLat),
+  };
 }
-
-const WORKSPACE_PIN_COLOR: Record<string, string> = {
-  agriculture: "#1d6e56", // --wv-color-accent-500, this app's core green
-  insurance: "#b3401f", // --wv-color-critical-500
-  "government-ngos": "#2563a8", // a distinct blue, matches the logo's globe
-  // Disaster Monitoring's three point-based layers (BUILD_PLAN "STAGE
-  // — GLOBE VIEW: DISASTER MONITORING LAYERS") get their own distinct
-  // colors rather than sharing one, since a flood pin and a fire
-  // detection pin next to each other on the map need to read as
-  // different things at a glance.
-  "disaster-monitoring-flood": "#2563a8", // same blue as water elsewhere in this app
-  "disaster-monitoring-shelter": "#1d6e56", // same green as "safe"/positive elsewhere
-  "disaster-monitoring-fire": "#d4652f", // --wv-color-critical-400, warm/urgent
-};
 
 /**
  * "God's Eye" global view (BUILD_PLAN "STAGE — GOD'S EYE GLOBE VIEW",
@@ -43,7 +55,8 @@ const WORKSPACE_PIN_COLOR: Record<string, string> = {
  * BUILD_PLAN entry for the full reasoning).
  *
  * **Both `cesium` and `resium` are loaded via a runtime `import()`
- * inside `useEffect`, never a static top-level `import`, and this is
+ * (in `globe-loader.ts`, started as early as the page's own script
+ * runs), never a static top-level `import`, and this is
  * not a style preference — it's the actual fix for a real production
  * bug this app shipped with initially.** A static `import * as Cesium
  * from "cesium"` (and `resium` itself statically imports `cesium`
@@ -69,36 +82,101 @@ const WORKSPACE_PIN_COLOR: Record<string, string> = {
  * themselves, which is safe precisely because it never reaches the
  * runtime bundling path that caused the bug in the first place.
  */
-export function GlobeViewer({ pins }: { pins: GlobePin[] }) {
-  const [modules, setModules] = useState<{
-    resium: typeof ResiumTypes;
-    Cesium: typeof CesiumTypes;
-    imageryProviderPromise: Promise<CesiumTypes.ImageryProvider>;
-  } | null>(null);
+export function GlobeViewer({
+  pins,
+  focusPins = [],
+  onReady,
+  onFailed,
+}: {
+  pins: GlobePin[];
+  /** Pins to frame in the opening view (the person's own locations). With none, the engine's default view is used. */
+  focusPins?: GlobePin[];
+  /** Called once the globe has drawn with its map pictures loaded, so the page can retire the instant preview. */
+  onReady?: () => void;
+  /** Called if the 3D engine could not be downloaded, so the page can keep the flat map. */
+  onFailed?: () => void;
+}) {
+  const [modules, setModules] = useState<CesiumModules | null>(null);
+  const viewerRef = useRef<CesiumComponentRef<CesiumTypes.Viewer>>(null);
 
   useEffect(() => {
     let cancelled = false;
-    // Must be set before Cesium's own asset-loading paths
-    // (`buildModuleUrl`, called below once the module has loaded) are
-    // touched at all.
-    (window as unknown as { CESIUM_BASE_URL: string }).CESIUM_BASE_URL = "/cesium/";
-
-    Promise.all([import("resium"), import("cesium")]).then(([resium, Cesium]) => {
-      if (cancelled) return;
-      // `TileMapServiceImageryProvider` is constructed via an async
-      // `fromUrl` factory in this Cesium version, not a plain
-      // constructor — confirmed against this installed version's own
-      // type definitions rather than assumed from older examples.
-      const imageryProviderPromise = Cesium.TileMapServiceImageryProvider.fromUrl(
-        Cesium.buildModuleUrl("Assets/Textures/NaturalEarthII"),
-      );
-      setModules({ resium, Cesium, imageryProviderPromise });
-    });
-
+    // The page usually started this download already (see globe-loader.ts),
+    // so this normally just picks up the same in-flight promise.
+    loadCesium().then(
+      (loaded) => {
+        if (!cancelled) setModules(loaded);
+      },
+      () => {
+        if (!cancelled) onFailed?.();
+      },
+    );
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- callbacks are stable page handlers; re-running would only re-read the same promise
   }, []);
+
+  // Tell the page when the globe is genuinely ready to be looked at: it has
+  // drawn, its map imagery has been set up, and the map pictures for the
+  // opening view have arrived. (A first frame alone can be a blank black
+  // globe — the pictures load a moment after it.) The viewer's element is
+  // created just after this component mounts, so wait for it briefly.
+  useEffect(() => {
+    if (!modules) return;
+    let cancelled = false;
+    let removeFrameCounter: (() => void) | undefined;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let tries = 0;
+    const attach = () => {
+      if (cancelled) return;
+      const viewer = viewerRef.current?.cesiumElement;
+      if (!viewer) {
+        if (tries++ < 200) requestAnimationFrame(attach);
+        return;
+      }
+      // Open on the person's own locations, set before the first frame so
+      // the globe never visibly jumps. Padded so one point is not a
+      // street-level zoom; skipped when there is nothing of theirs to frame.
+      const framing = framingRectangle(focusPins);
+      if (framing) {
+        viewer.camera.setView({
+          destination: modules.Cesium.Rectangle.fromDegrees(
+            framing.west,
+            framing.south,
+            framing.east,
+            framing.north,
+          ),
+        });
+      }
+      let frames = 0;
+      removeFrameCounter = viewer.scene.postRender.addEventListener(() => {
+        frames += 1;
+      });
+      const startedAt = performance.now();
+      timer = setInterval(() => {
+        const layer = viewer.imageryLayers.length > 0 ? viewer.imageryLayers.get(0) : undefined;
+        const ready = frames > 0 && layer?.ready === true && viewer.scene.globe.tilesLoaded;
+        // Never leave the flat map up forever if a picture is slow or missing.
+        if (ready || performance.now() - startedAt > READY_TIMEOUT_MS) {
+          clearInterval(timer);
+          timer = undefined;
+          if (!cancelled) onReady?.();
+        } else {
+          // The scene only draws when asked to (see `requestRenderMode`), so
+          // keep asking until the imagery has arrived.
+          viewer.scene.requestRender();
+        }
+      }, 120);
+    };
+    attach();
+    return () => {
+      cancelled = true;
+      removeFrameCounter?.();
+      if (timer) clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per loaded engine
+  }, [modules]);
 
   if (!modules) {
     return null;
@@ -109,6 +187,7 @@ export function GlobeViewer({ pins }: { pins: GlobePin[] }) {
 
   return (
     <Viewer
+      ref={viewerRef}
       full
       baseLayer={false}
       baseLayerPicker={false}
@@ -121,6 +200,11 @@ export function GlobeViewer({ pins }: { pins: GlobePin[] }) {
       fullscreenButton={false}
       selectionIndicator={true}
       infoBox={false}
+      // The scene is static until someone moves it, so draw only when
+      // something changes (camera, tiles, pins) instead of 60 times a
+      // second — a real saving on phones and laptops on battery.
+      requestRenderMode
+      maximumRenderTimeChange={Infinity}
     >
       <ImageryLayer imageryProvider={imageryProviderPromise} />
       {pins.map((pin) => (
@@ -134,9 +218,7 @@ export function GlobeViewer({ pins }: { pins: GlobePin[] }) {
         >
           <PointGraphics
             pixelSize={10}
-            color={Cesium.Color.fromCssColorString(
-              WORKSPACE_PIN_COLOR[pin.workspaceKey] ?? "#666666",
-            )}
+            color={Cesium.Color.fromCssColorString(pinColor(pin.workspaceKey))}
             outlineColor={Cesium.Color.WHITE}
             outlineWidth={2}
           />
@@ -149,6 +231,10 @@ export function GlobeViewer({ pins }: { pins: GlobePin[] }) {
             style={Cesium.LabelStyle.FILL_AND_OUTLINE}
             verticalOrigin={Cesium.VerticalOrigin.TOP}
             pixelOffset={new Cesium.Cartesian2(0, 14)}
+            // Names appear once the person has zoomed in. From far away
+            // nearby pins sit on top of each other and their names would
+            // pile up into an unreadable smear.
+            distanceDisplayCondition={new Cesium.DistanceDisplayCondition(0, LABEL_MAX_DISTANCE_M)}
           />
         </Entity>
       ))}

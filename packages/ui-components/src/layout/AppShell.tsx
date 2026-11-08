@@ -214,6 +214,11 @@ function GlobeToggleLink() {
         textDecoration: "none",
         fontSize: "0.875rem",
         fontFamily: "var(--wv-font-sans)",
+        // One line, never squeezed: when the search box and the buttons competed for a
+        // narrow header the buttons wrapped ("View the / Globe", "Sign / out"), so their text
+        // no longer sat on one line. The search box is the part that gives way instead.
+        whiteSpace: "nowrap",
+        flexShrink: 0,
       }}
     >
       <span aria-hidden="true">🌐</span>
@@ -236,6 +241,8 @@ const accountControlStyle = {
   fontSize: "0.875rem",
   fontFamily: "var(--wv-font-sans)",
   cursor: "pointer",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
 } as const;
 
 /**
@@ -250,7 +257,12 @@ function AccountControls() {
       <a href="/settings" className="wv-desktop-only" style={accountControlStyle}>
         {ui.settings}
       </a>
-      <form method="post" action="/auth/signout" className="wv-desktop-only" style={{ margin: 0 }}>
+      <form
+        method="post"
+        action="/auth/signout"
+        className="wv-desktop-only"
+        style={{ margin: 0, flexShrink: 0 }}
+      >
         <button type="submit" style={accountControlStyle}>
           {ui.signOut}
         </button>

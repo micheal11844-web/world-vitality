@@ -303,6 +303,13 @@ Logs, search `billing_checkout_failed`.
 
 ## Going live
 
+**Status (2026-11-08): live.** The owner activated the business, set the Live
+Webhook URL and put the live secret key in Vercel; the four live plan codes
+below were then installed as `PAYSTACK_PLAN_CODES` and the site redeployed
+(step 3 done, deployment checked READY). Still to do: step 4 (clear the
+owner's old test subscription, on request: "reset my test plan") and step 5
+(the owner's first real payment, which cannot be exercised from here).
+
 Test payments work (2026-11-07). Going live changes **four things that must
 change together**: the secret key, the plan codes, the webhook URL (in
 Paystack), and the business being activated. The app needs no code change.

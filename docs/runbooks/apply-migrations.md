@@ -8,22 +8,22 @@ applied to the live database without asking.
 
 ## Where things stand
 
-Checked read-only against the live project on 2026-11-07 (0019 and 0020 were applied that day, at the owner's request, through the Supabase connector; the connector's confirmation for 0021 timed out unanswered, so 0021 is still to do).
+Checked read-only against the live project on 2026-11-07 (0019 and 0020 were applied that day, at the owner's request, through the Supabase connector; the connector's confirmation for 0021 timed out unanswered). **0021 was applied on 2026-11-08, at the owner's request, and its read-only checks passed, so every migration through 0021 is now in the live project.**
 
 | #         | What it does                                                                                                                               | State       | If you wait                                                                                                                                                                                    |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0016–0018 | Staff accounts, billing tables, organisations (every saved item and role belongs to one)                                                   | **Applied** | —                                                                                                                                                                                              |
 | 0019      | Lets the app save the "your payment didn't go through" notice (widens `notifications_source_check` to allow `billing`)                     | **Applied** | A failed renewal is still recorded and the plan still lapses correctly; only the in-app notice is not saved (logged as `notify_user_failed`, the webhook still answers 200).                   |
 | 0020      | Makes `organization_id` mandatory on fields, insured properties, monitored locations and workspace roles, closing a hole in the role check | **Applied** | Nothing breaks. The rule is already followed by every insert the app makes; this makes the database refuse a row that breaks it.                                                               |
-| 0021      | Adds the function that hands an organisation to another member                                                                             | **Pending** | The "Hand over ownership" section only shows to an owner with at least one other person in the organisation (today nobody). If it were used, the button says it couldn't, and nothing changes. |
+| 0021      | Adds the function that hands an organisation to another member                                                                             | **Applied** | The "Hand over ownership" section only shows to an owner with at least one other person in the organisation (today nobody). If it were used, the button says it couldn't, and nothing changes. |
 
 Supabase's own migration history list stops at 0015 because 0016–0018 were
 pasted in by hand (the objects exist; the list is informational and nothing
 in the app reads it). Migrations applied through the connector do appear in
 it.
 
-**0021 is the only one still pending.** It is safe to apply while the site
-is live. (0019 and 0020 were independent of it and of each other.)
+**Nothing is pending.** (0021 was the last one; it was safe to apply while the
+site was live, and 0019 and 0020 were independent of it and of each other.)
 
 ## What each one checked before it changed anything
 

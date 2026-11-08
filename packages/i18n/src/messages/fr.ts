@@ -1203,4 +1203,19 @@ export const fr: Messages = {
 
   // ---- browser-tab title
   "welcome.pageTitle": "Bienvenue",
+
+  // ---- Globe: instant map and live hazard layers
+  "globe.live.loading":
+    "Chargement des couches de dangers en direct (inondations, abris, détections d’incendie)…",
+  "globe.live.count":
+    "{count, plural, one {# point de danger en direct} other {# points de danger en direct}} issus de sources publiques : inondations, abris et détections d’incendie.",
+  "globe.live.none": "Aucun point de danger en direct à afficher pour le moment.",
+  "globe.live.partial":
+    "Certaines couches en direct n’ont pas pu être chargées pour le moment ; l’affichage peut être incomplet.",
+  "globe.live.failed":
+    "Les couches de dangers en direct n’ont pas pu être chargées pour le moment. Vos propres lieux sont affichés.",
+  "globe.preview.loading3d":
+    "Chargement du globe 3D… la carte à plat est déjà active. Sélectionnez un point pour l’ouvrir.",
+  "globe.preview.no3d":
+    "Le globe 3D ne fonctionne pas dans ce navigateur ; la carte à plat est affichée à la place. Chaque point ouvre la même page.",
 };

@@ -246,6 +246,9 @@ export function GlobalSearch({
             color: "var(--wv-text-primary)",
             fontFamily: "var(--wv-font-sans)",
             fontSize: "0.875rem",
+            // A long placeholder ("Rechercher des lieux, des sujets…") ends in
+            // an ellipsis when the box is narrow, not mid-word.
+            textOverflow: "ellipsis",
           }}
         />
       </form>

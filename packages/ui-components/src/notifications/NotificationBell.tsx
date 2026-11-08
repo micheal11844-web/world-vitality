@@ -147,6 +147,7 @@ export function NotificationBellView({
         boxSizing: "border-box",
         minWidth: "2.5rem",
         minHeight: "2.5rem",
+        flexShrink: 0,
         padding: "0 0.5rem",
         borderRadius: "var(--wv-radius-sm)",
         border: `1px solid ${critical > 0 ? "var(--wv-critical)" : "var(--wv-border)"}`,

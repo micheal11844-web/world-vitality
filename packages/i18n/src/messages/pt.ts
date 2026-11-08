@@ -1171,4 +1171,19 @@ export const pt: Messages = {
 
   // ---- browser-tab title
   "welcome.pageTitle": "Boas-vindas",
+
+  // ---- Globe: instant map and live hazard layers
+  "globe.live.loading":
+    "A carregar as camadas de perigos em direto (inundações, abrigos, deteções de incêndio)…",
+  "globe.live.count":
+    "{count, plural, one {# ponto de perigo em direto} other {# pontos de perigo em direto}} de fontes públicas: inundações, abrigos e deteções de incêndio.",
+  "globe.live.none": "Não há pontos de perigo em direto para mostrar agora.",
+  "globe.live.partial":
+    "Algumas camadas em direto não puderam ser carregadas agora, por isso isto pode estar incompleto.",
+  "globe.live.failed":
+    "Não foi possível carregar as camadas de perigos em direto agora. Os seus próprios locais são mostrados.",
+  "globe.preview.loading3d":
+    "A carregar o globo 3D… o mapa plano já está ativo. Selecione um ponto para o abrir.",
+  "globe.preview.no3d":
+    "O globo 3D não funciona neste navegador, por isso é mostrado o mapa plano. Cada ponto abre a mesma página.",
 };

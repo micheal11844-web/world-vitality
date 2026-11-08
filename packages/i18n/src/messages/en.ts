@@ -1156,6 +1156,20 @@ export const en = {
 
   // ---- browser-tab title
   "welcome.pageTitle": "Welcome",
+
+  // ---- Globe: instant map and live hazard layers
+  "globe.live.loading": "Loading live hazard layers (floods, shelters, fire detections)…",
+  "globe.live.count":
+    "{count, plural, one {# live hazard point} other {# live hazard points}} from public sources: floods, shelters and fire detections.",
+  "globe.live.none": "No live hazard points to show right now.",
+  "globe.live.partial":
+    "Some live layers could not be loaded right now, so this may be incomplete.",
+  "globe.live.failed":
+    "The live hazard layers could not be loaded right now. Your own locations are shown.",
+  "globe.preview.loading3d":
+    "Loading the 3D globe… the flat map is already live. Select a dot to open it.",
+  "globe.preview.no3d":
+    "The 3D globe can’t run in this browser, so the flat map is shown instead. Every dot opens the same page.",
 } as const;
 
 export type MessageKey = keyof typeof en;
