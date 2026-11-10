@@ -1158,10 +1158,10 @@ export const en = {
   "welcome.pageTitle": "Welcome",
 
   // ---- Globe: instant map and live hazard layers
-  "globe.live.loading": "Loading live hazard layers (floods, shelters, fire detections)…",
+  "globe.live.loading": "Loading live flood and shelter layers…",
   "globe.live.count":
-    "{count, plural, one {# live hazard point} other {# live hazard points}} from public sources: floods, shelters and fire detections.",
-  "globe.live.none": "No live hazard points to show right now.",
+    "{count, plural, one {# live flood or shelter point} other {# live flood and shelter points}} from public sources.",
+  "globe.live.none": "No live flood or shelter points to show right now.",
   "globe.live.partial":
     "Some live layers could not be loaded right now, so this may be incomplete.",
   "globe.live.failed":
@@ -1170,6 +1170,65 @@ export const en = {
     "Loading the 3D globe… the flat map is already live. Select a dot to open it.",
   "globe.preview.no3d":
     "The 3D globe can’t run in this browser, so the flat map is shown instead. Every dot opens the same page.",
+
+  // ---- Globe: worldwide fire detections, public cameras and the details panel
+  "globe.watch.loading": "Loading worldwide satellite fire detections and public cameras…",
+  "globe.watch.summary":
+    "{fires, plural, one {# satellite heat detection area} other {# satellite heat detection areas}} and {cameras, plural, one {# public camera} other {# public cameras}} shown. Select a dot to open it.",
+  "globe.watch.capped": "Showing the strongest {shown} of {total} areas worldwide.",
+  "globe.watch.none": "No satellite fire detections or public cameras to show right now.",
+  "globe.watch.firesNotConfigured":
+    "Satellite fire detections are not switched on for this app yet.",
+  "globe.watch.partial":
+    "Some fire or camera sources could not be loaded right now, so this may be incomplete.",
+  "globe.watch.failed": "Fire detections and cameras could not be loaded right now.",
+  "globe.legend.fire": "Satellite heat detection",
+  "globe.legend.camera": "Public camera",
+  "globe.marker.fire": "Satellite heat detection at {latitude}, {longitude}",
+  "globe.marker.camera": "Public camera: {name}",
+  "globe.panel.label": "Details",
+  "globe.panel.close": "Close",
+  "globe.panel.back": "Back to the heat detection",
+  "globe.panel.fire.title": "Satellite heat detection",
+  "globe.panel.fire.what":
+    "A satellite saw an unusually hot spot here. It may be a wildfire, but it can also be farm burning, a gas flare or a factory. It is not a confirmed fire.",
+  "globe.panel.fire.detections":
+    "{count, plural, one {# detection} other {# detections}} in this area",
+  "globe.panel.fire.power": "Strongest heat output: {frp} MW",
+  "globe.panel.fire.confidenceHigh": "Satellite confidence: high",
+  "globe.panel.fire.confidenceNominal": "Satellite confidence: medium",
+  "globe.panel.fire.latest": "Latest satellite pass: {when}",
+  "globe.panel.fire.position": "Location: {latitude}, {longitude}",
+  "globe.panel.cameras.title": "Public cameras nearby",
+  "globe.panel.cameras.none":
+    "No public camera from this app’s sources is within 25 km. Cameras are only available in California, New South Wales, British Columbia, London and Finland.",
+  "globe.panel.cameras.unavailable":
+    "Camera pictures could not be loaded right now, so nearby cameras are not listed.",
+  "globe.panel.camera.title": "Public camera",
+  "globe.panel.camera.distance": "{distance} km from the detection, towards the {direction}",
+  "globe.panel.camera.source": "Picture from {provider}",
+  "globe.panel.camera.licence": "Licence: {licence}",
+  "globe.panel.camera.refresh":
+    "{minutes, plural, one {Updates about every # minute} other {Updates about every # minutes}}",
+  "globe.panel.camera.stillNote":
+    "This is a still picture that can be several minutes old, not live video, and it may not show the fire.",
+  "globe.panel.camera.unavailable": "This picture could not be loaded. The camera may be offline.",
+  "globe.panel.camera.alt": "Latest picture from the camera {name}",
+  "globe.panel.emergency.title": "Seeing a real fire?",
+  "globe.panel.emergency.callSpecific": "Call the fire service: {number}",
+  "globe.panel.emergency.callGeneral": "Call emergency services: {number}",
+  "globe.panel.emergency.advice":
+    "Only call if you believe there is a real, current fire. A satellite point or a camera picture alone can be wrong or out of date. Tell the dispatcher where it is and what you can see. This app is not an official alert and does not replace emergency services.",
+  "globe.panel.emergency.general":
+    "112 works on most mobile phones in most countries. If you know your local emergency number, use that instead.",
+  "globe.compass.n": "north",
+  "globe.compass.ne": "north-east",
+  "globe.compass.e": "east",
+  "globe.compass.se": "south-east",
+  "globe.compass.s": "south",
+  "globe.compass.sw": "south-west",
+  "globe.compass.w": "west",
+  "globe.compass.nw": "north-west",
 } as const;
 
 export type MessageKey = keyof typeof en;

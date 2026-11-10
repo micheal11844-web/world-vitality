@@ -1,6 +1,17 @@
 "use client";
 
-import { pinColor, type GlobePin } from "./globe-types";
+import { useI18n } from "../../lib/i18n/i18n-provider";
+import {
+  CAMERA_COLOR,
+  FIRE_COLOR,
+  SELECTED_COLOR,
+  fireMarkerSize,
+  pinColor,
+  type GlobeFire,
+  type GlobePin,
+  type GlobeSelection,
+  type PublicCamera,
+} from "./globe-types";
 
 /**
  * The Globe's instant first view: a flat world map with every pin on it,
@@ -16,12 +27,71 @@ import { pinColor, type GlobePin } from "./globe-types";
  * projection: a pin sits at `(longitude + 180) / 360` across and
  * `(90 − latitude) / 180` down. It is drawn at a 2:1 shape that always fits
  * inside the available space.
+ *
+ * Satellite heat-detection areas and public cameras are drawn as real
+ * buttons here, so a keyboard or screen-reader user (and anyone on a device
+ * without WebGL) can open the same details panel the 3D globe opens. The
+ * caller passes a limited set (the strongest fires and the cameras worth
+ * looking at), because a thousand buttons would not be a usable page.
  */
 const COLUMNS = [0, 1, 2, 3];
 // Tile rows count from the south (TMS), so draw row 1 above row 0.
 const ROWS = [1, 0];
 
-export function GlobePreview({ pins }: { pins: GlobePin[] }) {
+export function GlobePreview({
+  pins,
+  fires = [],
+  cameras = [],
+  selection = null,
+  onSelect,
+}: {
+  pins: GlobePin[];
+  fires?: GlobeFire[];
+  cameras?: PublicCamera[];
+  selection?: GlobeSelection | null;
+  onSelect?: (selection: GlobeSelection) => void;
+}) {
+  const { t } = useI18n();
+  const isSelected = (kind: GlobeSelection["kind"], id: string) =>
+    selection?.kind === kind && selection.id === id;
+  const marker = (
+    kind: GlobeSelection["kind"],
+    id: string,
+    latitude: number,
+    longitude: number,
+    size: number,
+    color: string,
+    label: string,
+  ) => {
+    const selected = isSelected(kind, id);
+    const px = selected ? size + 6 : size;
+    return (
+      <button
+        key={`${kind}:${id}`}
+        type="button"
+        title={label}
+        aria-label={label}
+        aria-pressed={selected}
+        onClick={() => onSelect?.({ kind, id })}
+        style={{
+          position: "absolute",
+          left: `${((longitude + 180) / 360) * 100}%`,
+          top: `${((90 - latitude) / 180) * 100}%`,
+          width: px,
+          height: px,
+          marginLeft: -px / 2,
+          marginTop: -px / 2,
+          padding: 0,
+          cursor: "pointer",
+          borderRadius: "50%",
+          background: selected ? SELECTED_COLOR : color,
+          border: `${selected ? 3 : 1.5}px solid #fff`,
+          boxSizing: "border-box",
+          zIndex: selected ? 2 : 1,
+        }}
+      />
+    );
+  };
   return (
     <div
       style={{
@@ -83,6 +153,31 @@ export function GlobePreview({ pins }: { pins: GlobePin[] }) {
             }}
           />
         ))}
+        {cameras.map((camera) =>
+          marker(
+            "camera",
+            camera.id,
+            camera.latitude,
+            camera.longitude,
+            9,
+            CAMERA_COLOR,
+            t("globe.marker.camera", { name: camera.name }),
+          ),
+        )}
+        {fires.map((fire) =>
+          marker(
+            "fire",
+            fire.id,
+            fire.latitude,
+            fire.longitude,
+            fireMarkerSize(fire.count),
+            FIRE_COLOR,
+            t("globe.marker.fire", {
+              latitude: fire.latitude.toFixed(2),
+              longitude: fire.longitude.toFixed(2),
+            }),
+          ),
+        )}
       </div>
     </div>
   );

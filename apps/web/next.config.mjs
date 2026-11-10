@@ -162,7 +162,13 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data:",
+              // The five public-agency camera hosts (packages/hazard-feeds,
+              // `providers.ts`) are listed here so the Globe's side panel
+              // can show a camera's own still picture. Images only: no
+              // script, frame or connection permission goes to these
+              // hosts. A test (`csp-sources.test.ts` in that package)
+              // fails if this list and the provider table drift apart.
+              "img-src 'self' data: https://cwwp2.dot.ca.gov https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/ https://webcams.transport.nsw.gov.au https://weathercam.digitraffic.fi https://www.drivebc.ca",
               `connect-src 'self' https://${supabaseHost}`,
               "font-src 'self'",
               "object-src 'none'",

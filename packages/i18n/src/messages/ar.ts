@@ -1141,14 +1141,74 @@ export const ar: Messages = {
   "welcome.pageTitle": "مرحبًا بك",
 
   // ---- Globe: instant map and live hazard layers
-  "globe.live.loading": "جارٍ تحميل طبقات المخاطر المباشرة (الفيضانات والملاجئ وكشف الحرائق)…",
+  "globe.live.loading": "جارٍ تحميل الطبقات المباشرة للفيضانات والملاجئ…",
   "globe.live.count":
-    "{count, plural, zero {لا نقاط خطر مباشرة} one {نقطة خطر مباشرة واحدة} two {نقطتا خطر مباشرتان} few {# نقاط خطر مباشرة} many {# نقطة خطر مباشرة} other {# نقطة خطر مباشرة}} من مصادر عامة: الفيضانات والملاجئ وكشف الحرائق.",
-  "globe.live.none": "لا توجد نقاط خطر مباشرة لعرضها الآن.",
+    "{count, plural, zero {لا نقاط مباشرة للفيضانات أو الملاجئ} one {نقطة مباشرة واحدة للفيضانات أو الملاجئ} two {نقطتان مباشرتان للفيضانات أو الملاجئ} few {# نقاط مباشرة للفيضانات والملاجئ} many {# نقطة مباشرة للفيضانات والملاجئ} other {# نقطة مباشرة للفيضانات والملاجئ}} من مصادر عامة.",
+  "globe.live.none": "لا توجد نقاط مباشرة للفيضانات أو الملاجئ لعرضها الآن.",
   "globe.live.partial": "تعذّر تحميل بعض الطبقات المباشرة الآن، لذا قد يكون العرض ناقصًا.",
   "globe.live.failed": "تعذّر تحميل طبقات المخاطر المباشرة الآن. تظهر مواقعك الخاصة.",
   "globe.preview.loading3d":
     "جارٍ تحميل الكرة الأرضية ثلاثية الأبعاد… الخريطة المسطحة تعمل الآن. اختر نقطة لفتحها.",
   "globe.preview.no3d":
     "لا تعمل الكرة الأرضية ثلاثية الأبعاد في هذا المتصفح، لذا تظهر الخريطة المسطحة بدلًا منها. كل نقطة تفتح الصفحة نفسها.",
+
+  // ---- Globe: worldwide fire detections, public cameras and the details panel
+  "globe.watch.loading":
+    "جارٍ تحميل رصد الحرائق عبر الأقمار الصناعية والكاميرات العامة حول العالم…",
+  "globe.watch.summary":
+    "{fires, plural, zero {لا مناطق رصد حرارة بالأقمار الصناعية} one {منطقة رصد حرارة واحدة بالأقمار الصناعية} two {منطقتا رصد حرارة بالأقمار الصناعية} few {# مناطق رصد حرارة بالأقمار الصناعية} many {# منطقة رصد حرارة بالأقمار الصناعية} other {# منطقة رصد حرارة بالأقمار الصناعية}} و{cameras, plural, zero {لا كاميرات عامة} one {كاميرا عامة واحدة} two {كاميرتان عامتان} few {# كاميرات عامة} many {# كاميرا عامة} other {# كاميرا عامة}} معروضة. اختر نقطة لفتحها.",
+  "globe.watch.capped": "يُعرض أقوى {shown} من أصل {total} منطقة حول العالم.",
+  "globe.watch.none": "لا توجد عمليات رصد حرائق بالأقمار الصناعية ولا كاميرات عامة لعرضها الآن.",
+  "globe.watch.firesNotConfigured":
+    "رصد الحرائق عبر الأقمار الصناعية غير مفعّل في هذا التطبيق بعد.",
+  "globe.watch.partial":
+    "تعذّر تحميل بعض مصادر الحرائق أو الكاميرات الآن، لذا قد يكون العرض ناقصًا.",
+  "globe.watch.failed": "تعذّر تحميل رصد الحرائق والكاميرات الآن.",
+  "globe.legend.fire": "رصد حرارة بالأقمار الصناعية",
+  "globe.legend.camera": "كاميرا عامة",
+  "globe.marker.fire": "رصد حرارة بالأقمار الصناعية عند {latitude}، {longitude}",
+  "globe.marker.camera": "كاميرا عامة: {name}",
+  "globe.panel.label": "التفاصيل",
+  "globe.panel.close": "إغلاق",
+  "globe.panel.back": "العودة إلى رصد الحرارة",
+  "globe.panel.fire.title": "رصد حرارة بالأقمار الصناعية",
+  "globe.panel.fire.what":
+    "رصد قمر صناعي هنا نقطة شديدة الحرارة على غير المعتاد. قد تكون حريق غابات، لكنها قد تكون أيضًا حرقًا زراعيًا أو شعلة غاز أو مصنعًا. وهي ليست حريقًا مؤكدًا.",
+  "globe.panel.fire.detections":
+    "{count, plural, zero {لا عمليات رصد} one {عملية رصد واحدة} two {عمليتا رصد} few {# عمليات رصد} many {# عملية رصد} other {# عملية رصد}} في هذه المنطقة",
+  "globe.panel.fire.power": "أعلى انبعاث حراري: {frp} ميغاواط",
+  "globe.panel.fire.confidenceHigh": "ثقة القمر الصناعي: عالية",
+  "globe.panel.fire.confidenceNominal": "ثقة القمر الصناعي: متوسطة",
+  "globe.panel.fire.latest": "آخر مرور للقمر الصناعي: {when}",
+  "globe.panel.fire.position": "الموقع: {latitude}، {longitude}",
+  "globe.panel.cameras.title": "كاميرات عامة قريبة",
+  "globe.panel.cameras.none":
+    "لا توجد كاميرا عامة من مصادر هذا التطبيق ضمن 25 كم. تتوفر الكاميرات فقط في كاليفورنيا ونيو ساوث ويلز وكولومبيا البريطانية ولندن وفنلندا.",
+  "globe.panel.cameras.unavailable":
+    "تعذّر تحميل صور الكاميرات الآن، لذا لا تُعرض الكاميرات القريبة.",
+  "globe.panel.camera.title": "كاميرا عامة",
+  "globe.panel.camera.distance": "على بعد {distance} كم من نقطة الرصد، باتجاه {direction}",
+  "globe.panel.camera.source": "الصورة من {provider}",
+  "globe.panel.camera.licence": "الترخيص: {licence}",
+  "globe.panel.camera.refresh":
+    "تُحدَّث تقريبًا كل {minutes, plural, one {دقيقة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
+  "globe.panel.camera.stillNote":
+    "هذه صورة ثابتة قد يكون عمرها عدة دقائق، وليست بثًا مباشرًا، وقد لا تُظهر الحريق.",
+  "globe.panel.camera.unavailable": "تعذّر تحميل هذه الصورة. قد تكون الكاميرا غير متصلة.",
+  "globe.panel.camera.alt": "أحدث صورة من الكاميرا {name}",
+  "globe.panel.emergency.title": "هل ترى حريقًا حقيقيًا؟",
+  "globe.panel.emergency.callSpecific": "اتصل بالإطفاء: {number}",
+  "globe.panel.emergency.callGeneral": "اتصل بخدمات الطوارئ: {number}",
+  "globe.panel.emergency.advice":
+    "لا تتصل إلا إذا كنت تعتقد أن هناك حريقًا حقيقيًا وحاليًا. قد تكون نقطة القمر الصناعي أو صورة الكاميرا وحدها خاطئة أو قديمة. أخبر المشغّل بمكانه وبما تراه. هذا التطبيق ليس تنبيهًا رسميًا ولا يغني عن خدمات الطوارئ.",
+  "globe.panel.emergency.general":
+    "يعمل الرقم 112 على معظم الهواتف المحمولة في معظم الدول. إذا كنت تعرف رقم الطوارئ المحلي فاستخدمه.",
+  "globe.compass.n": "الشمال",
+  "globe.compass.ne": "الشمال الشرقي",
+  "globe.compass.e": "الشرق",
+  "globe.compass.se": "الجنوب الشرقي",
+  "globe.compass.s": "الجنوب",
+  "globe.compass.sw": "الجنوب الغربي",
+  "globe.compass.w": "الغرب",
+  "globe.compass.nw": "الشمال الغربي",
 };

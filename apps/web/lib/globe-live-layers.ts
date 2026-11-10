@@ -1,7 +1,6 @@
 import type { GlobePin } from "../app/globe/globe-types";
 import { fetchFloodingLocations, type FloodImpactLocation } from "./usgs-flood-impacts";
 import { fetchNearbyShelters, type ShelterLocation } from "./fema-shelters";
-import { fetchActiveFireDetections, type FireDetection } from "./nasa-firms";
 import { logSecurity } from "./logger";
 
 // Same shared demo location Disaster Monitoring's own page uses — see
@@ -18,12 +17,11 @@ export const LAYER_TIMEOUT_MS = 8000;
 /** How long a good answer is reused. The sources update every few minutes at most. */
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export type LiveLayerName = "floods" | "shelters" | "fires";
+export type LiveLayerName = "floods" | "shelters";
 
 export interface LiveLayerSources {
   floods: () => Promise<FloodImpactLocation[]>;
   shelters: () => Promise<ShelterLocation[]>;
-  fires: () => Promise<FireDetection[]>;
 }
 
 export interface LiveLayersResult {
@@ -59,24 +57,18 @@ const DEFAULT_SOURCES: LiveLayerSources = {
       DISASTER_MONITORING_DEMO_LOCATION.longitude,
     ),
   ),
-  fires: cached(() =>
-    fetchActiveFireDetections(
-      DISASTER_MONITORING_DEMO_LOCATION.latitude,
-      DISASTER_MONITORING_DEMO_LOCATION.longitude,
-    ),
-  ),
 };
 
-/** True when fire detection is simply not set up (no `NASA_FIRMS_MAP_KEY`), as opposed to broken. */
-function isFireNotConfigured(err: unknown): boolean {
-  return err instanceof Error && err.message.includes("NASA_FIRMS_MAP_KEY");
-}
-
 /**
- * Disaster Monitoring's three point-based layers as Globe pins — the same
- * pins `app/globe/page.tsx` used to build inline while the page waited for
- * the outside services. They now load after the page is already on screen,
- * through `/api/globe/live-layers`.
+ * Disaster Monitoring's two point-based layers (flooding locations and
+ * shelters) as Globe pins — the same pins `app/globe/page.tsx` used to build
+ * inline while the page waited for the outside services. They now load after
+ * the page is already on screen, through `/api/globe/live-layers`.
+ *
+ * Fire detections used to be a third layer here, but only for one demo
+ * location (Los Angeles). They are now a worldwide layer with their own route
+ * (`/api/globe/fires`, see `global-fires.ts`), because that data is large and
+ * slow enough that it must not hold the floods and shelters back.
  *
  * Each layer is fetched at the same time as the others, with its own
  * deadline and its own try/catch — one slow or broken source must never
@@ -88,46 +80,38 @@ function isFireNotConfigured(err: unknown): boolean {
  * route requires.
  */
 export async function loadLiveLayerPins({
-  fireLabel,
   sources = DEFAULT_SOURCES,
   timeoutMs = LAYER_TIMEOUT_MS,
 }: {
-  fireLabel: (confidence: string) => string;
   sources?: LiveLayerSources;
   timeoutMs?: number;
-}): Promise<LiveLayersResult> {
+} = {}): Promise<LiveLayersResult> {
   const failed: LiveLayerName[] = [];
 
   const run = async <T>(name: LiveLayerName, load: () => Promise<T[]>): Promise<T[]> => {
     try {
       return await withDeadline(load(), timeoutMs);
     } catch (err) {
-      if (name === "fires" && isFireNotConfigured(err)) return [];
       failed.push(name);
       logSecurity.error(`globe_${name}_fetch_failed`, err);
       return [];
     }
   };
 
-  const [floods, shelters, fires] = await Promise.all([
+  const [floods, shelters] = await Promise.all([
     run("floods", sources.floods),
     run("shelters", sources.shelters),
-    run("fires", sources.fires),
   ]);
 
-  return { pins: buildLiveLayerPins({ floods, shelters, fires, fireLabel }), failed };
+  return { pins: buildLiveLayerPins({ floods, shelters }), failed };
 }
 
 export function buildLiveLayerPins({
   floods,
   shelters,
-  fires,
-  fireLabel,
 }: {
   floods: FloodImpactLocation[];
   shelters: ShelterLocation[];
-  fires: FireDetection[];
-  fireLabel: (confidence: string) => string;
 }): GlobePin[] {
   return [
     ...floods
@@ -147,16 +131,6 @@ export function buildLiveLayerPins({
       latitude: s.latitude,
       longitude: s.longitude,
       workspaceKey: "disaster-monitoring-shelter",
-      workspaceLabel: "Disaster Monitoring",
-      href: "/workspaces/disaster-monitoring",
-    })),
-    ...fires.map((f, i) => ({
-      id: `disaster-monitoring-fire-${i}`,
-      // The confidence is FIRMS's own wording and is shown as issued.
-      label: fireLabel(f.confidence),
-      latitude: f.latitude,
-      longitude: f.longitude,
-      workspaceKey: "disaster-monitoring-fire",
       workspaceLabel: "Disaster Monitoring",
       href: "/workspaces/disaster-monitoring",
     })),

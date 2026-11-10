@@ -1205,11 +1205,10 @@ export const fr: Messages = {
   "welcome.pageTitle": "Bienvenue",
 
   // ---- Globe: instant map and live hazard layers
-  "globe.live.loading":
-    "Chargement des couches de dangers en direct (inondations, abris, détections d’incendie)…",
+  "globe.live.loading": "Chargement des couches en direct (inondations et abris)…",
   "globe.live.count":
-    "{count, plural, one {# point de danger en direct} other {# points de danger en direct}} issus de sources publiques : inondations, abris et détections d’incendie.",
-  "globe.live.none": "Aucun point de danger en direct à afficher pour le moment.",
+    "{count, plural, one {# point en direct d’inondation ou d’abri} other {# points en direct d’inondations et d’abris}} issus de sources publiques.",
+  "globe.live.none": "Aucun point en direct d’inondation ou d’abri à afficher pour le moment.",
   "globe.live.partial":
     "Certaines couches en direct n’ont pas pu être chargées pour le moment ; l’affichage peut être incomplet.",
   "globe.live.failed":
@@ -1218,4 +1217,67 @@ export const fr: Messages = {
     "Chargement du globe 3D… la carte à plat est déjà active. Sélectionnez un point pour l’ouvrir.",
   "globe.preview.no3d":
     "Le globe 3D ne fonctionne pas dans ce navigateur ; la carte à plat est affichée à la place. Chaque point ouvre la même page.",
+
+  // ---- Globe: worldwide fire detections, public cameras and the details panel
+  "globe.watch.loading":
+    "Chargement des détections d’incendie par satellite et des caméras publiques du monde entier…",
+  "globe.watch.summary":
+    "{fires, plural, one {# zone de détection de chaleur par satellite affichée} other {# zones de détection de chaleur par satellite affichées}} et {cameras, plural, one {# caméra publique affichée} other {# caméras publiques affichées}}. Sélectionnez un point pour l’ouvrir.",
+  "globe.watch.capped": "Affichage des {shown} zones les plus intenses sur {total} dans le monde.",
+  "globe.watch.none":
+    "Aucune détection d’incendie par satellite ni caméra publique à afficher pour le moment.",
+  "globe.watch.firesNotConfigured":
+    "Les détections d’incendie par satellite ne sont pas encore activées dans cette application.",
+  "globe.watch.partial":
+    "Certaines sources d’incendies ou de caméras n’ont pas pu être chargées pour le moment ; l’affichage peut être incomplet.",
+  "globe.watch.failed":
+    "Les détections d’incendie et les caméras n’ont pas pu être chargées pour le moment.",
+  "globe.legend.fire": "Détection de chaleur par satellite",
+  "globe.legend.camera": "Caméra publique",
+  "globe.marker.fire": "Détection de chaleur par satellite à {latitude}, {longitude}",
+  "globe.marker.camera": "Caméra publique : {name}",
+  "globe.panel.label": "Détails",
+  "globe.panel.close": "Fermer",
+  "globe.panel.back": "Retour à la détection de chaleur",
+  "globe.panel.fire.title": "Détection de chaleur par satellite",
+  "globe.panel.fire.what":
+    "Un satellite a repéré ici un point anormalement chaud. Ce peut être un feu de forêt, mais aussi un brûlage agricole, une torchère de gaz ou une usine. Ce n’est pas un incendie confirmé.",
+  "globe.panel.fire.detections":
+    "{count, plural, one {# détection} other {# détections}} dans cette zone",
+  "globe.panel.fire.power": "Puissance thermique maximale : {frp} MW",
+  "globe.panel.fire.confidenceHigh": "Confiance du satellite : élevée",
+  "globe.panel.fire.confidenceNominal": "Confiance du satellite : moyenne",
+  "globe.panel.fire.latest": "Dernier passage du satellite : {when}",
+  "globe.panel.fire.position": "Position : {latitude}, {longitude}",
+  "globe.panel.cameras.title": "Caméras publiques à proximité",
+  "globe.panel.cameras.none":
+    "Aucune caméra publique des sources de cette application n’est à moins de 25 km. Les caméras n’existent qu’en Californie, en Nouvelle-Galles du Sud, en Colombie-Britannique, à Londres et en Finlande.",
+  "globe.panel.cameras.unavailable":
+    "Les images des caméras n’ont pas pu être chargées pour le moment ; les caméras proches ne sont donc pas listées.",
+  "globe.panel.camera.title": "Caméra publique",
+  "globe.panel.camera.distance": "À {distance} km de la détection, direction {direction}",
+  "globe.panel.camera.source": "Image fournie par {provider}",
+  "globe.panel.camera.licence": "Licence : {licence}",
+  "globe.panel.camera.refresh":
+    "{minutes, plural, one {Mise à jour environ toutes les # minute} other {Mise à jour environ toutes les # minutes}}",
+  "globe.panel.camera.stillNote":
+    "Il s’agit d’une image fixe qui peut dater de plusieurs minutes, et non d’une vidéo en direct ; elle peut ne pas montrer l’incendie.",
+  "globe.panel.camera.unavailable":
+    "Cette image n’a pas pu être chargée. La caméra est peut-être hors ligne.",
+  "globe.panel.camera.alt": "Dernière image de la caméra {name}",
+  "globe.panel.emergency.title": "Vous voyez un vrai incendie ?",
+  "globe.panel.emergency.callSpecific": "Appelez les pompiers : {number}",
+  "globe.panel.emergency.callGeneral": "Appelez les secours : {number}",
+  "globe.panel.emergency.advice":
+    "N’appelez que si vous pensez qu’il y a un incendie réel et en cours. Un point satellite ou une image de caméra seuls peuvent être erronés ou dépassés. Indiquez à l’opérateur où cela se passe et ce que vous voyez. Cette application n’est pas une alerte officielle et ne remplace pas les services d’urgence.",
+  "globe.panel.emergency.general":
+    "Le 112 fonctionne sur la plupart des téléphones mobiles dans la plupart des pays. Si vous connaissez le numéro d’urgence local, utilisez-le plutôt.",
+  "globe.compass.n": "nord",
+  "globe.compass.ne": "nord-est",
+  "globe.compass.e": "est",
+  "globe.compass.se": "sud-est",
+  "globe.compass.s": "sud",
+  "globe.compass.sw": "sud-ouest",
+  "globe.compass.w": "ouest",
+  "globe.compass.nw": "nord-ouest",
 };

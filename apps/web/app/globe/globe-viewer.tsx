@@ -5,7 +5,14 @@ import type { CesiumComponentRef } from "resium";
 import type * as CesiumTypes from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import { loadCesium, type CesiumModules } from "./globe-loader";
-import { pinColor, type GlobePin } from "./globe-types";
+import { addMarkerLayer, type MarkerLayer } from "./globe-markers";
+import {
+  pinColor,
+  type GlobeFire,
+  type GlobePin,
+  type GlobeSelection,
+  type PublicCamera,
+} from "./globe-types";
 
 /** If the opening view's pictures have not all arrived by now, show the globe anyway. */
 const READY_TIMEOUT_MS = 6000;
@@ -48,11 +55,15 @@ export function framingRectangle(
  * fixed by "STAGE — GLOBE VIEW PRODUCTION FIX") — a single 3D-globe
  * visualization of every real, resource-scoped location this app
  * already tracks across workspaces, inspired by the open-source "God's
- * Eye View" project (github.com/bilawalsidhu/gods-eye-view) but
- * deliberately scoped to this app's own real data rather than
- * replicating its actual feature set (flights/ships/CCTV/military are
- * off-mission for World Vitality's PRD verticals — see this stage's
- * BUILD_PLAN entry for the full reasoning).
+ * Eye View" project (github.com/bilawalsidhu/gods-eye-view). It was
+ * first scoped to this app's own data only; at the owner's request
+ * (BUILD_PLAN v109, Decision #027) it also shows two safety layers
+ * borrowed from that project's idea: worldwide satellite heat
+ * detections and official public traffic cameras, so a person can see
+ * a possible fire, look at a nearby camera, and call the fire service.
+ * Flights, ships and military layers remain off-mission and are not
+ * included. Those two layers are drawn as one batch of points by
+ * `globe-markers.ts`, and opened in `globe-panel.tsx`.
  *
  * **Both `cesium` and `resium` are loaded via a runtime `import()`
  * (in `globe-loader.ts`, started as early as the page's own script
@@ -85,12 +96,23 @@ export function framingRectangle(
 export function GlobeViewer({
   pins,
   focusPins = [],
+  fires = [],
+  cameras = [],
+  selection = null,
+  onSelect,
   onReady,
   onFailed,
 }: {
   pins: GlobePin[];
   /** Pins to frame in the opening view (the person's own locations). With none, the engine's default view is used. */
   focusPins?: GlobePin[];
+  /** Satellite heat-detection areas, drawn as markers that can be opened. */
+  fires?: GlobeFire[];
+  /** Public cameras (every one to draw, including those listed under a fire), drawn as markers that can be opened. */
+  cameras?: PublicCamera[];
+  /** The marker the person has opened, highlighted on the globe. */
+  selection?: GlobeSelection | null;
+  onSelect?: (selection: GlobeSelection) => void;
   /** Called once the globe has drawn with its map pictures loaded, so the page can retire the instant preview. */
   onReady?: () => void;
   /** Called if the 3D engine could not be downloaded, so the page can keep the flat map. */
@@ -98,6 +120,12 @@ export function GlobeViewer({
 }) {
   const [modules, setModules] = useState<CesiumModules | null>(null);
   const viewerRef = useRef<CesiumComponentRef<CesiumTypes.Viewer>>(null);
+  const markerLayerRef = useRef<MarkerLayer | null>(null);
+  // Read through refs so a new callback or selection never rebuilds the markers.
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
 
   useEffect(() => {
     let cancelled = false;
@@ -177,6 +205,42 @@ export function GlobeViewer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per loaded engine
   }, [modules]);
+
+  // Fire areas and cameras: one batch of points, rebuilt only when the data changes.
+  useEffect(() => {
+    if (!modules) return;
+    let cancelled = false;
+    let tries = 0;
+    const attach = () => {
+      if (cancelled) return;
+      const viewer = viewerRef.current?.cesiumElement;
+      if (!viewer) {
+        if (tries++ < 200) requestAnimationFrame(attach);
+        return;
+      }
+      const layer = addMarkerLayer(modules.Cesium, viewer, {
+        fires,
+        cameras,
+        onSelect: (picked) => onSelectRef.current?.(picked),
+      });
+      markerLayerRef.current = layer;
+      layer.setSelected(selectionRef.current);
+      viewer.scene.requestRender();
+    };
+    attach();
+    return () => {
+      cancelled = true;
+      markerLayerRef.current?.destroy();
+      markerLayerRef.current = null;
+    };
+  }, [modules, fires, cameras]);
+
+  // Highlight the opened marker and bring the globe closer to it.
+  useEffect(() => {
+    const layer = markerLayerRef.current;
+    layer?.setSelected(selection);
+    if (selection) layer?.flyTo(selection);
+  }, [selection, modules, fires, cameras]);
 
   if (!modules) {
     return null;

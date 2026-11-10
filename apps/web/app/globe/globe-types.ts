@@ -1,3 +1,7 @@
+import type { GlobeFire, PublicCamera } from "@world-vitality/hazard-feeds";
+
+export type { GlobeFire, PublicCamera };
+
 /**
  * The Globe's shared, browser-safe shapes. They live apart from
  * `globe-viewer.tsx` so the instant flat-map preview, the page shell and the
@@ -31,4 +35,25 @@ export const WORKSPACE_PIN_COLOR: Record<string, string> = {
 
 export function pinColor(workspaceKey: string): string {
   return WORKSPACE_PIN_COLOR[workspaceKey] ?? "#666666";
+}
+
+/** What the person has opened on the Globe: a satellite heat detection or a public camera. */
+export type GlobeSelection =
+  | { kind: "fire"; id: string }
+  /** `fromFireId` is set when the camera was opened from a fire's "cameras nearby" list. */
+  | { kind: "camera"; id: string; fromFireId?: string };
+
+/** Marker colours for the two layers drawn from the live fire and camera feeds. */
+export const FIRE_COLOR = "#e8501a";
+export const CAMERA_COLOR = "#17b3a3";
+export const SELECTED_COLOR = "#ffd23f";
+
+/** Marker diameter in pixels for a fire area: bigger where more detections were folded together. */
+export function fireMarkerSize(count: number): number {
+  return Math.round(7 + Math.min(7, Math.log2(Math.max(1, count))));
+}
+
+/** The marker id Cesium and the flat map use for a selection (`fire:…` / `camera:…`). */
+export function markerId(selection: Pick<GlobeSelection, "kind" | "id">): string {
+  return `${selection.kind}:${selection.id}`;
 }

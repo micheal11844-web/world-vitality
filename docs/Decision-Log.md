@@ -897,3 +897,67 @@ carry the meaning meanwhile.
 turn-around or voice for the tutorial.
 
 **Status:** Accepted.
+
+## Decision #027 — Live fire detections and public cameras on the Globe, with limits
+
+**Context:** The owner asked for the Globe to include fire detection and live
+CCTV, "so a random app user can use it for fun or observation, see a fire hazard
+going on, and if it is not reported yet use the cameras to see what is actually
+going on and call a fire fighter, so the app also works to save lives". At the
+Globe's first version (BUILD_PLAN v57) the reference project's CCTV, flights and
+ships layers were left out as off-mission. Saving lives from fire is squarely
+the mission, so this reverses that part of the earlier scoping, but not the rest.
+
+**Chosen:**
+
+- **Fires:** one day of NASA FIRMS (VIIRS) heat detections for the whole world,
+  folded into about 11 km squares, low confidence dropped, strongest 2,500 plus
+  every one with a camera nearby. Replaces the Los-Angeles-only demo dots.
+- **Cameras:** only official public traffic or road-weather camera services whose
+  terms let other apps show the pictures with credit: Caltrans (California),
+  Live Traffic NSW (Australia), DriveBC (British Columbia), Transport for London,
+  Digitraffic (Finland). Each picture's address must sit on the agency's own host
+  and the page's Content-Security-Policy allows pictures from those five hosts only.
+- **Pictures are never touched by us:** the viewer's browser loads a picture
+  straight from the agency, only after they open a camera, with no referrer.
+  Nothing is recorded, copied or stored. The server handles camera lists only.
+- **A panel that helps decide, not one that decides:** a heat detection is shown as
+  possibly a fire ("it is not a confirmed fire"); cameras within 25 km are listed
+  with distance and direction; a camera is labelled a still that can be minutes old;
+  the call button comes with "call only if you believe there is a real, current
+  fire" and "this is not an official alert and does not replace emergency services".
+- **Emergency numbers:** a national number only where the country is known from a
+  nearby camera's agency (911, 999, 000, 112); otherwise 112 with an explanation.
+  Countries are never guessed from coordinates.
+- **Independent loading:** floods and shelters, fires and cameras are three
+  requests, so the slow one (a world fire day is several megabytes) never holds
+  back the others. A failed agency removes only itself and is logged by name.
+
+**Alternatives considered:**
+
+- _Connect to every camera the reference project lists._ Several agencies forbid
+  reuse (FL511, Houston TranStar, NYC DOT) and others are private or unsecured
+  streams. Using them would put the owner at legal and ethical risk. Excluded.
+- _Proxy or store the pictures through our server._ More load and cost, and it
+  would make us a copier of other organisations' images. Excluded.
+- _Windy Webcams API for worldwide coverage (including Nigeria)._ Needs an owner
+  account and key and has its own terms; left as a possible later addition.
+- _Send every camera to every visitor._ About 3,000 cameras per page open for
+  markers nobody looks at. Thinned instead; fires always carry their own cameras.
+
+**Trade-offs, stated honestly:**
+
+- Coverage is five regions. **Nothing for Nigeria or most of Africa**; the panel says so.
+- Satellite passes are a few hours apart and heat is not fire; pictures are stills,
+  possibly minutes old. This will sometimes show nothing for a real fire and
+  something for a harmless heat source. The wording says so.
+- Anyone signed in can use the call button; a prank or mistaken call is possible
+  and the advice text discourages it. No call is made by the app itself.
+- Feed formats and licence wording could not be checked live from the build
+  environment (see `docs/runbooks/globe-cameras.md`, "Not verified").
+
+**Revisit when:** the logs show a source changed format or refused us; an agency
+changes its terms; the owner obtains a Windy Webcams key or another open feed
+covering Africa; or fire services ask for a different message.
+
+**Status:** Accepted.

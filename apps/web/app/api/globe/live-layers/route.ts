@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSessionUserId } from "../../../../lib/get-session-user-id";
-import { getTranslator } from "../../../../lib/i18n/server";
 import { loadLiveLayerPins } from "../../../../lib/globe-live-layers";
 import { logApplication } from "../../../../lib/logger";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The Globe's live hazard points (floods, shelters, fire detections),
+ * The Globe's live hazard points (flooding locations and shelters),
  * fetched by the page *after* it is already on screen. They used to be
  * fetched one after another while the server rendered the page, so the
  * Globe could not open until the slowest outside service had answered.
@@ -25,11 +24,7 @@ export async function GET() {
   }
 
   try {
-    const { t } = await getTranslator();
-    const { pins, failed } = await loadLiveLayerPins({
-      fireLabel: (confidence) =>
-        t("globe.fireDetection", { confidence: confidence || t("dm.fires.unknown") }),
-    });
+    const { pins, failed } = await loadLiveLayerPins();
     return NextResponse.json(
       { pins, failed },
       { headers: { "Cache-Control": "private, max-age=120" } },
@@ -37,7 +32,7 @@ export async function GET() {
   } catch (err) {
     logApplication.error("globe_live_layers_failed", err);
     return NextResponse.json(
-      { pins: [], failed: ["floods", "shelters", "fires"] },
+      { pins: [], failed: ["floods", "shelters"] },
       { headers: { "Cache-Control": "no-store" } },
     );
   }

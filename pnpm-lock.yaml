@@ -65,6 +65,9 @@ importers:
       '@world-vitality/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@world-vitality/hazard-feeds':
+        specifier: workspace:*
+        version: link:../../packages/hazard-feeds
       '@world-vitality/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -117,6 +120,8 @@ importers:
         version: 4.6.7
 
   packages/design-tokens: {}
+
+  packages/hazard-feeds: {}
 
   packages/i18n: {}
 
