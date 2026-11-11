@@ -28,7 +28,7 @@ function fakeClient(results: (table: string, calls: Call[]) => Result) {
         Promise.resolve(resolve()).then(ok, bad),
       maybeSingle: async () => resolve(),
     };
-    for (const op of ["select", "insert", "upsert", "eq"]) {
+    for (const op of ["select", "insert", "upsert", "update", "eq", "order", "limit"]) {
       c[op] = (...args: unknown[]) => {
         const call = { table, op, args };
         mine.push(call);
@@ -194,4 +194,120 @@ test("hasEvent is true only when a row exists", async () => {
   const no = fakeClient(() => ({ data: null }));
   assert.equal(await new SupabaseBillingStore(yes.client).hasEvent("k"), true);
   assert.equal(await new SupabaseBillingStore(no.client).hasEvent("k"), false);
+});
+
+/* ---------- payments ---------- */
+
+const PAYMENT_ROW = {
+  reference: "ref_1",
+  user_id: "u1",
+  amount_minor: "750000", // bigint columns can arrive as strings
+  currency: "NGN",
+  plan: "standard",
+  paid_at: "2026-11-15T10:30:00+00:00",
+  refund_status: "processing",
+};
+
+test("recordPayment inserts by reference and leaves an existing row alone", async () => {
+  const { client, calls } = fakeClient(() => ({}));
+  await new SupabaseBillingStore(client).recordPayment({
+    reference: "ref_1",
+    userId: "u1",
+    amountMinor: 750000,
+    currency: "NGN",
+    plan: "standard",
+    paidAt: "2026-11-15T10:30:00.000Z",
+  });
+  const upsert = calls.find((c) => c.op === "upsert");
+  assert.equal(upsert?.table, "billing_payments");
+  assert.deepEqual(upsert?.args[0], {
+    reference: "ref_1",
+    user_id: "u1",
+    amount_minor: 750000,
+    currency: "NGN",
+    plan: "standard",
+    paid_at: "2026-11-15T10:30:00.000Z",
+  });
+  // ON CONFLICT DO NOTHING: a repeat must never wipe the refund status.
+  assert.deepEqual(upsert?.args[1], { onConflict: "reference", ignoreDuplicates: true });
+});
+
+test("recordPayment surfaces a database error", async () => {
+  const { client } = fakeClient(() => ({ error: { message: "boom" } }));
+  await assert.rejects(
+    () =>
+      new SupabaseBillingStore(client).recordPayment({
+        reference: "r",
+        userId: "u",
+        amountMinor: 1,
+        currency: "USD",
+        plan: null,
+        paidAt: "2026-11-15T10:30:00.000Z",
+      }),
+    /Failed to record payment: boom/,
+  );
+});
+
+test("getPayment maps a row to a payment, reading a string bigint as a number", async () => {
+  const { client } = fakeClient(() => ({ data: PAYMENT_ROW }));
+  assert.deepEqual(await new SupabaseBillingStore(client).getPayment("ref_1"), {
+    reference: "ref_1",
+    userId: "u1",
+    amountMinor: 750000,
+    currency: "NGN",
+    plan: "standard",
+    paidAt: "2026-11-15T10:30:00+00:00",
+    refundStatus: "processing",
+  });
+  const none = fakeClient(() => ({ data: null }));
+  assert.equal(await new SupabaseBillingStore(none.client).getPayment("x"), null);
+});
+
+test("a payment row we do not understand is left out rather than shown wrongly", async () => {
+  const bad = [
+    { ...PAYMENT_ROW, amount_minor: 0 },
+    { ...PAYMENT_ROW, amount_minor: "abc" },
+    { ...PAYMENT_ROW, currency: "EUR" },
+  ];
+  for (const row of bad) {
+    const { client } = fakeClient(() => ({ data: row }));
+    assert.equal(
+      await new SupabaseBillingStore(client).getPayment("ref_1"),
+      null,
+      JSON.stringify(row),
+    );
+  }
+  // An unknown plan or refund value degrades to "no plan" / "no refund", not to a lost payment.
+  const odd = fakeClient(() => ({
+    data: { ...PAYMENT_ROW, plan: "gold", refund_status: "weird" },
+  }));
+  const payment = await new SupabaseBillingStore(odd.client).getPayment("ref_1");
+  assert.equal(payment?.plan, null);
+  assert.equal(payment?.refundStatus, null);
+});
+
+test("listPayments asks for the person's rows newest first with a cap, and skips unreadable rows", async () => {
+  const { client, calls } = fakeClient(() => ({
+    data: [PAYMENT_ROW, { ...PAYMENT_ROW, reference: "bad", currency: "EUR" }],
+  }));
+  const list = await new SupabaseBillingStore(client).listPayments("u1", 24);
+  assert.deepEqual(
+    list.map((p) => p.reference),
+    ["ref_1"],
+  );
+  assert.deepEqual(
+    calls.filter((c) => c.op === "eq").map((c) => c.args),
+    [["user_id", "u1"]],
+  );
+  assert.deepEqual(calls.find((c) => c.op === "order")?.args, ["paid_at", { ascending: false }]);
+  assert.deepEqual(calls.find((c) => c.op === "limit")?.args, [24]);
+});
+
+test("setRefundStatus updates only that payment's refund status", async () => {
+  const { client, calls } = fakeClient(() => ({}));
+  await new SupabaseBillingStore(client).setRefundStatus("ref_1", "processed");
+  const update = calls.find((c) => c.op === "update");
+  assert.equal(update?.table, "billing_payments");
+  assert.equal((update?.args[0] as { refund_status: string }).refund_status, "processed");
+  assert.deepEqual(calls.find((c) => c.op === "eq")?.args, ["reference", "ref_1"]);
 });

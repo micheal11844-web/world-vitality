@@ -977,6 +977,35 @@ export const en = {
   "dm.map.fireSummary":
     "Thermal anomaly, {satellite}, {date} ({dayNight}). Not a confirmed wildfire.",
 
+  // ---- Payment history, receipts and refunds (v111)
+  "billing.history.title": "Payment history",
+  "billing.history.unavailable":
+    "We couldn’t load your payment history just now. Try again in a moment.",
+  "billing.history.receipt": "Receipt",
+  "billing.history.receiptAria": "Receipt for the {amount} payment on {date}",
+  "billing.history.recentOnly": "Showing your {count} most recent payments.",
+  "billing.history.note": "Paystack may also email you its own receipt for each payment.",
+  "billing.history.itemOther": "Payment",
+  "billing.refund.inProgress": "Refund in progress",
+  "billing.refund.processed": "Refund processed",
+  "billing.refund.failed": "Refund didn’t complete",
+  "billing.receipt.title": "Payment receipt",
+  "billing.receipt.issuedBy": "Issued by",
+  "billing.receipt.account": "Account",
+  "billing.receipt.datePaid": "Date paid",
+  "billing.receipt.reference": "Payment reference",
+  "billing.receipt.item": "Item",
+  "billing.receipt.itemPlan": "{plan} plan subscription",
+  "billing.receipt.itemOther": "World Vitality payment",
+  "billing.receipt.amount": "Amount paid",
+  "billing.receipt.method": "Paid through",
+  "billing.receipt.refundInProgress": "A refund for this payment is in progress.",
+  "billing.receipt.refundProcessed": "A refund was processed for this payment.",
+  "billing.receipt.refundFailed": "A refund for this payment didn’t complete.",
+  "billing.receipt.notInvoice": "This is a record of your payment. It is not a tax invoice.",
+  "billing.receipt.print": "Print or save as PDF",
+  "billing.receipt.back": "Back to Plan & billing",
+
   // ---- Team page, plan limits and plan notices (v108)
   "team.title": "Team — {workspace}",
   "team.intro": "Invite people to this workspace and manage their access.",
@@ -1035,6 +1064,13 @@ export const en = {
   "notifications.msg.paymentFailed.title": "Your payment didn’t go through",
   "notifications.msg.paymentFailed.body":
     "We couldn’t renew your {plan} plan. Update your card to keep it.",
+
+  // ---- Refund notice (v111)
+  "notifications.msg.paymentRefunded.title": "Your refund has been processed",
+  "notifications.msg.paymentRefunded.body":
+    "We processed a refund for your {plan} plan payment. It can take a few days to show in your account. A refund doesn’t change your plan; to stop renewals, cancel from Billing.",
+  "notifications.msg.paymentRefunded.bodyNoPlan":
+    "We processed a refund for your payment. It can take a few days to show in your account. A refund doesn’t change your plan; to stop renewals, cancel from Billing.",
 
   // ---- Hand over ownership of the organisation (v105)
   "settings.org.transfer.title": "Hand over ownership",

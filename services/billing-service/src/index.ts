@@ -62,6 +62,8 @@ export {
   planForPlanCode,
   startCheckout,
   type PaystackEvent,
+  type PaystackPayment,
+  type PaystackRefund,
   type ParseResult,
   type PlanCodeMap,
   type Currency,
@@ -79,8 +81,20 @@ export {
   type BillingStore,
   type BillingEventRecord,
 } from "./store.js";
+export { DEFAULT_RECEIPT_SELLER, receiptSellerLines } from "./receipt.js";
+export {
+  REFUND_STATUSES,
+  refundStateOf,
+  applyRefundStatus,
+  type PaymentRecord,
+  type PaymentCurrency,
+  type PaymentRefundState,
+  type RefundChange,
+  type RefundStatus,
+} from "./payments.js";
 export {
   handlePaystackWebhook,
+  type AppliedRefund,
   type AppliedEvent,
   type WebhookDeps,
   type WebhookResult,
