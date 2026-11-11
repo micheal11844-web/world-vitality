@@ -1043,3 +1043,30 @@ by up to the agency's interval, and nothing here is live video. The coverage gap
 
 **Revisit when:** the log shows California video in a known format and Caltrans'
 conditions allow it, or a sample from Singapore (or another open feed) is available.
+
+## Decision #030 — Pin patched PostCSS parts with overrides until Next 16
+
+**Date:** 2026-11-11. **Status:** accepted.
+
+**Context:** A quick check of the app (`docs/security/checkup-2026-11-11.md`)
+found six known vulnerabilities (four high) in shipped dependencies, all in
+PostCSS 8.4.31 and two of its parts. Next.js 15 pins that exact PostCSS, and even
+the newest 15.x (15.5.29) still does; the patched PostCSS arrives only with
+Next 16.
+
+**Decision:** Add `pnpm.overrides` for `postcss`, `nanoid` and `source-map-js`,
+keep Next on 15, and verify with the full suite, a production build and browser
+tests. Remove the overrides when moving to Next 16.
+
+**Alternatives considered:**
+
+- _Upgrade to Next 16 now._ A major upgrade for a hygiene fix; much more to test.
+- _Leave it._ The advisories concern hostile CSS or source-map files, which this
+  app does not process, so exposure was low. But a failing audit hides new,
+  relevant findings, and the override cost one line each.
+
+**Trade-offs:** Next runs on a PostCSS version it was not released with. Next only
+uses it internally here (the app has no PostCSS config), and everything built and
+rendered as before; a future Next upgrade must re-check this.
+
+**Revisit when:** upgrading to Next 16.
