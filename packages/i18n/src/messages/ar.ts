@@ -1196,6 +1196,9 @@ export const ar: Messages = {
     "هذه صورة ثابتة قد يكون عمرها عدة دقائق، وليست بثًا مباشرًا، وقد لا تُظهر الحريق.",
   "globe.panel.camera.unavailable": "تعذّر تحميل هذه الصورة. قد تكون الكاميرا غير متصلة.",
   "globe.panel.camera.alt": "أحدث صورة من الكاميرا {name}",
+  "globe.panel.camera.stillBadge": "صورة ثابتة، وليست فيديو مباشرًا",
+  "globe.panel.camera.autoRefresh":
+    "ما دامت هذه اللوحة مفتوحة، تُحمَّل الصورة من جديد تلقائيًا تقريبًا كل {minutes, plural, one {دقيقة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}.",
   "globe.panel.camera.reload": "إعادة تحميل الصورة",
   "globe.panel.camera.loadedAt":
     "تم التحميل في {time} (بتوقيتك). الساعة المطبوعة على الصورة تعرض التوقيت المحلي للكاميرا وقد يختلف عن توقيتك.",

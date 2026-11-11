@@ -1214,6 +1214,9 @@ export const en = {
     "This is a still picture that can be several minutes old, not live video, and it may not show the fire.",
   "globe.panel.camera.unavailable": "This picture could not be loaded. The camera may be offline.",
   "globe.panel.camera.alt": "Latest picture from the camera {name}",
+  "globe.panel.camera.stillBadge": "Still picture, not live video",
+  "globe.panel.camera.autoRefresh":
+    "{minutes, plural, one {While this is open, the picture reloads by itself about every # minute.} other {While this is open, the picture reloads by itself about every # minutes.}}",
   "globe.panel.camera.reload": "Reload picture",
   "globe.panel.camera.loadedAt":
     "Loaded at {time} (your time). A clock printed on the picture shows the camera’s own local time, which may differ.",

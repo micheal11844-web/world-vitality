@@ -1242,6 +1242,9 @@ export const es: Messages = {
   "globe.panel.camera.unavailable":
     "No se pudo cargar esta imagen. Es posible que la cámara esté fuera de línea.",
   "globe.panel.camera.alt": "Última imagen de la cámara {name}",
+  "globe.panel.camera.stillBadge": "Imagen fija, no vídeo en directo",
+  "globe.panel.camera.autoRefresh":
+    "{minutes, plural, one {Mientras está abierta, la imagen se recarga sola aproximadamente cada # minuto.} other {Mientras está abierta, la imagen se recarga sola aproximadamente cada # minutos.}}",
   "globe.panel.camera.reload": "Recargar imagen",
   "globe.panel.camera.loadedAt":
     "Cargada a las {time} (tu hora). El reloj impreso en la imagen muestra la hora local de la cámara, que puede ser distinta.",

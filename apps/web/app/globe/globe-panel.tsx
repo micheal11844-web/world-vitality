@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Button, ButtonLink, Text } from "@world-vitality/ui-components";
 import {
   CAMERA_PROVIDERS,
+  autoRefreshMinutes,
   cacheBustedImageUrl,
   compassPoint,
   emergencyNumberFor,
@@ -324,6 +325,29 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
   // When this picture was fetched, in the person's own clock; "Reload" fetches it again.
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const provider = CAMERA_PROVIDERS[camera.providerId];
+  const autoMinutes = autoRefreshMinutes(camera.refreshMinutes);
+  // The agencies publish a new still every few minutes, not a video. While the
+  // panel is open and the tab is in view, the next picture is fetched in the
+  // background on the agency's own rhythm and swapped in only once it has
+  // loaded, so a person who keeps the panel open sees it move forward without
+  // tapping, and a failed refresh never replaces a good picture with an error.
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      const next = Date.now();
+      const probe = new window.Image();
+      probe.referrerPolicy = "no-referrer";
+      probe.onload = () => {
+        if (!cancelled) setLoadedAt(next);
+      };
+      probe.src = cacheBustedImageUrl(camera.imageUrl, next);
+    }, autoMinutes * 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [autoMinutes, camera.imageUrl]);
   return (
     <>
       <div
@@ -336,6 +360,7 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
           overflow: "hidden",
           display: "grid",
           placeItems: "center",
+          position: "relative",
         }}
       >
         {failed ? (
@@ -352,6 +377,22 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
             style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
           />
         )}
+        <span
+          style={{
+            position: "absolute",
+            insetInlineStart: "var(--wv-space-xs)",
+            bottom: "var(--wv-space-xs)",
+            padding: "2px 8px",
+            borderRadius: "var(--wv-radius-sm)",
+            background: "rgba(0, 0, 0, 0.72)",
+            color: "#fff",
+            fontSize: "0.75rem",
+            lineHeight: 1.4,
+            pointerEvents: "none",
+          }}
+        >
+          {t("globe.panel.camera.stillBadge")}
+        </span>
       </div>
       <Text
         variant="body"
@@ -412,7 +453,8 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
         variant="caption"
         style={{ ...mutedStyle, display: "block", marginTop: "var(--wv-space-sm)" }}
       >
-        {t("globe.panel.camera.stillNote")}
+        {t("globe.panel.camera.stillNote")}{" "}
+        {t("globe.panel.camera.autoRefresh", { minutes: autoMinutes })}
       </Text>
       <LookAround latitude={camera.latitude} longitude={camera.longitude} />
       <EmergencyBlock countryCode={provider.countryCode} />

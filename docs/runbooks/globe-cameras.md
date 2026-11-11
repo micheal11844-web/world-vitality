@@ -20,8 +20,11 @@ Tapping a dot opens a side panel (a bottom sheet on a phone):
 - **Heat detection:** what it is (and is not), how many detections, strongest
   heat output, satellite confidence, how long ago the satellite passed, the up to
   four nearest cameras with their pictures, distance and direction.
-- **Camera:** the agency's own still picture, name, the agency's credit and licence
-  link, how often it updates, a line that it is a still that can be minutes old.
+- **Camera:** the agency's own still picture with a **"Still picture, not live video"**
+  label on it, name, the agency's credit and licence link, how often it updates, and a
+  line that it can be minutes old. While the panel is open and the tab is in view the
+  picture is fetched again by itself on the agency's own rhythm (1 to 5 minutes; 5 when
+  the agency does not say), and a failed refresh keeps the picture already on screen.
 - **Both:** "Seeing a real fire?" with a **call button** (`tel:`) and the advice to
   call only for a real, current fire. This is not an official alert and does not
   replace emergency services.
@@ -77,6 +80,43 @@ A fire elsewhere is still shown, with the general emergency guidance.
   person's own time. A clock printed **on** the picture is the camera's own local
   time: London is currently 1 hour behind Lagos, California 9 hours.
 
+## Why a camera shows a picture and not video
+
+Every agency the Globe reads publishes **still pictures that are replaced every
+few minutes**, not a continuous video stream, so that is what the Globe shows
+(Decision #029). What was read on 2026-11-11, and what it means:
+
+| Agency                          | What its open feed gives                                                                                                                                                                    | Used?                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Transport for London            | Stills only, roughly every 5 to 10 minutes. TfL's own live video is not in the public API (from a community FAQ, not a TfL document).                                                       | Yes                              |
+| Caltrans (California)           | Stills, plus an optional `streamingVideoURL` per camera that many districts leave as "Not Reported". The format is not stated in the field description.                                     | Stills                           |
+| NSW, DriveBC, Digitraffic       | Stills (what the readers use).                                                                                                                                                              | Yes                              |
+| NZ Transport Agency             | Stills every 30 seconds; registered developers only, with a username and password.                                                                                                          | No (needs the owner to register) |
+| Washington State DOT            | Stills every 1 to 5 minutes; needs an access code.                                                                                                                                          | No (needs the owner to register) |
+| Ontario 511                     | Needs a key; 10 calls per minute; Open Government Licence - Ontario.                                                                                                                        | No (needs the owner to register) |
+| Singapore (LTA via data.gov.sg) | Stills every 20 seconds, `https://api.data.gov.sg/v1/transport/traffic-images`. Open Data Licence ("free forever for personal or commercial use"); no key needed (a key raises the limits). | **Not yet**                      |
+
+**Singapore is not built because it could not be tested here.** The sandbox
+cannot reach the API, and the exact names of the location fields and the picture
+host are not confirmed. A camera whose picture host is missing from the Globe's
+Content-Security-Policy would show a dot and then a blank picture, which is worse
+than no dot. Next step: take one sample response from a browser (open the address
+above and copy the first lines), then add the reader, a fixture test, the host in
+`providers.ts` (the CSP test keeps `next.config.mjs` in line) and the attribution.
+
+**Video from California.** The Globe logs one line per list refresh,
+`globe_caltrans_video_offered {cameras, withVideo, hosts, extensions}`. Read it
+after opening the Globe once. If `withVideo` is large and `extensions` is `m3u8`
+(HLS), playing it is possible, but it needs: a player library, the video host
+added to the page's CSP (`media-src` and `connect-src`), a check of Caltrans'
+conditions of use (the CWWP page lists "Conditions Of Use" but they were not
+readable here), a fallback to the still, and a decision about bandwidth. Do not
+build it blind.
+
+**Africa.** No open, reusable camera feed for Nigeria or the rest of Africa was
+found. Cameras belonging to a city or state would need that body's written
+permission; unsecured or private streams are never used.
+
 ## Google Maps: links only, and why not the imagery
 
 The fire and camera panels end with "Look at the place": two plain links that
@@ -128,6 +168,9 @@ they can help a person decide whether to call; neither proves a fire.
    - **`globe_cameras_empty {provider}` — the agency answered but no camera passed
      the checks. The format has probably changed: fix the reader in
      `packages/hazard-feeds/src/cameras.ts` and add a test with a sample of the new shape.**
+   - `globe_caltrans_video_offered {cameras, withVideo, hosts, extensions}` — how many
+     California cameras list a video address (see "Why a camera shows a picture and not
+     video"). Information only; the Globe still shows stills.
    - `globe_cameras_failed {provider, errorMessage}` — the agency was down, slow
      (12 s limit) or blocked the server. Not a code bug unless it persists.
    - `globe_world_fires_loaded {detections}` — usually tens of thousands.

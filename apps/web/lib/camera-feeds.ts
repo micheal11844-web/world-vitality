@@ -1,5 +1,6 @@
 import {
   CAMERA_PROVIDER_IDS,
+  caltransVideoStats,
   parseCaltransCctv,
   parseDigitrafficStations,
   parseDriveBcWebcams,
@@ -62,10 +63,11 @@ async function fetchCaltrans(): Promise<PublicCamera[]> {
       const payload = await getJson(
         `https://cwwp2.dot.ca.gov/data/d${district}/cctv/cctvStatusD${code}.json`,
       );
-      return parseCaltransCctv(payload, district);
+      return { cameras: parseCaltransCctv(payload, district), video: caltransVideoStats(payload) };
     }),
   );
-  const cameras = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+  const fulfilled = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  const cameras = fulfilled.flatMap((r) => r.cameras);
   const rejected = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
   if (rejected.length === results.length) throw rejected[0]?.reason ?? new Error("no district");
   if (rejected.length > 0) {
@@ -74,6 +76,17 @@ async function fetchCaltrans(): Promise<PublicCamera[]> {
       of: results.length,
     });
   }
+  // The Globe shows stills only. Caltrans lists a video address for some cameras;
+  // this line says how many, from which hosts and in which format, so a later
+  // decision about showing video starts from facts (docs/runbooks/globe-cameras.md).
+  const hosts = new Set(fulfilled.flatMap((r) => r.video.hosts));
+  const extensions = new Set(fulfilled.flatMap((r) => r.video.extensions));
+  logApplication.info("globe_caltrans_video_offered", {
+    cameras: fulfilled.reduce((sum, r) => sum + r.video.cameras, 0),
+    withVideo: fulfilled.reduce((sum, r) => sum + r.video.withVideo, 0),
+    hosts: [...hosts].slice(0, 10).join(",") || "none",
+    extensions: [...extensions].slice(0, 5).join(",") || "none",
+  });
   return cameras;
 }
 

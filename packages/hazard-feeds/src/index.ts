@@ -10,6 +10,9 @@ export {
   parseTflJamCams,
   pinImageUrl,
   cacheBustedImageUrl,
+  autoRefreshMinutes,
+  caltransVideoStats,
+  type CaltransVideoStats,
 } from "./cameras.js";
 export {
   CameraIndex,

@@ -341,3 +341,64 @@ export function driveBcPartnerCredit(raw: unknown): string {
     ? text
     : "";
 }
+
+/**
+ * How often an open camera panel fetches its picture again, in whole minutes:
+ * the agency's own rhythm, kept between 1 and 5 so a picture left open stays
+ * current without hammering the agency (5 when the agency does not say).
+ */
+export function autoRefreshMinutes(refreshMinutes: number | null): number {
+  const minutes = refreshMinutes ?? 5;
+  return Math.min(5, Math.max(1, Math.round(minutes)));
+}
+
+/** What one Caltrans district file says about video (see {@link caltransVideoStats}). */
+export interface CaltransVideoStats {
+  /** In-service cameras with a position, like the ones the Globe lists. */
+  cameras: number;
+  /** Of those, how many give a real web address in `streamingVideoURL`. */
+  withVideo: number;
+  /** Distinct hosts of those addresses (at most 10). */
+  hosts: string[];
+  /** Distinct file endings of those addresses, e.g. `m3u8` (at most 5). */
+  extensions: string[];
+}
+
+/**
+ * Caltrans' feed has an optional `streamingVideoURL` per camera ("Not
+ * Reported" where a district does not give one). The Globe shows stills only;
+ * this counts what a district offers so a later change to show video starts
+ * from facts (how many cameras, which hosts, which format) and not a guess.
+ * Reads the same file as {@link parseCaltransCctv}; never throws.
+ */
+export function caltransVideoStats(payload: unknown): CaltransVideoStats {
+  const hosts = new Set<string>();
+  const extensions = new Set<string>();
+  let cameras = 0;
+  let withVideo = 0;
+  for (const row of list(record(payload).data)) {
+    const cctv = record(record(row).cctv);
+    if (String(cctv.inService).toLowerCase() !== "true") continue;
+    const location = record(cctv.location);
+    const latitude = toNumber(location.latitude);
+    const longitude = toNumber(location.longitude);
+    if (latitude === null || longitude === null || !isUsableCoordinate(latitude, longitude)) {
+      continue;
+    }
+    cameras += 1;
+    const raw = record(cctv.imageData).streamingVideoURL;
+    if (typeof raw !== "string") continue;
+    let url: URL;
+    try {
+      url = new URL(raw.trim());
+    } catch {
+      continue;
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") continue;
+    withVideo += 1;
+    if (hosts.size < 10) hosts.add(url.hostname.toLowerCase());
+    const ending = /\.([a-z0-9]{2,5})$/i.exec(url.pathname)?.[1]?.toLowerCase();
+    if (ending && extensions.size < 5) extensions.add(ending);
+  }
+  return { cameras, withVideo, hosts: [...hosts], extensions: [...extensions] };
+}

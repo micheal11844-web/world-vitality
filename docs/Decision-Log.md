@@ -1006,3 +1006,40 @@ view. The wording already says so.
 
 **Revisit when:** the owner wants a coarse "see the smoke from space" layer (GIBS),
 or a way to receive geostationary fire detections.
+
+## Decision #029 — Cameras stay as labelled still pictures that reload themselves; video waits for facts
+
+**Date:** 2026-11-11. **Status:** accepted.
+
+**Context:** The owner opened a camera and asked why it is not live video. Every
+agency feed the Globe reads publishes stills that are replaced every few minutes
+(Transport for London, NSW, DriveBC, Digitraffic; Caltrans lists a video address for
+only some cameras and does not state its format). The panel already said "not live
+video" in a small note under the picture, and it was missed.
+
+**Decision:**
+
+- Put a **"Still picture, not live video"** label on the picture itself.
+- Fetch the open picture again by itself on the agency's own rhythm (1 to 5
+  minutes), in the background, and swap it in only once it has loaded, so a failed
+  refresh never turns a good picture into an error. Paused while the tab is hidden.
+- Log how many California cameras offer video (`globe_caltrans_video_offered`)
+  rather than build video playback on a guess.
+- Do **not** add camera sources that cannot be tested from the build environment
+  (Singapore is the first candidate; see the runbook for what is needed).
+
+**Alternatives considered:**
+
+- _Play Caltrans' video now._ Format, hosts and conditions of use are unconfirmed;
+  needs a player library and CSP changes. Waits for the log line.
+- _Add Singapore now._ Open licence and no key, but its location fields and picture
+  host could not be verified from here; a wrong CSP host gives a dot with no picture.
+- _Scrape or embed agencies' own live pages, or use private or unsecured streams._
+  Not permitted; excluded as before.
+
+**Trade-offs, stated honestly:** the picture still lags the agency's own publishing
+by up to the agency's interval, and nothing here is live video. The coverage gap
+(nothing in Africa) is unchanged.
+
+**Revisit when:** the log shows California video in a known format and Caltrans'
+conditions allow it, or a sample from Singapore (or another open feed) is available.

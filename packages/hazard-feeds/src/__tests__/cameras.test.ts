@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  autoRefreshMinutes,
   cacheBustedImageUrl,
+  caltransVideoStats,
   driveBcPartnerCredit,
   isUsableCoordinate,
   parseCaltransCctv,
@@ -276,4 +278,50 @@ test("a cache-busted picture address keeps its host and path and only changes th
   );
   // Not an address: handed back untouched rather than thrown on.
   assert.equal(cacheBustedImageUrl("not a url", 1), "not a url");
+});
+
+test("autoRefreshMinutes follows the agency's rhythm, kept between 1 and 5 minutes", () => {
+  assert.equal(autoRefreshMinutes(null), 5);
+  assert.equal(autoRefreshMinutes(1), 1);
+  assert.equal(autoRefreshMinutes(0.2), 1);
+  assert.equal(autoRefreshMinutes(3), 3);
+  assert.equal(autoRefreshMinutes(60), 5);
+  assert.equal(autoRefreshMinutes(2.6), 3);
+});
+
+test("caltransVideoStats counts only real web addresses and reports their hosts and endings", () => {
+  const row = (inService: string, video: unknown, lat = "37.7", lon = "-122.4") => ({
+    cctv: {
+      inService,
+      location: { latitude: lat, longitude: lon, locationName: "TV1 -- I-80" },
+      imageData: {
+        streamingVideoURL: video,
+        static: { currentImageURL: "https://cwwp2.dot.ca.gov/a.jpg" },
+      },
+    },
+  });
+  const stats = caltransVideoStats({
+    data: [
+      row("true", "https://wzmedia.dot.ca.gov/D4/I80_x.stream/playlist.m3u8"),
+      row("true", "https://wzmedia.dot.ca.gov/D4/I80_y.stream/playlist.m3u8"),
+      row("true", "Not Reported"),
+      row("true", ""),
+      row("true", "ftp://example.test/live.mp4"),
+      row("true", 5),
+      row("false", "https://wzmedia.dot.ca.gov/D4/off.stream/playlist.m3u8"),
+      row("true", "https://wzmedia.dot.ca.gov/D4/nowhere.stream/playlist.m3u8", "x", "y"),
+    ],
+  });
+  assert.deepEqual(stats, {
+    cameras: 6,
+    withVideo: 2,
+    hosts: ["wzmedia.dot.ca.gov"],
+    extensions: ["m3u8"],
+  });
+  assert.deepEqual(caltransVideoStats(null), {
+    cameras: 0,
+    withVideo: 0,
+    hosts: [],
+    extensions: [],
+  });
 });
