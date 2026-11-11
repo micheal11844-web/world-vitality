@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  cacheBustedImageUrl,
   driveBcPartnerCredit,
   isUsableCoordinate,
   parseCaltransCctv,
@@ -261,4 +262,18 @@ test("driveBcPartnerCredit: removes markup", () => {
     "Image courtesy of City of Kelowna",
   );
   assert.equal(driveBcPartnerCredit(null), "");
+});
+
+test("a cache-busted picture address keeps its host and path and only changes the wv value", () => {
+  const a = cacheBustedImageUrl("https://weathercam.digitraffic.fi/C0150101.jpg", 100);
+  const b = cacheBustedImageUrl("https://weathercam.digitraffic.fi/C0150101.jpg", 101);
+  assert.equal(a, "https://weathercam.digitraffic.fi/C0150101.jpg?wv=100");
+  assert.notEqual(a, b);
+  // A query the agency already uses is kept; ours is set once, not stacked.
+  assert.equal(
+    cacheBustedImageUrl("https://cwwp2.dot.ca.gov/x.jpg?size=big&wv=5", 7.9),
+    "https://cwwp2.dot.ca.gov/x.jpg?size=big&wv=7",
+  );
+  // Not an address: handed back untouched rather than thrown on.
+  assert.equal(cacheBustedImageUrl("not a url", 1), "not a url");
 });

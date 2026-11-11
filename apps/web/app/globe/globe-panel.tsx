@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Button, ButtonLink, Text } from "@world-vitality/ui-components";
 import {
   CAMERA_PROVIDERS,
+  cacheBustedImageUrl,
   compassPoint,
   emergencyNumberFor,
   type CameraNearPoint,
@@ -200,6 +201,8 @@ function FireDetails({
         </li>
       </ul>
 
+      <LookAround latitude={fire.latitude} longitude={fire.longitude} />
+
       <section style={sectionStyle} aria-labelledby="globe-panel-cameras">
         <Text
           variant="body"
@@ -256,6 +259,8 @@ function directionText(
 function NearbyCamera({ entry, onOpen }: { entry: CameraNearPoint; onOpen: () => void }) {
   const { t, locale } = useI18n();
   const [failed, setFailed] = useState(false);
+  // A new look at least once a minute: agencies publish each new still at the same address.
+  const [minute] = useState(() => Math.floor(Date.now() / 60_000));
   return (
     <button
       type="button"
@@ -287,7 +292,7 @@ function NearbyCamera({ entry, onOpen }: { entry: CameraNearPoint; onOpen: () =>
         {!failed && (
           // eslint-disable-next-line @next/next/no-img-element -- the agency's own live still, loaded straight from its host; next/image would proxy it through this server
           <img
-            src={entry.camera.imageUrl}
+            src={cacheBustedImageUrl(entry.camera.imageUrl, minute)}
             alt={t("globe.panel.camera.alt", { name: entry.camera.name })}
             loading="lazy"
             referrerPolicy="no-referrer"
@@ -314,8 +319,10 @@ function NearbyCamera({ entry, onOpen }: { entry: CameraNearPoint; onOpen: () =>
 }
 
 function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNearPoint }) {
-  const { t, locale } = useI18n();
+  const { t, locale, date } = useI18n();
   const [failed, setFailed] = useState(false);
+  // When this picture was fetched, in the person's own clock; "Reload" fetches it again.
+  const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const provider = CAMERA_PROVIDERS[camera.providerId];
   return (
     <>
@@ -338,7 +345,7 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- the agency's own live still, loaded straight from its host; next/image would proxy it through this server
           <img
-            src={camera.imageUrl}
+            src={cacheBustedImageUrl(camera.imageUrl, loadedAt)}
             alt={t("globe.panel.camera.alt", { name: camera.name })}
             referrerPolicy="no-referrer"
             onError={() => setFailed(true)}
@@ -376,14 +383,94 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
           <li>{t("globe.panel.camera.refresh", { minutes: camera.refreshMinutes })}</li>
         )}
       </ul>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: "var(--wv-space-sm)",
+          marginTop: "var(--wv-space-sm)",
+        }}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setFailed(false);
+            setLoadedAt(Date.now());
+          }}
+        >
+          {t("globe.panel.camera.reload")}
+        </Button>
+        <Text variant="caption" style={{ ...mutedStyle, flex: 1, minWidth: "12rem" }}>
+          {t("globe.panel.camera.loadedAt", {
+            time: date(loadedAt, { hour: "2-digit", minute: "2-digit" }),
+          })}
+        </Text>
+      </div>
       <Text
         variant="caption"
         style={{ ...mutedStyle, display: "block", marginTop: "var(--wv-space-sm)" }}
       >
         {t("globe.panel.camera.stillNote")}
       </Text>
+      <LookAround latitude={camera.latitude} longitude={camera.longitude} />
       <EmergencyBlock countryCode={provider.countryCode} />
     </>
+  );
+}
+
+/**
+ * Links into Google Maps for the same spot, so a person can see what kind of
+ * place it is (houses, a forest, a factory) before deciding what to say to a
+ * dispatcher. Plain links to Google's own site (its documented "Maps URLs"),
+ * opened by the person: nothing from Google is shown or loaded inside the
+ * Globe. Google's satellite and Street View pictures are stored photos from
+ * earlier dates, never live, and the panel says so.
+ */
+function LookAround({ latitude, longitude }: { latitude: number; longitude: number }) {
+  const { t } = useI18n();
+  const place = `${latitude.toFixed(5)},${longitude.toFixed(5)}`;
+  const satellite = `https://www.google.com/maps/@?api=1&map_action=map&center=${place}&zoom=17&basemap=satellite`;
+  const street = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${place}`;
+  return (
+    <section style={sectionStyle} aria-labelledby="globe-panel-look">
+      <Text
+        variant="body"
+        as="h3"
+        id="globe-panel-look"
+        style={{ margin: "0 0 var(--wv-space-xs)", fontWeight: 600 }}
+      >
+        {t("globe.panel.look.title")}
+      </Text>
+      <ul
+        style={{
+          listStyle: "none",
+          margin: 0,
+          padding: 0,
+          display: "grid",
+          gap: "var(--wv-space-xs)",
+          fontSize: "0.875rem",
+        }}
+      >
+        <li>
+          <a href={satellite} target="_blank" rel="noopener noreferrer">
+            {t("globe.panel.look.satellite")}
+          </a>
+        </li>
+        <li>
+          <a href={street} target="_blank" rel="noopener noreferrer">
+            {t("globe.panel.look.street")}
+          </a>
+        </li>
+      </ul>
+      <Text
+        variant="caption"
+        style={{ ...mutedStyle, display: "block", marginTop: "var(--wv-space-xs)" }}
+      >
+        {t("globe.panel.look.note")}
+      </Text>
+    </section>
   );
 }
 

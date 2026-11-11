@@ -1265,6 +1265,14 @@ export const fr: Messages = {
   "globe.panel.camera.unavailable":
     "Cette image n’a pas pu être chargée. La caméra est peut-être hors ligne.",
   "globe.panel.camera.alt": "Dernière image de la caméra {name}",
+  "globe.panel.camera.reload": "Recharger l’image",
+  "globe.panel.camera.loadedAt":
+    "Chargée à {time} (votre heure). L’horloge incrustée dans l’image indique l’heure locale de la caméra, qui peut différer.",
+  "globe.panel.look.title": "Voir le lieu",
+  "globe.panel.look.satellite": "Vue satellite dans Google Maps",
+  "globe.panel.look.street": "Street View dans Google Maps",
+  "globe.panel.look.note":
+    "Ouvre Google Maps dans un nouvel onglet. Ses images satellite et Street View sont des photos enregistrées à des dates antérieures, pas de la vidéo en direct. Elles montrent à quoi ressemble le lieu, pas s’il brûle en ce moment.",
   "globe.panel.emergency.title": "Vous voyez un vrai incendie ?",
   "globe.panel.emergency.callSpecific": "Appelez les pompiers : {number}",
   "globe.panel.emergency.callGeneral": "Appelez les secours : {number}",

@@ -33,7 +33,7 @@ export async function GET() {
       if (isFireKeyMissing(detections.reason)) {
         return NextResponse.json(
           { fires: [], totalDetections: 0, totalClusters: 0, notConfigured: true },
-          { headers: { "Cache-Control": "private, max-age=300" } },
+          { headers: { "Cache-Control": "private, max-age=120" } },
         );
       }
       logApplication.error("globe_fires_failed", detections.reason);
@@ -49,7 +49,7 @@ export async function GET() {
         ...watch,
         camerasFailed: cameras === null || cameras.failed.length > 0,
       },
-      { headers: { "Cache-Control": "private, max-age=300" } },
+      { headers: { "Cache-Control": "private, max-age=120" } },
     );
   } catch (err) {
     logApplication.error("globe_fires_route_failed", err);

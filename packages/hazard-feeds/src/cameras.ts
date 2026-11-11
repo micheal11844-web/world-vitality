@@ -66,6 +66,25 @@ function cleanText(value: unknown, max: number): string {
 }
 
 /**
+ * The same picture address with a changing `wv` query value, so a browser or
+ * a cache in between fetches the picture again instead of showing one it kept.
+ * Agency cameras publish each new still at the SAME address, and some serve
+ * it with a cache lifetime, which is how a picture can look an hour old.
+ * `stamp` is whatever changes when a fresh look is wanted (a minute number
+ * when a camera is opened, the current time when the person reloads).
+ * Anything that is not a readable web address is returned unchanged.
+ */
+export function cacheBustedImageUrl(imageUrl: string, stamp: number): string {
+  try {
+    const url = new URL(imageUrl);
+    url.searchParams.set("wv", String(Math.trunc(stamp)));
+    return url.href;
+  } catch {
+    return imageUrl;
+  }
+}
+
+/**
  * `raw` as an `https` address that starts with `origin` exactly (same host,
  * same port, path under the origin's path), or `null`. An `http` address on the
  * right host is upgraded to `https`. Addresses with a username or password,

@@ -1214,6 +1214,14 @@ export const en = {
     "This is a still picture that can be several minutes old, not live video, and it may not show the fire.",
   "globe.panel.camera.unavailable": "This picture could not be loaded. The camera may be offline.",
   "globe.panel.camera.alt": "Latest picture from the camera {name}",
+  "globe.panel.camera.reload": "Reload picture",
+  "globe.panel.camera.loadedAt":
+    "Loaded at {time} (your time). A clock printed on the picture shows the camera’s own local time, which may differ.",
+  "globe.panel.look.title": "Look at the place",
+  "globe.panel.look.satellite": "Satellite view in Google Maps",
+  "globe.panel.look.street": "Street View in Google Maps",
+  "globe.panel.look.note":
+    "Opens Google Maps in a new tab. Its satellite and Street View pictures are stored photos from earlier dates, not live video. They show what the place is like, not whether it is burning now.",
   "globe.panel.emergency.title": "Seeing a real fire?",
   "globe.panel.emergency.callSpecific": "Call the fire service: {number}",
   "globe.panel.emergency.callGeneral": "Call emergency services: {number}",

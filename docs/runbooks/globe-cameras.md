@@ -32,14 +32,14 @@ of cameras). Escape closes the panel.
 
 ## Where the data comes from
 
-| Layer            | Source                                                                              | How it is read                                  |
-| ---------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Heat detections  | NASA FIRMS `area/csv/{key}/VIIRS_SNPP_NRT/world/1`                                  | Server, key `NASA_FIRMS_MAP_KEY`, cached 30 min |
-| California       | Caltrans CWWP, 12 district files `cwwp2.dot.ca.gov/data/dN/cctv/cctvStatusDNN.json` | Server, cached 15 min                           |
-| London           | TfL Unified API `api.tfl.gov.uk/Place/Type/JamCam`                                  | Server, cached 15 min                           |
-| New South Wales  | Live Traffic NSW `data.livetraffic.com/cameras/traffic-cam.json`                    | Server, cached 15 min                           |
-| Finland          | Digitraffic `tie.digitraffic.fi/api/weathercam/v1/stations`                         | Server, cached 15 min                           |
-| British Columbia | DriveBC `www.drivebc.ca/api/webcams/`                                               | Server, cached 15 min                           |
+| Layer            | Source                                                                                                        | How it is read                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Heat detections  | NASA FIRMS `area/csv/{key}/{source}/world/1`, for `VIIRS_SNPP_NRT`, `VIIRS_NOAA20_NRT` and `VIIRS_NOAA21_NRT` | Server, key `NASA_FIRMS_MAP_KEY`, cached 10 min |
+| California       | Caltrans CWWP, 12 district files `cwwp2.dot.ca.gov/data/dN/cctv/cctvStatusDNN.json`                           | Server, cached 15 min                           |
+| London           | TfL Unified API `api.tfl.gov.uk/Place/Type/JamCam`                                                            | Server, cached 15 min                           |
+| New South Wales  | Live Traffic NSW `data.livetraffic.com/cameras/traffic-cam.json`                                              | Server, cached 15 min                           |
+| Finland          | Digitraffic `tie.digitraffic.fi/api/weathercam/v1/stations`                                                   | Server, cached 15 min                           |
+| British Columbia | DriveBC `www.drivebc.ca/api/webcams/`                                                                         | Server, cached 15 min                           |
 
 Only the camera **lists** pass through the server. The **pictures** are loaded
 from the agency's own host by the viewer's browser, only after they open a
@@ -52,6 +52,47 @@ There is **nothing for Nigeria or the rest of Africa**: no open, official public
 camera feed was found that permits reuse. The panel says so ("Cameras are only
 available in California, New South Wales, British Columbia, London and Finland").
 A fire elsewhere is still shown, with the general emergency guidance.
+
+## Why a fire can look late (and what was done about it)
+
+- **The satellites.** Each VIIRS satellite passes over a given place only a few
+  times a day, and NASA says detections reach FIRMS up to about 3 hours after a
+  pass. A fire that starts just after a pass waits for the next one. Since v110
+  the Globe reads three satellites (Suomi NPP, NOAA-20, NOAA-21; same instrument,
+  staggered orbits), so a place is looked at more often. If one satellite's file
+  cannot be read the others are still shown; only if all three fail is it a
+  failure (the log line `globe_world_fires_loaded` names any that failed in
+  `failedSources`). The panel always says when the latest pass was.
+- **Our cache.** The world file is kept 10 minutes (it was 30) and the browser
+  keeps the answer 2 minutes. Shortening further buys little: NASA adds data
+  every few minutes at best, and each refresh is several megabytes.
+- **Not available through this feed:** the geostationary satellites
+  (GOES, Meteosat, Himawari) see a whole hemisphere every 10 to 15 minutes and
+  would catch a fire sooner, but they are not in the FIRMS download this app
+  uses. Adding them means another data source; not built.
+- **Camera pictures.** An agency camera publishes each new still at the same web
+  address, and a browser may keep the old one. Pictures are now requested with a
+  changing `?wv=` number (a new one every minute, and every time the person taps
+  **Reload picture**), and the panel says when the picture was loaded in the
+  person's own time. A clock printed **on** the picture is the camera's own local
+  time: London is currently 1 hour behind Lagos, California 9 hours.
+
+## Google Maps: links only, and why not the imagery
+
+The fire and camera panels end with "Look at the place": two plain links that
+open Google Maps in a new tab at that spot (satellite view, and Street View).
+Nothing from Google is loaded by the Globe itself. These are Google's documented
+"Maps URLs" (no key, no cost). The panel says they are **stored photos from
+earlier dates, not live video**.
+
+Google's imagery is **not live**. Street View is photographs taken on a past
+date (the date is shown in its corner); the satellite layer is stored imagery
+too. Embedding it in the Globe is also not allowed: Google's terms, as passed on
+by Cesium for Google content, forbid use where failure could cause death or
+injury (emergency response is named) and forbid showing Google imagery together
+with a non-Google map. For a fresher look from space, NASA GIBS (free, public,
+daily true-colour and fire layers, and 10-minute GOES images for the Americas) is
+the candidate; not built.
 
 ## Sources left out on purpose
 
@@ -119,4 +160,5 @@ The build environment has no access to these agencies' servers, so:
   (reader), `apps/web/lib/camera-feeds.ts` (address), `apps/web/next.config.mjs`
   (`img-src` for `/globe`), plus tests. The CSP test fails until all agree.
 - Change how many fires are shown: `DEFAULT_MAX_FIRES` in `fire-watch.ts`.
+- Change the satellites read: `SOURCES` in `apps/web/lib/global-fires.ts` (FIRMS source names).
 - Change the search radius for "cameras nearby": `NEARBY_CAMERA_RADIUS_KM`.

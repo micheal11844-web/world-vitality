@@ -1196,6 +1196,14 @@ export const ar: Messages = {
     "هذه صورة ثابتة قد يكون عمرها عدة دقائق، وليست بثًا مباشرًا، وقد لا تُظهر الحريق.",
   "globe.panel.camera.unavailable": "تعذّر تحميل هذه الصورة. قد تكون الكاميرا غير متصلة.",
   "globe.panel.camera.alt": "أحدث صورة من الكاميرا {name}",
+  "globe.panel.camera.reload": "إعادة تحميل الصورة",
+  "globe.panel.camera.loadedAt":
+    "تم التحميل في {time} (بتوقيتك). الساعة المطبوعة على الصورة تعرض التوقيت المحلي للكاميرا وقد يختلف عن توقيتك.",
+  "globe.panel.look.title": "اطّلع على المكان",
+  "globe.panel.look.satellite": "عرض القمر الصناعي في خرائط Google",
+  "globe.panel.look.street": "Street View في خرائط Google",
+  "globe.panel.look.note":
+    "تفتح خرائط Google في علامة تبويب جديدة. صور الأقمار الصناعية وStreet View فيها صور مخزّنة من تواريخ سابقة وليست بثًا مباشرًا. إنها تُظهر طبيعة المكان لا ما إذا كان يحترق الآن.",
   "globe.panel.emergency.title": "هل ترى حريقًا حقيقيًا؟",
   "globe.panel.emergency.callSpecific": "اتصل بالإطفاء: {number}",
   "globe.panel.emergency.callGeneral": "اتصل بخدمات الطوارئ: {number}",

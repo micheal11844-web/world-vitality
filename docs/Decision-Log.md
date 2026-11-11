@@ -961,3 +961,48 @@ changes its terms; the owner obtains a Windy Webcams key or another open feed
 covering Africa; or fire services ask for a different message.
 
 **Status:** Accepted.
+
+## Decision #028 — Google Maps imagery is linked to, not embedded, on the Globe
+
+**Context:** The owner saw that the Globe's cameras were sometimes about an hour
+behind and had shown no fire, and asked to integrate Google Maps' satellite view
+because zooming in on it felt like a live walk through the place; they asked us
+to find out whether it is live video or only images.
+
+**Finding:** It is images. What they walked through was Street View (photographs
+taken on a past date, cities re-photographed every few years, rural areas far
+less often); the satellite layer is stored imagery too. Neither shows a fire as
+it happens or a moving vehicle.
+
+**Chosen:**
+
+- **Link out, do not embed.** Each fire and camera panel gets "Look at the place":
+  Google Maps satellite and Street View links (Google's documented Maps URLs,
+  new tab, no key), labelled as older photos, not live. The person sees what kind
+  of place it is (houses, forest, factory) and can describe it to a dispatcher.
+- **Why not embed:** it cannot show a fire as it happens, so it would give a false
+  sense of watching; and Google's terms forbid use where failure could cause death
+  or injury (emergency response is named) and forbid mixing Google imagery with a
+  non-Google map, which is exactly what the Globe is.
+- **Address the lateness where it comes from:** three VIIRS satellites instead of
+  one, a 10-minute server cache instead of 30, picture requests that cannot be
+  answered from a browser's old copy, a **Reload picture** button, and the time the
+  picture was loaded shown in the person's own clock.
+
+**Alternatives considered:**
+
+- _Embed Google's photorealistic 3D tiles or satellite tiles._ Not live, and not
+  permitted for this use (above). Excluded.
+- _NASA GIBS imagery layer._ Free and public, with daily true-colour imagery, fire
+  layers and 10-minute GOES views for the Americas. Coarse (hundreds of metres to
+  kilometres per pixel), so it shows smoke and burned land, not buildings. Possible
+  later addition.
+- _Geostationary fire detections (GOES, Meteosat, Himawari)._ Would be fresher, but
+  are not in the FIRMS download this app reads.
+
+**Trade-offs, stated honestly:** a fire can still show up hours after it starts
+(satellite passes and NASA's processing), and nothing here makes the Globe a live
+view. The wording already says so.
+
+**Revisit when:** the owner wants a coarse "see the smoke from space" layer (GIBS),
+or a way to receive geostationary fire detections.
