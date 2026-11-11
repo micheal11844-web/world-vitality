@@ -168,7 +168,7 @@ const nextConfig = {
               // script, frame or connection permission goes to these
               // hosts. A test (`csp-sources.test.ts` in that package)
               // fails if this list and the provider table drift apart.
-              "img-src 'self' data: https://cwwp2.dot.ca.gov https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/ https://webcams.transport.nsw.gov.au https://weathercam.digitraffic.fi https://www.drivebc.ca",
+              "img-src 'self' data: https://cwwp2.dot.ca.gov https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/ https://webcams.transport.nsw.gov.au https://weathercam.digitraffic.fi https://www.drivebc.ca https://images.data.gov.sg",
               `connect-src 'self' https://${supabaseHost}`,
               "font-src 'self'",
               "object-src 'none'",

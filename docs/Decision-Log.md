@@ -1070,3 +1070,38 @@ uses it internally here (the app has no PostCSS config), and everything built an
 rendered as before; a future Next upgrade must re-check this.
 
 **Revisit when:** upgrading to Next 16.
+
+## Decision #031 — Singapore cameras, with the latest picture address asked for on demand
+
+**Date:** 2026-11-11. **Status:** accepted.
+
+**Context:** Decision #029 held Singapore back because its feed could not be tested
+from the build environment. The owner pasted a real response, which settled the
+field names and the picture host (`images.data.gov.sg`) and showed that every new
+picture gets a **new address**, unlike every other agency (one address, replaced).
+
+**Decision:** Add Singapore (about 90 cameras; Singapore Open Data Licence, no key,
+commercial use allowed with attribution; fire and ambulance number 995). Because an
+address in a list is out of date within seconds, mark these cameras `freshAddress`
+and add a small signed-in route, `/api/globe/camera-picture`, that returns one
+camera's latest address from a 30-second shared copy of the agency's list. The panel
+uses it on open, on Reload and every minute while open, shows the agency's own
+"picture taken at" time, and the nearby-cameras list shows "Open for the latest
+picture" instead of a thumbnail that could be minutes old.
+
+**Alternatives considered:**
+
+- _Show the list's address and a Reload that does nothing new._ A picture up to the
+  list's age old with a button that cannot refresh it, which is the "an hour late"
+  complaint again. Rejected.
+- _Proxy the pictures through this server._ Breaks the rule that pictures load
+  straight from the agency and are never copied. Rejected.
+- _Refresh the whole camera list in the browser every minute._ Heavier (every
+  agency's cameras) for one agency's need. Rejected.
+
+**Trade-offs, stated honestly:** Singapore
+cameras have a plain numbered name; coverage is one small island, so it does nothing
+for Africa; and without a key the agency may rate-limit us (logged; a key can be added).
+
+**Revisit when:** Singapore rate-limits, or another agency also changes the address of
+every picture (the `freshAddress` route is written for the `lta-` prefix only).

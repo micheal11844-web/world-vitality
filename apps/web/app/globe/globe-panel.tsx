@@ -290,7 +290,15 @@ function NearbyCamera({ entry, onOpen }: { entry: CameraNearPoint; onOpen: () =>
           overflow: "hidden",
         }}
       >
-        {!failed && (
+        {entry.camera.freshAddress && (
+          <Text
+            variant="caption"
+            style={{ color: "#fff", display: "block", padding: "var(--wv-space-xs)" }}
+          >
+            {t("globe.panel.camera.openForLatest")}
+          </Text>
+        )}
+        {!failed && !entry.camera.freshAddress && (
           // eslint-disable-next-line @next/next/no-img-element -- the agency's own live still, loaded straight from its host; next/image would proxy it through this server
           <img
             src={cacheBustedImageUrl(entry.camera.imageUrl, minute)}
@@ -319,13 +327,57 @@ function NearbyCamera({ entry, onOpen }: { entry: CameraNearPoint; onOpen: () =>
   );
 }
 
+/**
+ * The latest picture address of a camera whose address changes with every
+ * picture (Singapore), or `null` when it cannot be had right now. Never throws:
+ * the picture already on screen simply stays.
+ */
+async function fetchLatestPicture(
+  id: string,
+): Promise<{ imageUrl: string; takenAt: string | null } | null> {
+  try {
+    const response = await fetch(`/api/globe/camera-picture?id=${encodeURIComponent(id)}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const body: unknown = await response.json();
+    const imageUrl = (body as { imageUrl?: unknown } | null)?.imageUrl;
+    const takenAt = (body as { takenAt?: unknown } | null)?.takenAt;
+    return typeof imageUrl === "string"
+      ? { imageUrl, takenAt: typeof takenAt === "string" ? takenAt : null }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNearPoint }) {
   const { t, locale, date } = useI18n();
   const [failed, setFailed] = useState(false);
   // When this picture was fetched, in the person's own clock; "Reload" fetches it again.
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
+  // Singapore puts every new picture at a new address, so the address in the
+  // camera list is already out of date: ask the server for the latest one.
+  const [latest, setLatest] = useState<{ imageUrl: string; takenAt: string | null } | null>(null);
   const provider = CAMERA_PROVIDERS[camera.providerId];
   const autoMinutes = autoRefreshMinutes(camera.refreshMinutes);
+  const imageSrc = camera.freshAddress
+    ? (latest?.imageUrl ?? camera.imageUrl)
+    : cacheBustedImageUrl(camera.imageUrl, loadedAt);
+  const takenAt = latest?.takenAt ?? camera.takenAt ?? null;
+  useEffect(() => {
+    if (!camera.freshAddress) return;
+    let cancelled = false;
+    void fetchLatestPicture(camera.id).then((picture) => {
+      if (picture && !cancelled) {
+        setLatest(picture);
+        setLoadedAt(Date.now());
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [camera.id, camera.freshAddress]);
   // The agencies publish a new still every few minutes, not a video. While the
   // panel is open and the tab is in view, the next picture is fetched in the
   // background on the agency's own rhythm and swapped in only once it has
@@ -336,18 +388,31 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
       const next = Date.now();
-      const probe = new window.Image();
-      probe.referrerPolicy = "no-referrer";
-      probe.onload = () => {
-        if (!cancelled) setLoadedAt(next);
+      const preload = (url: string, onLoaded: () => void) => {
+        const probe = new window.Image();
+        probe.referrerPolicy = "no-referrer";
+        probe.onload = () => {
+          if (!cancelled) onLoaded();
+        };
+        probe.src = url;
       };
-      probe.src = cacheBustedImageUrl(camera.imageUrl, next);
+      if (camera.freshAddress) {
+        void fetchLatestPicture(camera.id).then((picture) => {
+          if (!picture || cancelled) return;
+          preload(picture.imageUrl, () => {
+            setLatest(picture);
+            setLoadedAt(next);
+          });
+        });
+        return;
+      }
+      preload(cacheBustedImageUrl(camera.imageUrl, next), () => setLoadedAt(next));
     }, autoMinutes * 60_000);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [autoMinutes, camera.imageUrl]);
+  }, [autoMinutes, camera.id, camera.imageUrl, camera.freshAddress]);
   return (
     <>
       <div
@@ -370,7 +435,7 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- the agency's own live still, loaded straight from its host; next/image would proxy it through this server
           <img
-            src={cacheBustedImageUrl(camera.imageUrl, loadedAt)}
+            src={imageSrc}
             alt={t("globe.panel.camera.alt", { name: camera.name })}
             referrerPolicy="no-referrer"
             onError={() => setFailed(true)}
@@ -423,6 +488,13 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
         {camera.refreshMinutes !== null && (
           <li>{t("globe.panel.camera.refresh", { minutes: camera.refreshMinutes })}</li>
         )}
+        {takenAt && Number.isFinite(Date.parse(takenAt)) && (
+          <li>
+            {t("globe.panel.camera.takenAt", {
+              time: date(Date.parse(takenAt), { hour: "2-digit", minute: "2-digit" }),
+            })}
+          </li>
+        )}
       </ul>
       <div
         style={{
@@ -438,6 +510,13 @@ function CameraDetails({ camera, near }: { camera: PublicCamera; near?: CameraNe
           size="sm"
           onClick={() => {
             setFailed(false);
+            if (camera.freshAddress) {
+              void fetchLatestPicture(camera.id).then((picture) => {
+                if (picture) setLatest(picture);
+                setLoadedAt(Date.now());
+              });
+              return;
+            }
             setLoadedAt(Date.now());
           }}
         >

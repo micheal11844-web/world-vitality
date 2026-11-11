@@ -4,6 +4,7 @@ import {
   parseCaltransCctv,
   parseDigitrafficStations,
   parseDriveBcWebcams,
+  parseLtaTrafficImages,
   parseNswCameras,
   parseTflJamCams,
   cachedLoader,
@@ -13,7 +14,7 @@ import {
 import { logApplication } from "./logger";
 
 /**
- * Loads the public camera lists from the five agencies the Globe knows about
+ * Loads the public camera lists from the six agencies the Globe knows about
  * (see `packages/hazard-feeds/src/providers.ts` for why these and no others).
  *
  * Only the *lists* come through the server: camera names, positions and the
@@ -36,6 +37,12 @@ import { logApplication } from "./logger";
 
 export const CAMERA_FEED_TIMEOUT_MS = 12_000;
 const LIST_TTL_MS = 15 * 60 * 1000;
+/**
+ * Singapore puts every new picture (about every 20 seconds) at a new address, so its
+ * list goes out of date far sooner than the others. One answer is shared by everyone
+ * for this long, so Singapore is asked at most twice a minute however many people look.
+ */
+const LTA_LIST_TTL_MS = 30 * 1000;
 const USER_AGENT = "WorldVitality/1.0 (+https://world-vitality.vercel.app)";
 /** California's twelve Caltrans districts. */
 const CALTRANS_DISTRICTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -92,8 +99,12 @@ async function fetchCaltrans(): Promise<PublicCamera[]> {
 
 export type CameraSources = Record<CameraProviderId, () => Promise<PublicCamera[]>>;
 
-function cachedSource(id: CameraProviderId, load: () => Promise<PublicCamera[]>) {
-  return cachedLoader(load, LIST_TTL_MS, {
+function cachedSource(
+  id: CameraProviderId,
+  load: () => Promise<PublicCamera[]>,
+  ttlMs: number = LIST_TTL_MS,
+) {
+  return cachedLoader(load, ttlMs, {
     onStale: (err) => logApplication.error("globe_cameras_using_stale_list", err, { provider: id }),
   });
 }
@@ -116,6 +127,12 @@ const DEFAULT_SOURCES: CameraSources = {
   ),
   drivebc: cachedSource("drivebc", async () =>
     parseDriveBcWebcams(await getJson("https://www.drivebc.ca/api/webcams/")),
+  ),
+  lta: cachedSource(
+    "lta",
+    async () =>
+      parseLtaTrafficImages(await getJson("https://api.data.gov.sg/v1/transport/traffic-images")),
+    LTA_LIST_TTL_MS,
   ),
 };
 
@@ -155,4 +172,31 @@ export async function loadCameras(
     cameras.push(camera);
   }
   return { cameras, failed };
+}
+
+/** The latest picture address of one camera whose address changes with every picture. */
+export interface FreshCameraPicture {
+  imageUrl: string;
+  /** When the picture was taken, ISO 8601, or `null` when the agency does not say. */
+  takenAt: string | null;
+}
+
+/** A camera id that can have a fresh address: the provider prefix and the agency's own number. */
+export const FRESH_CAMERA_ID = /^lta-[A-Za-z0-9._-]{1,16}$/;
+
+/**
+ * The latest picture address for a camera of an agency that gives every new
+ * picture a new address (Singapore). Read from the agency's own list through the
+ * same short-lived shared answer the camera list uses, so any number of viewers
+ * cost the agency at most two requests a minute. `null` when the id is not such a
+ * camera or is no longer listed. Throws when the agency cannot be reached and
+ * there is no earlier answer.
+ */
+export async function loadFreshCameraPicture(
+  id: string,
+  sources: CameraSources = DEFAULT_SOURCES,
+): Promise<FreshCameraPicture | null> {
+  if (!FRESH_CAMERA_ID.test(id)) return null;
+  const found = (await sources.lta()).find((camera) => camera.id === id);
+  return found ? { imageUrl: found.imageUrl, takenAt: found.takenAt ?? null } : null;
 }

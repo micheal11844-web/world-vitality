@@ -343,6 +343,55 @@ export function driveBcPartnerCredit(raw: unknown): string {
 }
 
 /**
+ * Singapore's Land Transport Authority "traffic images" (via data.gov.sg):
+ * `{ items: [{ timestamp, cameras: [{ timestamp, image, location: { latitude,
+ * longitude }, camera_id, image_metadata }] }] }`. Read from a real response
+ * the owner pasted on 2026-11-11. Unlike the other agencies, every new picture
+ * is a NEW address (`.../traffic-images/<year>/<month>/<uuid>.jpg`), so the
+ * address in a list goes out of date within seconds: cameras carry
+ * `freshAddress` and `takenAt`, and the app asks for the latest address when a
+ * camera is opened. The feed names no camera, so the name is the agency's
+ * camera number. Kept: a safe id, a real position and a picture on the agency's
+ * own host.
+ */
+export function parseLtaTrafficImages(payload: unknown): PublicCamera[] {
+  const out: PublicCamera[] = [];
+  const seen = new Set<string>();
+  for (const item of list(record(payload).items)) {
+    for (const entry of list(record(item).cameras)) {
+      const c = record(entry);
+      const rawId =
+        typeof c.camera_id === "string" || typeof c.camera_id === "number"
+          ? String(c.camera_id).trim()
+          : "";
+      if (!/^[A-Za-z0-9._-]{1,16}$/.test(rawId) || seen.has(rawId)) continue;
+      const location = record(c.location);
+      const latitude = location.latitude;
+      const longitude = location.longitude;
+      if (!isUsableCoordinate(latitude, longitude)) continue;
+      const imageUrl = pinImageUrl(c.image, CAMERA_PROVIDERS.lta.imageOrigin);
+      if (!imageUrl) continue;
+      const taken = typeof c.timestamp === "string" ? Date.parse(c.timestamp) : Number.NaN;
+      seen.add(rawId);
+      out.push(
+        camera("lta", {
+          id: `lta-${rawId}`,
+          name: `Singapore road camera ${rawId}`,
+          latitude: latitude as number,
+          longitude: longitude as number,
+          imageUrl,
+          // The agency says a new picture about every 20 seconds; a minute is the shortest wait the panel uses.
+          refreshMinutes: 1,
+          ...(Number.isNaN(taken) ? {} : { takenAt: new Date(taken).toISOString() }),
+          freshAddress: true,
+        }),
+      );
+    }
+  }
+  return out;
+}
+
+/**
  * How often an open camera panel fetches its picture again, in whole minutes:
  * the agency's own rhythm, kept between 1 and 5 so a picture left open stays
  * current without hammering the agency (5 when the agency does not say).

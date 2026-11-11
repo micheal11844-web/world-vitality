@@ -6,7 +6,7 @@
  */
 
 /** The official camera sources the Globe knows about. Adding one is a code change on purpose (see `providers.ts`). */
-export type CameraProviderId = "caltrans" | "tfl" | "nsw" | "digitraffic" | "drivebc";
+export type CameraProviderId = "caltrans" | "tfl" | "nsw" | "digitraffic" | "drivebc" | "lta";
 
 /** One public traffic or road-weather camera, reduced to what the Globe needs. */
 export interface PublicCamera {
@@ -23,6 +23,14 @@ export interface PublicCamera {
   refreshMinutes: number | null;
   /** A partner's image credit that the agency publishes with the camera (DriveBC only), plain text. */
   credit?: string;
+  /** When the picture in `imageUrl` was taken, ISO 8601, for agencies that say (Singapore). */
+  takenAt?: string;
+  /**
+   * `true` when the agency puts every new picture at a NEW address (Singapore), so the
+   * address in a list goes out of date and the latest one must be asked for
+   * (`/api/globe/camera-picture`). Other agencies reuse one address for every picture.
+   */
+  freshAddress?: boolean;
 }
 
 /** Who a camera feed belongs to, and the terms it is used under. */

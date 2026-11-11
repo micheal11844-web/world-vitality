@@ -21,6 +21,8 @@ const BY_COUNTRY: Record<string, string> = {
   GB: "999",
   AU: "000",
   FI: "112",
+  // Singapore: 995 is the fire and ambulance number (SCDF); 999 is the police.
+  SG: "995",
 };
 
 export function emergencyNumberFor(countryCode: string | null | undefined): EmergencyNumber {

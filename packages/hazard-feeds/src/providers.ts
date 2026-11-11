@@ -6,7 +6,9 @@ import type { CameraProviderId, CameraProviderInfo } from "./types.js";
  * **How a source gets on this list.** It is an official, public traffic or
  * road-weather camera service published by the agency that runs the
  * cameras, under terms that let other apps show the pictures with credit
- * (open-data licences, or a stated "no charge" public feed). Sources whose
+ * (open-data licences, or a stated "no charge" public feed). Singapore's
+ * Land Transport Authority feed (via data.gov.sg) is under the Singapore Open
+ * Data Licence, which allows commercial use with attribution. Sources whose
  * terms forbid reuse are left out on purpose even though the cameras are
  * visible on their own websites: Florida's FL511 (personal use only), Houston
  * TranStar (no linking to images without written permission) and New York
@@ -69,6 +71,16 @@ export const CAMERA_PROVIDERS: Record<CameraProviderId, CameraProviderInfo> = {
     countryCode: "CA",
     imageOrigin: "https://www.drivebc.ca/images/",
     cspImageSource: "https://www.drivebc.ca",
+  },
+  lta: {
+    id: "lta",
+    attribution: "Traffic Images, Land Transport Authority (LTA), Singapore, via data.gov.sg",
+    licenceName: "Singapore Open Data Licence version 1.0",
+    licenceUrl: "https://data.gov.sg/open-data-licence",
+    sourceUrl: "https://api.data.gov.sg/v1/transport/traffic-images",
+    countryCode: "SG",
+    imageOrigin: "https://images.data.gov.sg/api/traffic-images/",
+    cspImageSource: "https://images.data.gov.sg",
   },
 };
 

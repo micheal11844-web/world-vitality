@@ -1217,7 +1217,7 @@ export const pt: Messages = {
   "globe.panel.fire.position": "Localização: {latitude}, {longitude}",
   "globe.panel.cameras.title": "Câmaras públicas próximas",
   "globe.panel.cameras.none":
-    "Nenhuma câmara pública das fontes desta aplicação está a menos de 25 km. Só existem câmaras na Califórnia, Nova Gales do Sul, Colúmbia Britânica, Londres e Finlândia.",
+    "Nenhuma câmara pública das fontes desta aplicação está a menos de 25 km. Só existem câmaras na Califórnia, Nova Gales do Sul, Colúmbia Britânica, Londres, Finlândia e Singapura.",
   "globe.panel.cameras.unavailable":
     "Não foi possível carregar agora as imagens das câmaras, por isso as câmaras próximas não são listadas.",
   "globe.panel.camera.title": "Câmara pública",
@@ -1235,6 +1235,8 @@ export const pt: Messages = {
   "globe.panel.camera.autoRefresh":
     "{minutes, plural, one {Enquanto este painel está aberto, a imagem recarrega sozinha aproximadamente a cada # minuto.} other {Enquanto este painel está aberto, a imagem recarrega sozinha aproximadamente a cada # minutos.}}",
   "globe.panel.camera.reload": "Recarregar imagem",
+  "globe.panel.camera.takenAt": "Imagem captada às {time} (seu horário).",
+  "globe.panel.camera.openForLatest": "Abra para ver a imagem mais recente",
   "globe.panel.camera.loadedAt":
     "Carregada às {time} (seu horário). O relógio impresso na imagem mostra o horário local da câmera, que pode ser diferente.",
   "globe.panel.look.title": "Ver o local",

@@ -1183,7 +1183,7 @@ export const ar: Messages = {
   "globe.panel.fire.position": "الموقع: {latitude}، {longitude}",
   "globe.panel.cameras.title": "كاميرات عامة قريبة",
   "globe.panel.cameras.none":
-    "لا توجد كاميرا عامة من مصادر هذا التطبيق ضمن 25 كم. تتوفر الكاميرات فقط في كاليفورنيا ونيو ساوث ويلز وكولومبيا البريطانية ولندن وفنلندا.",
+    "لا توجد كاميرا عامة من مصادر هذا التطبيق ضمن 25 كم. تتوفر الكاميرات فقط في كاليفورنيا ونيو ساوث ويلز وكولومبيا البريطانية ولندن وفنلندا وسنغافورة.",
   "globe.panel.cameras.unavailable":
     "تعذّر تحميل صور الكاميرات الآن، لذا لا تُعرض الكاميرات القريبة.",
   "globe.panel.camera.title": "كاميرا عامة",
@@ -1200,6 +1200,8 @@ export const ar: Messages = {
   "globe.panel.camera.autoRefresh":
     "ما دامت هذه اللوحة مفتوحة، تُحمَّل الصورة من جديد تلقائيًا تقريبًا كل {minutes, plural, one {دقيقة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}.",
   "globe.panel.camera.reload": "إعادة تحميل الصورة",
+  "globe.panel.camera.takenAt": "التُقطت الصورة في {time} (بتوقيتك).",
+  "globe.panel.camera.openForLatest": "افتحها لرؤية أحدث صورة",
   "globe.panel.camera.loadedAt":
     "تم التحميل في {time} (بتوقيتك). الساعة المطبوعة على الصورة تعرض التوقيت المحلي للكاميرا وقد يختلف عن توقيتك.",
   "globe.panel.look.title": "اطّلع على المكان",

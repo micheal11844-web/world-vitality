@@ -4,6 +4,7 @@ import {
   autoRefreshMinutes,
   cacheBustedImageUrl,
   caltransVideoStats,
+  parseLtaTrafficImages,
   driveBcPartnerCredit,
   isUsableCoordinate,
   parseCaltransCctv,
@@ -324,4 +325,87 @@ test("caltransVideoStats counts only real web addresses and reports their hosts 
     hosts: [],
     extensions: [],
   });
+});
+
+// A real response from the Singapore feed (shortened), pasted by the owner on 2026-11-11.
+const LTA_SAMPLE = {
+  items: [
+    {
+      timestamp: "2026-11-12T03:27:35+08:00",
+      cameras: [
+        {
+          timestamp: "2026-11-12T03:25:35+08:00",
+          image:
+            "https://images.data.gov.sg/api/traffic-images/2026/11/0bab8eaf-a95c-42f4-9e16-7c318a6e2b03.jpg",
+          location: { latitude: 1.447023728, longitude: 103.7716543 },
+          camera_id: "2701",
+          image_metadata: { height: 1080, width: 1920, md5: "d3cbb34609e09b65690f4b154a3d37f2" },
+        },
+        {
+          timestamp: "2026-11-12T03:25:35+08:00",
+          image:
+            "https://images.data.gov.sg/api/traffic-images/2026/11/7b9d4e1f-d57a-4120-8434-ffcc40bfaa5b.jpg",
+          location: { latitude: 1.26027777363278, longitude: 103.823888890049 },
+          camera_id: "4799",
+          image_metadata: { height: 1080, width: 1920, md5: "27169231d2d16559c3961a8cacc9722a" },
+        },
+      ],
+    },
+  ],
+  api_info: { status: "healthy" },
+};
+
+test("parseLtaTrafficImages reads the real Singapore sample", () => {
+  const cameras = parseLtaTrafficImages(LTA_SAMPLE);
+  assert.equal(cameras.length, 2);
+  assert.deepEqual(cameras[0], {
+    id: "lta-2701",
+    providerId: "lta",
+    name: "Singapore road camera 2701",
+    latitude: 1.447023728,
+    longitude: 103.7716543,
+    imageUrl:
+      "https://images.data.gov.sg/api/traffic-images/2026/11/0bab8eaf-a95c-42f4-9e16-7c318a6e2b03.jpg",
+    refreshMinutes: 1,
+    takenAt: "2026-11-11T19:25:35.000Z",
+    freshAddress: true,
+  });
+  assert.equal(cameras[1]?.id, "lta-4799");
+});
+
+test("parseLtaTrafficImages skips unsafe or unreadable records and keeps the rest", () => {
+  const good = LTA_SAMPLE.items[0]!.cameras[0]!;
+  const bad = (change: Record<string, unknown>) => ({ ...good, camera_id: "9", ...change });
+  const cameras = parseLtaTrafficImages({
+    items: [
+      {
+        cameras: [
+          good,
+          good, // the same camera twice: kept once
+          bad({ image: "https://images.data.gov.sg.evil.example/api/traffic-images/a.jpg" }),
+          bad({ image: "https://evil.example/images.data.gov.sg/api/traffic-images/a.jpg" }),
+          bad({ image: "https://images.data.gov.sg/other/a.jpg" }),
+          bad({ image: 5 }),
+          bad({ camera_id: "../x" }),
+          bad({ camera_id: "" }),
+          bad({ location: { latitude: 0, longitude: 0 } }),
+          bad({ location: { latitude: "1.3", longitude: 103.8 } }),
+          bad({ location: null }),
+          null,
+          "text",
+          bad({ timestamp: "not a time" }), // kept, without a picture time
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(
+    cameras.map((c) => [c.id, c.takenAt === undefined]),
+    [
+      ["lta-2701", false],
+      ["lta-9", true],
+    ],
+  );
+  for (const input of [null, undefined, 5, "x", [], {}, { items: "x" }, { items: [{}] }]) {
+    assert.deepEqual(parseLtaTrafficImages(input), []);
+  }
 });

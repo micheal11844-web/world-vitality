@@ -1201,7 +1201,7 @@ export const en = {
   "globe.panel.fire.position": "Location: {latitude}, {longitude}",
   "globe.panel.cameras.title": "Public cameras nearby",
   "globe.panel.cameras.none":
-    "No public camera from this app’s sources is within 25 km. Cameras are only available in California, New South Wales, British Columbia, London and Finland.",
+    "No public camera from this app’s sources is within 25 km. Cameras are only available in California, New South Wales, British Columbia, London, Finland and Singapore.",
   "globe.panel.cameras.unavailable":
     "Camera pictures could not be loaded right now, so nearby cameras are not listed.",
   "globe.panel.camera.title": "Public camera",
@@ -1218,6 +1218,8 @@ export const en = {
   "globe.panel.camera.autoRefresh":
     "{minutes, plural, one {While this is open, the picture reloads by itself about every # minute.} other {While this is open, the picture reloads by itself about every # minutes.}}",
   "globe.panel.camera.reload": "Reload picture",
+  "globe.panel.camera.takenAt": "Picture taken at {time} (your time).",
+  "globe.panel.camera.openForLatest": "Open for the latest picture",
   "globe.panel.camera.loadedAt":
     "Loaded at {time} (your time). A clock printed on the picture shows the camera’s own local time, which may differ.",
   "globe.panel.look.title": "Look at the place",

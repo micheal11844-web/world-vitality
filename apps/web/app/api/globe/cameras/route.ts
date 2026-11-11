@@ -10,7 +10,7 @@ export const maxDuration = 20;
 /**
  * The public traffic and road-weather cameras the Globe can show as markers:
  * official agency cameras only (California, New South Wales, British
- * Columbia, London, Finland). Only the camera list is returned: names,
+ * Columbia, London, Finland, Singapore). Only the camera list is returned: names,
  * positions and the agency's own picture address. The browser loads a picture
  * from the agency only when the person opens that camera.
  *

@@ -12,7 +12,7 @@ Open **View the Globe**. Two kinds of dot join the map after the page is already
   (about 11 km squares). Low-confidence detections are dropped. At most 2,500
   dots are shown; the page says "Showing the strongest N of M" when it cuts.
   Dots that have a public camera within 25 km are always kept.
-- **Teal: public cameras** from five agencies (below), thinned to one per ~5 km
+- **Teal: public cameras** from six agencies (below), thinned to one per ~5 km
   square and at most 600 per agency so the map stays readable.
 
 Tapping a dot opens a side panel (a bottom sheet on a phone):
@@ -43,17 +43,18 @@ of cameras). Escape closes the panel.
 | New South Wales  | Live Traffic NSW `data.livetraffic.com/cameras/traffic-cam.json`                                              | Server, cached 15 min                           |
 | Finland          | Digitraffic `tie.digitraffic.fi/api/weathercam/v1/stations`                                                   | Server, cached 15 min                           |
 | British Columbia | DriveBC `www.drivebc.ca/api/webcams/`                                                                         | Server, cached 15 min                           |
+| Singapore        | LTA via data.gov.sg `api.data.gov.sg/v1/transport/traffic-images`                                             | Server, cached **30 seconds** (see below)       |
 
 Only the camera **lists** pass through the server. The **pictures** are loaded
 from the agency's own host by the viewer's browser, only after they open a
 camera (or a fire that lists it), with no referrer sent. Nothing is copied,
 recorded or stored. The Globe page's Content-Security-Policy lets pictures (and
-nothing else) come from those five hosts; `packages/hazard-feeds`'s
+nothing else) come from those six hosts; `packages/hazard-feeds`'s
 `csp-sources.test.ts` fails if `next.config.mjs` and the provider table drift apart.
 
 There is **nothing for Nigeria or the rest of Africa**: no open, official public
 camera feed was found that permits reuse. The panel says so ("Cameras are only
-available in California, New South Wales, British Columbia, London and Finland").
+available in California, New South Wales, British Columbia, London, Finland and Singapore").
 A fire elsewhere is still shown, with the general emergency guidance.
 
 ## Why a fire can look late (and what was done about it)
@@ -86,23 +87,46 @@ Every agency the Globe reads publishes **still pictures that are replaced every
 few minutes**, not a continuous video stream, so that is what the Globe shows
 (Decision #029). What was read on 2026-11-11, and what it means:
 
-| Agency                          | What its open feed gives                                                                                                                                                                    | Used?                            |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Transport for London            | Stills only, roughly every 5 to 10 minutes. TfL's own live video is not in the public API (from a community FAQ, not a TfL document).                                                       | Yes                              |
-| Caltrans (California)           | Stills, plus an optional `streamingVideoURL` per camera that many districts leave as "Not Reported". The format is not stated in the field description.                                     | Stills                           |
-| NSW, DriveBC, Digitraffic       | Stills (what the readers use).                                                                                                                                                              | Yes                              |
-| NZ Transport Agency             | Stills every 30 seconds; registered developers only, with a username and password.                                                                                                          | No (needs the owner to register) |
-| Washington State DOT            | Stills every 1 to 5 minutes; needs an access code.                                                                                                                                          | No (needs the owner to register) |
-| Ontario 511                     | Needs a key; 10 calls per minute; Open Government Licence - Ontario.                                                                                                                        | No (needs the owner to register) |
-| Singapore (LTA via data.gov.sg) | Stills every 20 seconds, `https://api.data.gov.sg/v1/transport/traffic-images`. Open Data Licence ("free forever for personal or commercial use"); no key needed (a key raises the limits). | **Not yet**                      |
+| Agency                          | What its open feed gives                                                                                                                                              | Used?                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Transport for London            | Stills only, roughly every 5 to 10 minutes. TfL's own live video is not in the public API (from a community FAQ, not a TfL document).                                 | Yes                              |
+| Caltrans (California)           | Stills, plus an optional `streamingVideoURL` per camera that many districts leave as "Not Reported". The format is not stated in the field description.               | Stills                           |
+| NSW, DriveBC, Digitraffic       | Stills (what the readers use).                                                                                                                                        | Yes                              |
+| NZ Transport Agency             | Stills every 30 seconds; registered developers only, with a username and password.                                                                                    | No (needs the owner to register) |
+| Washington State DOT            | Stills every 1 to 5 minutes; needs an access code.                                                                                                                    | No (needs the owner to register) |
+| Ontario 511                     | Needs a key; 10 calls per minute; Open Government Licence - Ontario.                                                                                                  | No (needs the owner to register) |
+| Singapore (LTA via data.gov.sg) | Stills every 20 seconds, `https://api.data.gov.sg/v1/transport/traffic-images`. Singapore Open Data Licence (commercial use allowed with attribution); no key needed. | **Yes (2026-11-11)**             |
 
-**Singapore is not built because it could not be tested here.** The sandbox
-cannot reach the API, and the exact names of the location fields and the picture
-host are not confirmed. A camera whose picture host is missing from the Globe's
-Content-Security-Policy would show a dot and then a blank picture, which is worse
-than no dot. Next step: take one sample response from a browser (open the address
-above and copy the first lines), then add the reader, a fixture test, the host in
-`providers.ts` (the CSP test keeps `next.config.mjs` in line) and the attribution.
+**Singapore (built 2026-11-11 from a real response the owner pasted).** The
+feed is `{ items: [{ timestamp, cameras: [{ timestamp, image, location: {
+latitude, longitude }, camera_id, image_metadata }] }] }`, about 90 cameras, each
+picture 1920 by 1080. Three things are different from the other agencies:
+
+- **Every new picture has a new address** (`images.data.gov.sg/api/traffic-images/<year>/<month>/<uuid>.jpg`).
+  An address in a cached list is therefore out of date within seconds. These
+  cameras carry `freshAddress` and `takenAt`; the camera panel asks
+  `GET /api/globe/camera-picture?id=lta-<number>` for the latest address when it
+  opens, when **Reload picture** is pressed, and every minute while it stays open
+  (swapped in only after it has loaded; a failed lookup keeps the picture on
+  screen). The server answers from a 30-second shared copy of the agency's list,
+  so any number of viewers cost the agency at most two requests a minute.
+- **The list gives no name**, so a camera is called "Singapore road camera 2701".
+- **The panel shows when the picture was taken** ("Picture taken at 08:35 PM (your
+  time)"), from the agency's own timestamp.
+
+In the "cameras near a fire" list a Singapore camera shows "Open for the latest
+picture" instead of a thumbnail, because the address the list holds could be
+minutes old; opening it fetches the current one. Fire and camera rows from the
+other agencies are unchanged.
+
+The feed needs no key. If Singapore starts answering `429` (too many requests
+without a key), `globe_cameras_failed {provider: "lta"}` appears in the logs and
+Singapore cameras drop out until it recovers; the agency offers a free key for
+higher limits, which would then need to be sent as a header (not built).
+The licence page (`https://data.gov.sg/open-data-licence`) was opened on 2026-11-11: it
+allows commercial use with a conspicuous notice naming the source and linking the
+licence, which the panel gives ("Picture from Traffic Images, Land Transport Authority
+(LTA), Singapore, via data.gov.sg" and a link to the licence).
 
 **Video from California.** The Globe logs one line per list refresh,
 `globe_caltrans_video_offered {cameras, withVideo, hosts, extensions}`. Read it
@@ -144,7 +168,7 @@ never records or stores a picture.
 ## Emergency numbers
 
 A specific number is offered only when the country is known from a camera of a
-known agency within 25 km: US/CA 911, GB 999, AU 000, FI 112. Otherwise the
+known agency within 25 km: US/CA 911, GB 999, AU 000, FI 112, SG 995 (Singapore's fire and ambulance number; 999 is the police). Otherwise the
 button says **112** and the panel explains that 112 works on most mobile phones
 in most countries and to use the local number if known. Countries are never
 guessed from coordinates.
@@ -164,7 +188,7 @@ they can help a person decide whether to call; neither proves a fire.
 2. In Vercel → project `world-vitality` → Logs (or the MCP `get_runtime_logs`),
    look for `globe_` lines:
    - `globe_cameras_loaded {provider, count}` — one per agency, the count should be
-     in the hundreds or thousands (Finland and California are the largest).
+     in the hundreds or thousands (Finland and California are the largest; Singapore about 90).
    - **`globe_cameras_empty {provider}` — the agency answered but no camera passed
      the checks. The format has probably changed: fix the reader in
      `packages/hazard-feeds/src/cameras.ts` and add a test with a sample of the new shape.**

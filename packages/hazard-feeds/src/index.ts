@@ -11,6 +11,7 @@ export {
   pinImageUrl,
   cacheBustedImageUrl,
   autoRefreshMinutes,
+  parseLtaTrafficImages,
   caltransVideoStats,
   type CaltransVideoStats,
 } from "./cameras.js";
