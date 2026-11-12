@@ -6,6 +6,7 @@ import type * as CesiumTypes from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import { loadCesium, type CesiumModules } from "./globe-loader";
 import { addMarkerLayer, type MarkerLayer } from "./globe-markers";
+import { addPlaceLayer } from "./globe-places";
 import {
   pinColor,
   type GlobeFire,
@@ -13,6 +14,10 @@ import {
   type GlobeSelection,
   type PublicCamera,
 } from "./globe-types";
+
+/** How close and how far the person can zoom: see the camera controls set-up below. */
+const MIN_ZOOM_DISTANCE_M = 600_000;
+const MAX_ZOOM_DISTANCE_M = 20_000_000;
 
 /** If the opening view's pictures have not all arrived by now, show the globe anyway. */
 const READY_TIMEOUT_MS = 6000;
@@ -99,6 +104,7 @@ export function GlobeViewer({
   fires = [],
   cameras = [],
   selection = null,
+  locale = "en",
   onSelect,
   onReady,
   onFailed,
@@ -112,6 +118,8 @@ export function GlobeViewer({
   cameras?: PublicCamera[];
   /** The marker the person has opened, highlighted on the globe. */
   selection?: GlobeSelection | null;
+  /** The person's language, used for country names. */
+  locale?: string;
   onSelect?: (selection: GlobeSelection) => void;
   /** Called once the globe has drawn with its map pictures loaded, so the page can retire the instant preview. */
   onReady?: () => void;
@@ -177,6 +185,11 @@ export function GlobeViewer({
           ),
         });
       }
+      // The bundled map picture is low detail: closer than this it is a flat patch of
+      // colour, and further than the other limit the globe shrinks to a speck.
+      const controls = viewer.scene.screenSpaceCameraController;
+      controls.minimumZoomDistance = MIN_ZOOM_DISTANCE_M;
+      controls.maximumZoomDistance = MAX_ZOOM_DISTANCE_M;
       let frames = 0;
       removeFrameCounter = viewer.scene.postRender.addEventListener(() => {
         frames += 1;
@@ -205,6 +218,29 @@ export function GlobeViewer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per loaded engine
   }, [modules]);
+
+  // Country and city names: drawn once per language, underneath the fire and camera dots.
+  useEffect(() => {
+    if (!modules) return;
+    let cancelled = false;
+    let tries = 0;
+    let layer: { destroy(): void } | null = null;
+    const attach = () => {
+      if (cancelled) return;
+      const viewer = viewerRef.current?.cesiumElement;
+      if (!viewer) {
+        if (tries++ < 200) requestAnimationFrame(attach);
+        return;
+      }
+      layer = addPlaceLayer(modules.Cesium, viewer, { locale });
+    };
+    attach();
+    return () => {
+      cancelled = true;
+      layer?.destroy();
+      layer = null;
+    };
+  }, [modules, locale]);
 
   // Fire areas and cameras: one batch of points, rebuilt only when the data changes.
   useEffect(() => {

@@ -15,6 +15,10 @@ Open **View the Globe**. Two kinds of dot join the map after the page is already
 - **Teal: public cameras** from six agencies (below), thinned to one per ~5 km
   square and at most 600 per agency so the map stays readable.
 
+The 3D globe also shows **place names**: country names from the whole-Earth view (the
+biggest first) and city names as you come closer, so a dot is never on a blank map. Country
+names are in the person's language; city names are English (Decision #032).
+
 Tapping a dot opens a side panel (a bottom sheet on a phone):
 
 - **Heat detection:** what it is (and is not), how many detections, strongest
@@ -229,3 +233,10 @@ The build environment has no access to these agencies' servers, so:
 - Change how many fires are shown: `DEFAULT_MAX_FIRES` in `fire-watch.ts`.
 - Change the satellites read: `SOURCES` in `apps/web/lib/global-fires.ts` (FIRMS source names).
 - Change the search radius for "cameras nearby": `NEARBY_CAMERA_RADIUS_KM`.
+- Change which place names appear, or from how far: `COUNTRY_VISIBLE_M` and `CITY_VISIBLE_M` in
+  `packages/hazard-feeds/src/places.ts`. The names themselves are `places-data.ts`, generated
+  once from Natural Earth (`ne_110m_admin_0_countries` label points; `ne_50m_populated_places_simple`
+  capitals plus cities of about one million, no scientific stations or historic places). Add a
+  row by hand for a missing city: `[name, longitude, latitude, tier]`, tier 0 (very large) to 2.
+- Change how close or far a person can zoom: `MIN_ZOOM_DISTANCE_M` / `MAX_ZOOM_DISTANCE_M` in
+  `apps/web/app/globe/globe-viewer.tsx`.

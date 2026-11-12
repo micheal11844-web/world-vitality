@@ -121,7 +121,7 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
   // globe is a visualization, not an interpretation result to
   // summarize.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const sidebar = buildAppSidebar({ t });
 
   const live = useLayer<LiveLayersResponse>("/api/globe/live-layers", 20_000);
@@ -322,6 +322,7 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
                 fires={fires}
                 cameras={cameras}
                 selection={selection}
+                locale={locale}
                 onSelect={setSelection}
                 onReady={() => setGlobeDrawn(true)}
                 onFailed={() => setEngineFailed(true)}

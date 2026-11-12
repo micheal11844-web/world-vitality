@@ -105,14 +105,20 @@ export function addMarkerLayer(
 
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   handler.setInputAction((click: { position: CesiumTypes.Cartesian2 }) => {
-    const picked = viewer.scene.pick(click.position, PICK_SIZE_PX, PICK_SIZE_PX) as
-      { id?: unknown } | undefined;
-    const id = picked?.id;
-    if (typeof id !== "string") return;
-    const separator = id.indexOf(":");
-    const kind = id.slice(0, separator);
-    if ((kind === "fire" || kind === "camera") && entries.has(id)) {
-      onSelect({ kind, id: id.slice(separator + 1) });
+    // Look through everything under the click (place names, the person's own pins) for
+    // the first fire or camera dot: a name drawn over a dot must not swallow the click.
+    const picks = viewer.scene.drillPick(click.position, 12, PICK_SIZE_PX, PICK_SIZE_PX) as {
+      id?: unknown;
+    }[];
+    for (const picked of picks) {
+      const id = picked?.id;
+      if (typeof id !== "string" || !entries.has(id)) continue;
+      const separator = id.indexOf(":");
+      const kind = id.slice(0, separator);
+      if (kind === "fire" || kind === "camera") {
+        onSelect({ kind, id: id.slice(separator + 1) });
+        return;
+      }
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 

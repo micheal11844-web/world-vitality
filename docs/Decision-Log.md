@@ -1105,3 +1105,46 @@ for Africa; and without a key the agency may rate-limit us (logged; a key can be
 
 **Revisit when:** Singapore rate-limits, or another agency also changes the address of
 every picture (the `freshAddress` route is written for the `lta-` prefix only).
+
+## Decision #032 — Place names on the 3D Globe, from bundled public-domain data
+
+**Date:** 2026-11-12. **Status:** accepted.
+
+**Context:** The owner opened the Globe and found no text on it: the 3D base map is
+Natural Earth II pictures only, so there were no country or city names, and a fire dot
+in the middle of a blank map tells a person nothing about where they are looking. (The
+flat preview map uses street-map tiles, which carry names; the 3D globe replaces it.)
+
+**Decision:** Draw country and city names on the 3D globe as one batch of Cesium labels
+and points (`apps/web/app/globe/globe-places.ts`), not as entities. Data is Natural
+Earth (public domain), generated once and checked in (`packages/hazard-feeds/src/places-data.ts`):
+175 countries and 492 cities (every capital plus every city of about a million people).
+Country names are **not stored**: the browser's own `Intl.DisplayNames` gives each in the
+person's language (all five). City names are English. What is shown depends on
+distance (`COUNTRY_VISIBLE_M`, `CITY_VISIBLE_M` in `places.ts`): the whole-Earth view has
+only the biggest country names, and cities arrive in steps (very large, then capitals
+and big cities, then the rest). Clicks look **through** a name to the fire or camera dot
+under it (`drillPick`). The person can no longer zoom in closer than 600 km or out
+beyond 20,000 km: closer, the bundled picture is a flat patch of colour; further, the
+globe shrinks to a speck.
+
+**Alternatives considered:**
+
+- _A hosted street-map or satellite layer with its own names._ Sharper when zoomed in
+  and no name data to carry, but a new outside host in the CSP, a usage policy that
+  (for the free street map) does not suit an app that charges, and a paid key for the
+  good ones. Not done; it is the next step if the zoomed-in view must be sharper.
+- _Names as `Entity` labels like the person's own pins._ Hundreds of entities make the
+  globe heavy to open and turn, and each gets a selection box when clicked. Rejected.
+- _Translating city names._ Natural Earth carries only English for these; the country
+  names are the ones people look for first. Left in English.
+
+**Trade-offs, stated honestly:** names can overlap where cities are close (Kinshasa and
+Brazzaville, Kigali and Bujumbura); the map is still low detail when close in, so the
+names are what make it readable there; a small country or a city not in the list shows
+no name. Names are a drawing aid, not an authority on borders: disputed territories carry
+only the names the data lists, and two places without an ISO code (Somaliland, Northern
+Cyprus) have no label of their own.
+
+**Revisit when:** the zoomed-in view needs more than names (then choose a tile source and
+add its host to the CSP and the drift test), or users ask for city names in their own language.

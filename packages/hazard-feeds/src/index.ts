@@ -40,3 +40,14 @@ export {
   type FireWatch,
   type GlobeFire,
 } from "./fire-watch.js";
+export {
+  CITY_PLACES,
+  COUNTRY_PLACES,
+  CITY_VISIBLE_M,
+  COUNTRY_VISIBLE_M,
+  countryName,
+  type CityPlace,
+  type CountryPlace,
+  type PlaceTier,
+  type VisibleRange,
+} from "./places.js";
