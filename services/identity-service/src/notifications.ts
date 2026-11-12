@@ -48,7 +48,7 @@ export type NotificationSource = "official_alert" | "collaboration" | "billing";
  * alerts have none — the agency's own text is never re-worded.
  */
 export type NotificationMessageKey =
-  "field_comment" | "member_added" | "payment_failed" | "ownership_received";
+  "field_comment" | "member_added" | "payment_failed" | "payment_refunded" | "ownership_received";
 
 export type NotificationMessageParams = Record<string, string>;
 
@@ -57,6 +57,7 @@ export function isNotificationMessageKey(value: unknown): value is NotificationM
     value === "field_comment" ||
     value === "member_added" ||
     value === "payment_failed" ||
+    value === "payment_refunded" ||
     value === "ownership_received"
   );
 }
@@ -452,6 +453,39 @@ export function paymentFailedNotification(input: {
     href: "/billing",
     dedupeKey: `payment_failed:${input.subscriptionCode}:${input.now.toISOString().slice(0, 10)}`,
     messageKey: "payment_failed",
+    messageParams: { plan: input.plan, planLabel: input.planLabel },
+  };
+}
+
+/**
+ * "Your refund has been processed." Written when Paystack reports that a
+ * refund for one of the person's payments is done. Informational: it is good
+ * news, and nothing needs doing. It says the plan is NOT changed by a refund
+ * (the plan follows the subscription, and ending that is a separate step the
+ * person controls from the plan screen), so nobody assumes a refund cancelled
+ * their renewals. No amount: Paystack's refund events do not say plainly
+ * which unit theirs is in. One per payment, however often Paystack repeats it.
+ */
+export function refundProcessedNotification(input: {
+  /** The refunded payment's Paystack reference. */
+  reference: string;
+  /** The plan id (e.g. `standard`) — rendered in the reader's language. `""` when it was not one of ours. */
+  plan: string;
+  /** English name of the plan, the stored fallback. */
+  planLabel: string;
+}): NewNotification {
+  const what = input.planLabel ? `your ${input.planLabel} plan payment` : "your payment";
+  return {
+    source: "billing",
+    tier: "info",
+    title: truncateText("Your refund has been processed", TITLE_MAX),
+    body: truncateText(
+      `We processed a refund for ${what}. It can take a few days to show in your account. A refund doesn’t change your plan; to stop renewals, cancel from Billing.`,
+      BODY_MAX,
+    ),
+    href: "/billing",
+    dedupeKey: `payment_refunded:${input.reference}`,
+    messageKey: "payment_refunded",
     messageParams: { plan: input.plan, planLabel: input.planLabel },
   };
 }

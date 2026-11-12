@@ -257,6 +257,10 @@ test("if saving fails, the error surfaces (so Paystack retries) and the event is
     findUserIdByEmail: (e) => inner.findUserIdByEmail(e),
     hasEvent: (k) => inner.hasEvent(k),
     recordEvent: (r) => inner.recordEvent(r),
+    recordPayment: (p) => inner.recordPayment(p),
+    getPayment: (r) => inner.getPayment(r),
+    listPayments: (u, n) => inner.listPayments(u, n),
+    setRefundStatus: (r, s) => inner.setRefundStatus(r, s),
     saveSubscription: async () => {
       throw new Error("database down");
     },
@@ -275,6 +279,7 @@ test("onApplied hears about an applied event, once, with the subscription as it 
   const { deps } = setup();
   const heard: { userId: string; type: string; plan: string; status: string }[] = [];
   deps.onApplied = (e) => {
+    assert.ok(e.state, "a subscription event carries the subscription");
     heard.push({ userId: e.userId, type: e.type, plan: e.state.plan, status: e.state.status });
   };
   await send(deps, create());

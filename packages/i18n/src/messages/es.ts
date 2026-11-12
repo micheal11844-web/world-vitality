@@ -998,6 +998,37 @@ export const es: Messages = {
   "dm.map.fireSummary":
     "Anomalía térmica, {satellite}, {date} ({dayNight}). No es un incendio forestal confirmado.",
 
+  // ---- Payment history, receipts and refunds (v111)
+  "billing.history.title": "Historial de pagos",
+  "billing.history.unavailable":
+    "No pudimos cargar tu historial de pagos en este momento. Inténtalo de nuevo en unos instantes.",
+  "billing.history.receipt": "Recibo",
+  "billing.history.receiptAria": "Recibo del pago de {amount} del {date}",
+  "billing.history.recentOnly": "Se muestran tus {count} pagos más recientes.",
+  "billing.history.note":
+    "Paystack también puede enviarte por correo su propio recibo de cada pago.",
+  "billing.history.itemOther": "Pago",
+  "billing.refund.inProgress": "Reembolso en curso",
+  "billing.refund.processed": "Reembolso procesado",
+  "billing.refund.failed": "El reembolso no se completó",
+  "billing.receipt.title": "Recibo de pago",
+  "billing.receipt.issuedBy": "Emitido por",
+  "billing.receipt.account": "Cuenta",
+  "billing.receipt.datePaid": "Fecha de pago",
+  "billing.receipt.reference": "Referencia del pago",
+  "billing.receipt.item": "Concepto",
+  "billing.receipt.itemPlan": "Suscripción al plan {plan}",
+  "billing.receipt.itemOther": "Pago a World Vitality",
+  "billing.receipt.amount": "Importe pagado",
+  "billing.receipt.method": "Pagado mediante",
+  "billing.receipt.refundInProgress": "Hay un reembolso de este pago en curso.",
+  "billing.receipt.refundProcessed": "Se procesó un reembolso de este pago.",
+  "billing.receipt.refundFailed": "Un reembolso de este pago no se completó.",
+  "billing.receipt.notInvoice":
+    "Este documento es un comprobante de tu pago. No es una factura fiscal.",
+  "billing.receipt.print": "Imprimir o guardar como PDF",
+  "billing.receipt.back": "Volver a Plan y facturación",
+
   // ---- Team page, plan limits and plan notices (v108)
   "team.title": "Equipo — {workspace}",
   "team.intro": "Invita a personas a este espacio de trabajo y gestiona su acceso.",
@@ -1057,6 +1088,13 @@ export const es: Messages = {
   "notifications.msg.paymentFailed.title": "No se pudo procesar tu pago",
   "notifications.msg.paymentFailed.body":
     "No pudimos renovar tu plan {plan}. Actualiza tu tarjeta para conservarlo.",
+
+  // ---- Refund notice (v111)
+  "notifications.msg.paymentRefunded.title": "Tu reembolso se ha procesado",
+  "notifications.msg.paymentRefunded.body":
+    "Procesamos un reembolso de tu pago del plan {plan}. Puede tardar unos días en aparecer en tu cuenta. Un reembolso no cambia tu plan; para detener las renovaciones, cancela desde Plan y facturación.",
+  "notifications.msg.paymentRefunded.bodyNoPlan":
+    "Procesamos un reembolso de tu pago. Puede tardar unos días en aparecer en tu cuenta. Un reembolso no cambia tu plan; para detener las renovaciones, cancela desde Plan y facturación.",
 
   // ---- Hand over ownership of the organisation (v105)
   "settings.org.transfer.title": "Ceder la propiedad",

@@ -89,6 +89,8 @@ test("a subscription.create body is reduced to the fields we use", () => {
       planCode: "PLN_std",
       currency: "NGN",
       nextPaymentDate: "2026-12-15T00:00:00.000Z",
+      payment: null,
+      refund: null,
     },
   );
 });
@@ -279,4 +281,119 @@ test("checkout reports a Paystack refusal, an odd response, and a network failur
       reason: "paystack_error",
     },
   );
+});
+
+/* ---------- payments and refunds ---------- */
+
+const charge = (data: Record<string, unknown>) => JSON.stringify({ event: "charge.success", data });
+
+test("a charge.success becomes a payment: reference, kobo amount, currency, paid time", () => {
+  const parsed = parsePaystackEvent(
+    charge({
+      reference: "ref_123",
+      amount: 750000,
+      currency: "ngn",
+      status: "success",
+      paid_at: "2026-11-15T10:30:00.000Z",
+      plan: { plan_code: "PLN_std" },
+      customer: { customer_code: "CUS_xyz", email: "ada@example.com" },
+    }),
+  );
+  assert.ok(parsed.ok);
+  assert.deepEqual(parsed.event.payment, {
+    reference: "ref_123",
+    amountMinor: 750000,
+    currency: "NGN",
+    paidAt: "2026-11-15T10:30:00.000Z",
+  });
+  assert.equal(parsed.event.planCode, "PLN_std");
+  assert.equal(parsed.event.refund, null);
+});
+
+test("a payment amount may arrive as a string of digits; a paid time may be missing", () => {
+  const parsed = parsePaystackEvent(
+    charge({ reference: "r", amount: "1000", currency: "USD", customer: { email: "a@b.co" } }),
+  );
+  assert.ok(parsed.ok);
+  assert.deepEqual(parsed.event.payment, {
+    reference: "r",
+    amountMinor: 1000,
+    currency: "USD",
+    paidAt: null,
+  });
+});
+
+test("a charge.success we cannot vouch for is not a payment", () => {
+  const base = { reference: "r", amount: 500, currency: "NGN", customer: { email: "a@b.co" } };
+  const none = (over: Record<string, unknown>) => {
+    const parsed = parsePaystackEvent(charge({ ...base, ...over }));
+    assert.ok(parsed.ok);
+    assert.equal(parsed.event.payment, null, JSON.stringify(over));
+  };
+  none({ reference: undefined });
+  none({ reference: "x".repeat(201) });
+  none({ amount: 0 });
+  none({ amount: -5 });
+  none({ amount: 12.5 });
+  none({ amount: "12.50" });
+  none({ amount: undefined });
+  none({ currency: "GHS" });
+  none({ currency: undefined });
+  none({ status: "failed" });
+  // Other events never carry a payment.
+  const other = parsePaystackEvent(
+    JSON.stringify({ event: "invoice.payment_failed", data: { ...base, customer: {} } }),
+  );
+  assert.ok(other.ok);
+  assert.equal(other.event.payment, null);
+});
+
+test("an unreadable paid time falls back to created_at, then to nothing", () => {
+  const a = parsePaystackEvent(
+    charge({
+      reference: "r",
+      amount: 5,
+      currency: "NGN",
+      paid_at: "never",
+      created_at: "2026-11-01T08:00:00Z",
+    }),
+  );
+  assert.ok(a.ok && a.event.payment);
+  assert.equal(a.event.payment.paidAt, "2026-11-01T08:00:00.000Z");
+  const b = parsePaystackEvent(
+    charge({ reference: "r", amount: 5, currency: "NGN", paid_at: "never" }),
+  );
+  assert.ok(b.ok && b.event.payment);
+  assert.equal(b.event.payment.paidAt, null);
+});
+
+test("refund events carry the payment's reference and the status named by the event", () => {
+  for (const status of ["pending", "processing", "processed", "failed"] as const) {
+    const parsed = parsePaystackEvent(
+      JSON.stringify({
+        event: `refund.${status}`,
+        data: { transaction_reference: "ref_9", amount: "10000", customer: { email: "a@b.co" } },
+      }),
+    );
+    assert.ok(parsed.ok);
+    assert.deepEqual(parsed.event.refund, { reference: "ref_9", status });
+    assert.equal(parsed.event.payment, null);
+  }
+});
+
+test("a refund's reference is also read from a nested transaction, and nothing else is guessed", () => {
+  const nested = parsePaystackEvent(
+    JSON.stringify({ event: "refund.processed", data: { transaction: { reference: "ref_7" } } }),
+  );
+  assert.ok(nested.ok);
+  assert.deepEqual(nested.event.refund, { reference: "ref_7", status: "processed" });
+  for (const body of [
+    { event: "refund.processed", data: { amount: 5 } },
+    { event: "refund.mystery", data: { transaction_reference: "ref_1" } },
+    { event: "refund.processed", data: { transaction_reference: "x".repeat(201) } },
+  ]) {
+    const parsed = parsePaystackEvent(JSON.stringify(body));
+    assert.ok(parsed.ok);
+    assert.equal(parsed.event.refund, null, JSON.stringify(body));
+  }
 });

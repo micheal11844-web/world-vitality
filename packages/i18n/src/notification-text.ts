@@ -77,6 +77,20 @@ export function localizeNotificationText(
     };
   }
 
+  if (notification.messageKey === "payment_refunded") {
+    // No amount: a refund notice only says one was processed (see
+    // `refundProcessedNotification`). The plan is named when it is one of ours.
+    const planId = params?.plan;
+    const planKey = `billing.plan.${planId ?? ""}`;
+    const plan = planId && isMessageKey(planKey) ? t(planKey) : params?.planLabel || "";
+    return {
+      title: t("notifications.msg.paymentRefunded.title"),
+      body: plan
+        ? t("notifications.msg.paymentRefunded.body", { plan })
+        : t("notifications.msg.paymentRefunded.bodyNoPlan"),
+    };
+  }
+
   if (notification.messageKey === "ownership_received") {
     const organisation = params?.organisation;
     if (!organisation) return stored;

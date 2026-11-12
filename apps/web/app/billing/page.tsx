@@ -1,17 +1,29 @@
-import { PLANS, summariseBilling, type BillingSummary } from "@world-vitality/billing-service";
+import {
+  PLANS,
+  refundStateOf,
+  summariseBilling,
+  type BillingSummary,
+} from "@world-vitality/billing-service";
 import { getBillingStore, getOfferedPrices } from "../../lib/billing";
 import { getAccessContext } from "../../lib/get-access-context";
 import { logApplication } from "../../lib/logger";
 import { requireSession } from "../../lib/require-session";
-import { BillingView, type BillingPlanLimits } from "./billing-view";
+import { BillingView, type BillingPaymentRow, type BillingPlanLimits } from "./billing-view";
 
 export const dynamic = "force-dynamic";
+
+/** How many of a person's latest payments the history lists. */
+const PAYMENT_HISTORY_LIMIT = 24;
 
 /**
  * Plan & billing (BUILD_PLAN v95). Shows the plan the signed-in person's
  * organisation is on — its OWNER's plan — what each plan includes, and, for
  * the owner only, the buttons to subscribe, update the card or cancel.
  * Members see the plan read-only with a note that the owner manages it.
+ *
+ * The person's own payment history is listed too (their payments, whoever
+ * owns the organisation now), each with a printable receipt. A failure to read
+ * it is shown as its own note and never hides the plan.
  *
  * Only the two limits the app actually enforces are listed (people, saved
  * items): the plan catalogue also defines workspace counts and feature
@@ -40,6 +52,24 @@ export default async function BillingPage({
     logApplication.error("billing_page_load_failed", err, { userId: session.userId });
   }
 
+  // The person's own payments (they are the one who paid), newest first.
+  let payments: BillingPaymentRow[] | null = [];
+  try {
+    payments = (await getBillingStore().listPayments(session.userId, PAYMENT_HISTORY_LIMIT)).map(
+      (p) => ({
+        reference: p.reference,
+        plan: p.plan,
+        amountMinor: p.amountMinor,
+        currency: p.currency,
+        paidAt: p.paidAt,
+        refund: refundStateOf(p),
+      }),
+    );
+  } catch (err) {
+    logApplication.error("billing_payment_history_failed", err, { userId: session.userId });
+    payments = null;
+  }
+
   const limit = (id: "basic" | "standard" | "premium"): BillingPlanLimits => ({
     seats: PLANS[id].limits.seats,
     savedItems: PLANS[id].limits.savedItems,
@@ -57,6 +87,8 @@ export default async function BillingPage({
         amountMajor: o.amountMinor / 100,
       }))}
       limits={{ basic: limit("basic"), standard: limit("standard"), premium: limit("premium") }}
+      payments={payments}
+      paymentHistoryLimit={PAYMENT_HISTORY_LIMIT}
     />
   );
 }

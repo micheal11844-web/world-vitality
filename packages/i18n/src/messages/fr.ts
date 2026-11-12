@@ -1011,6 +1011,37 @@ export const fr: Messages = {
   "dm.map.fireSummary":
     "Anomalie thermique, {satellite}, {date} ({dayNight}). Ce n’est pas un incendie de forêt confirmé.",
 
+  // ---- Payment history, receipts and refunds (v111)
+  "billing.history.title": "Historique des paiements",
+  "billing.history.unavailable":
+    "Nous n’avons pas pu charger votre historique de paiements pour le moment. Réessayez dans un instant.",
+  "billing.history.receipt": "Reçu",
+  "billing.history.receiptAria": "Reçu du paiement de {amount} du {date}",
+  "billing.history.recentOnly": "Vos {count} paiements les plus récents sont affichés.",
+  "billing.history.note":
+    "Paystack peut aussi vous envoyer par e-mail son propre reçu pour chaque paiement.",
+  "billing.history.itemOther": "Paiement",
+  "billing.refund.inProgress": "Remboursement en cours",
+  "billing.refund.processed": "Remboursement effectué",
+  "billing.refund.failed": "Le remboursement n’a pas abouti",
+  "billing.receipt.title": "Reçu de paiement",
+  "billing.receipt.issuedBy": "Émis par",
+  "billing.receipt.account": "Compte",
+  "billing.receipt.datePaid": "Date du paiement",
+  "billing.receipt.reference": "Référence du paiement",
+  "billing.receipt.item": "Article",
+  "billing.receipt.itemPlan": "Abonnement à l’offre {plan}",
+  "billing.receipt.itemOther": "Paiement à World Vitality",
+  "billing.receipt.amount": "Montant payé",
+  "billing.receipt.method": "Payé via",
+  "billing.receipt.refundInProgress": "Un remboursement de ce paiement est en cours.",
+  "billing.receipt.refundProcessed": "Un remboursement de ce paiement a été effectué.",
+  "billing.receipt.refundFailed": "Un remboursement de ce paiement n’a pas abouti.",
+  "billing.receipt.notInvoice":
+    "Ce document atteste votre paiement. Ce n’est pas une facture fiscale.",
+  "billing.receipt.print": "Imprimer ou enregistrer en PDF",
+  "billing.receipt.back": "Retour à Offre et facturation",
+
   // ---- Team page, plan limits and plan notices (v108)
   "team.title": "Équipe — {workspace}",
   "team.intro": "Invitez des personnes dans cet espace de travail et gérez leur accès.",
@@ -1073,6 +1104,13 @@ export const fr: Messages = {
   "notifications.msg.paymentFailed.title": "Votre paiement n’a pas abouti",
   "notifications.msg.paymentFailed.body":
     "Nous n’avons pas pu renouveler votre offre {plan}. Mettez à jour votre carte pour la conserver.",
+
+  // ---- Refund notice (v111)
+  "notifications.msg.paymentRefunded.title": "Votre remboursement a été effectué",
+  "notifications.msg.paymentRefunded.body":
+    "Nous avons effectué un remboursement de votre paiement pour l’offre {plan}. Il peut falloir quelques jours pour qu’il apparaisse sur votre compte. Un remboursement ne modifie pas votre offre ; pour arrêter les renouvellements, résiliez depuis Offre et facturation.",
+  "notifications.msg.paymentRefunded.bodyNoPlan":
+    "Nous avons effectué un remboursement de votre paiement. Il peut falloir quelques jours pour qu’il apparaisse sur votre compte. Un remboursement ne modifie pas votre offre ; pour arrêter les renouvellements, résiliez depuis Offre et facturation.",
 
   // ---- Hand over ownership of the organisation (v105)
   "settings.org.transfer.title": "Transférer la propriété",

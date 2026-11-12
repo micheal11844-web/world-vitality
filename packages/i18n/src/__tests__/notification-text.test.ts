@@ -165,3 +165,28 @@ test("a failed-payment notice is re-written in the reader's language with the pl
     body: n.body,
   });
 });
+
+test("a refund notice is re-written in the reader's language, naming the plan when it is one of ours", () => {
+  const n = {
+    title: "Your refund has been processed",
+    body: "We processed a refund for your Standard plan payment.",
+    messageKey: "payment_refunded",
+    messageParams: { plan: "standard", planLabel: "Standard" },
+  };
+  for (const locale of ["en", "es", "fr", "pt", "ar"] as const) {
+    const tr = createTranslator(locale);
+    const out = localizeNotificationText(n, tr);
+    assert.equal(out.title, tr.t("notifications.msg.paymentRefunded.title"), locale);
+    assert.equal(
+      out.body,
+      tr.t("notifications.msg.paymentRefunded.body", { plan: tr.t("billing.plan.standard") }),
+      locale,
+    );
+  }
+  // A payment whose plan is not one of ours gets the wording without a plan name.
+  const none = localizeNotificationText(
+    { ...n, messageParams: { plan: "", planLabel: "" } },
+    createTranslator("es"),
+  );
+  assert.equal(none.body, createTranslator("es").t("notifications.msg.paymentRefunded.bodyNoPlan"));
+});

@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell, Button, Card, Select, Text } from "@world-vitality/ui-components";
-import type { BillingSummary } from "@world-vitality/billing-service";
+import type { BillingSummary, PaymentRefundState } from "@world-vitality/billing-service";
 import type { MessageKey } from "@world-vitality/i18n";
 import { useI18n } from "../../lib/i18n/i18n-provider";
+import { formatMoneyMinor } from "../../lib/format-money";
 import {
   cancelSubscriptionAction,
   openCardPageAction,
@@ -29,6 +30,20 @@ export interface BillingOffer {
   amountMajor: number;
 }
 
+/** One line of the person's payment history. */
+export interface BillingPaymentRow {
+  /** Paystack's reference; also the receipt's address. */
+  reference: string;
+  /** `null` when the payment was not for one of our paid plans. */
+  plan: "standard" | "premium" | null;
+  /** Smallest currency unit (kobo / cents). */
+  amountMinor: number;
+  currency: "NGN" | "USD";
+  /** ISO timestamp. */
+  paidAt: string;
+  refund: PaymentRefundState;
+}
+
 export interface BillingViewProps {
   /** `null` when the plan could not be read — the page says so instead of guessing. */
   summary: BillingSummary | null;
@@ -39,6 +54,10 @@ export interface BillingViewProps {
   /** Only prices that can really be bought (a Paystack plan exists for each). */
   offers: BillingOffer[];
   limits: Record<"basic" | "standard" | "premium", BillingPlanLimits>;
+  /** The person's own payments, newest first; `null` when they could not be read. */
+  payments: BillingPaymentRow[] | null;
+  /** How many the list is capped at, to say so when it is full. */
+  paymentHistoryLimit: number;
 }
 
 const PLAN_KEY = {
@@ -69,6 +88,8 @@ export function BillingView({
   checkoutReturn,
   offers,
   limits,
+  payments,
+  paymentHistoryLimit,
 }: BillingViewProps) {
   const translator = useI18n();
   const { t } = translator;
@@ -453,6 +474,13 @@ export function BillingView({
           </Card>
         )}
 
+        <PaymentHistory
+          payments={payments}
+          limit={paymentHistoryLimit}
+          showUnavailable={isOwner}
+          planLabel={planLabel}
+        />
+
         {error && (
           <Text variant="caption" role="alert" style={errorColor}>
             {error}
@@ -464,5 +492,113 @@ export function BillingView({
         </Text>
       </div>
     </AppShell>
+  );
+}
+
+const REFUND_TEXT = {
+  in_progress: "billing.refund.inProgress",
+  processed: "billing.refund.processed",
+  failed: "billing.refund.failed",
+} as const satisfies Record<Exclude<PaymentRefundState, "none">, MessageKey>;
+
+/**
+ * What the person has paid, newest first, each with a link to a printable
+ * receipt. Nothing is shown when there are no payments (a person who has never
+ * paid has no use for an empty box); a read that failed says so, but only to
+ * the owner, who is the one who pays.
+ */
+function PaymentHistory({
+  payments,
+  limit,
+  showUnavailable,
+  planLabel,
+}: {
+  payments: BillingPaymentRow[] | null;
+  limit: number;
+  showUnavailable: boolean;
+  planLabel: (id: "standard" | "premium") => string;
+}) {
+  const { t, date, locale } = useI18n();
+  if (payments === null) {
+    if (!showUnavailable) return null;
+    return (
+      <Card>
+        <div style={stack}>
+          <Text variant="sectionTitle" as="h2">
+            {t("billing.history.title")}
+          </Text>
+          <Text variant="body" style={muted} role="status">
+            {t("billing.history.unavailable")}
+          </Text>
+        </div>
+      </Card>
+    );
+  }
+  if (payments.length === 0) return null;
+  return (
+    <Card>
+      <div style={stack}>
+        <Text variant="sectionTitle" as="h2">
+          {t("billing.history.title")}
+        </Text>
+        <ul
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--wv-space-sm)",
+          }}
+          data-testid="payment-history"
+        >
+          {payments.map((p) => {
+            const amount = formatMoneyMinor(locale, p.amountMinor, p.currency);
+            const when = date(p.paidAt, { dateStyle: "medium", timeZone: "UTC" });
+            return (
+              <li
+                key={p.reference}
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: "var(--wv-space-xs) var(--wv-space-md)",
+                  paddingBlockEnd: "var(--wv-space-sm)",
+                  borderBlockEnd: "1px solid var(--wv-border)",
+                }}
+              >
+                <span style={{ ...sans, minWidth: 0 }}>
+                  <span style={{ display: "block", fontWeight: 600 }}>
+                    {p.plan ? planLabel(p.plan) : t("billing.history.itemOther")}
+                    {" · "}
+                    <bdi>{amount}</bdi>
+                  </span>
+                  <span style={{ display: "block", fontSize: "0.875rem", ...muted }}>
+                    {when}
+                    {p.refund !== "none" && ` · ${t(REFUND_TEXT[p.refund])}`}
+                  </span>
+                </span>
+                <Link
+                  href={`/billing/receipt/${encodeURIComponent(p.reference)}`}
+                  aria-label={t("billing.history.receiptAria", { amount, date: when })}
+                  style={{ ...sans, fontSize: "0.875rem", color: "var(--wv-accent)" }}
+                >
+                  {t("billing.history.receipt")}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        {payments.length >= limit && (
+          <Text variant="caption" style={muted}>
+            {t("billing.history.recentOnly", { count: limit })}
+          </Text>
+        )}
+        <Text variant="caption" style={muted}>
+          {t("billing.history.note")}
+        </Text>
+      </div>
+    </Card>
   );
 }

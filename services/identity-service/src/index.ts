@@ -58,6 +58,7 @@ export {
   fieldCommentNotification,
   membershipAddedNotification,
   paymentFailedNotification,
+  refundProcessedNotification,
   ownershipReceivedNotification,
   isStillActive,
   isNwsCoverageCountry,

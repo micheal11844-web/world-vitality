@@ -966,6 +966,34 @@ export const ar: Messages = {
   "dm.map.fireName": "رصد حريق (الثقة: {confidence})",
   "dm.map.fireSummary": "شذوذ حراري، {satellite}، {date} ({dayNight}). ليس حريق غابات مؤكدًا.",
 
+  // ---- Payment history, receipts and refunds (v111)
+  "billing.history.title": "سجل المدفوعات",
+  "billing.history.unavailable": "تعذّر تحميل سجل مدفوعاتك الآن. حاول مرة أخرى بعد قليل.",
+  "billing.history.receipt": "الإيصال",
+  "billing.history.receiptAria": "إيصال الدفعة البالغة {amount} بتاريخ {date}",
+  "billing.history.recentOnly": "نعرض آخر {count} من مدفوعاتك.",
+  "billing.history.note": "قد ترسل لك Paystack أيضًا إيصالها الخاص بكل دفعة عبر البريد الإلكتروني.",
+  "billing.history.itemOther": "دفعة",
+  "billing.refund.inProgress": "الاسترداد قيد التنفيذ",
+  "billing.refund.processed": "تمت معالجة الاسترداد",
+  "billing.refund.failed": "لم يكتمل الاسترداد",
+  "billing.receipt.title": "إيصال دفع",
+  "billing.receipt.issuedBy": "صادر عن",
+  "billing.receipt.account": "الحساب",
+  "billing.receipt.datePaid": "تاريخ الدفع",
+  "billing.receipt.reference": "مرجع الدفعة",
+  "billing.receipt.item": "البند",
+  "billing.receipt.itemPlan": "اشتراك في الخطة {plan}",
+  "billing.receipt.itemOther": "دفعة إلى World Vitality",
+  "billing.receipt.amount": "المبلغ المدفوع",
+  "billing.receipt.method": "تم الدفع عبر",
+  "billing.receipt.refundInProgress": "هناك استرداد قيد التنفيذ لهذه الدفعة.",
+  "billing.receipt.refundProcessed": "تمت معالجة استرداد لهذه الدفعة.",
+  "billing.receipt.refundFailed": "لم يكتمل استرداد هذه الدفعة.",
+  "billing.receipt.notInvoice": "هذا المستند سجلّ لدفعتك وليس فاتورة ضريبية.",
+  "billing.receipt.print": "طباعة أو حفظ بصيغة PDF",
+  "billing.receipt.back": "العودة إلى الخطة والفوترة",
+
   // ---- Team page, plan limits and plan notices (v108)
   "team.title": "الفريق — {workspace}",
   "team.intro": "ادعُ أشخاصًا إلى مساحة العمل هذه وأدِر صلاحيات وصولهم.",
@@ -1022,6 +1050,13 @@ export const ar: Messages = {
   "notifications.msg.paymentFailed.title": "لم تتم عملية الدفع",
   "notifications.msg.paymentFailed.body":
     "تعذّر تجديد الخطة {plan} الخاصة بك. حدّث بطاقتك للاحتفاظ بها.",
+
+  // ---- Refund notice (v111)
+  "notifications.msg.paymentRefunded.title": "تمت معالجة استردادك",
+  "notifications.msg.paymentRefunded.body":
+    "عالجنا استردادًا لدفعتك للخطة {plan}. قد يستغرق ظهوره في حسابك بضعة أيام. لا يغيّر الاسترداد خطتك؛ لإيقاف التجديد ألغِ الاشتراك من الخطة والفوترة.",
+  "notifications.msg.paymentRefunded.bodyNoPlan":
+    "عالجنا استردادًا لدفعتك. قد يستغرق ظهوره في حسابك بضعة أيام. لا يغيّر الاسترداد خطتك؛ لإيقاف التجديد ألغِ الاشتراك من الخطة والفوترة.",
 
   // ---- Hand over ownership of the organisation (v105)
   "settings.org.transfer.title": "نقل الملكية",

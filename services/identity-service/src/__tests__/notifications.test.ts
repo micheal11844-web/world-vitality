@@ -12,6 +12,7 @@ import {
   officialAlertTier,
   officialAlertToNotification,
   paymentFailedNotification,
+  refundProcessedNotification,
   ownershipReceivedNotification,
   safeInternalHref,
   summarize,
@@ -393,6 +394,33 @@ test("a failed-payment notice is an alert that links to the plan screen, once pe
     a.dedupeKey,
   );
   assert.equal(isNotificationMessageKey("payment_failed"), true);
+});
+
+test("a refund notice is informational, links to the plan screen, once per payment, and says the plan is unchanged", () => {
+  const a = refundProcessedNotification({
+    reference: "ref_1",
+    plan: "standard",
+    planLabel: "Standard",
+  });
+  assert.equal(a.source, "billing");
+  assert.equal(a.tier, "info");
+  assert.equal(a.href, "/billing");
+  assert.equal(a.messageKey, "payment_refunded");
+  assert.deepEqual(a.messageParams, { plan: "standard", planLabel: "Standard" });
+  assert.ok(a.body?.includes("Standard plan payment"));
+  assert.ok(a.body?.includes("doesn’t change your plan"));
+  // Keyed by the payment, so a repeated event cannot make a second notice.
+  assert.equal(a.dedupeKey, "payment_refunded:ref_1");
+  assert.equal(
+    refundProcessedNotification({ reference: "ref_1", plan: "", planLabel: "" }).dedupeKey,
+    a.dedupeKey,
+  );
+  assert.ok(
+    refundProcessedNotification({ reference: "ref_2", plan: "", planLabel: "" }).body?.includes(
+      "your payment.",
+    ),
+  );
+  assert.equal(isNotificationMessageKey("payment_refunded"), true);
 });
 
 test("an ownership notice names the previous owner by display name or the start of their email, and links to Settings", () => {

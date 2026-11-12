@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SubscriptionState, SubscriptionStatus, SubscriptionSource } from "./subscription.js";
-import type { PlanId } from "./plans.js";
+import type { PaidPlanId, PlanId } from "./plans.js";
+import {
+  REFUND_STATUSES,
+  type PaymentCurrency,
+  type PaymentRecord,
+  type RefundStatus,
+} from "./payments.js";
 
 /**
  * Where billing state is kept. `SupabaseBillingStore` is the real one
@@ -25,6 +31,16 @@ export interface BillingStore {
   saveSubscription(state: SubscriptionState): Promise<void>;
   hasEvent(key: string): Promise<boolean>;
   recordEvent(record: BillingEventRecord): Promise<void>;
+  /**
+   * Keeps a successful payment. Idempotent by reference: a payment already
+   * held is left exactly as it is (it may have a refund status by now).
+   */
+  recordPayment(payment: Omit<PaymentRecord, "refundStatus">): Promise<void>;
+  getPayment(reference: string): Promise<PaymentRecord | null>;
+  /** The person's payments, newest first. */
+  listPayments(userId: string, limit: number): Promise<PaymentRecord[]>;
+  /** Stores how far a payment's refund has got. */
+  setRefundStatus(reference: string, status: RefundStatus): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -32,6 +48,7 @@ export interface BillingStore {
 export class InMemoryBillingStore implements BillingStore {
   readonly subscriptions = new Map<string, SubscriptionState>();
   readonly events = new Map<string, BillingEventRecord>();
+  readonly payments = new Map<string, PaymentRecord>();
   /** email (lowercase) → userId; stands in for the `profiles` table. */
   readonly profiles = new Map<string, string>();
 
@@ -58,6 +75,24 @@ export class InMemoryBillingStore implements BillingStore {
   async recordEvent(record: BillingEventRecord) {
     if (!this.events.has(record.key)) this.events.set(record.key, record);
   }
+  async recordPayment(payment: Omit<PaymentRecord, "refundStatus">) {
+    if (!this.payments.has(payment.reference)) {
+      this.payments.set(payment.reference, { ...payment, refundStatus: null });
+    }
+  }
+  async getPayment(reference: string) {
+    return this.payments.get(reference) ?? null;
+  }
+  async listPayments(userId: string, limit: number) {
+    return [...this.payments.values()]
+      .filter((p) => p.userId === userId)
+      .sort((a, b) => Date.parse(b.paidAt) - Date.parse(a.paidAt))
+      .slice(0, limit);
+  }
+  async setRefundStatus(reference: string, status: RefundStatus) {
+    const payment = this.payments.get(reference);
+    if (payment) this.payments.set(reference, { ...payment, refundStatus: status });
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -76,6 +111,39 @@ interface SubscriptionRow {
   current_period_end: string | null;
   past_due_since: string | null;
   updated_at: string;
+}
+
+const PAYMENT_COLUMNS = "reference, user_id, amount_minor, currency, plan, paid_at, refund_status";
+
+interface PaymentRow {
+  reference: string;
+  user_id: string;
+  amount_minor: number | string;
+  currency: string;
+  plan: string | null;
+  paid_at: string;
+  refund_status: string | null;
+}
+
+function rowToPayment(row: PaymentRow): PaymentRecord | null {
+  // bigint columns can come back as strings; anything that is not a whole,
+  // positive amount in a currency we sell in is a row we do not understand,
+  // and is left out of the list rather than shown wrongly.
+  const amountMinor = Number(row.amount_minor);
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) return null;
+  if (row.currency !== "NGN" && row.currency !== "USD") return null;
+  const refundStatus = (REFUND_STATUSES as readonly string[]).includes(row.refund_status ?? "")
+    ? (row.refund_status as RefundStatus)
+    : null;
+  return {
+    reference: row.reference,
+    userId: row.user_id,
+    amountMinor,
+    currency: row.currency as PaymentCurrency,
+    plan: row.plan === "standard" || row.plan === "premium" ? (row.plan as PaidPlanId) : null,
+    paidAt: row.paid_at,
+    refundStatus,
+  };
 }
 
 const STATUSES: readonly SubscriptionStatus[] = ["active", "non_renewing", "past_due", "cancelled"];
@@ -188,5 +256,53 @@ export class SupabaseBillingStore implements BillingStore {
     if (error && (error as { code?: string }).code !== "23505") {
       throw new Error(`Failed to record billing event: ${error.message}`);
     }
+  }
+
+  async recordPayment(payment: Omit<PaymentRecord, "refundStatus">): Promise<void> {
+    // `ignoreDuplicates` = ON CONFLICT DO NOTHING: a payment we already hold
+    // (a redelivery with a different body, say) keeps its refund status.
+    const { error } = await this.client.from("billing_payments").upsert(
+      {
+        reference: payment.reference,
+        user_id: payment.userId,
+        amount_minor: payment.amountMinor,
+        currency: payment.currency,
+        plan: payment.plan,
+        paid_at: payment.paidAt,
+      },
+      { onConflict: "reference", ignoreDuplicates: true },
+    );
+    if (error) throw new Error(`Failed to record payment: ${error.message}`);
+  }
+
+  async getPayment(reference: string): Promise<PaymentRecord | null> {
+    const { data, error } = await this.client
+      .from("billing_payments")
+      .select(PAYMENT_COLUMNS)
+      .eq("reference", reference)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to load payment: ${error.message}`);
+    return data ? rowToPayment(data as PaymentRow) : null;
+  }
+
+  async listPayments(userId: string, limit: number): Promise<PaymentRecord[]> {
+    const { data, error } = await this.client
+      .from("billing_payments")
+      .select(PAYMENT_COLUMNS)
+      .eq("user_id", userId)
+      .order("paid_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(`Failed to list payments: ${error.message}`);
+    return ((data ?? []) as PaymentRow[])
+      .map(rowToPayment)
+      .filter((p): p is PaymentRecord => p !== null);
+  }
+
+  async setRefundStatus(reference: string, status: RefundStatus): Promise<void> {
+    const { error } = await this.client
+      .from("billing_payments")
+      .update({ refund_status: status, updated_at: new Date().toISOString() })
+      .eq("reference", reference);
+    if (error) throw new Error(`Failed to save refund status: ${error.message}`);
   }
 }

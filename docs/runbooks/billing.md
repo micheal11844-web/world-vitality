@@ -378,6 +378,84 @@ call to the real service.
   `invoice.update`, `subscription.expiring_cards`. Renewals arrive as
   `charge.success`, which is handled.
 
+## Payments, receipts and refunds (v111)
+
+**What exists.** Every successful Paystack payment (`charge.success`) is kept
+in `billing_payments` (migration `0022_billing_payments.sql`), so the plan
+screen lists the person's payments (newest 24) with a **Receipt** link, and
+`/billing/receipt/<reference>` is a printable page ("Print or save as PDF").
+A `refund.*` event moves that payment's refund status forward and, when the
+refund is **processed**, the person gets an in-app notice (once per payment).
+
+**Migration 0022 is applied** (2026-11-12, by the owner in the SQL editor). If it
+is ever missing on a new project, apply it before the code goes live: the webhook
+answers 500 for a `charge.success` while the table is missing, and Paystack retries
+for 72 hours, which is the safe failure: nothing is lost. See `apply-migrations.md`.
+
+**What is kept.** Paystack's transaction reference, who paid, the amount in
+kobo/cents, the currency (NGN or USD only; anything else is skipped), the plan,
+when it was paid and how far any refund has got. Not the customer's email, not
+card or bank details, not the webhook body. Paystack stays the system of
+record; delete an account and its payment rows go with it.
+
+**The payment arrives before the plan.** For a first payment `charge.success`
+usually lands a moment before `subscription.create`, so the payment is matched
+to the person by the account email, like the first subscription event. A
+payment whose person cannot be found is acknowledged and not kept (the event
+shows `unknown_customer` in `billing_events`; the payment is in Paystack).
+Payments made before v110 are not in the list either: that history is in the
+Paystack dashboard, and a backfill was not built.
+
+**The receipt.** Date (shown in UTC, with its name, so it reads the same
+everywhere), reference, account email, plan, amount paid with two decimals,
+"Paid through Paystack", and the line "This is a record of your payment. It is
+not a tax invoice." Only the person who paid can open it; anyone else, and any
+unknown reference, gets a plain 404. **To put your business's legal name,
+address and tax number on it**, set `BILLING_RECEIPT_SELLER` in Vercel to
+lines separated by `|`, e.g. `World Vitality Ltd | 12 Example Street, Lagos |
+TIN 1234567-0001` (at most five lines; until set, it says "World Vitality").
+
+**Refunds.** You refund in the Paystack dashboard (Transactions, open the
+payment, Refund). Paystack then sends `refund.pending`, `refund.processing`,
+`refund.processed` or `refund.failed`; the payment shows "Refund in progress",
+"Refund processed" or "Refund didn't complete". The status only moves forward
+(a late "pending" never undoes "processed"). **No amount is shown or stored for
+a refund**: Paystack's refund event does not say plainly which unit its amount
+is in, and a partial refund would need summing, so an amount would sometimes be
+wrong. The amount is in the Paystack dashboard.
+
+**A refund does not end the plan.** The plan follows the subscription, so if
+you refund a customer who wants out, also disable their subscription in
+Paystack (Customers, the subscription, Disable); the app then moves them to
+"ends on …" by itself. The refund notice tells the person that a refund does
+not change their plan and that they can cancel from Billing. A refund for a
+payment we never kept (made before v110, say) is acknowledged and ignored
+(`unknown_payment`).
+
+**Checked against Paystack's documentation (2026-11-10).** The refund event
+example on Paystack's refund page carries the payment's reference at
+`data.transaction_reference` (also read from `data.transaction.reference`, in
+case a refund event nests it); the status is taken from the event name, not
+from a body field. The first live refund is the real test: after it, look at
+the payment row (`refund_status`) and `billing_events` (`refund.processed`,
+`applied`). If a refund event shows `ignored` / `unknown_payment` for a payment
+that IS in `billing_payments`, the reference field differs from what we read:
+send me that event's shape (without the email) and I will adjust the reader.
+
+**Emails.** The app has no mail sender of its own and this does not add one.
+Paystack emails the customer its own receipt for a payment and its own notice
+for a failed renewal (check Settings, Preferences in the Paystack dashboard that
+customer emails are on). The app adds the in-app notices (failed renewal, since
+v105; refund processed, since v111) and the printable receipt. If you later want
+branded emails from World Vitality, that needs a mail service (Resend, Postmark
+or similar) and a verified sending domain, both yours to set up.
+
+**Tax is your decision, not the app's.** Prices are tax-inclusive (v94). Whether
+you must charge VAT, issue VAT invoices, or register for it depends on your
+company and turnover; ask an accountant. The receipt deliberately says it is not
+a tax invoice. If you need real invoices later, that is a separate piece of work
+once you know what the law requires of you.
+
 ## Not built yet
 
 - Switching between paid plans in one step (Paystack cannot do it on a
@@ -387,9 +465,9 @@ call to the real service.
 - The `workspaces` limit, and the feature switches for team tools, the audit
   log and the auditable report (see "Where limits are enforced" and "Feature
   switches").
-- Receipts, invoices, tax/VAT, refunds, failed-payment **emails** (the
-  in-app notice exists since v105). (Paystack emails its own receipts; ours
-  are not built.)
+- Our own **emails** for receipts, refunds and failed payments, and real
+  **tax invoices** (see "Payments, receipts and refunds (v111)": the in-app
+  notices and the printable receipt exist; Paystack sends its own emails).
 - Moving a subscription to another owner.
 - The plan limit and feature-locked sentences ("Your Basic plan includes up
   to 3 saved items…"), the workspace pages around them and the plan screen

@@ -1,6 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type { PaidPlanId } from "./plans.js";
 import { PAID_PLAN_IDS } from "./plans.js";
+import { REFUND_STATUSES, type PaymentCurrency, type RefundStatus } from "./payments.js";
 
 /**
  * Everything specific to Paystack: checking that a webhook really came
@@ -68,6 +69,28 @@ export interface PaystackEvent {
   currency: string | null;
   /** ISO timestamp, as sent. */
   nextPaymentDate: string | null;
+  /** Set for a `charge.success` we can record as a payment; otherwise `null`. */
+  payment: PaystackPayment | null;
+  /** Set for a `refund.*` event we understand; otherwise `null`. */
+  refund: PaystackRefund | null;
+}
+
+/** The facts of one successful payment, from `charge.success`. */
+export interface PaystackPayment {
+  /** Paystack's transaction reference — what a refund event quotes back. */
+  reference: string;
+  /** Smallest currency unit (kobo / cents), as Paystack sends it. */
+  amountMinor: number;
+  currency: PaymentCurrency;
+  /** ISO. `null` when Paystack's timestamp is missing or unreadable. */
+  paidAt: string | null;
+}
+
+/** How far a refund has got, from `refund.pending|processing|processed|failed`. */
+export interface PaystackRefund {
+  /** The reference of the payment being refunded. */
+  reference: string;
+  status: RefundStatus;
 }
 
 export type ParseResult = { ok: true; event: PaystackEvent } | { ok: false; reason: string };
@@ -78,6 +101,70 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function text(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+}
+
+/** A whole number of minor units, sent as a number or as a string of digits. */
+function minorUnits(value: unknown): number | null {
+  const n =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && /^\d{1,15}$/.test(value.trim())
+        ? Number(value.trim())
+        : NaN;
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
+function paymentCurrency(value: unknown): PaymentCurrency | null {
+  const upper = typeof value === "string" ? value.trim().toUpperCase() : "";
+  return upper === "NGN" || upper === "USD" ? upper : null;
+}
+
+function isoOrNull(value: unknown): string | null {
+  const raw = text(value);
+  if (!raw) return null;
+  const t = Date.parse(raw);
+  return Number.isNaN(t) ? null : new Date(t).toISOString();
+}
+
+/**
+ * `charge.success` as a payment we can list and print a receipt for. All of
+ * reference, amount and currency (NGN or USD) must be readable, and a
+ * `status` field, when present, must say "success" — otherwise this is not a
+ * payment we can vouch for and the caller records nothing. The amount is
+ * `data.amount` (the kobo/cents Paystack charged), never a plan's list price.
+ */
+function readPayment(data: Record<string, unknown>): PaystackPayment | null {
+  const reference = text(data.reference);
+  const amountMinor = minorUnits(data.amount);
+  const currency =
+    paymentCurrency(data.currency) ?? paymentCurrency(pick(data, "plan", "currency"));
+  if (!reference || reference.length > 200 || amountMinor === null || currency === null)
+    return null;
+  const status = text(data.status);
+  if (status !== null && status.toLowerCase() !== "success") return null;
+  return {
+    reference,
+    amountMinor,
+    currency,
+    paidAt: isoOrNull(data.paid_at) ?? isoOrNull(data.paidAt) ?? isoOrNull(data.created_at),
+  };
+}
+
+/**
+ * `refund.*` as "this payment's refund is now <status>". The status comes from
+ * the event NAME, not from a body field, so it is right whichever fields a
+ * given refund event carries. The payment is found by the transaction
+ * reference, which Paystack's own example puts at `data.transaction_reference`;
+ * `data.transaction.reference` is read too in case a refund event nests it.
+ * Nothing about amounts is read (see `payments.ts`).
+ */
+function readRefund(type: string, data: Record<string, unknown>): PaystackRefund | null {
+  const status = type.slice("refund.".length);
+  if (!(REFUND_STATUSES as readonly string[]).includes(status)) return null;
+  const reference =
+    text(data.transaction_reference) ?? text(pick(data, "transaction", "reference"));
+  if (!reference || reference.length > 200) return null;
+  return { reference, status: status as RefundStatus };
 }
 
 function pick(root: unknown, ...path: string[]): unknown {
@@ -127,6 +214,8 @@ export function parsePaystackEvent(rawBody: string): ParseResult {
       planCode,
       currency,
       nextPaymentDate,
+      payment: type === "charge.success" ? readPayment(data) : null,
+      refund: type.startsWith("refund.") ? readRefund(type, data) : null,
     },
   };
 }
