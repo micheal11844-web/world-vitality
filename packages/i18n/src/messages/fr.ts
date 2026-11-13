@@ -260,6 +260,10 @@ export const fr: Messages = {
     "Les alertes critiques, qui touchent à la sécurité des personnes, sont toujours affichées et ne peuvent pas être désactivées.",
   "settings.notifications.collaboration":
     "Me prévenir quand un coéquipier commente une parcelle que j’ai créée",
+  "settings.notifications.heatWatch":
+    "Me prévenir quand un satellite détecte de la chaleur à moins de 10 km d’un lieu que j’ai enregistré",
+  "settings.notifications.heatWatchHelp":
+    "La chaleur détectée par satellite n’est pas un incendie confirmé : c’est souvent un brûlage agricole ou une torchère. Elle n’est vérifiée que lorsque World Vitality est ouvert, et un avis est envoyé par lieu et par jour.",
   "settings.notifications.inAppNote":
     "Les notifications apparaissent uniquement dans l’application — World Vitality n’envoie pas encore de push, SMS ou e-mail, et ne vérifie les alertes officielles que lorsqu’elle est ouverte. Consultez votre",
   "settings.notifications.center": "Centre de notifications",
@@ -1137,6 +1141,13 @@ export const fr: Messages = {
     "{who} a fait de vous le propriétaire de {organisation}",
   "notifications.msg.ownershipReceived.body":
     "Vous gérez désormais son offre et son équipe. Ouvrez Paramètres pour voir les personnes qui en font partie.",
+
+  // ---- Heat near a saved place (v116)
+  "notifications.msg.heatNear.title": "Chaleur détectée par satellite près de {place}",
+  "notifications.msg.heatNear.body":
+    "Un satellite a détecté de la chaleur à environ {km} km de {place}, {when}. Ce n’est pas un incendie confirmé : il peut s’agir d’un brûlage agricole ou d’une torchère. Ouvrez le globe pour y jeter un œil.",
+  "notifications.msg.heatNear.bodyMany":
+    "Un satellite a détecté de la chaleur à environ {km} km de {place}, {when} ({count} détections). Ce n’est pas un incendie confirmé : il peut s’agir d’un brûlage agricole ou d’une torchère. Ouvrez le globe pour y jeter un œil.",
 
   // ---- Landing page (v106)
   "landing.tagline": "L’intelligence environnementale en temps réel, expliquée simplement.",

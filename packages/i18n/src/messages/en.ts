@@ -253,6 +253,10 @@ export const en = {
   "settings.notifications.criticalAlways":
     "Critical, life-safety alerts are always shown and can’t be turned off.",
   "settings.notifications.collaboration": "Tell me when a teammate comments on a field I created",
+  "settings.notifications.heatWatch":
+    "Tell me when a satellite sees heat within 10 km of a place I saved",
+  "settings.notifications.heatWatchHelp":
+    "Satellite heat is not a confirmed fire: it is often farm burning or a gas flare. It is checked only while World Vitality is open, and one notice is sent per place per day.",
   "settings.notifications.inAppNote":
     "Notifications appear in the app only — World Vitality doesn’t send push, SMS or email yet, and checks for official alerts only while it’s open. See your",
   "settings.notifications.center": "Notification Center",
@@ -1095,6 +1099,13 @@ export const en = {
   "notifications.msg.ownershipReceived.title": "{who} made you the owner of {organisation}",
   "notifications.msg.ownershipReceived.body":
     "You now manage its plan and team. Open Settings to see the people in it.",
+
+  // ---- Heat near a saved place (v116)
+  "notifications.msg.heatNear.title": "Satellite heat near {place}",
+  "notifications.msg.heatNear.body":
+    "A satellite saw heat about {km} km from {place}, {when}. This is not a confirmed fire: it may be farm burning or a gas flare. Open the Globe to take a look.",
+  "notifications.msg.heatNear.bodyMany":
+    "A satellite saw heat about {km} km from {place}, {when} ({count} detections). This is not a confirmed fire: it may be farm burning or a gas flare. Open the Globe to take a look.",
 
   // ---- Landing page (v106)
   "landing.tagline": "Real-time environmental intelligence, interpreted plainly.",

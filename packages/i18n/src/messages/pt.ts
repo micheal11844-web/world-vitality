@@ -254,6 +254,10 @@ export const pt: Messages = {
     "Alertas críticos, que envolvem risco à vida, são sempre exibidos e não podem ser desativados.",
   "settings.notifications.collaboration":
     "Avisar-me quando um colega comentar em um campo que eu criei",
+  "settings.notifications.heatWatch":
+    "Avisar-me quando um satélite detectar calor a menos de 10 km de um lugar que salvei",
+  "settings.notifications.heatWatchHelp":
+    "O calor detectado por satélite não é um incêndio confirmado: costuma ser uma queimada agrícola ou um queimador de gás. Ele só é verificado enquanto o World Vitality está aberto, e é enviado um aviso por lugar por dia.",
   "settings.notifications.inAppNote":
     "As notificações aparecem somente no aplicativo — o World Vitality ainda não envia push, SMS ou e-mail, e só verifica alertas oficiais enquanto está aberto. Veja o seu",
   "settings.notifications.center": "Centro de notificações",
@@ -1112,6 +1116,13 @@ export const pt: Messages = {
   "notifications.msg.ownershipReceived.title": "{who} tornou você o proprietário de {organisation}",
   "notifications.msg.ownershipReceived.body":
     "Agora você gerencia o plano e a equipe dela. Abra Configurações para ver as pessoas que fazem parte dela.",
+
+  // ---- Heat near a saved place (v116)
+  "notifications.msg.heatNear.title": "Calor detectado por satélite perto de {place}",
+  "notifications.msg.heatNear.body":
+    "Um satélite detectou calor a cerca de {km} km de {place}, {when}. Não é um incêndio confirmado: pode ser uma queimada agrícola ou um queimador de gás. Abra o globo para dar uma olhada.",
+  "notifications.msg.heatNear.bodyMany":
+    "Um satélite detectou calor a cerca de {km} km de {place}, {when} ({count} detecções). Não é um incêndio confirmado: pode ser uma queimada agrícola ou um queimador de gás. Abra o globo para dar uma olhada.",
 
   // ---- Landing page (v106)
   "landing.tagline": "Inteligência ambiental em tempo real, explicada com clareza.",

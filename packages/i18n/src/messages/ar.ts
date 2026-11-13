@@ -251,6 +251,10 @@ export const ar: Messages = {
   "settings.notifications.criticalAlways":
     "التنبيهات الحرجة المتعلقة بسلامة الأرواح تُعرض دائمًا ولا يمكن إيقافها.",
   "settings.notifications.collaboration": "أبلغني عندما يعلّق زميل على حقل أنشأته",
+  "settings.notifications.heatWatch":
+    "أبلغني عندما يرصد قمر صناعي حرارة على بعد أقل من 10 كم من مكان حفظته",
+  "settings.notifications.heatWatchHelp":
+    "الحرارة التي يرصدها القمر الصناعي ليست حريقًا مؤكدًا؛ فهي غالبًا حرق زراعي أو شعلة غاز. تُفحص فقط أثناء فتح World Vitality، ويُرسل إشعار واحد لكل مكان في اليوم.",
   "settings.notifications.inAppNote":
     "تظهر الإشعارات داخل التطبيق فقط — لا يرسل World Vitality إشعارات فورية أو رسائل نصية أو بريدًا إلكترونيًا بعد، ولا يتحقق من التنبيهات الرسمية إلا أثناء فتحه. راجع",
   "settings.notifications.center": "مركز الإشعارات",
@@ -1079,6 +1083,13 @@ export const ar: Messages = {
   "notifications.msg.ownershipReceived.title": "جعلك {who} مالك {organisation}",
   "notifications.msg.ownershipReceived.body":
     "أصبحت الآن تدير خطتها وفريقها. افتح الإعدادات لرؤية الأشخاص المنتمين إليها.",
+
+  // ---- Heat near a saved place (v116)
+  "notifications.msg.heatNear.title": "حرارة رصدها قمر صناعي قرب {place}",
+  "notifications.msg.heatNear.body":
+    "رصد قمر صناعي حرارة على بعد نحو {km} كم من {place}، {when}. هذا ليس حريقًا مؤكدًا؛ فقد يكون حرقًا زراعيًا أو شعلة غاز. افتح الكرة الأرضية لإلقاء نظرة.",
+  "notifications.msg.heatNear.bodyMany":
+    "رصد قمر صناعي حرارة على بعد نحو {km} كم من {place}، {when} ({count} عمليات رصد). هذا ليس حريقًا مؤكدًا؛ فقد يكون حرقًا زراعيًا أو شعلة غاز. افتح الكرة الأرضية لإلقاء نظرة.",
 
   // ---- Landing page (v106)
   "landing.tagline": "رؤى بيئية فورية، مشروحة بوضوح.",

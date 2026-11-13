@@ -33,12 +33,15 @@ export const TIER_LABELS: Record<NotificationTier, string> = {
 };
 
 /**
- * Where a notification comes from. `billing` is the app telling the owner
+ * Where a notification comes from. `heat_watch` is the app telling someone that a
+ * satellite saw heat near a place they saved (Decision #033): not an agency's alert
+ * and not a confirmed fire, so it is never `critical` and has its own switch.
+ * `billing` is the app telling the owner
  * something about their plan (a failed payment). It is neither an agency's
  * alert nor a teammate's activity, so neither of the settings that narrow
  * those two (`officialMinTier`, `collaborationEnabled`) hides it.
  */
-export type NotificationSource = "official_alert" | "collaboration" | "billing";
+export type NotificationSource = "official_alert" | "collaboration" | "billing" | "heat_watch";
 
 /**
  * What a notification *says*, as data, for the ones the app writes
@@ -48,7 +51,12 @@ export type NotificationSource = "official_alert" | "collaboration" | "billing";
  * alerts have none — the agency's own text is never re-worded.
  */
 export type NotificationMessageKey =
-  "field_comment" | "member_added" | "payment_failed" | "payment_refunded" | "ownership_received";
+  | "field_comment"
+  | "member_added"
+  | "payment_failed"
+  | "payment_refunded"
+  | "ownership_received"
+  | "heat_near_place";
 
 export type NotificationMessageParams = Record<string, string>;
 
@@ -58,7 +66,8 @@ export function isNotificationMessageKey(value: unknown): value is NotificationM
     value === "member_added" ||
     value === "payment_failed" ||
     value === "payment_refunded" ||
-    value === "ownership_received"
+    value === "ownership_received" ||
+    value === "heat_near_place"
   );
 }
 
@@ -112,14 +121,20 @@ export interface NotificationSettings {
    */
   officialMinTier: OfficialMinTier;
   collaborationEnabled: boolean;
+  /** Whether to be told when a satellite sees heat near a saved place. On unless switched off. */
+  heatWatchEnabled: boolean;
   /** When official alerts were last checked for this user (throttle). */
   alertsSyncedAt: string | null;
+  /** When satellite heat near this user's places was last checked (throttle). */
+  heatSyncedAt: string | null;
 }
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   officialMinTier: "info",
   collaborationEnabled: true,
+  heatWatchEnabled: true,
   alertsSyncedAt: null,
+  heatSyncedAt: null,
 };
 
 export function isOfficialMinTier(value: unknown): value is OfficialMinTier {
@@ -208,7 +223,8 @@ export function truncateText(text: string, max: number): string {
  */
 export function visibleNotifications(
   all: readonly Notification[],
-  settings: Pick<NotificationSettings, "officialMinTier" | "collaborationEnabled">,
+  settings: Pick<NotificationSettings, "officialMinTier" | "collaborationEnabled"> &
+    Partial<Pick<NotificationSettings, "heatWatchEnabled">>,
   now: Date,
 ): Notification[] {
   return all.filter((n) => {
@@ -218,6 +234,9 @@ export function visibleNotifications(
     // that quiet teammates' activity or informational weather do not apply.
     if (n.source === "billing") return true;
     if (n.source === "collaboration") return settings.collaborationEnabled;
+    // Heat near a saved place has its own switch, and is never narrowed by the
+    // official-alert setting (it is not an agency's alert).
+    if (n.source === "heat_watch") return settings.heatWatchEnabled ?? true;
     if (n.tier === "info" && settings.officialMinTier === "alert") return false;
     return true;
   });
@@ -548,4 +567,67 @@ const NWS_COVERAGE_COUNTRIES = new Set([
 export function isNwsCoverageCountry(country: string | null | undefined): boolean | null {
   if (!country?.trim()) return null;
   return NWS_COVERAGE_COUNTRIES.has(country.trim().toLowerCase());
+}
+
+/** How far from a saved place a satellite heat detection still counts as "near" (kilometres). */
+export const HEAT_WATCH_RADIUS_KM = 10;
+
+/** Minimum gap between checks of satellite heat near one user's places (milliseconds). */
+export const HEAT_SYNC_INTERVAL_MS = 15 * 60 * 1000;
+
+/** Most places checked for one person, so one account with a huge list cannot make a check slow. */
+export const HEAT_WATCH_MAX_PLACES = 50;
+
+/**
+ * "A satellite saw heat near <place>." Written when a satellite heat detection
+ * (NASA FIRMS) lies within `HEAT_WATCH_RADIUS_KM` of a place the person saved: their
+ * home place, a field, an insured property or a monitored location.
+ *
+ * An `alert`, never `critical`: a detection is not a confirmed fire (it is often
+ * farm burning or a gas flare), and `critical` is reserved for an agency's own
+ * life-safety alert. The text says so, in the person's language, and points to the
+ * Globe, where the detection, any public camera near it and the call button are.
+ * One per place per day, however often it is checked: the key carries the day.
+ * Expires after a day, the age of the data it came from.
+ */
+export function heatNearPlaceNotification(input: {
+  /** A stable id for the saved place, e.g. `agriculture-<field id>` or `home`. */
+  placeId: string;
+  placeLabel: string;
+  /** Distance to the nearest detection, in kilometres. */
+  distanceKm: number;
+  /** Detections within the radius. */
+  detections: number;
+  /** When the satellite passed over the nearest one (ISO 8601). */
+  passAt: string;
+  /** Where the nearest detection is, for the link to the Globe. */
+  latitude: number;
+  longitude: number;
+  now: Date;
+}): NewNotification {
+  const km = Math.max(1, Math.round(input.distanceKm));
+  const place = truncateText(input.placeLabel, 80);
+  const when = timeAgo(input.passAt, input.now);
+  const many = input.detections > 1 ? ` (${input.detections} detections)` : "";
+  return {
+    source: "heat_watch",
+    tier: "alert",
+    title: truncateText(`Satellite heat near ${place}`, TITLE_MAX),
+    body: truncateText(
+      `A satellite saw heat about ${km} km from ${place}${when ? `, ${when}` : ""}${many}. This is not a confirmed fire: it may be farm burning or a gas flare. Open the Globe to take a look.`,
+      BODY_MAX,
+    ),
+    href: safeInternalHref(
+      `/globe?heat=${input.latitude.toFixed(3)},${input.longitude.toFixed(3)}`,
+    ),
+    dedupeKey: `heat:${input.placeId}:${input.now.toISOString().slice(0, 10)}`.slice(0, 190),
+    expiresAt: new Date(input.now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+    messageKey: "heat_near_place",
+    messageParams: {
+      place,
+      km: String(km),
+      detections: String(input.detections),
+      passAt: input.passAt,
+    },
+  };
 }

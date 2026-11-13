@@ -1,9 +1,7 @@
-import { can } from "@world-vitality/identity-service";
-import { getWorkspaceMembership } from "../../lib/get-workspace-membership";
-import { getOrganizationData } from "../../lib/organization-data";
+import { parseGlobeFocus } from "@world-vitality/hazard-feeds";
 import { logTelemetry } from "../../lib/logger";
+import { loadWatchedPlaces } from "../../lib/watched-places";
 import { GlobeShell } from "./globe-shell";
-import type { GlobePin } from "./globe-types";
 
 export const dynamic = "force-dynamic";
 
@@ -44,80 +42,19 @@ export const dynamic = "force-dynamic";
  * not points, and plotting one as a pin would imply precision the data
  * does not have.
  */
-export default async function GlobePage() {
+export default async function GlobePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   logTelemetry.event("globe_viewed");
+  // A satellite-heat alert links here as `/globe?heat=<lat>,<lon>`: the Globe opens on
+  // the detection it is about. Anything that is not two numbers on Earth is ignored.
+  const focus = parseGlobeFocus((await searchParams).heat);
 
-  // Each workspace's membership lookup flows straight into its own list
-  // read, so a slow one never makes the other two wait.
-  const [
-    { membership: agricultureMembership, items: fields },
-    { membership: insuranceMembership, items: properties },
-    { membership: governmentNgosMembership, items: locations },
-  ] = await Promise.all([
-    getWorkspaceMembership("agriculture").then(async (membership) => ({
-      membership,
-      items: await getOrganizationData(membership).listFields("agriculture"),
-    })),
-    getWorkspaceMembership("insurance").then(async (membership) => ({
-      membership,
-      items: await getOrganizationData(membership).listProperties("insurance"),
-    })),
-    getWorkspaceMembership("government-ngos").then(async (membership) => ({
-      membership,
-      items: await getOrganizationData(membership).listLocations("government-ngos"),
-    })),
-  ]);
+  // The person's own saved places, permission-filtered per workspace: see
+  // `loadWatchedPlaces` for why that filtering is not optional.
+  const pins = await loadWatchedPlaces();
 
-  const pins: GlobePin[] = [
-    ...fields
-      .filter((f) =>
-        can(agricultureMembership.role, "data:view", {
-          resourceId: f.id,
-          scopedResourceIds: agricultureMembership.scopedResourceIds,
-        }),
-      )
-      .map((f) => ({
-        id: `agriculture-${f.id}`,
-        label: f.name,
-        latitude: f.latitude,
-        longitude: f.longitude,
-        workspaceKey: "agriculture",
-        workspaceLabel: "Agriculture",
-        href: "/workspaces/agriculture",
-      })),
-    ...properties
-      .filter((p) =>
-        can(insuranceMembership.role, "data:view", {
-          resourceId: p.id,
-          scopedResourceIds: insuranceMembership.scopedResourceIds,
-        }),
-      )
-      .map((p) => ({
-        id: `insurance-${p.id}`,
-        label: p.policyNumber,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        workspaceKey: "insurance",
-        workspaceLabel: "Insurance",
-        href: "/workspaces/insurance",
-      })),
-    ...locations
-      .filter((l) =>
-        can(governmentNgosMembership.role, "data:view", {
-          resourceId: l.id,
-          scopedResourceIds: governmentNgosMembership.scopedResourceIds,
-        }),
-      )
-      .map((l) => ({
-        id: `government-ngos-${l.id}`,
-        label: l.label,
-        latitude: l.latitude,
-        longitude: l.longitude,
-        workspaceKey: "government-ngos",
-        workspaceLabel: "Government & NGOs",
-        href: "/workspaces/government-ngos",
-      })),
-  ];
-
-  return <GlobeShell pins={pins} />;
+  return <GlobeShell pins={pins} focus={focus} />;
 }

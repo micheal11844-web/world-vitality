@@ -93,12 +93,14 @@ export async function checkAlertsNowAction(): Promise<NotificationActionResult> 
 export async function saveNotificationSettingsAction(settings: {
   officialMinTier: OfficialMinTier;
   collaborationEnabled: boolean;
+  heatWatchEnabled: boolean;
 }): Promise<NotificationActionResult> {
   const userId = await getSessionUserId();
   if (!userId) return { ok: false, error: await tServer("common.signInAgain") };
   if (
     !isOfficialMinTier(settings?.officialMinTier) ||
-    typeof settings.collaborationEnabled !== "boolean"
+    typeof settings.collaborationEnabled !== "boolean" ||
+    typeof settings.heatWatchEnabled !== "boolean"
   ) {
     return { ok: false, error: await tServer("common.genericError") };
   }
@@ -106,6 +108,7 @@ export async function saveNotificationSettingsAction(settings: {
     await getAccountService().saveNotificationSettings(userId, {
       officialMinTier: settings.officialMinTier,
       collaborationEnabled: settings.collaborationEnabled,
+      heatWatchEnabled: settings.heatWatchEnabled,
     });
     revalidatePath("/notifications");
     revalidatePath("/settings");

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Text, AppShell } from "@world-vitality/ui-components";
-import { thinCameras } from "@world-vitality/hazard-feeds";
+import { distanceKm, thinCameras, type GlobeFocus } from "@world-vitality/hazard-feeds";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
@@ -19,6 +19,9 @@ import {
   type GlobeSelection,
   type PublicCamera,
 } from "./globe-types";
+
+/** A heat alert opens the fire area within this distance of the point it names. */
+const FOCUS_MATCH_KM = 6;
 
 // `ssr: false` is required, not a performance nicety — Cesium needs
 // `window`/WebGL, both entirely absent during server rendering. Next.js
@@ -114,7 +117,13 @@ const PREVIEW_MAX_FIRES = 500;
  * `currentWorkspaceKey` — the globe isn't "inside" any one workspace,
  * so every workspace starts collapsed here too.
  */
-export function GlobeShell({ pins }: { pins: GlobePin[] }) {
+export function GlobeShell({
+  pins,
+  focus = null,
+}: {
+  pins: GlobePin[];
+  focus?: GlobeFocus | null;
+}) {
   // Required by AppShellProps, but this page has no AI panel content —
   // same "no AI-adjacent side-panel summary" reasoning
   // education/workspace-shell.tsx already documented for itself; the
@@ -137,6 +146,23 @@ export function GlobeShell({ pins }: { pins: GlobePin[] }) {
   useEffect(() => {
     setWebgl(hasWebGL());
   }, []);
+
+  // Opened from a satellite-heat alert: once the fire areas are in, open the one
+  // nearest the point the alert was about (if it is still listed), once. Whatever
+  // the person does next is theirs: this never runs again or re-selects.
+  const focusHandled = useRef(false);
+  useEffect(() => {
+    if (!focus || focusHandled.current) return;
+    if (firesLayer.status === "loading") return;
+    focusHandled.current = true;
+    if (firesLayer.status !== "done" || !Array.isArray(firesLayer.data.fires)) return;
+    let nearest: { id: string; km: number } | null = null;
+    for (const fire of firesLayer.data.fires) {
+      const km = distanceKm(focus.latitude, focus.longitude, fire.latitude, fire.longitude);
+      if (km <= FOCUS_MATCH_KM && (!nearest || km < nearest.km)) nearest = { id: fire.id, km };
+    }
+    if (nearest) setSelection({ kind: "fire", id: nearest.id });
+  }, [focus, firesLayer]);
 
   // Retire the flat map shortly after the globe has drawn, so it can fade out.
   useEffect(() => {
