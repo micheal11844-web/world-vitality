@@ -1262,6 +1262,29 @@ export const ar: Messages = {
     "لا تتصل إلا إذا كنت تعتقد أن هناك حريقًا حقيقيًا وحاليًا. قد تكون نقطة القمر الصناعي أو صورة الكاميرا وحدها خاطئة أو قديمة. أخبر المشغّل بمكانه وبما تراه. هذا التطبيق ليس تنبيهًا رسميًا ولا يغني عن خدمات الطوارئ.",
   "globe.panel.emergency.general":
     "يعمل الرقم 112 على معظم الهواتف المحمولة في معظم الدول. إذا كنت تعرف رقم الطوارئ المحلي فاستخدمه.",
+  // ---- Globe: worldwide flood events (GDACS)
+  "globe.floods.loading": "جارٍ تحميل أحداث الفيضانات من GDACS…",
+  "globe.floods.count":
+    "{count, plural, zero {لا أحداث فيضانات حديثة} one {حدث فيضان حديث واحد} two {حدثا فيضان حديثان} few {# أحداث فيضانات حديثة} many {# حدث فيضان حديث} other {# حدث فيضان حديث}} من GDACS (نظام الإنذار التابع للأمم المتحدة والاتحاد الأوروبي) خلال آخر {days} يومًا. اختر نقطة زرقاء لفتحها.",
+  "globe.floods.none":
+    "لا يذكر GDACS أي فيضان كبير خلال آخر {days} يومًا. ومع ذلك قد يكون هناك فيضان محلي.",
+  "globe.floods.failed": "تعذّر تحميل أحداث الفيضانات من GDACS الآن.",
+  "globe.legend.flood": "حدث فيضان (GDACS)",
+  "globe.marker.flood": "حدث فيضان: {place}",
+  "globe.panel.flood.title": "حدث فيضان",
+  "globe.panel.flood.what":
+    "يُدرج نظام الأمم المتحدة والاتحاد الأوروبي للإنذار بالكوارث (GDACS) فيضانًا هنا. وهو تقدير مبني على نماذج الأقمار الصناعية والأنهار، والنقطة تحدد وسط منطقة واسعة وليس شارعًا. وهو ليس تحذيرًا رسميًا لمكانك، وقد لا يُدرج فيضان أصغر.",
+  "globe.panel.flood.alert.red": "مستوى إنذار GDACS: أحمر (تأثير مرتفع)",
+  "globe.panel.flood.alert.orange": "مستوى إنذار GDACS: برتقالي (تأثير متوسط)",
+  "globe.panel.flood.alert.green": "مستوى إنذار GDACS: أخضر (تأثير منخفض)",
+  "globe.panel.flood.ongoing": "ما زال مستمرًا. بدأ في {from}",
+  "globe.panel.flood.period": "من {from} إلى {to}",
+  "globe.panel.flood.started": "بدأ في {from}",
+  "globe.panel.flood.position": "وسط المنطقة: {latitude}، {longitude}",
+  "globe.panel.flood.report": "قراءة تقرير GDACS",
+  "globe.panel.flood.emergencyTitle": "هل أنت في خطر بسبب المياه؟",
+  "globe.panel.flood.emergencyAdvice":
+    "إذا كان هناك أشخاص في خطر، فانتقل إلى مكان مرتفع واتصل بخدمات الطوارئ. اتبع تعليمات السلطات المحلية. هذا التطبيق ليس تحذيرًا رسميًا ولا يغني عن خدمات الطوارئ.",
   "globe.compass.n": "الشمال",
   "globe.compass.ne": "الشمال الشرقي",
   "globe.compass.e": "الشرق",

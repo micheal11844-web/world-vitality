@@ -1,13 +1,17 @@
 "use client";
 
 import { useI18n } from "../../lib/i18n/i18n-provider";
+import { floodPlace } from "./globe-flood-place";
 import {
   CAMERA_COLOR,
   FIRE_COLOR,
+  FLOOD_COLOR,
   SELECTED_COLOR,
   fireMarkerSize,
+  floodMarkerSize,
   pinColor,
   type GlobeFire,
+  type GlobeFlood,
   type GlobePin,
   type GlobeSelection,
   type PublicCamera,
@@ -28,7 +32,7 @@ import {
  * `(90 − latitude) / 180` down. It is drawn at a 2:1 shape that always fits
  * inside the available space.
  *
- * Satellite heat-detection areas and public cameras are drawn as real
+ * Satellite heat-detection areas, flood events and public cameras are drawn as real
  * buttons here, so a keyboard or screen-reader user (and anyone on a device
  * without WebGL) can open the same details panel the 3D globe opens. The
  * caller passes a limited set (the strongest fires and the cameras worth
@@ -41,17 +45,19 @@ const ROWS = [1, 0];
 export function GlobePreview({
   pins,
   fires = [],
+  floods = [],
   cameras = [],
   selection = null,
   onSelect,
 }: {
   pins: GlobePin[];
   fires?: GlobeFire[];
+  floods?: GlobeFlood[];
   cameras?: PublicCamera[];
   selection?: GlobeSelection | null;
   onSelect?: (selection: GlobeSelection) => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isSelected = (kind: GlobeSelection["kind"], id: string) =>
     selection?.kind === kind && selection.id === id;
   const marker = (
@@ -162,6 +168,17 @@ export function GlobePreview({
             9,
             CAMERA_COLOR,
             t("globe.marker.camera", { name: camera.name }),
+          ),
+        )}
+        {floods.map((flood) =>
+          marker(
+            "flood",
+            flood.id,
+            flood.latitude,
+            flood.longitude,
+            floodMarkerSize(flood.alert),
+            FLOOD_COLOR,
+            t("globe.marker.flood", { place: floodPlace(flood, locale) }),
           ),
         )}
         {fires.map((fire) =>

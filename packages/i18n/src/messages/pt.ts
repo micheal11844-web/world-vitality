@@ -1300,6 +1300,29 @@ export const pt: Messages = {
     "Ligue apenas se acreditar que existe um incêndio real e atual. Um ponto de satélite ou uma imagem de câmara, por si só, podem estar errados ou desatualizados. Diga ao operador onde é e o que vê. Esta aplicação não é um alerta oficial e não substitui os serviços de emergência.",
   "globe.panel.emergency.general":
     "O 112 funciona na maioria dos telemóveis na maioria dos países. Se souber o número de emergência local, use esse.",
+  // ---- Globe: worldwide flood events (GDACS)
+  "globe.floods.loading": "A carregar os eventos de inundação do GDACS…",
+  "globe.floods.count":
+    "{count, plural, one {# evento de inundação recente} other {# eventos de inundação recentes}} do GDACS (o sistema de alertas da ONU e da UE) nos últimos {days} dias. Selecione um ponto azul para o abrir.",
+  "globe.floods.none":
+    "O GDACS não indica nenhuma grande inundação nos últimos {days} dias. Mesmo assim, pode estar a ocorrer uma inundação local.",
+  "globe.floods.failed": "Não foi possível carregar agora os eventos de inundação do GDACS.",
+  "globe.legend.flood": "Evento de inundação (GDACS)",
+  "globe.marker.flood": "Evento de inundação: {place}",
+  "globe.panel.flood.title": "Evento de inundação",
+  "globe.panel.flood.what":
+    "O sistema de alertas de desastres da ONU e da UE (GDACS) indica aqui uma inundação. É estimada a partir de modelos de satélite e de rios, e o ponto marca o centro de uma grande área, não uma rua. Não é um aviso oficial para o seu local, e uma inundação mais pequena pode não constar.",
+  "globe.panel.flood.alert.red": "Nível de alerta do GDACS: vermelho (impacto elevado)",
+  "globe.panel.flood.alert.orange": "Nível de alerta do GDACS: laranja (impacto médio)",
+  "globe.panel.flood.alert.green": "Nível de alerta do GDACS: verde (impacto baixo)",
+  "globe.panel.flood.ongoing": "Em curso. Começou em {from}",
+  "globe.panel.flood.period": "De {from} a {to}",
+  "globe.panel.flood.started": "Começou em {from}",
+  "globe.panel.flood.position": "Centro da área: {latitude}, {longitude}",
+  "globe.panel.flood.report": "Ler o relatório do GDACS",
+  "globe.panel.flood.emergencyTitle": "Em perigo por causa da água?",
+  "globe.panel.flood.emergencyAdvice":
+    "Se houver pessoas em perigo, vá para um local elevado e ligue para os serviços de emergência. Siga as indicações das autoridades locais. Esta aplicação não é um aviso oficial e não substitui os serviços de emergência.",
   "globe.compass.n": "norte",
   "globe.compass.ne": "nordeste",
   "globe.compass.e": "este",

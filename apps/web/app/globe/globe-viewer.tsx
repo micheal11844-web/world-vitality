@@ -10,6 +10,7 @@ import { addPlaceLayer } from "./globe-places";
 import {
   pinColor,
   type GlobeFire,
+  type GlobeFlood,
   type GlobePin,
   type GlobeSelection,
   type PublicCamera,
@@ -102,6 +103,7 @@ export function GlobeViewer({
   pins,
   focusPins = [],
   fires = [],
+  floods = [],
   cameras = [],
   selection = null,
   locale = "en",
@@ -114,6 +116,8 @@ export function GlobeViewer({
   focusPins?: GlobePin[];
   /** Satellite heat-detection areas, drawn as markers that can be opened. */
   fires?: GlobeFire[];
+  /** Recent flood events (from GDACS), drawn as markers that can be opened. */
+  floods?: GlobeFlood[];
   /** Public cameras (every one to draw, including those listed under a fire), drawn as markers that can be opened. */
   cameras?: PublicCamera[];
   /** The marker the person has opened, highlighted on the globe. */
@@ -242,7 +246,7 @@ export function GlobeViewer({
     };
   }, [modules, locale]);
 
-  // Fire areas and cameras: one batch of points, rebuilt only when the data changes.
+  // Fire areas, flood events and cameras: one batch of points, rebuilt only when the data changes.
   useEffect(() => {
     if (!modules) return;
     let cancelled = false;
@@ -256,6 +260,7 @@ export function GlobeViewer({
       }
       const layer = addMarkerLayer(modules.Cesium, viewer, {
         fires,
+        floods,
         cameras,
         onSelect: (picked) => onSelectRef.current?.(picked),
       });
@@ -269,14 +274,14 @@ export function GlobeViewer({
       markerLayerRef.current?.destroy();
       markerLayerRef.current = null;
     };
-  }, [modules, fires, cameras]);
+  }, [modules, fires, floods, cameras]);
 
   // Highlight the opened marker and bring the globe closer to it.
   useEffect(() => {
     const layer = markerLayerRef.current;
     layer?.setSelected(selection);
     if (selection) layer?.flyTo(selection);
-  }, [selection, modules, fires, cameras]);
+  }, [selection, modules, fires, floods, cameras]);
 
   if (!modules) {
     return null;

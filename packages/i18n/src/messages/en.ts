@@ -1281,6 +1281,29 @@ export const en = {
     "Only call if you believe there is a real, current fire. A satellite point or a camera picture alone can be wrong or out of date. Tell the dispatcher where it is and what you can see. This app is not an official alert and does not replace emergency services.",
   "globe.panel.emergency.general":
     "112 works on most mobile phones in most countries. If you know your local emergency number, use that instead.",
+  // ---- Globe: worldwide flood events (GDACS)
+  "globe.floods.loading": "Loading flood events from GDACS…",
+  "globe.floods.count":
+    "{count, plural, one {# recent flood event} other {# recent flood events}} from GDACS (the UN and EU alert system) in the last {days} days. Select a blue dot to open it.",
+  "globe.floods.none":
+    "GDACS lists no large flood from the last {days} days right now. A local flood can still be happening.",
+  "globe.floods.failed": "Flood events from GDACS could not be loaded right now.",
+  "globe.legend.flood": "Flood event (GDACS)",
+  "globe.marker.flood": "Flood event: {place}",
+  "globe.panel.flood.title": "Flood event",
+  "globe.panel.flood.what":
+    "The UN and EU disaster alert system (GDACS) lists a flood here. It is estimated from satellite and river models, and the dot marks the middle of a large area, not a street. It is not an official warning for your place, and a smaller flood may not be listed.",
+  "globe.panel.flood.alert.red": "GDACS alert level: red (high impact)",
+  "globe.panel.flood.alert.orange": "GDACS alert level: orange (medium impact)",
+  "globe.panel.flood.alert.green": "GDACS alert level: green (low impact)",
+  "globe.panel.flood.ongoing": "Still going. Started {from}",
+  "globe.panel.flood.period": "{from} to {to}",
+  "globe.panel.flood.started": "Started {from}",
+  "globe.panel.flood.position": "Middle of the area: {latitude}, {longitude}",
+  "globe.panel.flood.report": "Read the GDACS report",
+  "globe.panel.flood.emergencyTitle": "In danger from floodwater?",
+  "globe.panel.flood.emergencyAdvice":
+    "If people are in danger, move to higher ground and call emergency services. Follow your local authorities. This app is not an official warning and does not replace emergency services.",
   "globe.compass.n": "north",
   "globe.compass.ne": "north-east",
   "globe.compass.e": "east",

@@ -1213,3 +1213,82 @@ nothing: the alerts are for places the app knows.
 
 **Revisit when:** people use it and ask to be reached when the app is closed (email or push),
 or to choose the distance, or when more satellites (geostationary) are added to the feed.
+
+## Decision #034 — Worldwide flood events on the Globe (GDACS)
+
+**Date:** 2026-11-13/14. **Status:** accepted; built on the branch `globe-floods`. **Licence question open** (below).
+
+**Context:** The owner asked "ain't there one for flood?". The Globe's only flood layer
+is USGS Real-Time Flood Impact, which covers the United States (and the app asks for one
+demo state), so a person in Nigeria, India or Brazil saw no flood at all. The owner also
+needs a reason for people to open the Globe now that the cameras rarely show a fire.
+
+**Decision:** Add a **Flood event** layer (blue dots, bigger for a higher alert level)
+from **GDACS**, the Global Disaster Alert and Coordination System run by the UN (OCHA)
+and the European Commission (JRC). It needs no key. The server reads GDACS's event list
+(`/gdacsapi/api/events/geteventlist/SEARCH`), keeps the **flood** events, and the page
+draws them on the 3D globe and the flat map. Tapping one opens a panel that says what it
+is, GDACS's own alert level and dates, a link to GDACS's page for the event, and the
+emergency number for someone in danger. Code: `packages/hazard-feeds/src/floods.ts`
+(parser, tested), `apps/web/lib/global-floods.ts` (cached load),
+`/api/globe/floods`, and the Globe files.
+
+**What it is, said on the screen:** a **model estimate** (satellite and river models), the
+dot is the **middle of a large area, not a street**, it is **not an official warning**, and
+**a smaller flood may not be listed**. The text is in five languages. GDACS's own terms say
+the same ("purely indicative", "not meant to substitute … official information", "should
+not be used for decision making without prior confirmation").
+
+**Rules, all tested:**
+
+- **Floods are picked by `eventtype = "FL"` here**, not by the request. The list holds
+  every kind of event (earthquakes, cyclones, fires, droughts) even when floods are asked for.
+- **"Recent" is decided here:** still-going events, or ones that ended or were updated in
+  the last **14 days**. The request window is not trusted (the real list held floods that
+  had ended five or six weeks earlier).
+- **A changed answer is a failure, not an empty map.** A list that is not a feature
+  collection (or a 5xx, a timeout, an oversized body) makes the layer say "could not be
+  loaded" and logs an error; a well-formed list with no recent flood says "no large flood
+  from the last 14 days, a local flood can still be happening". Single events that do not
+  fit (bad point, unknown alert level, no date) are skipped and counted in the log.
+- **The report link is built from the event's numeric ids**, never copied from the answer.
+- **An emergency number is offered by country only when the event touches exactly one
+  country** that the app has a number for; otherwise the general `112` line and its
+  explanation (the same rule as fires, `emergency.ts`). Worded "emergency services", never
+  "fire service".
+- **Country names** come from the browser in the person's language when there is one country;
+  otherwise GDACS's own (English) text.
+- 15-minute server cache shared by everyone; an older good answer is used if a refresh fails.
+- Logs carry **counts only** (`features`, `floodEvents`, `skipped`, `shown`).
+
+**How the format was learned, and the honest limit:** the sandbox cannot reach GDACS directly,
+so the format was read through a page-reading tool on 2026-11-13 and the test fixture is
+**reconstructed from that read** (field names and value types as seen), not a byte-for-byte
+copy of a live answer. Two behaviours were seen live and are handled (mixed event types,
+long-ended floods in the list); anything not seen (for example a polygon geometry) is
+skipped and counted rather than guessed. **The first real check is the log** after deploy:
+`globe_world_floods_loaded` with `floodEvents` above 0 and `skipped` near 0.
+
+**Licence question (open):** GDACS's terms of use (page and the March 2025 PDF) say
+**nothing** about reuse, a licence, commercial use, credit wording or API rate. That is
+silence, not permission. Before the app charges customers, ask GDACS (the JRC contact on
+gdacs.org) in writing whether a paid product may show its event list with credit, and
+record the answer here. Until then the layer credits GDACS in every panel and the legend,
+reads the list at most once per 15 minutes, and is one switch to remove (the Globe shows
+no flood layer when `/api/globe/floods` answers `failed`).
+
+**Alternatives considered:**
+
+- _Wait for the owner to paste a sample._ Rejected: the format could be read live, and the
+  failure cases are handled explicitly.
+- _GloFAS directly (Copernicus)._ The real source of many of these events, but it is
+  gridded model data behind a Copernicus account; GDACS already publishes the large events as points.
+- _Satellite flood-extent tiles (NASA, Copernicus EMS)._ Would show water on the map, but
+  need a tile host (a new content-security-policy host and usage terms) and are not worldwide near real time.
+- _Google Flood Hub._ No open, licensed data feed for this use.
+- _Flood notifications near saved places (like heat alerts)._ Natural next step; held until
+  people use the layer, because a model estimate of a large area is a weaker trigger than a
+  10 km satellite reading.
+
+**Revisit when:** GDACS answers the licence question; people ask to be told about floods near
+their fields (reuse the heat-alert mechanism); or GDACS changes its list (the log will show it).
