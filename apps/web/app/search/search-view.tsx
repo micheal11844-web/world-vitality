@@ -12,6 +12,7 @@ import {
 } from "@world-vitality/ui-components";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
+import { DataCredit } from "../data-credit";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
 
 export interface SearchViewProps {
@@ -163,6 +164,7 @@ export function SearchView({
             items={places}
           />
         )}
+        {places.length > 0 && <DataCredit kind="places" />}
 
         {query && !hasResults && (
           <StateDisplay

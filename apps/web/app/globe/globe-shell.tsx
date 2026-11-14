@@ -376,6 +376,14 @@ export function GlobeShell({
                 <LegendDot color={FLOOD_COLOR} label={t("globe.legend.flood")} />
               )}
               <LegendDot color={CAMERA_COLOR} label={t("globe.legend.camera")} />
+              <a
+                href="/sources"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "var(--wv-accent)", textDecoration: "underline" }}
+              >
+                {t("credits.title")}
+              </a>
             </Text>
           )}
         </div>

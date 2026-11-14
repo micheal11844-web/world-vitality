@@ -78,6 +78,10 @@ buried in one, given how easy a licensing condition like this is to
 lose track of once a connector is "just working" and nobody revisits
 why.
 
+**Attribution is shown in the app since v118** (Decision #035, `docs/runbooks/data-credits.md`):
+"Weather data by Open-Meteo.com" (linked to open-meteo.com) beside every forecast and place-search result, and
+a full entry on `/sources`.
+
 Recorded in every record's `provenance.license` field as `"CC-BY-4.0"`,
 with `provenance.attributionUrl` pointing at Open-Meteo's docs.
 

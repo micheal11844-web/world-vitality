@@ -1138,6 +1138,53 @@ export const es: Messages = {
   "landing.signIn": "Iniciar sesión",
   "landing.appsPrompt": "¿Prefieres una app?",
   "landing.appsLink": "Descarga la app de escritorio o de Android",
+  "nav.sources": "Fuentes de datos",
+  "landing.sources": "Fuentes de datos y créditos",
+  "credits.title": "Fuentes de datos y créditos",
+  "credits.intro":
+    "World Vitality reúne datos públicos de las organizaciones que aparecen abajo, y les estamos agradecidos. Ellas no administran, revisan ni respaldan esta app. Parte de lo que ves es una estimación de un modelo, no una alerta oficial. En una emergencia, llama a tu número de emergencias local y sigue las instrucciones oficiales.",
+  "credits.group.weather": "Clima y lugares",
+  "credits.group.hazards": "Incendios, inundaciones y emergencias",
+  "credits.group.cameras": "Cámaras de tráfico en vivo",
+  "credits.group.maps": "Mapas y software",
+  "credits.group.security": "Seguridad de la cuenta",
+  "credits.licence": "Licencia",
+  "credits.cameras.intro":
+    "Cada imagen llega directamente de la entidad que opera la cámara. World Vitality no la copia, no la guarda ni la modifica.",
+  "credits.weatherBy": "Datos meteorológicos de",
+  "credits.placesBy": "Búsqueda de lugares de",
+  "credits.placesData": "Datos de ubicación basados en",
+  "credits.use.open-meteo": "Pronósticos del tiempo y búsqueda de lugares.",
+  "credits.use.geonames": "Los nombres y las posiciones de los lugares que encuentra la búsqueda.",
+  "credits.use.nasa-power": "Datos del tiempo pasado, del clima y de la energía solar.",
+  "credits.use.nws": "Alertas meteorológicas oficiales de Estados Unidos.",
+  "credits.use.nasa-firms":
+    "Detecciones de calor por satélite, que el globo muestra como posibles incendios.",
+  "credits.use.gdacs": "Inundaciones grandes y recientes, que se muestran en el globo.",
+  "credits.use.usgs-rtfi":
+    "Lugares de Estados Unidos donde una inundación afecta ahora mismo a carreteras, puentes y edificios.",
+  "credits.use.fema-shelters": "Ubicación de refugios en Estados Unidos.",
+  "credits.use.openstreetmap": "Los mosaicos de los mapas de los espacios de trabajo.",
+  "credits.use.natural-earth": "La imagen de la Tierra en el globo.",
+  "credits.use.cesium": "Dibuja el globo.",
+  "credits.use.maplibre": "Dibuja los mapas de los espacios de trabajo.",
+  "credits.use.pwned-passwords":
+    "Te avisa cuando una contraseña que eliges aparece en una filtración de datos conocida. Solo se envían los primeros cinco caracteres de una copia codificada, nunca la contraseña.",
+  "credits.note.geonames": "Datos de ubicación basados en GeoNames.",
+  "credits.note.nasa-power":
+    "Datos obtenidos del proyecto POWER del Centro de Investigación Langley de la NASA (LaRC), financiado por la División de Ciencias de la Tierra de la NASA.",
+  "credits.note.nws":
+    "Las alertas se muestran tal como las emitió el Servicio Meteorológico Nacional.",
+  "credits.note.nasa-firms":
+    "Las detecciones casi en tiempo real no tienen calidad científica, y una detección no es un incendio confirmado.",
+  "credits.note.gdacs":
+    "GDACS lo operan las Naciones Unidas y la Comisión Europea. Los eventos son estimaciones de modelos de satélite y de ríos, no alertas oficiales, y una inundación menor puede no aparecer.",
+  "credits.note.usgs-rtfi":
+    "Del Servicio Geológico de Estados Unidos (USGS), una agencia del gobierno de EE. UU.",
+  "credits.note.fema-shelters":
+    "Instalaciones de refugio de FEMA y de la Cruz Roja Estadounidense, del portal HIFLD Open. Es una lista de lugares designados, no indica si un refugio está abierto ahora.",
+  "credits.note.openstreetmap": "© colaboradores de OpenStreetMap.",
+  "credits.note.natural-earth": "Imágenes Natural Earth II, de dominio público.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Iniciar sesión",

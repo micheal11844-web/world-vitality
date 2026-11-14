@@ -14,6 +14,7 @@ import type { NormalizedDataRecord } from "@world-vitality/data-schemas";
 import { METRIC_NODES, workspacesUsingMetric } from "@world-vitality/knowledge-graph";
 import { fetchDatasetAction, type DatasetSource } from "../../../lib/research-actions";
 import { useI18n } from "../../../lib/i18n/i18n-provider";
+import { DataCredit } from "../../data-credit";
 import { WorkspaceShell } from "./workspace-shell";
 
 const SOURCE_OPTIONS: Array<{ value: DatasetSource; label: MessageKey; description: MessageKey }> =
@@ -363,7 +364,12 @@ export function DatasetExplorer() {
             description={t("research.empty.body")}
           />
         ) : (
-          <Table columns={columns} rows={records} getRowKey={(r) => r.id} compact />
+          <>
+            <Table columns={columns} rows={records} getRowKey={(r) => r.id} compact />
+            {records.some((r) => /open-?meteo/i.test(r.provenance.sourceName)) && (
+              <DataCredit kind="weather" />
+            )}
+          </>
         )}
       </Card>
 

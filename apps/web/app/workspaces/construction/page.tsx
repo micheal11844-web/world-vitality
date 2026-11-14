@@ -14,6 +14,7 @@ import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/h
 import { LocationNote } from "../location-note";
 import { featureLockedFor } from "../../../lib/plan-features";
 import { FeatureLockedNote } from "../../plan-notice";
+import { DataCredit } from "../../data-credit";
 
 // Same reasoning as Agriculture and Weather & Climate: environmental
 // data must be fetched fresh on every request, never baked in at build
@@ -273,6 +274,7 @@ export default async function ConstructionWorkspaceHome() {
                   {t("workspace.forecastGaps", { count: timeline.ingestionGaps.length })}
                 </Text>
               )}
+              {!timeline.result.unableToAnswer && <DataCredit kind="weather" />}
             </>
           )}
         </Card>

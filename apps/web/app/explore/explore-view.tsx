@@ -18,6 +18,7 @@ import type { GeocodedLocation } from "../../lib/geocode";
 import { placeLabel } from "../../lib/explore-link";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
+import { DataCredit } from "../data-credit";
 import { ExploreShell } from "./explore-shell";
 
 /**
@@ -172,6 +173,7 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
                 {t("workspace.gaps", { count: result.ingestionGapCount })}
               </Text>
             )}
+            <DataCredit kind="places" />
           </Card>
         )}
       </div>
