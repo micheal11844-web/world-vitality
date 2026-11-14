@@ -256,7 +256,7 @@ export function buildWorkspaceSidebarItems(
 }
 
 /** The top-level pages the sidebar can mark as current. */
-export type AppNavPage = "home" | "workspaces" | "notifications" | "settings";
+export type AppNavPage = "home" | "workspaces" | "notifications" | "settings" | "sources";
 
 export interface AppSidebarOptions {
   /** Which top-level page this is, when it is one of them. */
@@ -284,13 +284,14 @@ export interface AppSidebar {
 
 /**
  * The one sidebar every signed-in page shows: **Home**, **Workspaces**,
- * then **Notifications** and **Settings** under Account.
+ * **Data sources** (the public credits page), then **Notifications** and
+ * **Settings** under Account.
  *
  * The eleven workspaces used to be listed at the top level, each with its
  * own pages beneath it, which filled the whole rail and pushed
  * Notifications and Settings out of sight. They now sit inside a single
  * "Workspaces" row — its label opens the Workspaces page, its arrow
- * expands the list — so the rail stays four rows long until you ask for
+ * expands the list — so the rail stays five rows long until you ask for
  * more. On a workspace's own pages the group and that workspace open
  * automatically, so you can see where you are and move around without an
  * extra click. Everything is built here so no page hand-rolls its own
@@ -308,12 +309,23 @@ export function buildAppSidebar(options: AppSidebarOptions = {}): AppSidebar {
     children: buildWorkspaceSidebarItems(workspaceKey, subKey, t),
   };
 
+  // The public "Data sources and credits" page: reachable signed in or out.
+  const sourcesItem: SidebarItem = {
+    key: "sources",
+    label: label("nav.sources", "Data sources"),
+    href: "/sources",
+    active: current === "sources",
+  };
+
   const defaultExpandedKeys: string[] = [];
   if (workspaceKey) defaultExpandedKeys.push("workspaces", workspaceKey);
   else if (current === "workspaces") defaultExpandedKeys.push("workspaces");
 
   if (!signedIn) {
-    return { sections: [{ key: "main", items: [workspacesItem] }], defaultExpandedKeys };
+    return {
+      sections: [{ key: "main", items: [workspacesItem, sourcesItem] }],
+      defaultExpandedKeys,
+    };
   }
 
   return {
@@ -328,6 +340,7 @@ export function buildAppSidebar(options: AppSidebarOptions = {}): AppSidebar {
             active: current === "home",
           },
           workspacesItem,
+          sourcesItem,
         ],
       },
       {

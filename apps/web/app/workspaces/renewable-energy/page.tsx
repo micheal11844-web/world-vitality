@@ -23,6 +23,7 @@ import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../lib/h
 import { LocationNote } from "../location-note";
 import { featureLockedFor } from "../../../lib/plan-features";
 import { FeatureLockedNote } from "../../plan-notice";
+import { DataCredit } from "../../data-credit";
 
 export const dynamic = "force-dynamic";
 
@@ -299,6 +300,7 @@ export default async function RenewableEnergyWorkspaceHome() {
                   {t("workspace.forecastGaps", { count: outlook.ingestionGaps.length })}
                 </Text>
               )}
+              {!outlook.result.unableToAnswer && <DataCredit kind="weather" />}
             </>
           )}
         </Card>
@@ -347,6 +349,7 @@ export default async function RenewableEnergyWorkspaceHome() {
                   {t("workspace.forecastGaps", { count: solarOutlook.ingestionGaps.length })}
                 </Text>
               )}
+              {!solarOutlook.result.unableToAnswer && <DataCredit kind="weather" />}
             </>
           )}
         </Card>

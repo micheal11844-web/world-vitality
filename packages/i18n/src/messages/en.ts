@@ -1113,6 +1113,51 @@ export const en = {
   "landing.signIn": "Sign in",
   "landing.appsPrompt": "Prefer an app?",
   "landing.appsLink": "Get the desktop or Android app",
+  "nav.sources": "Data sources",
+  "landing.sources": "Data sources and credits",
+  "credits.title": "Data sources and credits",
+  "credits.intro":
+    "World Vitality brings together public data from the organisations below, and we are grateful to them. They do not run, check or endorse this app. Some of what you see is an estimate from a model, not an official warning. In an emergency, call your local emergency number and follow official instructions.",
+  "credits.group.weather": "Weather and places",
+  "credits.group.hazards": "Fires, floods and emergencies",
+  "credits.group.cameras": "Live traffic cameras",
+  "credits.group.maps": "Maps and software",
+  "credits.group.security": "Account security",
+  "credits.licence": "Licence",
+  "credits.cameras.intro":
+    "Each picture comes straight from the agency that runs the camera. World Vitality does not copy, store or change it.",
+  "credits.weatherBy": "Weather data by",
+  "credits.placesBy": "Place search by",
+  "credits.placesData": "Location data based on",
+  "credits.use.open-meteo": "Weather forecasts and place search.",
+  "credits.use.geonames": "The names and positions of the places the search finds.",
+  "credits.use.nasa-power": "Past weather, climate and solar data.",
+  "credits.use.nws": "Official weather alerts for the United States.",
+  "credits.use.nasa-firms": "Satellite heat detections, shown on the Globe as possible fires.",
+  "credits.use.gdacs": "Recent large flood events, shown on the Globe.",
+  "credits.use.usgs-rtfi":
+    "Places in the United States where flooding is affecting roads, bridges and buildings right now.",
+  "credits.use.fema-shelters": "Shelter locations in the United States.",
+  "credits.use.openstreetmap": "The map tiles on the workspace maps.",
+  "credits.use.natural-earth": "The picture of Earth on the Globe.",
+  "credits.use.cesium": "Draws the Globe.",
+  "credits.use.maplibre": "Draws the workspace maps.",
+  "credits.use.pwned-passwords":
+    "Warns you when a password you choose has appeared in a known data breach. Only the first five characters of a scrambled copy are sent, never the password.",
+  "credits.note.geonames": "Location data based on GeoNames.",
+  "credits.note.nasa-power":
+    "Data obtained from the NASA Langley Research Center (LaRC) POWER Project, funded through the NASA Earth Science Division.",
+  "credits.note.nws": "Alerts are passed on as the National Weather Service issued them.",
+  "credits.note.nasa-firms":
+    "Near-real-time detections are not science quality, and a detection is not a confirmed fire.",
+  "credits.note.gdacs":
+    "GDACS is run by the United Nations and the European Commission. Events are estimates from satellite and river models, not official warnings, and a smaller flood may not be listed.",
+  "credits.note.usgs-rtfi":
+    "From the U.S. Geological Survey (USGS), an agency of the U.S. government.",
+  "credits.note.fema-shelters":
+    "FEMA and American Red Cross shelter facilities, from the HIFLD Open portal. This is a list of designated places, not whether a shelter is open now.",
+  "credits.note.openstreetmap": "© OpenStreetMap contributors.",
+  "credits.note.natural-earth": "Natural Earth II imagery, in the public domain.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Sign in",

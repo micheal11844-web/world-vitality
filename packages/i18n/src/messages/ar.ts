@@ -1097,6 +1097,51 @@ export const ar: Messages = {
   "landing.signIn": "تسجيل الدخول",
   "landing.appsPrompt": "تفضّل تطبيقًا؟",
   "landing.appsLink": "احصل على تطبيق سطح المكتب أو أندرويد",
+  "nav.sources": "مصادر البيانات",
+  "landing.sources": "مصادر البيانات والإسناد",
+  "credits.title": "مصادر البيانات والإسناد",
+  "credits.intro":
+    "يجمع World Vitality بيانات عامة من الجهات المذكورة أدناه، ونحن ممتنون لها. هذه الجهات لا تُشغّل هذا التطبيق ولا تراجعه ولا تؤيّده. بعض ما تراه تقدير من نموذج حاسوبي وليس تحذيرًا رسميًا. في حالات الطوارئ، اتصل برقم الطوارئ المحلي واتبع التعليمات الرسمية.",
+  "credits.group.weather": "الطقس والأماكن",
+  "credits.group.hazards": "الحرائق والفيضانات والطوارئ",
+  "credits.group.cameras": "كاميرات المرور المباشرة",
+  "credits.group.maps": "الخرائط والبرمجيات",
+  "credits.group.security": "أمان الحساب",
+  "credits.licence": "الترخيص",
+  "credits.cameras.intro":
+    "تأتي كل صورة مباشرة من الجهة التي تشغّل الكاميرا. لا ينسخها World Vitality ولا يخزّنها ولا يعدّلها.",
+  "credits.weatherBy": "بيانات الطقس من",
+  "credits.placesBy": "البحث عن الأماكن من",
+  "credits.placesData": "بيانات المواقع مبنية على",
+  "credits.use.open-meteo": "توقعات الطقس والبحث عن الأماكن.",
+  "credits.use.geonames": "أسماء الأماكن ومواقعها التي يعثر عليها البحث.",
+  "credits.use.nasa-power": "بيانات الطقس السابق والمناخ والطاقة الشمسية.",
+  "credits.use.nws": "تنبيهات الطقس الرسمية في الولايات المتحدة.",
+  "credits.use.nasa-firms": "رصد الحرارة بالأقمار الصناعية، ويظهر على الكرة الأرضية كحرائق محتملة.",
+  "credits.use.gdacs": "فيضانات كبيرة حديثة تظهر على الكرة الأرضية.",
+  "credits.use.usgs-rtfi":
+    "أماكن في الولايات المتحدة تؤثر فيها الفيضانات الآن على الطرق والجسور والمباني.",
+  "credits.use.fema-shelters": "مواقع مراكز الإيواء في الولايات المتحدة.",
+  "credits.use.openstreetmap": "بلاطات الخرائط في خرائط مساحات العمل.",
+  "credits.use.natural-earth": "صورة الأرض على الكرة الأرضية.",
+  "credits.use.cesium": "يرسم الكرة الأرضية.",
+  "credits.use.maplibre": "يرسم خرائط مساحات العمل.",
+  "credits.use.pwned-passwords":
+    "ينبّهك عندما تظهر كلمة مرور تختارها في تسريب بيانات معروف. تُرسل أول خمسة أحرف فقط من نسخة مشفّرة، وليس كلمة المرور أبدًا.",
+  "credits.note.geonames": "بيانات المواقع مبنية على GeoNames.",
+  "credits.note.nasa-power":
+    "بيانات مأخوذة من مشروع POWER التابع لمركز لانغلي للأبحاث في ناسا (LaRC)، بتمويل من قسم علوم الأرض في ناسا.",
+  "credits.note.nws": "تُعرض التنبيهات كما أصدرتها الخدمة الوطنية للأرصاد الجوية.",
+  "credits.note.nasa-firms":
+    "رصد الحرارة القريب من الزمن الحقيقي ليس بجودة علمية، والرصد ليس حريقًا مؤكدًا.",
+  "credits.note.gdacs":
+    "تُشغّل نظام GDACS الأمم المتحدة والمفوضية الأوروبية. الأحداث تقديرات من نماذج الأقمار الصناعية والأنهار وليست تحذيرات رسمية، وقد لا يظهر فيضان أصغر.",
+  "credits.note.usgs-rtfi":
+    "من هيئة المسح الجيولوجي الأمريكية (USGS)، وهي وكالة تابعة للحكومة الأمريكية.",
+  "credits.note.fema-shelters":
+    "مرافق الإيواء التابعة لـ FEMA والصليب الأحمر الأمريكي، من بوابة HIFLD Open. هذه قائمة بأماكن مخصصة وليست حالة فتح أو إغلاق أي مركز الآن.",
+  "credits.note.openstreetmap": "© المساهمون في OpenStreetMap.",
+  "credits.note.natural-earth": "صور Natural Earth II، ملك عام.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "تسجيل الدخول",

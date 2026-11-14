@@ -19,6 +19,7 @@ import {
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 import { personaDescription, personaLabel, workspaceName } from "../../lib/i18n/labels";
+import { DataCredit } from "../data-credit";
 import {
   previewInsightAction,
   saveOnboardingAction,
@@ -326,6 +327,7 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
                     </label>
                   ))}
                 </div>
+                <DataCredit kind="places" />
               </fieldset>
             )}
 

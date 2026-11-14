@@ -1155,6 +1155,53 @@ export const fr: Messages = {
   "landing.signIn": "Se connecter",
   "landing.appsPrompt": "Vous préférez une application ?",
   "landing.appsLink": "Obtenir l’application pour ordinateur ou Android",
+  "nav.sources": "Sources de données",
+  "landing.sources": "Sources de données et crédits",
+  "credits.title": "Sources de données et crédits",
+  "credits.intro":
+    "World Vitality réunit des données publiques issues des organisations ci-dessous, et nous les en remercions. Elles ne gèrent, ne vérifient et ne cautionnent pas cette application. Une partie de ce que vous voyez est une estimation issue d’un modèle, et non une alerte officielle. En cas d’urgence, appelez le numéro d’urgence local et suivez les consignes officielles.",
+  "credits.group.weather": "Météo et lieux",
+  "credits.group.hazards": "Incendies, inondations et urgences",
+  "credits.group.cameras": "Caméras de circulation en direct",
+  "credits.group.maps": "Cartes et logiciels",
+  "credits.group.security": "Sécurité du compte",
+  "credits.licence": "Licence",
+  "credits.cameras.intro":
+    "Chaque image provient directement de l’organisme qui exploite la caméra. World Vitality ne la copie pas, ne la stocke pas et ne la modifie pas.",
+  "credits.weatherBy": "Données météo de",
+  "credits.placesBy": "Recherche de lieux par",
+  "credits.placesData": "Données de localisation basées sur",
+  "credits.use.open-meteo": "Prévisions météo et recherche de lieux.",
+  "credits.use.geonames": "Les noms et les positions des lieux que la recherche trouve.",
+  "credits.use.nasa-power": "Données météo passées, climatiques et solaires.",
+  "credits.use.nws": "Alertes météo officielles pour les États-Unis.",
+  "credits.use.nasa-firms":
+    "Détections de chaleur par satellite, affichées sur le globe comme incendies possibles.",
+  "credits.use.gdacs": "Grandes inondations récentes, affichées sur le globe.",
+  "credits.use.usgs-rtfi":
+    "Lieux des États-Unis où une inondation touche en ce moment des routes, des ponts et des bâtiments.",
+  "credits.use.fema-shelters": "Emplacements des abris aux États-Unis.",
+  "credits.use.openstreetmap": "Les tuiles des cartes des espaces de travail.",
+  "credits.use.natural-earth": "L’image de la Terre sur le globe.",
+  "credits.use.cesium": "Dessine le globe.",
+  "credits.use.maplibre": "Dessine les cartes des espaces de travail.",
+  "credits.use.pwned-passwords":
+    "Vous prévient lorsqu’un mot de passe que vous choisissez figure dans une fuite de données connue. Seuls les cinq premiers caractères d’une copie chiffrée sont envoyés, jamais le mot de passe.",
+  "credits.note.geonames": "Données de localisation basées sur GeoNames.",
+  "credits.note.nasa-power":
+    "Données issues du projet POWER du centre de recherche Langley de la NASA (LaRC), financé par la division des sciences de la Terre de la NASA.",
+  "credits.note.nws":
+    "Les alertes sont relayées telles que le Service météorologique national les a émises.",
+  "credits.note.nasa-firms":
+    "Les détections quasi temps réel ne sont pas de qualité scientifique, et une détection n’est pas un incendie confirmé.",
+  "credits.note.gdacs":
+    "GDACS est exploité par les Nations unies et la Commission européenne. Les événements sont des estimations issues de modèles satellitaires et fluviaux, pas des alertes officielles, et une inondation plus petite peut ne pas figurer.",
+  "credits.note.usgs-rtfi":
+    "Fourni par le Service géologique des États-Unis (USGS), une agence du gouvernement américain.",
+  "credits.note.fema-shelters":
+    "Sites d’abri de la FEMA et de la Croix-Rouge américaine, issus du portail HIFLD Open. Il s’agit d’une liste de lieux désignés, pas de l’état ouvert ou fermé d’un abri.",
+  "credits.note.openstreetmap": "© contributeurs d’OpenStreetMap.",
+  "credits.note.natural-earth": "Imagerie Natural Earth II, dans le domaine public.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Se connecter",

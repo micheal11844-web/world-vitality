@@ -1292,3 +1292,51 @@ no flood layer when `/api/globe/floods` answers `failed`).
 
 **Revisit when:** GDACS answers the licence question; people ask to be told about floods near
 their fields (reuse the heat-alert mechanism); or GDACS changes its list (the log will show it).
+
+## Decision #035 — Data credits page and Open-Meteo attribution (pre-launch)
+
+**Date:** 2026-11-14. **Status:** accepted; built on the branch `data-credits`.
+
+**Context:** A pre-launch check found the app showed other people's data without crediting
+it. The one hard requirement is Open-Meteo's: its free licence (CC BY 4.0) says "You must
+include a link next to any location Open-Meteo data are displayed", and the app displayed
+forecasts and place-search results with no link. Other sources (NASA, GDACS, the camera
+agencies, OpenStreetMap, the map and globe libraries) were credited only inside code
+comments or, for cameras, next to each picture.
+
+**Decision:** (1) A public **Data sources and credits** page at `/sources` (five languages,
+signed in or out), listing every source with its link, its licence **only where the source's
+own pages state one**, and the caveat that travels with its data (GDACS and FIRMS are not
+official warnings or confirmed fires; shelters are a list, not live status). (2) A small
+credit line **next to the data** where a licence asks for it: "Weather data by Open-Meteo.com"
+(linked to open-meteo.com) at the end of each forecast card, and "Place search by Open-Meteo.com
+· Location data based on GeoNames" beside place-search results. (3) Links to the page from the
+sidebar, the landing page and the Globe legend. Details, per-source status and how to add a
+source: `docs/runbooks/data-credits.md`.
+
+**Rules:**
+
+- **One list drives the page** (`packages/hazard-feeds/src/data-credits.ts` plus
+  `CAMERA_PROVIDERS`), and the sentences are a `Record` over its ids, so a source cannot be
+  added without a credit in all five languages, and a camera feed cannot be switched on
+  without its credit.
+- **No licence is written down that the source did not state.** GDACS, NASA POWER and FIRMS
+  have none on the page; they are credited by name and link, and the questions stay open.
+- **The Open-Meteo credit appears only when a forecast is shown** (not when the plan locks
+  it or the source failed), so it never credits data that is not there.
+- The names and licence names stay as written in every language; the sentences around them
+  are translated.
+
+**What this does not do:** it is not Terms of Service or a Privacy Policy (those need the
+owner's business details and must not be invented), and it does not settle the open licence
+questions (GDACS, NASA POWER commercial use) or buy the Open-Meteo plan.
+
+**Alternatives considered:**
+
+- _A footer on every page._ Open-Meteo asks for the link next to the data, and a footer on
+  pages that show no data would credit nothing; the page plus the inline line covers both.
+- _Credits only inside Settings._ Hidden from signed-out visitors, who are exactly the people
+  a CC BY credit must be visible to.
+
+**Revisit when:** a source is added or removed; GDACS or NASA answers; Open-Meteo or any
+other source changes its attribution wording.

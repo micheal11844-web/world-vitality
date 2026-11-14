@@ -67,6 +67,19 @@ export default async function LandingPage() {
           <div style={{ marginTop: "var(--wv-space-md)" }}>
             <AppDownloadsLink />
           </div>
+          <div style={{ marginTop: "var(--wv-space-xs)" }}>
+            <Link
+              href="/sources"
+              style={{
+                color: "var(--wv-text-secondary)",
+                fontFamily: "var(--wv-font-sans)",
+                fontSize: "var(--wv-text-sm, 0.875rem)",
+                textDecoration: "underline",
+              }}
+            >
+              {t("landing.sources")}
+            </Link>
+          </div>
         </div>
       </main>
     </LocaleBoundary>

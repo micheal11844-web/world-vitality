@@ -70,3 +70,14 @@ export {
   type GdacsFloodResult,
   type GlobeFlood,
 } from "./floods.js";
+export {
+  DATA_CREDITS,
+  DATA_CREDIT_GROUPS,
+  DATA_CREDIT_IDS,
+  GEONAMES_CREDIT_URL,
+  OPEN_METEO_CREDIT_URL,
+  dataCreditsInGroup,
+  type DataCredit,
+  type DataCreditGroup,
+  type DataCreditId,
+} from "./data-credits.js";
