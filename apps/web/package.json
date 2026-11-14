@@ -22,6 +22,7 @@
     "@world-vitality/identity-service": "workspace:*",
     "@world-vitality/interpretation-engine": "workspace:*",
     "@world-vitality/knowledge-graph": "workspace:*",
+    "@world-vitality/support": "workspace:*",
     "@world-vitality/ui-components": "workspace:*",
     "cesium": "^1.145.0",
     "maplibre-gl": "^6.16.0",

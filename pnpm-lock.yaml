@@ -85,6 +85,9 @@ importers:
       '@world-vitality/knowledge-graph':
         specifier: workspace:*
         version: link:../../packages/knowledge-graph
+      '@world-vitality/support':
+        specifier: workspace:*
+        version: link:../../packages/support
       '@world-vitality/ui-components':
         specifier: workspace:*
         version: link:../../packages/ui-components
@@ -131,6 +134,8 @@ importers:
   packages/i18n: {}
 
   packages/knowledge-graph: {}
+
+  packages/support: {}
 
   packages/ui-components:
     dependencies:

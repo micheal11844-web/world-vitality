@@ -256,7 +256,7 @@ export function buildWorkspaceSidebarItems(
 }
 
 /** The top-level pages the sidebar can mark as current. */
-export type AppNavPage = "home" | "workspaces" | "notifications" | "settings" | "sources";
+export type AppNavPage = "home" | "workspaces" | "notifications" | "settings" | "sources" | "legal";
 
 export interface AppSidebarOptions {
   /** Which top-level page this is, when it is one of them. */

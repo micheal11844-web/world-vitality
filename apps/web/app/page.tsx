@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { buttonStyle, Text } from "@world-vitality/ui-components";
 import { AppDownloadsLink } from "./app-downloads-link";
+import { LegalLinks } from "./legal-links";
 import { LanguageSwitcher } from "../lib/i18n/language-switcher";
 import { LocaleBoundary } from "../lib/i18n/locale-boundary";
 import { getTranslator } from "../lib/i18n/server";
@@ -79,6 +80,9 @@ export default async function LandingPage() {
             >
               {t("landing.sources")}
             </Link>
+          </div>
+          <div style={{ marginTop: "var(--wv-space-xs)" }}>
+            <LegalLinks />
           </div>
         </div>
       </main>

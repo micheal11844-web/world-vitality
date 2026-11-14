@@ -1202,6 +1202,13 @@ export const fr: Messages = {
     "Sites d’abri de la FEMA et de la Croix-Rouge américaine, issus du portail HIFLD Open. Il s’agit d’une liste de lieux désignés, pas de l’état ouvert ou fermé d’un abri.",
   "credits.note.openstreetmap": "© contributeurs d’OpenStreetMap.",
   "credits.note.natural-earth": "Imagerie Natural Earth II, dans le domaine public.",
+  "legal.terms.title": "Conditions d’utilisation",
+  "legal.privacy.title": "Politique de confidentialité",
+  "legal.updated": "Dernière mise à jour : {date}",
+  "legal.englishOnly":
+    "Ces documents sont rédigés en anglais, et c’est la version anglaise qui s’applique. Si vous avez besoin d’aide pour les comprendre dans votre langue, écrivez-nous.",
+  "legal.signupAgree":
+    "En vous connectant ou en créant un compte, vous acceptez les Conditions d’utilisation et la Politique de confidentialité.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Se connecter",

@@ -14,6 +14,7 @@ import {
   startCheckoutAction,
 } from "../../lib/billing-actions";
 import { AppBrand } from "../app-brand";
+import { LegalLinks } from "../legal-links";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
 
 export interface BillingPlanLimits {
@@ -490,6 +491,7 @@ export function BillingView({
         <Text variant="caption" style={muted}>
           {t("billing.alwaysFree")}
         </Text>
+        <LegalLinks />
       </div>
     </AppShell>
   );

@@ -61,8 +61,8 @@ known about its licence, and how to add a source without forgetting the credit.
 4. **Open-Meteo paid plan** and `OPEN_METEO_API_KEY` in Vercel before the first paying
    customer. The credit stays after upgrading (the paid licence keeps the attribution
    rule unless Open-Meteo says otherwise).
-5. **Terms of Service and Privacy Policy** are a separate piece of work and need the owner's
-   business details; they are not written here.
+5. **Terms of Service and Privacy Policy** exist since v119 (`legal-pages.md`); they still need a
+   Nigerian lawyer's read.
 
 ## Adding a source
 
