@@ -12,7 +12,15 @@ import {
   type CompassPoint,
 } from "@world-vitality/hazard-feeds";
 import { useI18n } from "../../lib/i18n/i18n-provider";
-import { FIRE_COLOR, type GlobeFire, type GlobeSelection, type PublicCamera } from "./globe-types";
+import { floodPlace } from "./globe-flood-place";
+import {
+  FIRE_COLOR,
+  FLOOD_COLOR,
+  type GlobeFire,
+  type GlobeFlood,
+  type GlobeSelection,
+  type PublicCamera,
+} from "./globe-types";
 
 const COMPASS_KEY = {
   N: "globe.compass.n",
@@ -58,20 +66,23 @@ const mutedStyle: CSSProperties = { color: "var(--wv-text-secondary)" };
 
 /**
  * The details panel for whatever the person opened on the Globe: a satellite
- * heat detection (with the public cameras nearest to it) or a single public
- * camera. It is also where the "call the fire service" button lives, so the
+ * heat detection (with the public cameras nearest to it), a flood event from
+ * GDACS or a single public camera. It is also where the "call the fire service" button lives, so the
  * answer to "is this real?" and the way to act on it are on one screen.
  *
  * Honesty is part of the panel, not fine print: a heat detection is shown as
  * *possibly* a fire; a camera picture is labelled as a still that may be
- * minutes old; the emergency text says to call only for a real, current fire
- * and that this is not an official alert. Pictures are loaded straight from
+ * minutes old; a flood event says it is a model estimate over a large area, not
+ * an official warning, and that a smaller flood may not be listed; the emergency
+ * text says to call only for a real, current fire and that this is not an
+ * official alert. Pictures are loaded straight from
  * the agency by this browser, only once a camera is open here, and carry the
  * agency's credit and licence.
  */
 export function GlobePanel({
   selection,
   fire,
+  flood,
   camera,
   camerasFailed,
   onSelect,
@@ -79,6 +90,7 @@ export function GlobePanel({
 }: {
   selection: GlobeSelection;
   fire: GlobeFire | null;
+  flood: GlobeFlood | null;
   camera: PublicCamera | null;
   camerasFailed: boolean;
   onSelect: (selection: GlobeSelection) => void;
@@ -129,7 +141,9 @@ export function GlobePanel({
           <Text variant="sectionTitle" as="h2" style={{ margin: 0, fontSize: "1.125rem" }}>
             {selection.kind === "fire"
               ? t("globe.panel.fire.title")
-              : t("globe.panel.camera.title")}
+              : selection.kind === "flood"
+                ? t("globe.panel.flood.title")
+                : t("globe.panel.camera.title")}
           </Text>
         </div>
         <Button
@@ -146,6 +160,7 @@ export function GlobePanel({
       {selection.kind === "fire" && fire && (
         <FireDetails fire={fire} camerasFailed={camerasFailed} onSelect={onSelect} />
       )}
+      {selection.kind === "flood" && flood && <FloodDetails key={flood.id} flood={flood} />}
       {selection.kind === "camera" && camera && (
         <CameraDetails key={camera.id} camera={camera} near={nearEntry} />
       )}
@@ -242,6 +257,77 @@ function FireDetails({
       </section>
 
       <EmergencyBlock countryCode={countryCode} />
+    </>
+  );
+}
+
+const FLOOD_ALERT_KEY = {
+  red: "globe.panel.flood.alert.red",
+  orange: "globe.panel.flood.alert.orange",
+  green: "globe.panel.flood.alert.green",
+} as const satisfies Record<GlobeFlood["alert"], string>;
+
+const FLOOD_DATE: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+
+/**
+ * One GDACS flood event. It says plainly what it is (a model estimate over a
+ * large area, not a street and not an official warning), shows GDACS's own alert
+ * level and dates, links to GDACS's page for the event, and offers the emergency
+ * number for someone who is in danger.
+ */
+function FloodDetails({ flood }: { flood: GlobeFlood }) {
+  const { t, date, locale, number } = useI18n();
+  const from = date(flood.startedAt, FLOOD_DATE);
+  const period = flood.ongoing
+    ? t("globe.panel.flood.ongoing", { from })
+    : flood.endedAt
+      ? t("globe.panel.flood.period", { from, to: date(flood.endedAt, FLOOD_DATE) })
+      : t("globe.panel.flood.started", { from });
+  return (
+    <>
+      <Text
+        variant="body"
+        data-testid="globe-flood-place"
+        style={{ ...sectionStyle, fontWeight: 600 }}
+        dir="auto"
+      >
+        {floodPlace(flood, locale)}
+      </Text>
+      <Text variant="body" style={{ display: "block", marginTop: "var(--wv-space-xs)" }}>
+        {t("globe.panel.flood.what")}
+      </Text>
+      <ul style={{ margin: "var(--wv-space-sm) 0 0", paddingInlineStart: "1.25rem" }}>
+        <li>
+          <Text variant="body" data-testid="globe-flood-alert">
+            {t(FLOOD_ALERT_KEY[flood.alert])}
+          </Text>
+        </li>
+        <li>
+          <Text variant="body" data-testid="globe-flood-period">
+            {period}
+          </Text>
+        </li>
+        <li>
+          <Text variant="caption" style={mutedStyle} dir="ltr">
+            {t("globe.panel.flood.position", {
+              latitude: number(Math.round(flood.latitude * 100) / 100),
+              longitude: number(Math.round(flood.longitude * 100) / 100),
+            })}
+          </Text>
+        </li>
+      </ul>
+      <div style={sectionStyle}>
+        <ButtonLink
+          href={flood.reportUrl}
+          variant="secondary"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="globe-flood-report"
+        >
+          {t("globe.panel.flood.report")} ↗
+        </ButtonLink>
+      </div>
+      <EmergencyBlock kind="flood" countryCode={flood.countryCode} />
     </>
   );
 }
@@ -595,15 +681,22 @@ function LookAround({ latitude, longitude }: { latitude: number; longitude: numb
   );
 }
 
-function EmergencyBlock({ countryCode }: { countryCode: string | null }) {
+function EmergencyBlock({
+  countryCode,
+  kind = "fire",
+}: {
+  countryCode: string | null;
+  kind?: "fire" | "flood";
+}) {
   const { t } = useI18n();
   const emergency = emergencyNumberFor(countryCode);
+  const flood = kind === "flood";
   return (
     <section
       style={{
         ...sectionStyle,
         padding: "var(--wv-space-sm)",
-        border: `1px solid ${FIRE_COLOR}`,
+        border: `1px solid ${flood ? FLOOD_COLOR : FIRE_COLOR}`,
         borderRadius: "var(--wv-radius-sm)",
       }}
       aria-labelledby="globe-panel-emergency"
@@ -614,7 +707,7 @@ function EmergencyBlock({ countryCode }: { countryCode: string | null }) {
         id="globe-panel-emergency"
         style={{ margin: "0 0 var(--wv-space-xs)", fontWeight: 600 }}
       >
-        {t("globe.panel.emergency.title")}
+        {flood ? t("globe.panel.flood.emergencyTitle") : t("globe.panel.emergency.title")}
       </Text>
       <ButtonLink
         href={`tel:${emergency.number}`}
@@ -625,12 +718,12 @@ function EmergencyBlock({ countryCode }: { countryCode: string | null }) {
           marginBottom: "var(--wv-space-xs)",
         }}
       >
-        {emergency.specific
+        {emergency.specific && !flood
           ? t("globe.panel.emergency.callSpecific", { number: emergency.number })
           : t("globe.panel.emergency.callGeneral", { number: emergency.number })}
       </ButtonLink>
       <Text variant="caption" style={{ ...mutedStyle, display: "block" }}>
-        {t("globe.panel.emergency.advice")}
+        {flood ? t("globe.panel.flood.emergencyAdvice") : t("globe.panel.emergency.advice")}
       </Text>
       {!emergency.specific && (
         <Text

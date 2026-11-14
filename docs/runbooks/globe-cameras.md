@@ -5,13 +5,14 @@ and how to tell when a source has changed. Decision #027 explains why it exists.
 
 ## What a person sees
 
-Open **View the Globe**. Two kinds of dot join the map after the page is already on screen:
+Open **View the Globe**. Three kinds of dot join the map after the page is already on screen:
 
 - **Orange: satellite heat detections** from the whole world for the last day
   (NASA FIRMS, VIIRS near-real-time). Nearby detections are folded into one dot
   (about 11 km squares). Low-confidence detections are dropped. At most 2,500
   dots are shown; the page says "Showing the strongest N of M" when it cuts.
   Dots that have a public camera within 25 km are always kept.
+- **Blue: flood events** from GDACS, the UN and European Commission's disaster alert system (model estimates of large floods, not ground reports; see "Flood events" below).
 - **Teal: public cameras** from six agencies (below), thinned to one per ~5 km
   square and at most 600 per agency so the map stays readable.
 
@@ -277,3 +278,55 @@ has not been applied (see `docs/runbooks/apply-migrations.md`).
 catalogs. How a Globe link picks the fire: `FOCUS_MATCH_KM` in `apps/web/app/globe/globe-shell.tsx`.
 Reaching people when the app is closed needs email, SMS or push: a vendor, a cost and a
 consent decision, not built.
+
+## Flood events (v117, Decision #034)
+
+**What a person sees.** A blue dot per recent flood event, worldwide, on the 3D globe and
+the flat map ("Flood event (GDACS)" in the key; bigger dot = higher GDACS alert level;
+selected dot turns yellow). Tapping one opens a panel: the country (in the person's
+language when it is one country), what the dot is, GDACS's alert level (red, orange, green),
+the dates ("Still going. Started …" or "… to …"), the middle of the area, a link
+**Read the GDACS report** (new tab), and "In danger from floodwater?" with the emergency number.
+
+**What it is not.** GDACS flood events are **estimates from satellite and river models**,
+not reports from the ground. The dot is the middle of a large area. Only large floods are
+listed. It is not an official warning. The panel says all of this; do not soften it.
+
+**Where it comes from.** GDACS (UN OCHA and the European Commission's JRC), no key:
+`https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=FL&alertlevel=Green;Orange;Red&fromdate=…&todate=…`
+(last 30 days; the filters in the address are asked for but **not trusted**: the answer holds
+every event type, and floods that ended weeks earlier). The server (`apps/web/lib/global-floods.ts`)
+reads it at most every 15 minutes for everyone, 12-second timeout, 8 MB cap.
+
+**The rules in `packages/hazard-feeds/src/floods.ts`.** Only `eventtype = "FL"`. Dates have no
+zone and are UTC. Kept: still going (`iscurrent`), or ended or updated within `FLOOD_MAX_AGE_DAYS`
+(14). Not kept: starting more than a day ahead. One row per event id, latest update wins.
+Order: red, orange, green; going before ended; newer first; at most `MAX_FLOODS` (300).
+The report address is built from the numeric ids. A country code is set only when the event
+touches exactly one country. A list that is not a feature collection throws.
+
+**When it seems wrong.** Read the logs within an hour:
+
+- `globe_world_floods_loaded` — `features` (all event types), `floodEvents` (floods seen),
+  `skipped` (floods dropped as unusable), `shown`. Normal: `floodEvents` above 0 on most days
+  and `skipped` near 0. **`features` above 0 with `floodEvents` always 0** means GDACS changed
+  how floods are labelled. **`skipped` close to `floodEvents`** means a field changed shape.
+  `shown` of 0 with `floodEvents` above 0 just means every flood is older than 14 days.
+- `globe_floods_failed` — GDACS could not be read or the answer was not a feature list
+  (the panel says "could not be loaded", never "no floods").
+- `globe_world_floods_using_stale_answer` — a refresh failed and the last good list is in use.
+
+**Changing it.** The days shown, the days asked for and the cap: `FLOOD_MAX_AGE_DAYS`,
+`FLOOD_REQUEST_DAYS`, `MAX_FLOODS` in `floods.ts`. Colour and size: `FLOOD_COLOR`,
+`floodMarkerSize` in `apps/web/app/globe/globe-types.ts`. The text: `globe.floods.*`,
+`globe.legend.flood`, `globe.marker.flood` and `globe.panel.flood.*` in the five catalogs.
+To switch the layer off, make `/api/globe/floods` answer `{ "floods": [], "failed": true }`
+(or remove the `floodsLayer` lines in `globe-shell.tsx`).
+
+**Open licence question.** GDACS's terms of use (`https://gdacs.org/About/termofuse.aspx` and
+the March 2025 PDF) are silent on reuse, licence, commercial use, credit wording and automated
+access. Before charging customers, ask GDACS in writing and record the answer in Decision #034.
+Same kind of item as the Open-Meteo plan (`docs/runbooks/billing.md`).
+
+**Not done, and why.** Notifications for floods near saved places (like heat alerts): held until
+people use the layer. Flood-extent maps (water drawn on the ground): need a tile host and terms.

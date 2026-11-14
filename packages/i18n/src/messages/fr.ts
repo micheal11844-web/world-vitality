@@ -1334,6 +1334,30 @@ export const fr: Messages = {
     "N’appelez que si vous pensez qu’il y a un incendie réel et en cours. Un point satellite ou une image de caméra seuls peuvent être erronés ou dépassés. Indiquez à l’opérateur où cela se passe et ce que vous voyez. Cette application n’est pas une alerte officielle et ne remplace pas les services d’urgence.",
   "globe.panel.emergency.general":
     "Le 112 fonctionne sur la plupart des téléphones mobiles dans la plupart des pays. Si vous connaissez le numéro d’urgence local, utilisez-le plutôt.",
+  // ---- Globe: worldwide flood events (GDACS)
+  "globe.floods.loading": "Chargement des événements d’inondation de GDACS…",
+  "globe.floods.count":
+    "{count, plural, one {# événement d’inondation récent} other {# événements d’inondation récents}} signalés par GDACS (le système d’alerte de l’ONU et de l’UE) ces {days} derniers jours. Sélectionnez un point bleu pour l’ouvrir.",
+  "globe.floods.none":
+    "GDACS ne signale aucune grande inondation ces {days} derniers jours. Une inondation locale peut tout de même être en cours.",
+  "globe.floods.failed":
+    "Impossible de charger les événements d’inondation de GDACS pour le moment.",
+  "globe.legend.flood": "Événement d’inondation (GDACS)",
+  "globe.marker.flood": "Événement d’inondation : {place}",
+  "globe.panel.flood.title": "Événement d’inondation",
+  "globe.panel.flood.what":
+    "Le système d’alerte aux catastrophes de l’ONU et de l’UE (GDACS) signale une inondation ici. Elle est estimée à partir de modèles satellitaires et fluviaux, et le point marque le centre d’une vaste zone, pas une rue. Ce n’est pas une alerte officielle pour votre lieu, et une inondation plus petite peut ne pas figurer.",
+  "globe.panel.flood.alert.red": "Niveau d’alerte GDACS : rouge (impact élevé)",
+  "globe.panel.flood.alert.orange": "Niveau d’alerte GDACS : orange (impact moyen)",
+  "globe.panel.flood.alert.green": "Niveau d’alerte GDACS : vert (impact faible)",
+  "globe.panel.flood.ongoing": "En cours. Commencée le {from}",
+  "globe.panel.flood.period": "Du {from} au {to}",
+  "globe.panel.flood.started": "Commencée le {from}",
+  "globe.panel.flood.position": "Centre de la zone : {latitude}, {longitude}",
+  "globe.panel.flood.report": "Lire le rapport GDACS",
+  "globe.panel.flood.emergencyTitle": "En danger à cause de l’eau ?",
+  "globe.panel.flood.emergencyAdvice":
+    "Si des personnes sont en danger, gagnez un point en hauteur et appelez les secours. Suivez les consignes des autorités locales. Cette application n’est pas une alerte officielle et ne remplace pas les services d’urgence.",
   "globe.compass.n": "nord",
   "globe.compass.ne": "nord-est",
   "globe.compass.e": "est",

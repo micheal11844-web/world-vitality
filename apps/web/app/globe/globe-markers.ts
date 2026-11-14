@@ -2,9 +2,12 @@ import type * as CesiumTypes from "cesium";
 import {
   CAMERA_COLOR,
   FIRE_COLOR,
+  FLOOD_COLOR,
   SELECTED_COLOR,
   fireMarkerSize,
+  floodMarkerSize,
   type GlobeFire,
+  type GlobeFlood,
   type GlobeSelection,
   type PublicCamera,
 } from "./globe-types";
@@ -21,6 +24,8 @@ const CAMERA_SIZE = 7;
 /** How far from a marker (in pixels) a click still counts as hitting it. Small dots are hard to hit on a touch screen. */
 const PICK_SIZE_PX = 14;
 const FIRE_FLY_HEIGHT_M = 2_000_000;
+/** A flood event is a point in the middle of a large area, so the view stays wider than for a fire. */
+const FLOOD_FLY_HEIGHT_M = 3_000_000;
 const CAMERA_FLY_HEIGHT_M = 1_200_000;
 
 interface Entry {
@@ -33,23 +38,25 @@ interface Entry {
 }
 
 /**
- * Draws the fire areas and public cameras as one batch of points and turns a
+ * Draws the fire areas, flood events and public cameras as one batch of points and turns a
  * click on one into `onSelect`. Thousands of markers are drawn this way
  * (a point collection) instead of one `Entity` each: entities carry far more
  * per-item cost and would make the globe heavy to open and to turn.
  *
- * Cameras are added first so a fire is drawn on top where they overlap.
- * Marker ids are `fire:<id>` / `camera:<id>`.
+ * Cameras are added first, then floods, then fires, so a fire is drawn on top
+ * where they overlap. Marker ids are `fire:<id>` / `flood:<id>` / `camera:<id>`.
  */
 export function addMarkerLayer(
   Cesium: typeof CesiumTypes,
   viewer: CesiumTypes.Viewer,
   {
     fires,
+    floods = [],
     cameras,
     onSelect,
   }: {
     fires: readonly GlobeFire[];
+    floods?: readonly GlobeFlood[];
     cameras: readonly PublicCamera[];
     onSelect: (selection: GlobeSelection) => void;
   },
@@ -58,6 +65,7 @@ export function addMarkerLayer(
   const entries = new Map<string, Entry>();
   const fireColor = Cesium.Color.fromCssColorString(FIRE_COLOR);
   const cameraColor = Cesium.Color.fromCssColorString(CAMERA_COLOR);
+  const floodColor = Cesium.Color.fromCssColorString(FLOOD_COLOR);
   const selectedColor = Cesium.Color.fromCssColorString(SELECTED_COLOR);
   // Far away, dots shrink so thousands of them do not smear into one patch.
   const scale = new Cesium.NearFarScalar(1_500_000, 1, 15_000_000, 0.55);
@@ -92,6 +100,16 @@ export function addMarkerLayer(
       CAMERA_FLY_HEIGHT_M,
     );
   }
+  for (const flood of floods) {
+    add(
+      `flood:${flood.id}`,
+      flood.latitude,
+      flood.longitude,
+      floodMarkerSize(flood.alert),
+      floodColor,
+      FLOOD_FLY_HEIGHT_M,
+    );
+  }
   for (const fire of fires) {
     add(
       `fire:${fire.id}`,
@@ -115,7 +133,7 @@ export function addMarkerLayer(
       if (typeof id !== "string" || !entries.has(id)) continue;
       const separator = id.indexOf(":");
       const kind = id.slice(0, separator);
-      if (kind === "fire" || kind === "camera") {
+      if (kind === "fire" || kind === "flood" || kind === "camera") {
         onSelect({ kind, id: id.slice(separator + 1) });
         return;
       }

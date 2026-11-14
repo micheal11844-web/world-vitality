@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Text, AppShell } from "@world-vitality/ui-components";
-import { distanceKm, thinCameras, type GlobeFocus } from "@world-vitality/hazard-feeds";
+import {
+  FLOOD_MAX_AGE_DAYS,
+  distanceKm,
+  thinCameras,
+  type GlobeFocus,
+} from "@world-vitality/hazard-feeds";
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
@@ -14,7 +19,9 @@ import { hasWebGL, loadCesium } from "./globe-loader";
 import {
   CAMERA_COLOR,
   FIRE_COLOR,
+  FLOOD_COLOR,
   type GlobeFire,
+  type GlobeFlood,
   type GlobePin,
   type GlobeSelection,
   type PublicCamera,
@@ -54,6 +61,11 @@ interface FiresResponse {
   notConfigured?: boolean;
   failed?: boolean;
   camerasFailed?: boolean;
+}
+
+interface FloodsResponse {
+  floods?: GlobeFlood[];
+  failed?: boolean;
 }
 
 interface CamerasResponse {
@@ -136,6 +148,7 @@ export function GlobeShell({
   const live = useLayer<LiveLayersResponse>("/api/globe/live-layers", 20_000);
   const firesLayer = useLayer<FiresResponse>("/api/globe/fires", 32_000);
   const camerasLayer = useLayer<CamerasResponse>("/api/globe/cameras", 22_000);
+  const floodsLayer = useLayer<FloodsResponse>("/api/globe/floods", 20_000);
   // `null` until we have asked the browser (it cannot be known on the server).
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [engineFailed, setEngineFailed] = useState(false);
@@ -185,6 +198,25 @@ export function GlobeShell({
         : [],
     [firesLayer],
   );
+  const floods = useMemo(
+    () =>
+      floodsLayer.status === "done" && Array.isArray(floodsLayer.data.floods)
+        ? floodsLayer.data.floods
+        : [],
+    [floodsLayer],
+  );
+  const floodById = useMemo(() => new Map(floods.map((f) => [f.id, f])), [floods]);
+  const floodsFailed =
+    floodsLayer.status === "failed" ||
+    (floodsLayer.status === "done" && floodsLayer.data.failed === true);
+  const floodsText =
+    floodsLayer.status === "loading"
+      ? t("globe.floods.loading")
+      : floodsFailed
+        ? t("globe.floods.failed")
+        : floods.length === 0
+          ? t("globe.floods.none", { days: FLOOD_MAX_AGE_DAYS })
+          : t("globe.floods.count", { count: floods.length, days: FLOOD_MAX_AGE_DAYS });
   // Every camera to draw: the thinned standalone list plus every camera listed under a fire.
   const cameras = useMemo(() => {
     const byId = new Map<string, PublicCamera>();
@@ -253,8 +285,14 @@ export function GlobeShell({
         : null;
   const selectedCamera =
     selection?.kind === "camera" ? (cameraById.get(selection.id) ?? null) : null;
+  const selectedFlood = selection?.kind === "flood" ? (floodById.get(selection.id) ?? null) : null;
   const panelOpen =
-    selection !== null && (selection.kind === "fire" ? selectedFire : selectedCamera) !== null;
+    selection !== null &&
+    (selection.kind === "fire"
+      ? selectedFire
+      : selection.kind === "flood"
+        ? selectedFlood
+        : selectedCamera) !== null;
   const closePanel = useCallback(() => setSelection(null), []);
 
   const use3d = webgl === true && !engineFailed;
@@ -315,7 +353,15 @@ export function GlobeShell({
           >
             {watchText}
           </Text>
-          {(fires.length > 0 || cameras.length > 0) && (
+          <Text
+            variant="caption"
+            role="status"
+            data-testid="globe-floods-status"
+            style={{ display: "block", color: "var(--wv-text-secondary)" }}
+          >
+            {floodsText}
+          </Text>
+          {(fires.length > 0 || floods.length > 0 || cameras.length > 0) && (
             <Text
               variant="caption"
               style={{
@@ -326,6 +372,9 @@ export function GlobeShell({
               }}
             >
               <LegendDot color={FIRE_COLOR} label={t("globe.legend.fire")} />
+              {floods.length > 0 && (
+                <LegendDot color={FLOOD_COLOR} label={t("globe.legend.flood")} />
+              )}
               <LegendDot color={CAMERA_COLOR} label={t("globe.legend.camera")} />
             </Text>
           )}
@@ -346,6 +395,7 @@ export function GlobeShell({
                 pins={allPins}
                 focusPins={pins}
                 fires={fires}
+                floods={floods}
                 cameras={cameras}
                 selection={selection}
                 locale={locale}
@@ -369,6 +419,7 @@ export function GlobeShell({
               <GlobePreview
                 pins={allPins}
                 fires={previewFires}
+                floods={floods}
                 cameras={previewCameras}
                 selection={selection}
                 onSelect={setSelection}
@@ -400,6 +451,7 @@ export function GlobeShell({
             <GlobePanel
               selection={selection}
               fire={selectedFire}
+              flood={selectedFlood}
               camera={selectedCamera}
               camerasFailed={camerasFailed}
               onSelect={setSelection}
