@@ -1340,3 +1340,37 @@ questions (GDACS, NASA POWER commercial use) or buy the Open-Meteo plan.
 
 **Revisit when:** a source is added or removed; GDACS or NASA answers; Open-Meteo or any
 other source changes its attribution wording.
+
+## Decision #036 — Terms of Service and Privacy Policy pages
+
+**Date:** 2026-11-15. **Status:** accepted; built on the branch `legal-pages`. **Needs a lawyer's read before launch** (below).
+
+**Context:** There were no Terms or Privacy pages, which blocks charging customers (and
+sign-up should say what people agree to). The owner supplied the details on 2026-11-14:
+business **joelflowstack**, business email **joelflowstack@gmail.com** (not the personal
+address), **Nigeria**, disputes settled online by email.
+
+**Decision:** Public pages `/terms` and `/privacy`, linked from the landing page, the sign-in
+and sign-up form, Plan and billing and Data sources, written from what the app actually does
+(verified against the database tables, account deletion, data export, billing code, hosting
+regions and the absence of analytics trackers). Governed by Nigerian law; disputes are first
+settled by email to the business address, then the courts of Nigeria. The privacy text follows
+the Nigeria Data Protection Act 2023's headings (controller, purposes and lawful bases,
+recipients, transfers, retention, rights, complaint to the NDPC, children). **English only**,
+with a line in each person's language saying the English version applies. Details, the
+list of facts checked and the lawyer's checklist: `docs/runbooks/legal-pages.md`.
+
+**Rules:** the business name, address and date live in one place
+(`packages/support/src/business.ts`); the text and the app change together; a change that
+matters to paying customers is announced before it applies; the personal address is never
+printed.
+
+**Not decided by the owner, drafted by me, to confirm:** age 18+, the refund wording,
+price changes at renewal with notice, the liability cap, no arbitration clause.
+
+**Alternatives considered:** _a template generator_ (cannot know what this app collects);
+_translating the legal text into five languages_ (five documents that can disagree, without a
+lawyer to check them); _leaving refunds unsaid_ (worse for customers and for the owner).
+
+**Revisit when:** a lawyer reviews it; the business becomes a registered company; any data
+flow changes (new provider, analytics, push or email alerts); regional pricing or refunds change.

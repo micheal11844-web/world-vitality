@@ -1158,6 +1158,13 @@ export const en = {
     "FEMA and American Red Cross shelter facilities, from the HIFLD Open portal. This is a list of designated places, not whether a shelter is open now.",
   "credits.note.openstreetmap": "© OpenStreetMap contributors.",
   "credits.note.natural-earth": "Natural Earth II imagery, in the public domain.",
+  "legal.terms.title": "Terms of Service",
+  "legal.privacy.title": "Privacy Policy",
+  "legal.updated": "Last updated: {date}",
+  "legal.englishOnly":
+    "These documents are written in English, and the English version is the one that applies. If you need help understanding them in your language, email us.",
+  "legal.signupAgree":
+    "By signing in or creating an account, you agree to the Terms of Service and the Privacy Policy.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Sign in",

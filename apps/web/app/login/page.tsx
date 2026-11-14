@@ -25,6 +25,7 @@ import { useI18n } from "../../lib/i18n/i18n-provider";
 import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 import { isNativeShellUserAgent } from "../../lib/pwa/native-shell";
 import { AppDownloadsLink } from "../app-downloads-link";
+import { LegalLinks } from "../legal-links";
 
 /**
  * Maps the form's real states onto the Guide Character's moods (Stage
@@ -431,6 +432,9 @@ function LoginForm() {
           )}
         </Text>
       </form>
+      <div style={{ marginTop: "var(--wv-space-md)" }}>
+        <LegalLinks agree />
+      </div>
       <div style={{ marginTop: "var(--wv-space-md)", textAlign: "center" }}>
         <AppDownloadsLink />
       </div>

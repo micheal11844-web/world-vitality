@@ -1176,6 +1176,13 @@ export const pt: Messages = {
     "Instalações de abrigo da FEMA e da Cruz Vermelha Americana, do portal HIFLD Open. É uma lista de locais designados, não indica se um abrigo está aberto agora.",
   "credits.note.openstreetmap": "© colaboradores do OpenStreetMap.",
   "credits.note.natural-earth": "Imagens Natural Earth II, em domínio público.",
+  "legal.terms.title": "Termos de Serviço",
+  "legal.privacy.title": "Política de Privacidade",
+  "legal.updated": "Última atualização: {date}",
+  "legal.englishOnly":
+    "Estes documentos estão escritos em inglês, e a versão em inglês é a que vale. Se você precisar de ajuda para entendê-los no seu idioma, escreva para nós.",
+  "legal.signupAgree":
+    "Ao entrar ou criar uma conta, você concorda com os Termos de Serviço e a Política de Privacidade.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Entrar",

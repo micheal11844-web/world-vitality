@@ -1142,6 +1142,12 @@ export const ar: Messages = {
     "مرافق الإيواء التابعة لـ FEMA والصليب الأحمر الأمريكي، من بوابة HIFLD Open. هذه قائمة بأماكن مخصصة وليست حالة فتح أو إغلاق أي مركز الآن.",
   "credits.note.openstreetmap": "© المساهمون في OpenStreetMap.",
   "credits.note.natural-earth": "صور Natural Earth II، ملك عام.",
+  "legal.terms.title": "شروط الخدمة",
+  "legal.privacy.title": "سياسة الخصوصية",
+  "legal.updated": "آخر تحديث: {date}",
+  "legal.englishOnly":
+    "هذه المستندات مكتوبة بالإنجليزية، والنسخة الإنجليزية هي المعتمدة. إذا احتجت إلى مساعدة في فهمها بلغتك، فراسلنا.",
+  "legal.signupAgree": "بتسجيل الدخول أو إنشاء حساب فإنك توافق على شروط الخدمة وسياسة الخصوصية.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "تسجيل الدخول",

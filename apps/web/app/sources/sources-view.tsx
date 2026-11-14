@@ -12,6 +12,7 @@ import {
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { LanguageSwitcher } from "../../lib/i18n/language-switcher";
 import { AppBrand } from "../app-brand";
+import { LegalLinks } from "../legal-links";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
 import { CREDIT_GROUP_TITLE, CREDIT_TEXT } from "./credit-text";
 
@@ -132,6 +133,7 @@ export function SourcesView({ signedIn }: { signedIn: boolean }) {
             {group === "hazards" ? <CameraSection /> : null}
           </Fragment>
         ))}
+        <LegalLinks />
       </div>
     </AppShell>
   );

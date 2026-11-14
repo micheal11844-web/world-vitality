@@ -1,6 +1,6 @@
 # packages/
 
-Shared code with no independent deployment lifecycle: `ui-components`, `design-tokens`, `data-schemas`, `validation`, `ai-evaluation`, `i18n`, `config`.
+Shared code with no independent deployment lifecycle: `ui-components`, `design-tokens`, `data-schemas`, `validation`, `ai-evaluation`, `i18n`, `config`, `support` (the business's name and contact address, and the help chat's matching logic).
 
 Kept granular rather than one giant "shared" package, so dependency graphs stay legible and teams don't end up depending on unrelated code just to get one utility. A piece of code is only promoted here once a genuine second consumer exists — no speculative, premature abstraction (Engineering Blueprint, Section 4.5).
 

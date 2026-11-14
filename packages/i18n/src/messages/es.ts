@@ -1185,6 +1185,13 @@ export const es: Messages = {
     "Instalaciones de refugio de FEMA y de la Cruz Roja Estadounidense, del portal HIFLD Open. Es una lista de lugares designados, no indica si un refugio está abierto ahora.",
   "credits.note.openstreetmap": "© colaboradores de OpenStreetMap.",
   "credits.note.natural-earth": "Imágenes Natural Earth II, de dominio público.",
+  "legal.terms.title": "Términos del servicio",
+  "legal.privacy.title": "Política de privacidad",
+  "legal.updated": "Última actualización: {date}",
+  "legal.englishOnly":
+    "Estos documentos están escritos en inglés y la versión en inglés es la que se aplica. Si necesitas ayuda para entenderlos en tu idioma, escríbenos.",
+  "legal.signupAgree":
+    "Al iniciar sesión o crear una cuenta, aceptas los Términos del servicio y la Política de privacidad.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Iniciar sesión",
