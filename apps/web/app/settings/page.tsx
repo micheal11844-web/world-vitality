@@ -115,6 +115,7 @@ export default async function SettingsPage() {
           ? {
               officialMinTier: notificationSettings.officialMinTier,
               collaborationEnabled: notificationSettings.collaborationEnabled,
+              heatWatchEnabled: notificationSettings.heatWatchEnabled,
             }
           : null
       }

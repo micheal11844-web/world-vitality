@@ -101,5 +101,30 @@ export function localizeNotificationText(
     };
   }
 
+  if (notification.messageKey === "heat_near_place") {
+    const place = params?.place;
+    const km = Number(params?.km);
+    const passAt = params?.passAt;
+    // Without a usable place, distance and time the stored English text reads
+    // better than a sentence with a hole in it.
+    if (!place || !Number.isFinite(km) || !passAt || Number.isNaN(Date.parse(passAt))) {
+      return stored;
+    }
+    const detections = Number(params?.detections);
+    const values = {
+      place,
+      km: translator.number(km),
+      when: translator.relativeTime(passAt),
+      count: translator.number(detections),
+    };
+    return {
+      title: t("notifications.msg.heatNear.title", { place }),
+      body:
+        Number.isFinite(detections) && detections > 1
+          ? t("notifications.msg.heatNear.bodyMany", values)
+          : t("notifications.msg.heatNear.body", values),
+    };
+  }
+
   return stored;
 }

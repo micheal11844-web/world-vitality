@@ -31,7 +31,9 @@ function fakeAccount(): AccountService {
     getNotificationSettings: async () => ({
       officialMinTier: "alert",
       collaborationEnabled: false,
+      heatWatchEnabled: true,
       alertsSyncedAt: null,
+      heatSyncedAt: null,
     }),
     listNotifications: async (_userId: string, options?: { includeInactive?: boolean }) => [
       {

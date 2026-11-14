@@ -51,3 +51,10 @@ export {
   type PlaceTier,
   type VisibleRange,
 } from "./places.js";
+export {
+  heatNearPlaces,
+  parseGlobeFocus,
+  type GlobeFocus,
+  type HeatNearPlace,
+  type WatchedPlace,
+} from "./heat-near.js";

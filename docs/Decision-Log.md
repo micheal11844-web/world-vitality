@@ -1148,3 +1148,68 @@ Cyprus) have no label of their own.
 
 **Revisit when:** the zoomed-in view needs more than names (then choose a tile source and
 add its host to the CSP and the drift test), or users ask for city names in their own language.
+
+## Decision #033 — Heat alerts: tell people when a satellite sees heat near a place they saved
+
+**Date:** 2026-11-12/13. **Status:** accepted; held on the branch `heat-watch` until migration 0023 is applied.
+
+**Context:** The owner's reason for the Globe is that anyone can check a reported or
+unreported fire and call the fire service. In practice the cameras show nothing: the
+orange dots are satellite heat readings (up to about 3 hours old, often farm burning
+or gas flares), traffic cameras exist only in six regions and none in Nigeria, so
+"see it on a camera, then call" rarely happens, and a person has no reason to open the
+Globe at all. The useful thing the data can do is **tell people about heat near what
+they care about**, so they know where to look and whether to call.
+
+**Decision:** When a satellite heat detection (NASA FIRMS, the data the Globe already
+shows) lies within **10 km** of a place a person saved, add a notification to their
+inbox. "Places" are their home place and every field, insured property and monitored
+location they are allowed to open (`apps/web/lib/watched-places.ts`, the same
+permission filtering as the Globe pins, extracted from the Globe page so there is one
+copy). Rules, all tested:
+
+- **`alert`, never `critical`.** A detection is not a confirmed fire, and `critical` is
+  reserved for an agency's own life-safety alert. The text says it is not a confirmed
+  fire and may be farm burning or a gas flare, in the person's language (five).
+- **Its own source** (`heat_watch`) and its **own switch** in Settings, on by default;
+  never narrowed by the official-alert setting.
+- **One per place per day** (the dedupe key carries the day), with the nearest
+  detection's distance and how long ago the satellite passed, and the count. A dismissed
+  notice is not brought back the same day. Expires after a day, the age of the data.
+- **Low-confidence detections, ones older than a day and ones stamped in the future are
+  ignored** (the same low-confidence rule as the Globe).
+- **The link opens the Globe on the detection** (`/globe?heat=<lat>,<lon>`, read strictly:
+  two numbers on Earth or nothing), selecting the fire area within 6 km of that point once,
+  so the camera list, "Look at the place" and the call button are one tap away.
+- **No place names or coordinates in logs**, only counts.
+
+**How it runs, and the honest limit:** like official alerts there is **no background
+job**. The header bell asks the server every few minutes while the app is open; the check
+runs at most every 15 minutes per person, claims its slot before working so two tabs do
+not both run it, and does the slow part (the world file from NASA, the comparison, the
+notifications) after the answer has gone (`after()`), so the bell never waits for NASA.
+The new notice shows on the bell's next refresh. **Nobody is woken up**: nothing is pushed
+to a phone, SMS or email, so a person who has the app closed hears nothing. On the free
+Vercel plan a scheduled job can run only once a day, which is too slow to be worth building.
+
+**Alternatives considered:**
+
+- _A daily scheduled job over every user._ Allowed on the free plan, but a notice that
+  arrives up to a day late, into an inbox nobody is looking at, does not help someone decide
+  whether to call. Rejected for now.
+- _Email, SMS or push._ The real answer to "nobody is looking", but each needs a vendor, a
+  cost and a consent decision (BUILD_PLAN records them as deliberately not built). The next
+  step if heat alerts prove useful.
+- _A radius setting._ One fixed 10 km is easier to explain and test; a field or a site
+  rarely needs more or less. Revisit if people ask.
+- _Using the `official_alert` source with a lower tier._ Rejected: it would put a
+  satellite reading in the same bucket as an agency's warning and under that setting.
+
+**Trade-offs, stated honestly:** in a dry-season farming region this can fire often (a
+farmer burning stubble next door is a detection); the one-per-day limit and the switch are
+the answer, and the text says what it is. A detection over open land with no camera is
+still "go and look", which only the person can do. People without any saved place get
+nothing: the alerts are for places the app knows.
+
+**Revisit when:** people use it and ask to be reached when the app is closed (email or push),
+or to choose the distance, or when more satellites (geostationary) are added to the feed.

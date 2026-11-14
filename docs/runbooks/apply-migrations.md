@@ -10,20 +10,21 @@ applied to the live database without asking.
 
 Checked read-only against the live project on 2026-11-07 (0019 and 0020 were applied that day, at the owner's request, through the Supabase connector; the connector's confirmation for 0021 timed out unanswered). **0021 was applied on 2026-11-08, at the owner's request, and its read-only checks passed, so every migration through 0021 is now in the live project.**
 
-| #         | What it does                                                                                                                               | State                    | If you wait                                                                                                                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0016–0018 | Staff accounts, billing tables, organisations (every saved item and role belongs to one)                                                   | **Applied**              | —                                                                                                                                                                                              |
-| 0019      | Lets the app save the "your payment didn't go through" notice (widens `notifications_source_check` to allow `billing`)                     | **Applied**              | A failed renewal is still recorded and the plan still lapses correctly; only the in-app notice is not saved (logged as `notify_user_failed`, the webhook still answers 200).                   |
-| 0020      | Makes `organization_id` mandatory on fields, insured properties, monitored locations and workspace roles, closing a hole in the role check | **Applied**              | Nothing breaks. The rule is already followed by every insert the app makes; this makes the database refuse a row that breaks it.                                                               |
-| 0021      | Adds the function that hands an organisation to another member                                                                             | **Applied**              | The "Hand over ownership" section only shows to an owner with at least one other person in the organisation (today nobody). If it were used, the button says it couldn't, and nothing changes. |
-| 0022      | Adds the table that keeps each successful payment (payment history, receipts, refund status)                                               | **Applied** (2026-11-12) | Applied by the owner in the Supabase SQL editor; read back afterwards: table present, row-level security on, no grants or policies for browser roles, both indexes, 0 rows.                    |
+| #         | What it does                                                                                                                                                                                                                                   | State                    | If you wait                                                                                                                                                                                    |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0016–0018 | Staff accounts, billing tables, organisations (every saved item and role belongs to one)                                                                                                                                                       | **Applied**              | —                                                                                                                                                                                              |
+| 0019      | Lets the app save the "your payment didn't go through" notice (widens `notifications_source_check` to allow `billing`)                                                                                                                         | **Applied**              | A failed renewal is still recorded and the plan still lapses correctly; only the in-app notice is not saved (logged as `notify_user_failed`, the webhook still answers 200).                   |
+| 0020      | Makes `organization_id` mandatory on fields, insured properties, monitored locations and workspace roles, closing a hole in the role check                                                                                                     | **Applied**              | Nothing breaks. The rule is already followed by every insert the app makes; this makes the database refuse a row that breaks it.                                                               |
+| 0021      | Adds the function that hands an organisation to another member                                                                                                                                                                                 | **Applied**              | The "Hand over ownership" section only shows to an owner with at least one other person in the organisation (today nobody). If it were used, the button says it couldn't, and nothing changes. |
+| 0022      | Adds the table that keeps each successful payment (payment history, receipts, refund status)                                                                                                                                                   | **Applied** (2026-11-12) | Applied by the owner in the Supabase SQL editor; read back afterwards: table present, row-level security on, no grants or policies for browser roles, both indexes, 0 rows.                    |
+| 0023      | Lets the app tell someone when a satellite sees heat near a place they saved (heat alerts): allows the `heat_watch` notification source and adds two columns to `notification_settings` (the person's switch, and when they were last checked) | **Pending**              | The code that reads these columns is held back on the branch `heat-watch` and is merged only after this is applied, so nothing breaks while it waits; heat alerts simply do not exist yet.     |
 
 Supabase's own migration history list stops at 0015 because 0016–0018 were
 pasted in by hand (the objects exist; the list is informational and nothing
 in the app reads it). Migrations applied through the connector do appear in
 it.
 
-**Nothing is pending.** (0022, `billing_payments`, BUILD_PLAN v111, was the last one: the owner applied it in the SQL editor on 2026-11-12 and the billing code was merged and deployed after that. It only added a new, empty table.)
+**One is pending: 0023** (`0023_heat_watch.sql`, BUILD_PLAN v116, heat alerts near saved places). It was run here on a real Postgres, on top of the notification migrations (0013, 0014, 0015, 0019), **twice**: existing rows were untouched, the new switch defaults to on, a heat notice with the longest text the app can write fits the table's limits, and the same notice for the same place and day is refused a second time. The code that needs it is on the branch `heat-watch` and is merged after the owner applies it and the read-only check below passes (the same order as 0022, BUILD_PLAN v111).
 
 ## What each one checked before it changed anything
 
@@ -38,6 +39,10 @@ it.
   through.
 - **0021** only adds a function (service role only).
 - **0022** only creates `billing_payments` (new, empty) with an index, turns row-level security on, and takes away every grant from the browser roles. Before it ran, the tables `billing_subscriptions` and `billing_events` were confirmed present and `billing_payments` absent.
+
+- **0023** widens one check constraint (like 0019) and adds two columns to
+  `notification_settings`: `heat_watch_enabled` (default on) and `heat_synced_at`
+  (empty). No existing row is changed and nothing is deleted. Safe to run twice.
 
 ## Ways to apply
 
@@ -68,6 +73,18 @@ select table_name, is_nullable from information_schema.columns
 where table_schema = 'public' and column_name = 'organization_id'
 order by table_name;
 
+-- 0023: the allowed sources now include heat_watch (expect the list to contain 'heat_watch')
+select pg_get_constraintdef(oid) from pg_constraint
+where conname = 'notifications_source_check';
+
+-- 0023: two new columns (expect two rows: heat_synced_at, timestamp with time zone, YES, no default;
+--       heat_watch_enabled, boolean, NO, default true)
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema = 'public' and table_name = 'notification_settings'
+  and column_name in ('heat_watch_enabled', 'heat_synced_at')
+order by column_name;
+
 -- 0021: the function exists (expect 1), and the public roles cannot run it (expect false, false, true)
 select count(*) from pg_proc where proname = 'transfer_organization_ownership';
 select
@@ -92,6 +109,15 @@ select
 ## Undoing one (only if something unexpected shows up)
 
 ```sql
+-- 0023: remove the heat notices and the two columns, then put the old constraint back
+-- (the heat-alert code must not be live, or it will log errors until 0023 is applied again)
+delete from public.notifications where source = 'heat_watch';
+alter table public.notification_settings drop column if exists heat_watch_enabled;
+alter table public.notification_settings drop column if exists heat_synced_at;
+alter table public.notifications drop constraint notifications_source_check;
+alter table public.notifications add constraint notifications_source_check
+  check (source in ('official_alert', 'collaboration', 'billing'));
+
 -- 0021: remove the function (the hand-over button then reports it couldn't)
 drop function if exists public.transfer_organization_ownership(uuid, uuid, uuid, text[]);
 

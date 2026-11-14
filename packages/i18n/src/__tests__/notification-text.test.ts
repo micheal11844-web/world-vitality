@@ -190,3 +190,65 @@ test("a refund notice is re-written in the reader's language, naming the plan wh
   );
   assert.equal(none.body, createTranslator("es").t("notifications.msg.paymentRefunded.bodyNoPlan"));
 });
+
+test("a heat-near-a-place notification reads in the reader's language, with distance and time", () => {
+  const now = Date.now();
+  const n = {
+    title: "Satellite heat near North field",
+    body: "English fallback",
+    messageKey: "heat_near_place",
+    messageParams: {
+      place: "North field",
+      km: "4",
+      detections: "1",
+      passAt: new Date(now - 2 * 3_600_000).toISOString(),
+    },
+  };
+  const en = localizeNotificationText(n, createTranslator("en"));
+  assert.equal(en.title, "Satellite heat near North field");
+  assert.match(en.body ?? "", /about 4 km from North field, .*ago\. This is not a confirmed fire/);
+  const es = localizeNotificationText(n, createTranslator("es"));
+  assert.match(es.title, /^Calor detectado por satélite cerca de North field$/);
+  assert.match(es.body ?? "", /No es un incendio confirmado/);
+  assert.match(
+    localizeNotificationText(n, createTranslator("fr")).body ?? "",
+    /pas un incendie confirmé/,
+  );
+  assert.match(
+    localizeNotificationText(n, createTranslator("pt")).body ?? "",
+    /Não é um incêndio confirmado/,
+  );
+  assert.match(localizeNotificationText(n, createTranslator("ar")).body ?? "", /ليس حريقًا مؤكدًا/);
+});
+
+test("several detections are counted in the sentence, one is not", () => {
+  const passAt = new Date(Date.now() - 3_600_000).toISOString();
+  const base = { title: "t", body: "b", messageKey: "heat_near_place" };
+  const many = localizeNotificationText(
+    { ...base, messageParams: { place: "Farm", km: "2", detections: "5", passAt } },
+    createTranslator("en"),
+  );
+  assert.match(many.body ?? "", /\(5 detections\)/);
+  const one = localizeNotificationText(
+    { ...base, messageParams: { place: "Farm", km: "2", detections: "1", passAt } },
+    createTranslator("en"),
+  );
+  assert.doesNotMatch(one.body ?? "", /detections\)/);
+});
+
+test("a heat notification with a missing or broken parameter keeps its stored text", () => {
+  const base = { title: "stored title", body: "stored body", messageKey: "heat_near_place" };
+  const cases: (Record<string, string> | null)[] = [
+    null,
+    { place: "", km: "4", passAt: new Date().toISOString() },
+    { place: "Farm", km: "far", passAt: new Date().toISOString() },
+    { place: "Farm", km: "4", passAt: "not a time" },
+    { place: "Farm", km: "4" },
+  ];
+  for (const messageParams of cases) {
+    assert.deepEqual(localizeNotificationText({ ...base, messageParams }, createTranslator("es")), {
+      title: "stored title",
+      body: "stored body",
+    });
+  }
+});

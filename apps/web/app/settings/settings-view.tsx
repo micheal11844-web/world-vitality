@@ -71,7 +71,11 @@ export interface SettingsViewProps {
   /** `null` while billing is switched off (no card); `plan: null` when it is on but the plan couldn't be read. */
   billing: { plan: "basic" | "standard" | "premium" | "enterprise" | null } | null;
   /** `null` when the settings couldn't be loaded — the card then says so instead of guessing. */
-  notificationSettings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean } | null;
+  notificationSettings: {
+    officialMinTier: OfficialMinTier;
+    collaborationEnabled: boolean;
+    heatWatchEnabled: boolean;
+  } | null;
   memberships: Array<{
     workspaceId: string;
     /** The workspace role id (e.g. `operational_user`), labelled here. */
@@ -121,6 +125,9 @@ export function SettingsView({
   const [collaborationEnabled, setCollaborationEnabled] = useState(
     notificationSettings?.collaborationEnabled ?? true,
   );
+  const [heatWatchEnabled, setHeatWatchEnabled] = useState(
+    notificationSettings?.heatWatchEnabled ?? true,
+  );
   const [notifStatus, setNotifStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [notifError, setNotifError] = useState<string | undefined>();
 
@@ -128,7 +135,11 @@ export function SettingsView({
     e.preventDefault();
     setNotifStatus("saving");
     setNotifError(undefined);
-    const result = await saveNotificationSettingsAction({ officialMinTier, collaborationEnabled });
+    const result = await saveNotificationSettingsAction({
+      officialMinTier,
+      collaborationEnabled,
+      heatWatchEnabled,
+    });
     if (result.ok) {
       setNotifStatus("saved");
     } else {
@@ -406,6 +417,17 @@ export function SettingsView({
                       setNotifStatus("idle");
                     }}
                   />
+                  <Checkbox
+                    label={t("settings.notifications.heatWatch")}
+                    checked={heatWatchEnabled}
+                    onChange={(e) => {
+                      setHeatWatchEnabled(e.target.checked);
+                      setNotifStatus("idle");
+                    }}
+                  />
+                  <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+                    {t("settings.notifications.heatWatchHelp")}
+                  </Text>
                   <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
                     {t("settings.notifications.inAppNote")}{" "}
                     <Link href="/notifications">{t("settings.notifications.center")}</Link>.

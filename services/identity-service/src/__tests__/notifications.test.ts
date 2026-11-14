@@ -4,6 +4,7 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   fieldCommentNotification,
   groupByTier,
+  heatNearPlaceNotification,
   isNotificationMessageKey,
   isNwsCoverageCountry,
   isStillActive,
@@ -474,4 +475,107 @@ test("a plan notice is shown whatever the notification settings say, until it is
   );
   // The settings still narrow what they are meant to narrow.
   assert.equal(visibleNotifications([n({ source: "collaboration" })], quiet, NOW).length, 0);
+});
+
+// ---- heat near a saved place ---------------------------------------------
+
+const HEAT_NOW = new Date("2026-11-12T12:00:00Z");
+
+function heat(overrides: Partial<Parameters<typeof heatNearPlaceNotification>[0]> = {}) {
+  return heatNearPlaceNotification({
+    placeId: "agriculture-abc",
+    placeLabel: "North field",
+    distanceKm: 4.4,
+    detections: 1,
+    passAt: "2026-11-12T10:00:00Z",
+    latitude: 7.41234,
+    longitude: 3.90567,
+    now: HEAT_NOW,
+    ...overrides,
+  });
+}
+
+test("heat near a place is an alert from its own source, never critical, and says it is not a confirmed fire", () => {
+  const item = heat();
+  assert.equal(item.source, "heat_watch");
+  assert.equal(item.tier, "alert");
+  assert.equal(item.title, "Satellite heat near North field");
+  assert.match(item.body ?? "", /about 4 km from North field, 2 hours ago/);
+  assert.match(item.body ?? "", /not a confirmed fire/);
+  assert.match(item.body ?? "", /farm burning or a gas flare/);
+  assert.equal(item.messageKey, "heat_near_place");
+  assert.deepEqual(item.messageParams, {
+    place: "North field",
+    km: "4",
+    detections: "1",
+    passAt: "2026-11-12T10:00:00Z",
+  });
+});
+
+test("heat near a place links to the Globe on the detection, with a safe in-app address", () => {
+  const item = heat();
+  assert.equal(item.href, "/globe?heat=7.412,3.906");
+  assert.equal(safeInternalHref(item.href), item.href);
+});
+
+test("heat near a place is one per place per day, and ends after a day", () => {
+  assert.equal(heat().dedupeKey, "heat:agriculture-abc:2026-11-12");
+  assert.equal(heat({ placeId: "home" }).dedupeKey, "heat:home:2026-11-12");
+  const nextDay = heat({ now: new Date("2026-11-13T00:30:00Z") });
+  assert.equal(nextDay.dedupeKey, "heat:agriculture-abc:2026-11-13");
+  assert.equal(heat().expiresAt, "2026-11-13T12:00:00.000Z");
+});
+
+test("heat near a place says how many detections when there are several, and never less than 1 km", () => {
+  assert.match(heat({ detections: 3 }).body ?? "", /\(3 detections\)/);
+  assert.doesNotMatch(heat({ detections: 1 }).body ?? "", /detections\)/);
+  assert.match(heat({ distanceKm: 0.2 }).body ?? "", /about 1 km/);
+  assert.equal(heat({ distanceKm: 0.2 }).messageParams?.km, "1");
+});
+
+test("a very long place name is shortened, and the stored fields stay within the table's limits", () => {
+  const item = heat({ placeLabel: "A".repeat(500) });
+  assert.ok((item.title ?? "").length <= 160);
+  assert.ok((item.body ?? "").length <= 400);
+  assert.ok((item.dedupeKey ?? "").length <= 200);
+  assert.ok(((item.messageParams?.place ?? "") as string).length <= 80);
+});
+
+test("the heat message key is recognised, and the setting is on by default", () => {
+  assert.equal(isNotificationMessageKey("heat_near_place"), true);
+  assert.equal(DEFAULT_NOTIFICATION_SETTINGS.heatWatchEnabled, true);
+  assert.equal(DEFAULT_NOTIFICATION_SETTINGS.heatSyncedAt, null);
+});
+
+test("turning heat alerts off hides only heat alerts; other settings never hide them", () => {
+  const items = [
+    n({ id: "heat", source: "heat_watch", tier: "alert" }),
+    n({ id: "official", source: "official_alert", tier: "alert" }),
+    n({ id: "bill", source: "billing", tier: "alert" }),
+  ];
+  const off = visibleNotifications(
+    items,
+    { officialMinTier: "info", collaborationEnabled: true, heatWatchEnabled: false },
+    HEAT_NOW,
+  );
+  assert.deepEqual(off.map((x) => x.id).sort(), ["bill", "official"]);
+
+  // On, or not mentioned (older callers): shown, whatever the other two settings say.
+  for (const heatWatchEnabled of [true, undefined]) {
+    const on = visibleNotifications(
+      items,
+      { officialMinTier: "alert", collaborationEnabled: false, heatWatchEnabled },
+      HEAT_NOW,
+    );
+    assert.ok(on.some((x) => x.id === "heat"));
+  }
+});
+
+test("an informational-only official-alert setting does not hide heat alerts", () => {
+  const items = [n({ id: "heat", source: "heat_watch", tier: "alert" })];
+  assert.equal(
+    visibleNotifications(items, { officialMinTier: "alert", collaborationEnabled: true }, HEAT_NOW)
+      .length,
+    1,
+  );
 });

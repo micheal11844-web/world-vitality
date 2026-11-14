@@ -310,15 +310,25 @@ export interface AccountService {
   /** Settings, or the defaults when the user has never saved any. */
   getNotificationSettings(userId: string): Promise<NotificationSettings>;
 
-  /** Saves the two user-controlled settings (never touches the sync timestamp). */
+  /**
+   * Saves the user-controlled settings (never touches the sync timestamps).
+   * `heatWatchEnabled` is left as it was when it is not given.
+   */
   saveNotificationSettings(
     userId: string,
-    settings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean },
+    settings: {
+      officialMinTier: OfficialMinTier;
+      collaborationEnabled: boolean;
+      heatWatchEnabled?: boolean;
+    },
     now?: Date,
   ): Promise<NotificationSettings>;
 
   /** Records that official alerts were just checked (the re-check throttle). */
   markAlertsSynced(userId: string, now?: Date): Promise<void>;
+
+  /** Records that satellite heat near the user's places was just checked (its own re-check throttle). */
+  markHeatSynced(userId: string, now?: Date): Promise<void>;
 
   /** Deletes notifications created before `olderThan`. */
   pruneNotifications(userId: string, olderThan: Date): Promise<void>;
@@ -791,7 +801,7 @@ export class SupabaseAccountService implements AccountService {
   async getNotificationSettings(userId: string): Promise<NotificationSettings> {
     const { data, error } = await this.client
       .from("notification_settings")
-      .select("official_min_tier, collaboration_enabled, alerts_synced_at")
+      .select(SETTINGS_COLUMNS)
       .eq("user_id", userId)
       .maybeSingle();
     if (error) {
@@ -802,7 +812,11 @@ export class SupabaseAccountService implements AccountService {
 
   async saveNotificationSettings(
     userId: string,
-    settings: { officialMinTier: OfficialMinTier; collaborationEnabled: boolean },
+    settings: {
+      officialMinTier: OfficialMinTier;
+      collaborationEnabled: boolean;
+      heatWatchEnabled?: boolean;
+    },
     now: Date = new Date(),
   ): Promise<NotificationSettings> {
     const { data, error } = await this.client
@@ -812,11 +826,15 @@ export class SupabaseAccountService implements AccountService {
           user_id: userId,
           official_min_tier: settings.officialMinTier,
           collaboration_enabled: settings.collaborationEnabled,
+          // Only written when given, so saving the other two never resets this one.
+          ...(settings.heatWatchEnabled === undefined
+            ? {}
+            : { heat_watch_enabled: settings.heatWatchEnabled }),
           updated_at: now.toISOString(),
         },
         { onConflict: "user_id" },
       )
-      .select("official_min_tier, collaboration_enabled, alerts_synced_at")
+      .select(SETTINGS_COLUMNS)
       .single();
     if (error || !data) {
       throw new Error(
@@ -835,6 +853,18 @@ export class SupabaseAccountService implements AccountService {
       );
     if (error) {
       throw new Error(`Failed to record alert check for ${userId}: ${error.message}`);
+    }
+  }
+
+  async markHeatSynced(userId: string, now: Date = new Date()): Promise<void> {
+    const { error } = await this.client
+      .from("notification_settings")
+      .upsert(
+        { user_id: userId, heat_synced_at: now.toISOString(), updated_at: now.toISOString() },
+        { onConflict: "user_id" },
+      );
+    if (error) {
+      throw new Error(`Failed to record heat check for ${userId}: ${error.message}`);
     }
   }
 
@@ -931,18 +961,26 @@ function toMessageParams(value: unknown): NotificationMessageParams | null {
   return out;
 }
 
+const SETTINGS_COLUMNS =
+  "official_min_tier, collaboration_enabled, heat_watch_enabled, alerts_synced_at, heat_synced_at";
+
 function rowToNotificationSettings(
   row: {
     official_min_tier: string;
     collaboration_enabled: boolean;
+    heat_watch_enabled: boolean;
     alerts_synced_at: string | null;
+    heat_synced_at: string | null;
   } | null,
 ): NotificationSettings {
   if (!row) return { ...DEFAULT_NOTIFICATION_SETTINGS };
   return {
     officialMinTier: isOfficialMinTier(row.official_min_tier) ? row.official_min_tier : "info",
     collaborationEnabled: row.collaboration_enabled,
+    // A row from before the column existed reads as on, like the default.
+    heatWatchEnabled: row.heat_watch_enabled !== false,
     alertsSyncedAt: row.alerts_synced_at,
+    heatSyncedAt: row.heat_synced_at ?? null,
   };
 }
 

@@ -240,3 +240,40 @@ The build environment has no access to these agencies' servers, so:
   row by hand for a missing city: `[name, longitude, latitude, tier]`, tier 0 (very large) to 2.
 - Change how close or far a person can zoom: `MIN_ZOOM_DISTANCE_M` / `MAX_ZOOM_DISTANCE_M` in
   `apps/web/app/globe/globe-viewer.tsx`.
+
+## Heat alerts near your places (v116, Decision #033)
+
+**What it does.** When a satellite heat detection (the same NASA FIRMS data the Globe
+shows) is within 10 km of a place someone saved (home place, a field, an insured
+property, a monitored location they can open), they get an **Alert** in the Notification
+Center and on the bell: "Satellite heat near North field. A satellite saw heat about 4 km
+from North field, 2 hours ago. This is not a confirmed fire: it may be farm burning or a
+gas flare. Open the Globe to take a look." Its link opens the Globe with that fire area
+already selected, where the cameras nearby, "Look at the place" and the call button are.
+
+**What it does not do.** It runs **only while someone has the app open** (the bell asks
+every few minutes; the check runs at most every 15 minutes per person). Nothing is pushed
+to a phone, SMS or email, and nobody is woken up. A detection is not a confirmed fire.
+Nobody with no saved place gets anything.
+
+**Rules worth knowing.** An `alert`, never `critical`. One per place per day (a dismissed
+one is not brought back that day). Low-confidence detections and anything older than a day
+are ignored. The person can turn it off in Settings → Notifications. Needs
+`NASA_FIRMS_MAP_KEY` (without it the check quietly does nothing).
+
+**When it seems not to work.** Read the logs within an hour (Vercel keeps about an hour on
+the free plan): `heat_watch_checked` (`places`, `withHeat`) means a check ran;
+`heat_watch_failed` means NASA could not be read (the next try is 15 minutes later);
+`heat_watch_places_capped` means more than 50 places were saved and only 50 were checked;
+`notification_summary_heat_failed` means the start of the check failed (a database read).
+No log line at all usually means the person has the switch off, was checked less than 15
+minutes ago, or has no saved place or no `NASA_FIRMS_MAP_KEY`. A database error naming
+`heat_watch_enabled`, `heat_synced_at` or `notifications_source_check` means migration 0023
+has not been applied (see `docs/runbooks/apply-migrations.md`).
+
+**Changing it.** The distance and limits: `HEAT_WATCH_RADIUS_KM`, `HEAT_SYNC_INTERVAL_MS`,
+`HEAT_WATCH_MAX_PLACES` in `services/identity-service/src/notifications.ts`. The text: the
+`notifications.msg.heatNear.*` and `settings.notifications.heatWatch*` keys in the five
+catalogs. How a Globe link picks the fire: `FOCUS_MATCH_KM` in `apps/web/app/globe/globe-shell.tsx`.
+Reaching people when the app is closed needs email, SMS or push: a vendor, a cost and a
+consent decision, not built.
