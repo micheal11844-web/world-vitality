@@ -1151,7 +1151,7 @@ add its host to the CSP and the drift test), or users ask for city names in thei
 
 ## Decision #033 — Heat alerts: tell people when a satellite sees heat near a place they saved
 
-**Date:** 2026-11-12/13. **Status:** accepted; held on the branch `heat-watch` until migration 0023 is applied.
+**Date:** 2026-11-12/13. **Status:** accepted and live. Held on the branch `heat-watch` until the owner applied migration 0023 (read back 2026-11-14), then merged.
 
 **Context:** The owner's reason for the Globe is that anyone can check a reported or
 unreported fire and call the fire service. In practice the cameras show nothing: the
