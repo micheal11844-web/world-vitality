@@ -46,7 +46,12 @@ the reading direction, as before). The pill goes with it.
 Every translated page gets it automatically (the provider sits in each page's language
 boundary). A page without a language boundary (the admin area) keeps a plain Orbi.
 
-## Linking the owner's bot (not done: the owner has not said which bot)
+## Linking the owner's bot, Flow (not done: waiting on Flow's side)
+
+The bot is **Flow**, a separate project of the owner's, run with another Claude. The proposed
+contract, the facts Flow must answer for the Privacy Policy, and the activation checklist are in
+`docs/handoff/flow-integration.md` (written for that Claude; replies go in its section 9). The
+rules below still apply.
 
 The window calls one function, `respondToMessage` in `apps/web/lib/support/responder.ts`.
 To connect a bot, change its body to call the bot and return `{ kind: "text", text }`
