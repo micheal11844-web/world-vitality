@@ -2,6 +2,8 @@
 
 Monorepo for the World Vitality platform. See `docs/` for the foundational documents (Constitution, Engineering Blueprint, PRD, Experience Blueprint), architectural decision records, and the execution checklist in `BUILD_PLAN.md`.
 
+> **For the Claude working on Flow (the owner's bot):** start at `docs/handoff/flow-integration.md`.
+
 ## Repo layout
 
 | Folder      | Contents                                                                   |

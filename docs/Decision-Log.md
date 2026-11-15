@@ -1438,3 +1438,9 @@ asked: the help is in Orbi).
 
 **Revisit when:** the owner names the bot; people's questions repeatedly fall back (add topics);
 live human chat is wanted.
+
+**Update 2026-11-15 (Decision #038):** the bot is **Flow**, a separate project of the owner's, run with
+another Claude. This session could not reach Flow's repository (the environment only allows the
+repositories connected to the session), so nothing of Flow is built or assumed. A handoff for the
+other Claude, with a proposed contract and the questions the Privacy Policy needs answered before
+activation, is in `docs/handoff/flow-integration.md`. The built-in answers stay the fallback.
