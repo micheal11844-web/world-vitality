@@ -390,6 +390,10 @@ export const es: Messages = {
   "billing.currency.label": "Moneda",
   "billing.currency.NGN": "Naira (₦)",
   "billing.currency.USD": "Dólares estadounidenses ($)",
+  "billing.currency.regionNigeria":
+    "Los precios se muestran en nairas (₦) porque parece que te conectas desde Nigeria.",
+  "billing.currency.regionAbroad":
+    "Los precios se muestran en dólares estadounidenses ($) porque parece que te conectas desde fuera de Nigeria. El banco de tu tarjeta hace la conversión desde tu moneda si hace falta.",
   "billing.price.monthly": "{price} / mes",
   "billing.price.annual": "{price} / año",
   "billing.subscribe": "Suscribirme a {plan}",

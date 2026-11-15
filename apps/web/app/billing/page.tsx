@@ -4,7 +4,8 @@ import {
   summariseBilling,
   type BillingSummary,
 } from "@world-vitality/billing-service";
-import { getBillingStore, getOfferedPrices } from "../../lib/billing";
+import { getBillingStore } from "../../lib/billing";
+import { getOffersForRequest } from "../../lib/billing-region";
 import { getAccessContext } from "../../lib/get-access-context";
 import { logApplication } from "../../lib/logger";
 import { requireSession } from "../../lib/require-session";
@@ -70,6 +71,11 @@ export default async function BillingPage({
     payments = null;
   }
 
+  // Only the plans in the currency this visitor's country is priced in
+  // (naira in Nigeria, dollars elsewhere once USD plans exist; both when the
+  // country is not known).
+  const { offers, regionNote } = await getOffersForRequest();
+
   const limit = (id: "basic" | "standard" | "premium"): BillingPlanLimits => ({
     seats: PLANS[id].limits.seats,
     savedItems: PLANS[id].limits.savedItems,
@@ -80,7 +86,8 @@ export default async function BillingPage({
       summary={summary}
       isOwner={isOwner}
       checkoutReturn={checkout === "return"}
-      offers={getOfferedPrices().map((o) => ({
+      regionNote={regionNote}
+      offers={offers.map((o) => ({
         plan: o.plan,
         currency: o.currency,
         interval: o.interval,

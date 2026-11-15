@@ -59,6 +59,11 @@ export interface BillingViewProps {
   payments: BillingPaymentRow[] | null;
   /** How many the list is capped at, to say so when it is full. */
   paymentHistoryLimit: number;
+  /**
+   * Set when the visitor's country (not their choice) decided the currency, and
+   * the other currency exists too: the note under the selectors says so.
+   */
+  regionNote?: "nigeria" | "abroad" | null;
 }
 
 const PLAN_KEY = {
@@ -91,6 +96,7 @@ export function BillingView({
   limits,
   payments,
   paymentHistoryLimit,
+  regionNote = null,
 }: BillingViewProps) {
   const translator = useI18n();
   const { t } = translator;
@@ -334,6 +340,15 @@ export function BillingView({
                       </Select>
                     )}
                   </div>
+                  {regionNote !== null && (
+                    <Text variant="caption" style={muted}>
+                      {t(
+                        regionNote === "nigeria"
+                          ? "billing.currency.regionNigeria"
+                          : "billing.currency.regionAbroad",
+                      )}
+                    </Text>
+                  )}
                   <div style={{ display: "flex", gap: "var(--wv-space-md)", flexWrap: "wrap" }}>
                     <Card style={{ flex: "1 1 13rem" }} compact>
                       <div style={stack}>
