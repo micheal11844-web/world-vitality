@@ -1341,6 +1341,15 @@ questions (GDACS, NASA POWER commercial use) or buy the Open-Meteo plan.
 **Revisit when:** a source is added or removed; GDACS or NASA answers; Open-Meteo or any
 other source changes its attribution wording.
 
+**Update 2026-11-15 (NASA POWER closed).** POWER states **CC BY 4.0** in its own project
+metadata (`power.larc.nasa.gov/llms.txt`) and on its NASA-managed AWS Open Data entry ("no
+restrictions on the use, access, and/or download"); NASA's data-use policy adds only "NASA
+should be acknowledged" and no implied endorsement. CC BY 4.0 permits commercial use with
+credit, so the open point is closed and `/sources` now prints the licence (it had said "no
+licence stated", which was out of date: the admin catalog already recorded CC BY 4.0, see
+`docs/data-provenance/nasa-power.md`). GDACS stays open: their terms are still silent, and the
+old contact email is cancelled, so the request goes through their contact form.
+
 ## Decision #036 — Terms of Service and Privacy Policy pages
 
 **Date:** 2026-11-15. **Status:** accepted; built on the branch `legal-pages`. **Needs a lawyer's read before launch** (below).
