@@ -40,6 +40,13 @@ export {
   offeredPrices,
   type OfferedPrice,
 } from "./prices.js";
+export {
+  HOME_COUNTRY,
+  pricingRegion,
+  offersForRegion,
+  regionNoteFor,
+  type PricingRegion,
+} from "./region.js";
 export { summariseBilling, type BillingState, type BillingSummary } from "./summary.js";
 export {
   applyPaystackEvent,

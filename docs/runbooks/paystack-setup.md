@@ -172,7 +172,8 @@ the API these are 750000, 7500000, 2500000 and 25000000.)
 After saving each, open it and copy its **plan code** (it starts with
 `PLN_`). Plan codes are identifiers, not secrets — it is fine to share them.
 
-Do **not** create plans for USD or Enterprise now (see `billing.md`).
+Do **not** create plans for USD or Enterprise now (see `billing.md`). Dollar prices for
+customers abroad come later, with their own step-by-step guide in `regional-pricing.md`.
 
 ## 3. Write the plan-code list
 

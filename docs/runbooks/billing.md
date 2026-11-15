@@ -76,7 +76,8 @@ Tax-inclusive. A year costs ten months (two free) — the only discount.
 | Enterprise               | contact us, invoiced outside Paystack |          |
 
 † Only sold once USD is enabled on the Paystack account **and** USD plan
-codes are configured. **Launch with the four NGN plans.** Enterprise is never
+codes are configured. Which currency a visitor is shown is decided by their
+country: naira in Nigeria, dollars elsewhere (`regional-pricing.md`). **Launch with the four NGN plans.** Enterprise is never
 a Paystack plan.
 
 **Why these numbers.** Nigerian prices are set for local purchasing power,
@@ -244,7 +245,8 @@ beside any plan-limit message. It exists only while `BILLING_ENABLED` is
   browser never says whose subscription it is.
 - **Subscribe** sends the person to Paystack's own checkout page (card
   details never touch this app). Only prices with a Paystack plan code
-  configured are shown, so USD stays hidden until its plans exist. The
+  configured are shown, so USD stays hidden until its plans exist, and then
+  only the currency the visitor's country is priced in (`regional-pricing.md`). The
   return address is built from the origin of `SUPABASE_AUTH_REDIRECT_URL` —
   the setting the sign-in emails already use — never from the request, so it
   must be set in Vercel.
@@ -478,7 +480,9 @@ once you know what the law requires of you.
   as the billing service's own `limitReachedMessage` and
   `featureLockedMessage`, apart from numbers of 1,000 or more getting a
   thousands separator.
-- USD charging needs a USD settlement account on the Paystack side.
+- USD charging needs international payments enabled on the Paystack account (and a USD
+  settlement account if you want to be paid in dollars): `regional-pricing.md` has the
+  steps and what could not be confirmed.
 
 ## Putting a customer on Enterprise (invoiced, by hand)
 

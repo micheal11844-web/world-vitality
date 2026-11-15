@@ -380,6 +380,9 @@ export const ar: Messages = {
   "billing.currency.label": "العملة",
   "billing.currency.NGN": "النايرا (₦)",
   "billing.currency.USD": "الدولار الأمريكي ($)",
+  "billing.currency.regionNigeria": "تُعرض الأسعار بالنايرا (₦) لأنه يبدو أنك تتصل من نيجيريا.",
+  "billing.currency.regionAbroad":
+    "تُعرض الأسعار بالدولار الأمريكي ($) لأنه يبدو أنك تتصل من خارج نيجيريا. يتولى بنك بطاقتك التحويل من عملتك عند الحاجة.",
   "billing.price.monthly": "{price} / شهريًا",
   "billing.price.annual": "{price} / سنويًا",
   "billing.subscribe": "الاشتراك في الخطة {plan}",

@@ -1374,3 +1374,38 @@ lawyer to check them); _leaving refunds unsaid_ (worse for customers and for the
 
 **Revisit when:** a lawyer reviews it; the business becomes a registered company; any data
 flow changes (new provider, analytics, push or email alerts); regional pricing or refunds change.
+
+## Decision #037 — Regional pricing: naira in Nigeria, dollars abroad
+
+**Date:** 2026-11-15. **Status:** accepted; built on the branch `regional-pricing`. Dollars stay off until USD plans exist.
+
+**Context:** The owner asked (2026-11-14) to charge "naira for Nigeria and dollars for foreign"
+and whether Paystack allows dollars. Billing already supported both currencies, but showed
+whichever plans existed to everyone.
+
+**Decision:** The currency a **new** subscription is priced in follows the country the visitor
+appears to connect from (Vercel's `x-vercel-ip-country`): Nigeria → naira, any other country →
+dollars, country unknown → both with a selector (naira first). It applies only once USD plan
+codes exist; until then everyone keeps seeing naira. The same rule filters the billing page and
+is enforced in `startCheckoutAction`. The rule is a pure, tested function
+(`services/billing-service/src/region.ts`), with a one-line note on the page saying why the
+currency was chosen. No database change. Paystack answer (read 2026-11-15) and the step-by-step
+to turn dollars on: `docs/runbooks/regional-pricing.md`.
+
+**Rules:** an offer list is never emptied by the filter; an unrecognised country value counts as
+unknown (never guessed); existing subscribers keep their plan's currency.
+
+**Alternatives considered:** _ask everyone to pick a currency_ (Nigerians would see a dollar price
+they should not pay; foreigners could pick naira); _card-country detection_ (not known before
+Paystack's page); _converting naira to dollars at a live rate_ (prices stay stable and set for each
+market, as in Decision #020); _a "pay in naira anyway" button for Nigerians abroad_ (also lets
+anyone take the cheaper price).
+
+**Known limit:** the country is the connection's, so a VPN, or a Nigerian travelling, is priced as
+the country they appear in. Accepted; not hidden from the owner.
+
+**Not confirmed:** whether Paystack lets this business create USD subscription plans and settle
+them in naira without a Zenith USD account. The owner checks the dashboard (guide in the runbook).
+
+**Revisit when:** USD plans exist (test from abroad); travelling Nigerians complain; a third
+currency or market is added.

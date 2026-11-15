@@ -388,6 +388,10 @@ export const en = {
   "billing.currency.label": "Currency",
   "billing.currency.NGN": "Naira (₦)",
   "billing.currency.USD": "US dollars ($)",
+  "billing.currency.regionNigeria":
+    "Prices are shown in naira (₦) because you appear to be connecting from Nigeria.",
+  "billing.currency.regionAbroad":
+    "Prices are shown in US dollars ($) because you appear to be connecting from outside Nigeria. Your card's bank converts from your own currency if needed.",
   "billing.price.monthly": "{price} / month",
   "billing.price.annual": "{price} / year",
   "billing.subscribe": "Subscribe to {plan}",

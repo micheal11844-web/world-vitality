@@ -17,11 +17,11 @@ import {
   billingEnabled,
   billingReturnUrl,
   getBillingStore,
-  getOfferedPrices,
   getPlanCodes,
   paystackApiBase,
   paystackSecret,
 } from "./billing";
+import { getOffersForRequest } from "./billing-region";
 import { getAccessContext } from "./get-access-context";
 import { getSessionUserId } from "./get-session-user-id";
 import { tServer } from "./i18n/server";
@@ -99,7 +99,9 @@ export async function startCheckoutAction(input: {
   if (!isPaidPlan(plan) || !isCurrency(currency) || !isInterval(interval)) {
     return { ok: false, error: await tServer("errors.billingNotOffered") };
   }
-  const offered = getOfferedPrices().some(
+  // The same list the billing screen showed: the plans that exist, in the
+  // currency this visitor's country is priced in.
+  const offered = (await getOffersForRequest()).offers.some(
     (p) => p.plan === plan && p.currency === currency && p.interval === interval,
   );
   if (!offered) return { ok: false, error: await tServer("errors.billingNotOffered") };
