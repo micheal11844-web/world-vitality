@@ -1196,6 +1196,52 @@ export const es: Messages = {
     "Estos documentos están escritos en inglés y la versión en inglés es la que se aplica. Si necesitas ayuda para entenderlos en tu idioma, escríbenos.",
   "legal.signupAgree":
     "Al iniciar sesión o crear una cuenta, aceptas los Términos del servicio y la Política de privacidad.",
+  "support.help": "Ayuda",
+  "support.openLabel": "Abrir el chat de ayuda",
+  "support.title": "Ayuda",
+  "support.intro":
+    "¡Hola! Soy Orbi. Puedo responder preguntas frecuentes sobre World Vitality. Elige un tema o escribe tu pregunta.",
+  "support.auto":
+    "Soy un asistente automático, no una persona. Nada de lo que escribas aquí se guarda ni se envía a ningún sitio, salvo que decidas escribirnos por correo.",
+  "support.inputLabel": "Escribe tu pregunta",
+  "support.send": "Enviar",
+  "support.close": "Cerrar",
+  "support.you": "Tú",
+  "support.orbi": "Orbi",
+  "support.topicsLabel": "Temas",
+  "support.email": "Escribir a una persona",
+  "support.openPage": "Abrir {page}",
+  "support.fallback":
+    "No estoy seguro de haberte entendido. Elige uno de estos temas o escribe a una persona y te responderemos por correo.",
+  "support.emergency":
+    "Si tú o alguien cerca de ti está en peligro, llama ya al número de emergencias de tu país (el 112 funciona en muchos países). Si estás pensando en hacerte daño, contacta de inmediato con los servicios de emergencia o con una línea de ayuda local; findahelpline.com reúne líneas gratuitas por país. Soy un asistente automático y no puedo enviar ayuda, y World Vitality no es un servicio de emergencias.",
+  "support.topic.plans": "Planes y facturación",
+  "support.topic.account": "Mi cuenta y mis datos",
+  "support.topic.alerts": "Alertas y notificaciones",
+  "support.topic.globe": "El globo y las cámaras",
+  "support.topic.workspaces": "Espacios de trabajo y equipos",
+  "support.topic.sources": "Fuentes de datos",
+  "support.topic.privacy": "Privacidad y términos",
+  "support.topic.language": "Idioma",
+  "support.topic.contact": "Hablar con una persona",
+  "support.answer.plans":
+    "El plan Básico es gratis. Estándar y Premium son de pago, con cobro mensual o anual. Pagas en la página segura de Paystack, así que los datos de tu tarjeta nunca pasan por World Vitality. Los precios se muestran en nairas en Nigeria y en dólares estadounidenses en el resto del mundo, cuando los dólares estén disponibles. Solo el propietario de una organización puede suscribirse o cancelar, y al cancelar conservas el plan hasta el final del periodo pagado. La página de facturación muestra los precios actuales y tus recibos. Para un reembolso o un cargo que no reconozcas, escribe a una persona.",
+  "support.answer.account":
+    "En Ajustes puedes cambiar tu idioma, elegir qué alertas recibes, descargar una copia de tus datos y eliminar tu cuenta (eliminarla es permanente). Si olvidaste tu contraseña, usa «¿Olvidaste tu contraseña?» en la página de inicio de sesión y te enviaremos un enlace para restablecerla.",
+  "support.answer.alerts":
+    "Tus notificaciones están en el Centro de notificaciones. En Ajustes, en Notificaciones, eliges qué alertas meteorológicas oficiales y avisos de calor recibes. Por ahora aparecen solo dentro de la app, no por correo, SMS ni notificación push, y se comprueban únicamente mientras World Vitality está abierto. Las alertas vienen de fuentes públicas y pueden llegar tarde o incompletas, así que nunca dependas solo de ellas en una emergencia.",
+  "support.answer.globe":
+    "El globo es una vista 3D de la Tierra con datos públicos recientes sobre peligros, como detecciones satelitales de incendios, y vistas en vivo de cámaras públicas cerca de algunos incendios. Arrástralo para girarlo, usa la rueda o pellizca para acercar, y toca un marcador para ver detalles. Debes iniciar sesión para abrirlo. El calor detectado por satélite no siempre es un incendio confirmado.",
+  "support.answer.workspaces":
+    "Los espacios de trabajo son vistas centradas en los mismos datos para distintos trabajos: clima, agricultura, construcción, logística, seguros, educación, investigación, energía renovable, monitoreo de desastres, y gobierno y ONG. Ábrelos desde Espacios de trabajo en el menú. Guarda campos o lugares para seguirlos e invita a tu equipo desde la página Equipo de un espacio.",
+  "support.answer.sources":
+    "El tiempo viene de Open-Meteo, las detecciones de incendios de NASA FIRMS y los mapas de OpenStreetMap, entre otras fuentes. La página Fuentes de datos enumera cada fuente con su enlace y su licencia. Los pronósticos y las alertas pueden llegar tarde o equivocarse, así que para decisiones importantes consulta también tus fuentes oficiales locales.",
+  "support.answer.privacy":
+    "Los Términos del servicio y la Política de privacidad están enlazados al final de las páginas de inicio, de inicio de sesión, de facturación y de fuentes de datos. La Política de privacidad explica qué guardamos y por qué, dónde se aloja y cómo descargar o eliminar tus datos. Están escritos en inglés.",
+  "support.answer.language":
+    "World Vitality está disponible en inglés, español, francés, portugués y árabe. Cámbialo en Ajustes, en Idioma; se guarda en tu cuenta. También puedes usar el selector de idioma de las páginas de inicio y de inicio de sesión. Los Términos y la Política de privacidad siguen en inglés.",
+  "support.answer.contact":
+    "Soy un asistente automático, así que no puedo ver tu cuenta. Para hablar con una persona de {business}, usa el botón «Escribir a una persona» de abajo. Respondemos por correo ({email}); todavía no hay chat en vivo.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Iniciar sesión",

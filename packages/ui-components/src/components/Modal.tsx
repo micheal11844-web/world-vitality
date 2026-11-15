@@ -106,8 +106,15 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
           backgroundColor: "var(--wv-surface)",
           borderRadius: "var(--wv-radius-lg)",
           padding: "var(--wv-space-lg)",
-          maxWidth: "32rem",
+          // border-box, so the 90% width includes the padding: with the browser
+          // default (content-box) the dialog was 48px wider than 90% and spilled
+          // past the edge of a phone screen. The max keeps the desktop width.
+          boxSizing: "border-box",
+          maxWidth: "calc(32rem + 2 * var(--wv-space-lg))",
           width: "90%",
+          // Never taller than the window (a short window scrolls the dialog).
+          maxHeight: "calc(100dvh - 2rem)",
+          overflowY: "auto",
           boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
         }}
       >

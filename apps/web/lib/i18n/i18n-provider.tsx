@@ -10,6 +10,7 @@ import {
 } from "@world-vitality/i18n";
 import { UiStringsProvider } from "@world-vitality/ui-components";
 import { rememberLanguage } from "../pwa/remember-language";
+import { SupportProvider } from "../support/support-provider";
 
 const I18nContext = createContext<Translator | null>(null);
 
@@ -34,7 +35,9 @@ export function I18nProvider({
   useEffect(() => rememberLanguage(locale), [locale]);
   return (
     <I18nContext.Provider value={translator}>
-      <UiStringsProvider value={chrome}>{children}</UiStringsProvider>
+      <UiStringsProvider value={chrome}>
+        <SupportProvider translator={translator}>{children}</SupportProvider>
+      </UiStringsProvider>
     </I18nContext.Provider>
   );
 }

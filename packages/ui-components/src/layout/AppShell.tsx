@@ -17,6 +17,7 @@ import { COMPACT_MAX_WIDTH, MEDIUM_MAX_WIDTH, SHELL_CSS } from "./shell-styles.j
 import { useMediaQuery } from "./useMediaQuery.js";
 import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
+import { useGuideDock } from "./GuideDock.js";
 import { GlobalSearch } from "../search/GlobalSearch.js";
 import { NotificationBellView, useNotificationSummary } from "../notifications/NotificationBell.js";
 import { OfflineNotice } from "./OfflineNotice.js";
@@ -485,6 +486,7 @@ export function AppShell({
   const closeDrawer = () => setDrawerOpen(false);
   const modalOpen = (compact && drawerOpen) || (overlay && aiPanelOpen);
   const rtl = ui.dir === "rtl";
+  const guideDock = useGuideDock();
 
   const rootStyle = {
     display: "flex",
@@ -702,7 +704,39 @@ export function AppShell({
             zIndex: 10,
           }}
         >
-          {guideCharacter ?? <GuideCharacter mood="idle" size={72} />}
+          {guideCharacter ??
+            (guideDock ? (
+              <button
+                type="button"
+                className="wv-guide-dock"
+                onClick={guideDock.onActivate}
+                aria-label={guideDock.ariaLabel ?? guideDock.label}
+                aria-haspopup="dialog"
+                aria-expanded={guideDock.open}
+                // The corner box ignores the pointer so it never blocks the page
+                // under it; this button alone takes it back.
+                style={{
+                  pointerEvents: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: 0,
+                  margin: 0,
+                  border: 0,
+                  background: "none",
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
+                <GuideCharacter mood={guideDock.open ? "happy" : "idle"} size={72} />
+                <span className="wv-guide-pill" aria-hidden="true">
+                  <span className="wv-guide-pill-mark">?</span>
+                  {guideDock.label}
+                </span>
+              </button>
+            ) : (
+              <GuideCharacter mood="idle" size={72} />
+            ))}
         </div>
       )}
     </div>
