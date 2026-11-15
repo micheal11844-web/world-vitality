@@ -1169,6 +1169,52 @@ export const en = {
     "These documents are written in English, and the English version is the one that applies. If you need help understanding them in your language, email us.",
   "legal.signupAgree":
     "By signing in or creating an account, you agree to the Terms of Service and the Privacy Policy.",
+  "support.help": "Help",
+  "support.openLabel": "Open the help chat",
+  "support.title": "Help",
+  "support.intro":
+    "Hi, I’m Orbi. I can answer common questions about World Vitality. Pick a topic or type your question.",
+  "support.auto":
+    "I’m an automatic helper, not a person. Nothing you type here is saved or sent anywhere unless you choose to email us.",
+  "support.inputLabel": "Type your question",
+  "support.send": "Send",
+  "support.close": "Close",
+  "support.you": "You",
+  "support.orbi": "Orbi",
+  "support.topicsLabel": "Topics",
+  "support.email": "Email a person",
+  "support.openPage": "Open {page}",
+  "support.fallback":
+    "I’m not sure I understood that. Pick one of these topics, or email a person and we’ll answer by email.",
+  "support.emergency":
+    "If you or someone near you is in danger, call your local emergency number now (112 works in many countries). If you are thinking about harming yourself, please contact emergency services or a local crisis line right away; findahelpline.com lists free helplines by country. I’m an automatic helper and can’t send help, and World Vitality is not an emergency service.",
+  "support.topic.plans": "Plans and billing",
+  "support.topic.account": "My account and data",
+  "support.topic.alerts": "Alerts and notifications",
+  "support.topic.globe": "The Globe and cameras",
+  "support.topic.workspaces": "Workspaces and teams",
+  "support.topic.sources": "Data sources",
+  "support.topic.privacy": "Privacy and terms",
+  "support.topic.language": "Language",
+  "support.topic.contact": "Talk to a person",
+  "support.answer.plans":
+    "Basic is free. Standard and Premium are paid plans, billed monthly or yearly. You pay on Paystack’s secure page, so your card details never touch World Vitality. Prices are shown in naira in Nigeria and in US dollars elsewhere once dollars are available. Only the owner of an organisation can subscribe or cancel, and cancelling keeps your plan until the end of the period you paid for. The billing page shows current prices and your receipts. For a refund or a charge you don’t recognise, email a person.",
+  "support.answer.account":
+    "In Settings you can change your language, choose which alerts you get, download a copy of your data, and delete your account (deleting is permanent). If you’ve forgotten your password, use “Forgot password?” on the sign-in page and we’ll send a reset link.",
+  "support.answer.alerts":
+    "Your notifications are in the Notification Center. In Settings, under Notifications, you choose which official weather alerts and heat-watch alerts you get. For now they appear inside the app only, not by email, SMS or push, and they are checked only while World Vitality is open. Alerts come from public sources and can arrive late or be incomplete, so never rely on them alone in an emergency.",
+  "support.answer.globe":
+    "The Globe is a 3D view of the Earth with recent public hazard data, such as satellite fire detections, and live views from public cameras near some fires. Drag to turn it, scroll or pinch to zoom, and select a marker for details. You need to be signed in to open it. Satellite heat is not always a confirmed fire.",
+  "support.answer.workspaces":
+    "Workspaces are focused views of the same data for different jobs: weather and climate, agriculture, construction, logistics, insurance, education, research, renewable energy, disaster monitoring, and government and NGOs. Open them from Workspaces in the menu. Save fields or places to follow them, and invite teammates from a workspace’s Team page.",
+  "support.answer.sources":
+    "Weather comes from Open-Meteo, fire detections from NASA FIRMS, and maps from OpenStreetMap, among others. The Data sources page lists every source with its link and licence. Forecasts and alerts can be late or wrong, so for decisions that matter, check your official local sources too.",
+  "support.answer.privacy":
+    "The Terms of Service and Privacy Policy are linked at the bottom of the landing, sign-in, billing and data sources pages. The Privacy Policy explains what we store and why, where it’s hosted, and how to download or delete your data. They are written in English.",
+  "support.answer.language":
+    "World Vitality is available in English, Spanish, French, Portuguese and Arabic. Change it in Settings under Language; it follows your account. You can also use the language selector on the landing and sign-in pages. The Terms and Privacy Policy stay in English.",
+  "support.answer.contact":
+    "I’m an automatic helper, so I can’t look at your account. To reach a person at {business}, use the “Email a person” button below. We answer by email ({email}); there’s no live chat yet.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Sign in",

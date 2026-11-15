@@ -1409,3 +1409,32 @@ them in naira without a Zenith USD account. The owner checks the dashboard (guid
 
 **Revisit when:** USD plans exist (test from abroad); travelling Nigerians complain; a third
 currency or market is added.
+
+## Decision #038 — Help chat on Orbi, with built-in answers and a seam for the owner's bot
+
+**Date:** 2026-11-15. **Status:** accepted; built on the branch `support-chat`.
+
+**Context:** The owner asked for a "Help" pill attached to Orbi so that pressing Orbi opens a
+support system, and for "my bot" to be linked to it. The bot was not identified (nothing in the
+repo or the conversation says what or where it is).
+
+**Decision:** Orbi becomes a button with a Help pill (every translated page, via a context in the
+shell), opening a chat window. The answers come from a **built-in keyword matcher that runs in the
+browser**, with nine topics and a link to the page for each, in all five languages. "Email a
+person" opens the visitor's own mail app addressed to the business address with the chat copied
+in. The window calls **one function** (`respondToMessage`) so the owner's bot can replace the
+matcher later without touching the window.
+
+**Rules:** nothing typed is stored or sent (the Privacy Policy says so); an emergency message
+always gets the emergency note first, and a future bot must never be asked about it; the answers
+state only what the app really does and name no plan prices; an unknown question gets an honest
+fallback, never a guess; Orbi's position is unchanged (bottom-right, bottom-left in Arabic).
+
+**Alternatives considered:** _an AI service now_ (a cost per message, a key and rate limits to run,
+what people type would leave their device, and the Privacy Policy would have to change before it
+could ship — all for a bot the owner has not yet identified); _a plain "Contact us" link_ (no
+answers, so the owner would read every routine question); _a separate Help page_ (not what was
+asked: the help is in Orbi).
+
+**Revisit when:** the owner names the bot; people's questions repeatedly fall back (add topics);
+live human chat is wanted.

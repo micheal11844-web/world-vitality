@@ -1213,6 +1213,52 @@ export const fr: Messages = {
     "Ces documents sont rédigés en anglais, et c’est la version anglaise qui s’applique. Si vous avez besoin d’aide pour les comprendre dans votre langue, écrivez-nous.",
   "legal.signupAgree":
     "En vous connectant ou en créant un compte, vous acceptez les Conditions d’utilisation et la Politique de confidentialité.",
+  "support.help": "Aide",
+  "support.openLabel": "Ouvrir le chat d’aide",
+  "support.title": "Aide",
+  "support.intro":
+    "Bonjour, je suis Orbi. Je peux répondre aux questions courantes sur World Vitality. Choisissez un sujet ou écrivez votre question.",
+  "support.auto":
+    "Je suis un assistant automatique, pas une personne. Rien de ce que vous écrivez ici n’est enregistré ni envoyé ailleurs, sauf si vous choisissez de nous écrire par e-mail.",
+  "support.inputLabel": "Écrivez votre question",
+  "support.send": "Envoyer",
+  "support.close": "Fermer",
+  "support.you": "Vous",
+  "support.orbi": "Orbi",
+  "support.topicsLabel": "Sujets",
+  "support.email": "Écrire à une personne",
+  "support.openPage": "Ouvrir {page}",
+  "support.fallback":
+    "Je ne suis pas sûr d’avoir compris. Choisissez l’un de ces sujets, ou écrivez à une personne et nous répondrons par e-mail.",
+  "support.emergency":
+    "Si vous ou une personne près de vous êtes en danger, appelez tout de suite le numéro d’urgence de votre pays (le 112 fonctionne dans de nombreux pays). Si vous pensez à vous faire du mal, contactez immédiatement les services d’urgence ou une ligne d’écoute locale ; findahelpline.com recense des lignes gratuites par pays. Je suis un assistant automatique et je ne peux pas envoyer de secours, et World Vitality n’est pas un service d’urgence.",
+  "support.topic.plans": "Offres et facturation",
+  "support.topic.account": "Mon compte et mes données",
+  "support.topic.alerts": "Alertes et notifications",
+  "support.topic.globe": "Le globe et les caméras",
+  "support.topic.workspaces": "Espaces de travail et équipes",
+  "support.topic.sources": "Sources de données",
+  "support.topic.privacy": "Confidentialité et conditions",
+  "support.topic.language": "Langue",
+  "support.topic.contact": "Parler à une personne",
+  "support.answer.plans":
+    "L’offre Basique est gratuite. Standard et Premium sont payantes, facturées au mois ou à l’année. Vous payez sur la page sécurisée de Paystack : vos données de carte ne passent jamais par World Vitality. Les prix s’affichent en nairas au Nigeria et en dollars américains ailleurs, dès que les dollars sont disponibles. Seul le propriétaire d’une organisation peut s’abonner ou résilier, et la résiliation garde votre offre jusqu’à la fin de la période payée. La page de facturation montre les prix actuels et vos reçus. Pour un remboursement ou un prélèvement que vous ne reconnaissez pas, écrivez à une personne.",
+  "support.answer.account":
+    "Dans Paramètres, vous pouvez changer de langue, choisir les alertes que vous recevez, télécharger une copie de vos données et supprimer votre compte (la suppression est définitive). Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur la page de connexion et nous vous enverrons un lien de réinitialisation.",
+  "support.answer.alerts":
+    "Vos notifications se trouvent dans le Centre de notifications. Dans Paramètres, sous Notifications, vous choisissez les alertes météo officielles et les alertes de chaleur que vous recevez. Pour l’instant, elles s’affichent uniquement dans l’application, pas par e-mail, SMS ni notification push, et ne sont vérifiées que lorsque World Vitality est ouvert. Les alertes viennent de sources publiques et peuvent arriver en retard ou être incomplètes : ne vous fiez jamais à elles seules en cas d’urgence.",
+  "support.answer.globe":
+    "Le globe est une vue 3D de la Terre avec des données publiques récentes sur les dangers, comme les détections satellites d’incendies, et des vues en direct de caméras publiques près de certains incendies. Faites-le tourner en le faisant glisser, zoomez avec la molette ou en pinçant, et sélectionnez un repère pour les détails. Vous devez être connecté pour l’ouvrir. Une chaleur détectée par satellite n’est pas toujours un incendie confirmé.",
+  "support.answer.workspaces":
+    "Les espaces de travail sont des vues ciblées des mêmes données pour différents métiers : météo et climat, agriculture, construction, logistique, assurance, éducation, recherche, énergies renouvelables, suivi des catastrophes, et gouvernement et ONG. Ouvrez-les depuis Espaces de travail dans le menu. Enregistrez des champs ou des lieux pour les suivre, et invitez votre équipe depuis la page Équipe d’un espace.",
+  "support.answer.sources":
+    "La météo vient d’Open-Meteo, les détections d’incendies de NASA FIRMS et les cartes d’OpenStreetMap, entre autres. La page Sources de données liste chaque source avec son lien et sa licence. Les prévisions et les alertes peuvent arriver en retard ou être fausses : pour les décisions importantes, consultez aussi vos sources officielles locales.",
+  "support.answer.privacy":
+    "Les Conditions d’utilisation et la Politique de confidentialité sont liées en bas des pages d’accueil, de connexion, de facturation et des sources de données. La Politique de confidentialité explique ce que nous conservons et pourquoi, où c’est hébergé, et comment télécharger ou supprimer vos données. Elles sont rédigées en anglais.",
+  "support.answer.language":
+    "World Vitality est disponible en anglais, espagnol, français, portugais et arabe. Changez la langue dans Paramètres, sous Langue ; elle est liée à votre compte. Vous pouvez aussi utiliser le sélecteur de langue des pages d’accueil et de connexion. Les Conditions et la Politique de confidentialité restent en anglais.",
+  "support.answer.contact":
+    "Je suis un assistant automatique, donc je ne peux pas consulter votre compte. Pour joindre une personne chez {business}, utilisez le bouton « Écrire à une personne » ci-dessous. Nous répondons par e-mail ({email}) ; il n’y a pas encore de chat en direct.",
 
   // ---- Sign-in, forgot-password and reset-password pages (v106)
   "auth.signIn.title": "Se connecter",

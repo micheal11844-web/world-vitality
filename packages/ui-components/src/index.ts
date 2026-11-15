@@ -25,6 +25,7 @@ export {
   type StateDisplayProps,
   type StateDisplayStatus,
 } from "./components/StateDisplay.js";
+export { GuideDockProvider, useGuideDock, type GuideDockValue } from "./layout/GuideDock.js";
 export {
   GuideCharacter,
   type GuideCharacterProps,

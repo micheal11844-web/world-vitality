@@ -307,6 +307,50 @@ export const SHELL_CSS = `
   }
 }
 
+/* The Help pill attached to the bottom of the guide character: it overlaps
+   Orbi's base a little, with a ring in the page colour so it looks set into it. */
+.wv-guide-pill {
+  position: relative;
+  margin-top: -0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.75rem 0.1875rem 0.25rem;
+  border-radius: var(--wv-radius-full);
+  background: var(--wv-color-accent-500);
+  color: var(--wv-color-neutral-50);
+  border: 2px solid var(--wv-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-family: var(--wv-font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: transform 0.15s ease;
+}
+.wv-guide-pill-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: var(--wv-color-neutral-50);
+  color: var(--wv-color-accent-500);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.wv-guide-dock:hover .wv-guide-pill { transform: translateY(-2px); }
+.wv-guide-dock:focus-visible {
+  outline: 2px solid var(--wv-accent);
+  outline-offset: 4px;
+  border-radius: var(--wv-radius-lg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wv-guide-pill { transition: none; }
+  .wv-guide-dock:hover .wv-guide-pill { transform: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wv-shell-drawer { transition: none !important; }
 }
