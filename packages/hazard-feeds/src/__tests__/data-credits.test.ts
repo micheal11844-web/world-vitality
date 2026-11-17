@@ -40,8 +40,12 @@ test("Open-Meteo is credited with a link to its own site and under CC BY 4.0", (
 });
 
 test("a source whose terms are silent is not given a licence it has not stated", () => {
-  assert.equal(DATA_CREDITS.gdacs.licence, undefined);
   assert.equal(DATA_CREDITS["nasa-firms"].licence, undefined);
+});
+
+test("GDACS carries the CC BY 4.0 licence its Terms of use state (section 8)", () => {
+  assert.equal(DATA_CREDITS.gdacs.licence?.name, "CC BY 4.0");
+  assert.equal(DATA_CREDITS.gdacs.licence?.url, "https://creativecommons.org/licenses/by/4.0/");
 });
 
 test("NASA POWER carries the CC BY 4.0 licence its own project metadata states", () => {

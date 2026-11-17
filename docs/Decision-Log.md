@@ -1216,7 +1216,7 @@ or to choose the distance, or when more satellites (geostationary) are added to 
 
 ## Decision #034 — Worldwide flood events on the Globe (GDACS)
 
-**Date:** 2026-11-13/14. **Status:** accepted; built on the branch `globe-floods`. **Licence question open** (below).
+**Date:** 2026-11-13/14. **Status:** accepted; built on the branch `globe-floods`. **Licence question closed 2026-11-17** (update at the end of this decision).
 
 **Context:** The owner asked "ain't there one for flood?". The Globe's only flood layer
 is USGS Real-Time Flood Impact, which covers the United States (and the app asks for one
@@ -1292,6 +1292,17 @@ no flood layer when `/api/globe/floods` answers `failed`).
 
 **Revisit when:** GDACS answers the licence question; people ask to be told about floods near
 their fields (reuse the heat-alert mechanism); or GDACS changes its list (the log will show it).
+
+**Update 2026-11-17 (licence question closed).** The owner wrote to GDACS through its contact form on
+2026-11-16; the JRC's GDACS team replied on 2026-11-17 that the answers are in their FAQ and Terms of
+use and that **one request every 15 minutes is fine**, adding that they are "in monitoring mode" and may
+tighten API limits later, with notice to registered users. The Terms of use PDF they pointed to states in
+section 8 that content and data are free of charge and licensed under **CC BY 4.0**, "unless specified
+otherwise for third party or derived products". That permits a paid product with credit, so the
+"silence, not permission" paragraph above is superseded (the March 2025 copy read on 2026-11-15 did not
+appear to contain it and could not be re-checked). The flood events seen in the list carry `source: GLOFAS`.
+`/sources` now prints the licence. Open: the owner is not a registered GDACS user, so a future notice would not
+reach them; the owner's reply to GDACS (how they found it, app screenshots) is theirs to send.
 
 ## Decision #035 — Data credits page and Open-Meteo attribution (pre-launch)
 
