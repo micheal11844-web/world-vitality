@@ -10,10 +10,12 @@
  * until its sentences exist in every language.
  *
  * **What a licence line means.** Only terms read from the source's own pages are
- * written down. A source whose terms say nothing about reuse (GDACS, FIRMS)
- * has no `licence` here and is credited by name and link only. NASA POWER states
- * CC BY 4.0 in its own project metadata (`power.larc.nasa.gov/llms.txt`) and on its
- * NASA-managed AWS Open Data entry, so it carries that licence; see
+ * written down. A source whose terms say nothing about reuse (FIRMS) has no
+ * `licence` here and is credited by name and link only. NASA POWER states CC BY 4.0
+ * in its own project metadata (`power.larc.nasa.gov/llms.txt`) and on its
+ * NASA-managed AWS Open Data entry, and GDACS states CC BY 4.0 in section 8 of its
+ * Terms of use ("unless specified otherwise for third party or derived products"),
+ * so both carry that licence; see
  * `docs/runbooks/data-credits.md` for what was read and what is still open.
  *
  * **Open-Meteo is the one with a hard rule.** Its free licence (CC BY 4.0)
@@ -101,6 +103,7 @@ export const DATA_CREDITS: Record<DataCreditId, DataCredit> = {
     group: "hazards",
     name: "GDACS",
     url: "https://www.gdacs.org/",
+    licence: CC_BY_4,
   },
   "usgs-rtfi": {
     id: "usgs-rtfi",

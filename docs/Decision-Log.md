@@ -1216,7 +1216,7 @@ or to choose the distance, or when more satellites (geostationary) are added to 
 
 ## Decision #034 — Worldwide flood events on the Globe (GDACS)
 
-**Date:** 2026-11-13/14. **Status:** accepted; built on the branch `globe-floods`. **Licence question open** (below).
+**Date:** 2026-11-13/14. **Status:** accepted; built on the branch `globe-floods`. **Licence question closed 2026-11-17** (update at the end of this decision).
 
 **Context:** The owner asked "ain't there one for flood?". The Globe's only flood layer
 is USGS Real-Time Flood Impact, which covers the United States (and the app asks for one
@@ -1292,6 +1292,17 @@ no flood layer when `/api/globe/floods` answers `failed`).
 
 **Revisit when:** GDACS answers the licence question; people ask to be told about floods near
 their fields (reuse the heat-alert mechanism); or GDACS changes its list (the log will show it).
+
+**Update 2026-11-17 (licence question closed).** The owner wrote to GDACS through its contact form on
+2026-11-16; the JRC's GDACS team replied on 2026-11-17 that the answers are in their FAQ and Terms of
+use and that **one request every 15 minutes is fine**, adding that they are "in monitoring mode" and may
+tighten API limits later, with notice to registered users. The Terms of use PDF they pointed to states in
+section 8 that content and data are free of charge and licensed under **CC BY 4.0**, "unless specified
+otherwise for third party or derived products". That permits a paid product with credit, so the
+"silence, not permission" paragraph above is superseded (the March 2025 copy read on 2026-11-15 did not
+appear to contain it and could not be re-checked). The flood events seen in the list carry `source: GLOFAS`.
+`/sources` now prints the licence. Open: the owner is not a registered GDACS user, so a future notice would not
+reach them; the owner's reply to GDACS (how they found it, app screenshots) is theirs to send.
 
 ## Decision #035 — Data credits page and Open-Meteo attribution (pre-launch)
 
@@ -1453,3 +1464,13 @@ another Claude. This session could not reach Flow's repository (the environment 
 repositories connected to the session), so nothing of Flow is built or assumed. A handoff for the
 other Claude, with a proposed contract and the questions the Privacy Policy needs answered before
 activation, is in `docs/handoff/flow-integration.md`. The built-in answers stay the fallback.
+
+**Update 2026-11-17 (Decision #038):** Flow's repository became readable (the owner connected the Claude
+GitHub app on the account that owns it) and was read, not changed, apart from one docs-only note on a branch
+with a draft PR. Flow already has a mode for outside callers (`audience: "third_party"`, tools off, nothing
+saved), so the handoff's proposed contract is replaced by Flow's real one; see section 10 of
+`docs/handoff/flow-integration.md`. **A decision is now the owner's:** Flow's model chain includes NVIDIA, whose
+API trial terms allow internal testing only (not production) and let NVIDIA use inputs and outputs to improve its AI
+models, while Groq and Cloudflare Workers AI say they do not keep or train on API content. The options are to limit
+the visitor path to Groq and Cloudflare (a small change on Flow's side), or keep the built-in answers only. Nothing
+is switched on until it is decided and the Privacy Policy is rewritten from Flow's real answers.
