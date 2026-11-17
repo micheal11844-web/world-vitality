@@ -1176,6 +1176,9 @@ export const en = {
     "Hi, I’m Orbi. I can answer common questions about World Vitality. Pick a topic or type your question.",
   "support.auto":
     "I’m an automatic helper, not a person. Nothing you type here is saved or sent anywhere unless you choose to email us.",
+  "support.autoAssistant":
+    "I’m an automatic assistant, not a person. What you type here is sent to an AI service to write the reply, so please don’t include passwords, card numbers or personal details. The topic buttons stay on your device.",
+  "support.thinking": "Orbi is thinking…",
   "support.inputLabel": "Type your question",
   "support.send": "Send",
   "support.close": "Close",

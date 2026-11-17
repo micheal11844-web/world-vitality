@@ -1474,3 +1474,23 @@ API trial terms allow internal testing only (not production) and let NVIDIA use 
 models, while Groq and Cloudflare Workers AI say they do not keep or train on API content. The options are to limit
 the visitor path to Groq and Cloudflare (a small change on Flow's side), or keep the built-in answers only. Nothing
 is switched on until it is decided and the Privacy Policy is rewritten from Flow's real answers.
+
+**Update 2026-11-17, later (Decision #038): the link is built and stays off.** World Vitality's side of the
+Flow link exists (`/api/support/assistant`, `packages/support/src/assistant.ts`; runbook
+`docs/runbooks/support-chat.md`), tested in a browser against a pretend Flow, and does nothing unless the owner
+sets `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` on the server. Choices made, and why:
+
+- **Built-in answer first for danger, and the fallback for everything else.** Danger is answered by the emergency
+  note in the window and checked again on the server; it is never sent, nor kept in the history sent later. Any
+  failure, slow answer (over 8 seconds), refusal or odd reply shows the built-in answer silently, so Flow can never
+  make the chat worse than it is today.
+- **The window asks if the assistant is on before sending any text** (a status call with no text), so a stale or
+  cached page can never post words to a route that is off, and the notice at the top changes only when it is on.
+  With the switch off the Privacy Policy and the existing notice remain true; both are rewritten in the same release
+  that switches it on, from Flow's real answers, never before.
+- **The assistant is told only what the app's own answers say**, cannot state prices (any reply with an amount is
+  dropped: the billing page is the authority), and its replies are shown as plain text, never as markup.
+- **No cookie, account, e-mail, IP address or page is sent**, and the app logs only that a call happened, how long it
+  took and why it failed.
+- **Still the owner's decision:** which AI providers a visitor's words may reach (see the update above). Nothing in
+  this change settles it, and nothing is switched on.
