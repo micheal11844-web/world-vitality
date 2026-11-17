@@ -4,7 +4,7 @@ Written 2026-11-15 by the Claude working on World Vitality, at the owner's reque
 (business **joelflowstack**, Nigeria, contact `joelflowstack@gmail.com`) runs both projects and is
 the go-between. **Flow** is his bot; he says it is already linked to his business website.
 
-> **Status: proposed, not built.** The World Vitality side could not read Flow's repo (this
+> **Status: proposed, not built. Superseded in part by section 10 (2026-11-17): Flow's real interface is known, and the contract in section 4 is replaced by it.** The World Vitality side could not read Flow's repo (this
 > session only had access to the World Vitality repo), so everything about Flow below is a request,
 > not a description. If Flow already has an HTTP interface, **tell us its real shape** (section 7)
 > and we will adapt our side to it instead of asking you to build a new one.
@@ -118,3 +118,22 @@ Write the answers in section 9. Do not guess; "not stored" is only acceptable if
 ## 9. Replies from Flow's side
 
 _(empty: to be filled in by the Claude working on Flow, or relayed by the owner)_
+
+## 10. Findings from reading Flow (2026-11-16 and 2026-11-17, by the World Vitality Claude)
+
+Flow's repo (`Joel44118/flow-V3`, private) became readable once the owner connected the Claude GitHub app on that account. Read only; one docs-only note was added on a branch
+(`WORLD_VITALITY_HELP_CHAT.md`, draft PR #3 in that repo, not merged, nothing deployed). What was found, at Flow commit `11ccaf8`:
+
+- **Interface.** `POST /api/chat` on Flow's Vercel project is public (CORS `*`). `{ audience: "third_party", disableTools: true, messages: [system, ...history, user] }` turns all tools off, drops
+  the self-knowledge block and saves nothing to semantic memory. The reply is `{ reply: string, ... }`; a failure is a non-200 or no `reply`. Auth enforcement is off unless `FLOW_AUTH_ENFORCE=1`;
+  a `Bearer FLOW_API_KEY` header is accepted. **So section 4's contract (`source`, `message`, `locale`, `links`) is replaced by this**: World Vitality sends its own system prompt (built from its
+  answer catalogs, in the visitor's language) and the last six turns, and reads `reply`. Flow is at Vercel's 12-function cap, so a new endpoint was never an option.
+- **Providers.** NVIDIA and Groq race, then OpenRouter, Cloudflare Workers AI and Hugging Face. Their own pages (read 2026-11-17; links in the Flow note): Groq does not retain inference data by default
+  (up to 30 days for reliability and abuse; stored in the US); Cloudflare Workers AI does not retain or train; OpenRouter does not store prompts by default but its page is silent on free models and upstream
+  providers; Hugging Face does not store request bodies but defers to downstream providers; **NVIDIA's API Trial Terms allow internal testing only, "not in production", bar personal information about identifiable
+  people, and let NVIDIA use inputs and outputs to improve its AI models.** (Which kind of NVIDIA key Joel has is not known.)
+- **Decision pending (the owner's):** limit the `third_party` path to Groq and Cloudflare (a change on Flow's side that would also affect Echo, the Telegram bot for strangers), or use a new request field only World Vitality
+  sets, or keep the built-in answers and not use Flow. **Nothing is built or switched on until this is decided.**
+- **Still unknown, only Flow's side can say:** the Vercel region the function runs in (`vercel.json` pins none), how long Vercel keeps function logs on Joel's plan, whether anything else in Flow (`core/memextract.js`,
+  `core/chat-persist.js`, `core/flow-actions-log.js`) stores text from a `third_party` call, and whether anything about the caller (IP, headers) is logged.
+- **Privacy Policy.** Section "The help chat" and `support.auto` (five languages) still say messages stay on the device. They are changed in the same release that switches Flow on, never before.

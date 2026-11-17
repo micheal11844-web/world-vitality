@@ -1453,3 +1453,13 @@ another Claude. This session could not reach Flow's repository (the environment 
 repositories connected to the session), so nothing of Flow is built or assumed. A handoff for the
 other Claude, with a proposed contract and the questions the Privacy Policy needs answered before
 activation, is in `docs/handoff/flow-integration.md`. The built-in answers stay the fallback.
+
+**Update 2026-11-17 (Decision #038):** Flow's repository became readable (the owner connected the Claude
+GitHub app on the account that owns it) and was read, not changed, apart from one docs-only note on a branch
+with a draft PR. Flow already has a mode for outside callers (`audience: "third_party"`, tools off, nothing
+saved), so the handoff's proposed contract is replaced by Flow's real one; see section 10 of
+`docs/handoff/flow-integration.md`. **A decision is now the owner's:** Flow's model chain includes NVIDIA, whose
+API trial terms allow internal testing only (not production) and let NVIDIA use inputs and outputs to improve its AI
+models, while Groq and Cloudflare Workers AI say they do not keep or train on API content. The options are to limit
+the visitor path to Groq and Cloudflare (a small change on Flow's side), or keep the built-in answers only. Nothing
+is switched on until it is decided and the Privacy Policy is rewritten from Flow's real answers.
