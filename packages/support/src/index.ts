@@ -1,4 +1,16 @@
 export {
+  ASSISTANT_LIMITS,
+  buildAssistantBody,
+  buildSystemPrompt,
+  cleanAssistantReply,
+  createRateLimiter,
+  historyFromChat,
+  parseAssistantRequest,
+  type AssistantRequest,
+  type AssistantTurn,
+  type ChatLine,
+} from "./assistant.js";
+export {
   BUSINESS_COUNTRY,
   BUSINESS_EMAIL,
   BUSINESS_NAME,

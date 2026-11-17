@@ -8,13 +8,14 @@ import {
   BUSINESS_NAME,
   SUPPORT_TOPIC_HREF,
   SUPPORT_TOPIC_IDS,
+  historyFromChat,
   supportMailto,
   type SupportReply,
   type SupportTopicId,
   type TranscriptLine,
 } from "@world-vitality/support";
 import { Button, Input, Modal } from "@world-vitality/ui-components";
-import { respondToMessage } from "./responder";
+import { assistantEnabled, respondToMessage } from "./responder";
 
 const TOPIC_LABEL: Record<SupportTopicId, MessageKey> = {
   plans: "support.topic.plans",
@@ -82,6 +83,10 @@ const bubble = {
  * link only puts the chat into the reader's own mail app, to read and edit
  * before sending. Stays mounted after the first open, so closing and
  * reopening keeps the conversation (it is gone when the page is left).
+ *
+ * **Only if the server says an outside assistant is switched on** (asked once,
+ * no text sent) are typed messages sent on, and then the notice at the top says
+ * so in plain words. The topic buttons always stay on the device.
  */
 export function SupportPanel({
   open,
@@ -98,27 +103,51 @@ export function SupportPanel({
   // The topic buttons are open at the start and fold away once the conversation
   // begins (they take a lot of a phone screen); the "Topics" button brings them back.
   const [showTopics, setShowTopics] = useState(true);
+  // Off unless the server says so (see `assistantEnabled`); asked once, on first open.
+  const [assistant, setAssistant] = useState(false);
+  const [thinking, setThinking] = useState(false);
+  const asked = useRef(false);
   const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || asked.current) return;
+    asked.current = true;
+    void assistantEnabled().then(setAssistant);
+  }, [open]);
 
   useEffect(() => {
     const log = logRef.current;
     if (log) log.scrollTop = log.scrollHeight;
-  }, [entries, open]);
+  }, [entries, open, thinking]);
 
   async function ask(message: string, shown: string) {
     const text = message.trim();
-    if (!text) return;
+    if (!text || thinking) return;
     setShowTopics(false);
-    const reply = await respondToMessage(text, locale);
-    setEntries((prev) => [
-      ...prev,
-      { id: nextId++, who: "you", text: shown.trim() || text },
-      { id: nextId++, who: "orbi", reply },
-    ]);
+    // What was said so far, before this message (danger is filtered out of it).
+    const history = historyFromChat(
+      entries
+        .filter((e) => !(e.who === "orbi" && e.reply.kind === "intro"))
+        .map((e) => ({
+          who: e.who,
+          text: entryText(e, t),
+          emergency: e.who === "orbi" && e.reply.kind === "emergency",
+        })),
+    );
+    // The visitor's own words appear at once; the answer follows.
+    setEntries((prev) => [...prev, { id: nextId++, who: "you", text: shown.trim() || text }]);
+    setThinking(true);
+    try {
+      const reply = await respondToMessage(text, locale, { useAssistant: assistant, history });
+      setEntries((prev) => [...prev, { id: nextId++, who: "orbi", reply }]);
+    } finally {
+      setThinking(false);
+    }
   }
 
   function submit(e: FormEvent) {
     e.preventDefault();
+    if (thinking) return;
     const text = draft;
     setDraft("");
     void ask(text, text);
@@ -150,7 +179,7 @@ export function SupportPanel({
             color: "var(--wv-text-secondary)",
           }}
         >
-          {t("support.auto")}
+          {t(assistant ? "support.autoAssistant" : "support.auto")}
         </p>
 
         <div
@@ -224,6 +253,30 @@ export function SupportPanel({
               </div>
             );
           })}
+          {thinking && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
+              <span
+                style={{
+                  fontFamily: "var(--wv-font-sans)",
+                  fontSize: "0.75rem",
+                  color: "var(--wv-text-secondary)",
+                }}
+              >
+                {t("support.orbi")}
+              </span>
+              <div
+                data-testid="support-thinking"
+                style={{
+                  ...bubble,
+                  backgroundColor: "var(--wv-bg)",
+                  color: "var(--wv-text-secondary)",
+                  border: "1px solid var(--wv-border)",
+                }}
+              >
+                {t("support.thinking")}
+              </div>
+            </div>
+          )}
         </div>
 
         {showTopics && (
@@ -261,7 +314,11 @@ export function SupportPanel({
               enterKeyHint="send"
             />
           </div>
-          <Button type="submit" disabled={draft.trim().length === 0} style={{ flexShrink: 0 }}>
+          <Button
+            type="submit"
+            disabled={draft.trim().length === 0 || thinking}
+            style={{ flexShrink: 0 }}
+          >
             {t("support.send")}
           </Button>
         </form>

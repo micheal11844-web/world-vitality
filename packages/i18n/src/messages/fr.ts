@@ -1220,6 +1220,9 @@ export const fr: Messages = {
     "Bonjour, je suis Orbi. Je peux répondre aux questions courantes sur World Vitality. Choisissez un sujet ou écrivez votre question.",
   "support.auto":
     "Je suis un assistant automatique, pas une personne. Rien de ce que vous écrivez ici n’est enregistré ni envoyé ailleurs, sauf si vous choisissez de nous écrire par e-mail.",
+  "support.autoAssistant":
+    "Je suis un assistant automatique, pas une personne. Ce que vous écrivez ici est envoyé à un service d’IA pour rédiger la réponse ; n’indiquez donc ni mot de passe, ni numéro de carte, ni données personnelles. Les boutons de sujets restent sur votre appareil.",
+  "support.thinking": "Orbi réfléchit…",
   "support.inputLabel": "Écrivez votre question",
   "support.send": "Envoyer",
   "support.close": "Fermer",

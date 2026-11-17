@@ -137,3 +137,17 @@ Flow's repo (`Joel44118/flow-V3`, private) became readable once the owner connec
 - **Still unknown, only Flow's side can say:** the Vercel region the function runs in (`vercel.json` pins none), how long Vercel keeps function logs on Joel's plan, whether anything else in Flow (`core/memextract.js`,
   `core/chat-persist.js`, `core/flow-actions-log.js`) stores text from a `third_party` call, and whether anything about the caller (IP, headers) is logged.
 - **Privacy Policy.** Section "The help chat" and `support.auto` (five languages) still say messages stay on the device. They are changed in the same release that switches Flow on, never before.
+
+## 11. Update 2026-11-17: World Vitality's side is built, and switched off
+
+The route, the window changes and the tests are in World Vitality (`apps/web/app/api/support/assistant/route.ts`,
+`packages/support/src/assistant.ts`; details in `docs/runbooks/support-chat.md`). It calls Flow's `/api/chat` exactly as
+described in section 10 and Flow's `WORLD_VITALITY_HELP_CHAT.md`: `audience: "third_party"`, `disableTools: true`, a system
+text World Vitality writes, the new message and at most six earlier turns, nothing else. It uses the success shape
+`{ reply: string }` and treats anything else as a failure (it then shows its own built-in answer).
+
+Nothing is on. It starts only when the owner sets `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` in World Vitality's Vercel
+settings, which he will not do before (1) deciding which providers a visitor's text may reach, (2) Flow's side answering the
+four questions in section 6 of Flow's note, and (3) the Privacy Policy being rewritten from those answers. **Nothing is needed
+from Flow's side until the owner decides step 1.** If the answer is "only Groq and Cloudflare" or a `providers` field, that is
+the one change on Flow's side, on a branch and pull request.
