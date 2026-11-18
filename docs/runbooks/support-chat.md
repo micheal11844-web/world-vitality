@@ -114,7 +114,11 @@ They are read on every request, so a change plus a redeploy is enough, and remov
    Claude working on Flow) merges it; the help chat link must not be switched on before that.
 2. Flow's side answers the four questions in its note (region, what is stored and for how long,
    which providers, whether anything about the caller is logged), and any change from step 1 is
-   made there, on a branch and pull request, not on Flow's main branch.
+   made there, on a branch and pull request, not on Flow's main branch. **Partly done
+   2026-11-18:** what Flow's code stores and logs for a third-party call is read and written up
+   (Flow's note section 6a; `docs/handoff/flow-integration.md` section 13). Still open: the
+   Function Region, the Vercel plan (log retention) and which provider keys are set, which only
+   the owner can read in Flow's Vercel dashboard, and merging PR #4.
 3. Rewrite the Privacy Policy section "The help chat" (`apps/web/app/legal/legal-text.ts`) from
    those answers, naming the providers, and bump `LEGAL_UPDATED`. Rewrite `support.auto` /
    `support.autoAssistant` in five languages to match the policy, and update this runbook. These
