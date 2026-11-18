@@ -161,3 +161,22 @@ Cloudflare Workers AI. **Needs from Flow's side:** review and merge it (it chang
 `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in Flow's Vercel project if Cloudflare should be the second
 provider, and still answer the four questions in section 6 of Flow's note. World Vitality's link stays switched off
 until the pull request is merged and those answers are in.
+
+## 13. Update 2026-11-18: Flow's four questions, answered from its code
+
+Read-only, from Flow's code at `bb2e69c` plus PR #4; the full answers are in section 6a of Flow's `WORLD_VITALITY_HELP_CHAT.md`
+(branch `world-vitality-help-chat`, PR #3), for Flow's side to confirm. What matters for the Privacy Policy:
+
+- **Not saved by Flow's code:** a third-party, tools-off call is not saved to semantic memory, the tool log, the workspace or the
+  voice bank; intent detection is plain regex with no model call; model-health and race counters keep no text.
+- **Visitor identity never reaches Flow:** World Vitality sends no IP, cookie or account data, and Flow's chat code reads only the
+  `Authorization` header (to check the key), never an IP or user agent.
+- **One gap to close or accept:** if a model ever wrote a `<flow-think>` block, `cleanReply` would store that reasoning in Flow's
+  database (last 100); it could quote the visitor's message. Flow's own prompt asks for the tag; a third-party call uses World
+  Vitality's text, so it should not appear. Skipping that store for third parties is a small change on Flow's side, not in PR #4.
+- **Vercel's logs:** Flow's function logs carry flags and error categories, not message text; a provider's error text could in
+  principle quote part of a request (not verified). Retention depends on Flow's Vercel plan.
+- **Unknown from World Vitality's side (needs Joel in Flow's Vercel dashboard):** the Function Region, the plan (log retention), which
+  of `GROQ_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` are set, and then merging PR #4.
+
+The Privacy Policy rewrite waits on those answers; the help-chat link stays off.
