@@ -65,10 +65,18 @@ export default async function LandingPage() {
               {t("landing.signIn")}
             </Link>
           </div>
-          <div style={{ marginTop: "var(--wv-space-md)" }}>
+          {/* The small print sits apart from the two buttons, one line each, with room between them. */}
+          <div
+            style={{
+              marginTop: "var(--wv-space-xl)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: "var(--wv-space-sm)",
+              lineHeight: 1.6,
+            }}
+          >
             <AppDownloadsLink />
-          </div>
-          <div style={{ marginTop: "var(--wv-space-xs)" }}>
             <Link
               href="/sources"
               style={{
@@ -80,9 +88,7 @@ export default async function LandingPage() {
             >
               {t("landing.sources")}
             </Link>
-          </div>
-          <div style={{ marginTop: "var(--wv-space-xs)" }}>
-            <LegalLinks />
+            <LegalLinks align="start" />
           </div>
         </div>
       </main>

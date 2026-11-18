@@ -103,12 +103,15 @@ They are read on every request, so a change plus a redeploy is enough, and remov
 
 **Before switching it on (in this order; the last step is the switch):**
 
-1. The owner decides which AI providers a visitor's words may reach. Flow's chain today also
-   uses NVIDIA (trial terms say not for production and may use content to improve models),
-   OpenRouter and Hugging Face. Options: (a) only Groq and Cloudflare, a small change on Flow's
-   side that also changes Echo; (b) a new request field only World Vitality sets, for example
-   `providers: ["groq", "cloudflare"]`; (c) keep the built-in answers only. See
-   `docs/handoff/flow-integration.md` section 10 and Flow's note section 1b.
+1. **Decided 2026-11-17 (the owner): option (a).** A visitor's words may reach only Groq and
+   Cloudflare Workers AI, whose own pages say prompts are not kept for long and not used for
+   training (Groq's page does not mention training either way). NVIDIA (trial terms: internal
+   testing only, may use content to improve its models), OpenRouter's free models and Hugging
+   Face are left out of this path. The change is on Flow's side: draft pull request
+   <https://github.com/Joel44118/flow-V3/pull/4> (adds `THIRD_PARTY_PROVIDERS`; if both are
+   down the caller gets an error, never a quiet fallback). **It also changes Echo** (the
+   Telegram bot answering strangers), which uses the same path. Not live until the owner (or the
+   Claude working on Flow) merges it; the help chat link must not be switched on before that.
 2. Flow's side answers the four questions in its note (region, what is stored and for how long,
    which providers, whether anything about the caller is logged), and any change from step 1 is
    made there, on a branch and pull request, not on Flow's main branch.
