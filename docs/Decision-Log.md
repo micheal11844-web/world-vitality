@@ -1494,3 +1494,10 @@ sets `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` on the server. Choices m
   took and why it failed.
 - **Still the owner's decision:** which AI providers a visitor's words may reach (see the update above). Nothing in
   this change settles it, and nothing is switched on.
+
+**Update 2026-11-18 (Decision #038): the owner chose option (a).** A visitor's words may reach only Groq and
+Cloudflare Workers AI (Flow's draft pull request #4 makes that so, and also applies it to Echo). The link stays
+switched off until that is merged, Flow's four answers are in, and the Privacy Policy and notice are rewritten from
+them. The landing page's small links (app downloads, data sources, Terms and Privacy) were crammed one under the
+other with the legal line centred while the rest was start-aligned; they now sit in their own block with room between
+lines and one left edge (`LegalLinks` has an `align` option; centred stays the default on the sign-in and billing pages).

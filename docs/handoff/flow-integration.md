@@ -151,3 +151,13 @@ settings, which he will not do before (1) deciding which providers a visitor's t
 four questions in section 6 of Flow's note, and (3) the Privacy Policy being rewritten from those answers. **Nothing is needed
 from Flow's side until the owner decides step 1.** If the answer is "only Groq and Cloudflare" or a `providers` field, that is
 the one change on Flow's side, on a branch and pull request.
+
+## 12. Decision 2026-11-17: the visitor path is limited to Groq and Cloudflare
+
+The owner chose the recommended option (a) from section 10. The change on Flow's side is a draft pull request,
+<https://github.com/Joel44118/flow-V3/pull/4> (branch `third-party-provider-limit`, `api/chat.js` plus tests; nothing
+on Flow's main branch). Calls with `audience: "third_party"` (Echo, and this help chat) then reach only Groq and
+Cloudflare Workers AI. **Needs from Flow's side:** review and merge it (it changes Echo's providers too), set
+`CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in Flow's Vercel project if Cloudflare should be the second
+provider, and still answer the four questions in section 6 of Flow's note. World Vitality's link stays switched off
+until the pull request is merged and those answers are in.

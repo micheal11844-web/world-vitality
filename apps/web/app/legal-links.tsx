@@ -6,10 +6,17 @@ import { useOptionalI18n } from "../lib/i18n/i18n-provider";
 /**
  * "Terms of Service · Privacy Policy" links, optionally under the sentence
  * that says signing in or creating an account means agreeing to them
- * (`agree`). Translated inside a `LocaleBoundary`, English elsewhere, like the
+ * (`agree`), centred by default or start-aligned with `align="start"`. Translated inside a `LocaleBoundary`, English elsewhere, like the
  * other small shared links.
  */
-export function LegalLinks({ agree = false }: { agree?: boolean }) {
+export function LegalLinks({
+  agree = false,
+  align = "center",
+}: {
+  agree?: boolean;
+  /** `center` under a form (the default); `start` where the rest of the page is start-aligned. */
+  align?: "center" | "start";
+}) {
   const i18n = useOptionalI18n();
   const t = (key: Parameters<NonNullable<typeof i18n>["t"]>[0], fallback: string) =>
     i18n ? i18n.t(key) : fallback;
@@ -22,7 +29,8 @@ export function LegalLinks({ agree = false }: { agree?: boolean }) {
         color: "var(--wv-text-secondary)",
         fontFamily: "var(--wv-font-sans)",
         fontSize: "var(--wv-text-sm, 0.875rem)",
-        textAlign: "center",
+        lineHeight: 1.6,
+        textAlign: align,
       }}
     >
       {agree ? (
