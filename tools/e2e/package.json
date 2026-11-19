@@ -1,0 +1,12 @@
+{
+  "name": "world-vitality-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser checks for the web app (Playwright). A standalone npm project, outside the pnpm workspace, so it never changes pnpm-lock.yaml.",
+  "scripts": {
+    "test": "node run.cjs"
+  },
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}

@@ -1325,6 +1325,13 @@ export const pt: Messages = {
   "globe.full.browserExit": "Sair do ecrã inteiro",
   "globe.full.info": "Legenda e estado",
   "globe.full.controls": "Vista do globo",
+  "globe.list.summary": "Lista de eventos ({count})",
+  "globe.list.note":
+    "Escolha um para abrir os detalhes. As câmaras públicas aparecem nos detalhes de uma deteção de calor.",
+  "globe.list.floods": "Eventos de inundação",
+  "globe.list.fires": "Deteções de calor por satélite, das mais fortes para as mais fracas",
+  "globe.list.fire":
+    "Perto de {latitude}, {longitude}: {count, plural, one {# deteção} other {# deteções}}",
   "globe.empty.title": "Nenhum local para mostrar",
   "globe.empty.body":
     "Nada a que você tem acesso em Agricultura, Seguros ou Governo e ONGs tem um local ainda.",

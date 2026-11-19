@@ -28,6 +28,7 @@ import {
   onFullscreenChange,
 } from "./fullscreen";
 import { GlobeErrorBoundary } from "./globe-error-boundary";
+import { GlobeEventList } from "./globe-event-list";
 import { GlobePanel } from "./globe-panel";
 import { GlobePreview } from "./globe-preview";
 import { hasWebGL, loadCesium } from "./globe-loader";
@@ -216,6 +217,10 @@ export function GlobeShell({
   const [browserFullAllowed, setBrowserFullAllowed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const infoId = useId();
+  // The list button used to open the details panel, and the corner button that opens the legend card:
+  // when the panel closes, keyboard focus goes back to one of them instead of being lost.
+  const openerRef = useRef<HTMLElement | null>(null);
+  const infoButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setWebgl(hasWebGL());
@@ -381,6 +386,21 @@ export function GlobeShell({
     if (panelOpen) setInfoOpen(false);
   }, [panelOpen]);
 
+  // Closing the details panel that was opened from the events list hands focus back: to the list
+  // button if it is still on screen, else to the corner button that opens the legend card.
+  // (A dot opened with the mouse leaves `openerRef` empty, so nothing is moved.)
+  const wasPanelOpen = useRef(false);
+  useEffect(() => {
+    const closed = wasPanelOpen.current && !panelOpen;
+    wasPanelOpen.current = panelOpen;
+    if (!closed) return;
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (!opener) return;
+    if (opener.isConnected) opener.focus({ preventScroll: true });
+    else infoButtonRef.current?.focus({ preventScroll: true });
+  }, [panelOpen]);
+
   // Escape peels back one layer at a time: the details panel (which closes itself), then the
   // legend card, then the full view. Read through a ref so the key listener is added once.
   const layers = useRef({ panelOpen, infoOpen, immersive });
@@ -482,6 +502,7 @@ export function GlobeShell({
           </a>
         </Text>
       )}
+      <GlobeEventList floods={floods} fires={fires} onSelect={setSelection} openerRef={openerRef} />
     </>
   );
 
@@ -567,6 +588,7 @@ export function GlobeShell({
                 {immersive && (
                   <button
                     type="button"
+                    ref={infoButtonRef}
                     data-testid="globe-full-info"
                     aria-expanded={infoOpen}
                     aria-controls={infoId}

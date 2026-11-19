@@ -24,6 +24,7 @@ export {
   type CompassPoint,
 } from "./geo.js";
 export { cachedLoader } from "./cached-loader.js";
+export { rankFires, rankFloods } from "./event-list.js";
 export {
   capClusters,
   clusterFires,

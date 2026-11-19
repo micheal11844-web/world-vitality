@@ -20,6 +20,9 @@ apps/web/public/cesium/
 # apps/web/scripts/copy-maplibre-worker.mjs (predev/prebuild), never committed.
 apps/web/public/maplibre/
 
+# Browser checks (tools/e2e): screenshots and server logs from a run
+tools/e2e/.out/
+
 # Env / secrets
 .env
 .env.*

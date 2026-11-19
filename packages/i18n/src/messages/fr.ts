@@ -1358,6 +1358,13 @@ export const fr: Messages = {
   "globe.full.browserExit": "Quitter le plein écran",
   "globe.full.info": "Légende et état",
   "globe.full.controls": "Vue du globe",
+  "globe.list.summary": "Liste des événements ({count})",
+  "globe.list.note":
+    "Choisissez-en un pour ouvrir ses détails. Les caméras publiques figurent dans les détails d’une détection de chaleur.",
+  "globe.list.floods": "Événements d’inondation",
+  "globe.list.fires": "Détections de chaleur par satellite, les plus fortes d’abord",
+  "globe.list.fire":
+    "Près de {latitude}, {longitude} : {count, plural, one {# détection} other {# détections}}",
   "globe.empty.title": "Aucun lieu à afficher",
   "globe.empty.body":
     "Rien de ce à quoi vous avez accès dans Agriculture, Assurance ou Gouvernement et ONG n’a encore de lieu.",

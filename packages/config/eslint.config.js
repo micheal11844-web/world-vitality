@@ -54,6 +54,33 @@ export default tseslint.config(
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },
   {
+    // The browser checks (tools/e2e) are CommonJS programs run by Node, outside the pnpm
+    // workspace. Functions handed to Playwright's `page.evaluate` run inside the page, so the
+    // browser globals they use (document, window, getComputedStyle) are declared too. The two
+    // mock files are preloaded into the site's own Node process (`--require`).
+    files: ["tools/e2e/**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        require: "readonly",
+        module: "writable",
+        process: "readonly",
+        console: "readonly",
+        __dirname: "readonly",
+        URL: "readonly",
+        Buffer: "readonly",
+        Response: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        globalThis: "readonly",
+        document: "readonly",
+        window: "readonly",
+        getComputedStyle: "readonly",
+      },
+    },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
     // The desktop offline page's one small script runs in the page itself.
     files: ["native/desktop/src/offline.js"],
     languageOptions: {

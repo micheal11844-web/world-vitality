@@ -18,3 +18,7 @@ pnpm-lock.yaml
 # files are written by npm, and the generated Android project is Gradle/Java.
 native/**/package-lock.json
 native/mobile/android/
+
+# The browser checks (tools/e2e) are a separate npm project: its lock file is written by npm.
+tools/e2e/package-lock.json
+tools/e2e/.out/

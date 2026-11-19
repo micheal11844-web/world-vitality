@@ -1307,6 +1307,13 @@ export const en = {
   "globe.full.browserExit": "Leave full screen",
   "globe.full.info": "Legend and status",
   "globe.full.controls": "Globe view",
+  "globe.list.summary": "List of events ({count})",
+  "globe.list.note":
+    "Choose one to open its details. Public cameras are listed in the details of a heat detection.",
+  "globe.list.floods": "Flood events",
+  "globe.list.fires": "Satellite heat detections, strongest first",
+  "globe.list.fire":
+    "Near {latitude}, {longitude}: {count, plural, one {# detection} other {# detections}}",
   "globe.empty.title": "No locations to show",
   "globe.empty.body":
     "Nothing you have access to across Agriculture, Insurance, or Government & NGOs has a location yet.",

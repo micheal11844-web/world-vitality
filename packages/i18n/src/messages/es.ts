@@ -1336,6 +1336,13 @@ export const es: Messages = {
   "globe.full.browserExit": "Salir de pantalla completa",
   "globe.full.info": "Leyenda y estado",
   "globe.full.controls": "Vista del globo",
+  "globe.list.summary": "Lista de eventos ({count})",
+  "globe.list.note":
+    "Elige uno para abrir sus detalles. Las cámaras públicas aparecen en los detalles de una detección de calor.",
+  "globe.list.floods": "Eventos de inundación",
+  "globe.list.fires": "Detecciones de calor por satélite, de mayor a menor",
+  "globe.list.fire":
+    "Cerca de {latitude}, {longitude}: {count, plural, one {# detección} other {# detecciones}}",
   "globe.empty.title": "No hay ubicaciones que mostrar",
   "globe.empty.body":
     "Nada a lo que tienes acceso en Agricultura, Seguros o Gobierno y ONG tiene todavía una ubicación.",
