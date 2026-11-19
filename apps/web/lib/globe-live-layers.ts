@@ -1,7 +1,8 @@
+import { cachedLoader } from "@world-vitality/hazard-feeds";
 import type { GlobePin } from "../app/globe/globe-types";
 import { fetchFloodingLocations, type FloodImpactLocation } from "./usgs-flood-impacts";
 import { fetchNearbyShelters, type ShelterLocation } from "./fema-shelters";
-import { logSecurity } from "./logger";
+import { logApplication, logSecurity } from "./logger";
 
 // Same shared demo location Disaster Monitoring's own page uses — see
 // that page's own doc comment for why it's U.S.-only (National
@@ -16,6 +17,14 @@ export const DISASTER_MONITORING_DEMO_LOCATION = {
 export const LAYER_TIMEOUT_MS = 8000;
 /** How long a good answer is reused. The sources update every few minutes at most. */
 const CACHE_TTL_MS = 5 * 60 * 1000;
+/**
+ * When a source fails (FEMA's shelter service does now and then), the last good answer is
+ * shown for up to this long instead of an "unavailable" note. Past it, the layer says it is
+ * unavailable rather than showing something that may no longer be true.
+ */
+const MAX_STALE_AGE_MS = 30 * 60 * 1000;
+/** A source that fails is tried once more after this pause (a dropped connection, a momentary 5xx). */
+const RETRY_DELAY_MS = 500;
 
 export type LiveLayerName = "floods" | "shelters";
 
@@ -39,19 +48,20 @@ export function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
 }
 
-function cached<T>(load: () => Promise<T>): () => Promise<T> {
-  let entry: { at: number; value: T } | null = null;
-  return async () => {
-    if (entry && Date.now() - entry.at < CACHE_TTL_MS) return entry.value;
-    const value = await load();
-    entry = { at: Date.now(), value };
-    return value;
-  };
+/** One source's loader: shared between callers, retried once, and the last good answer used if it still fails. */
+function sourceLoader<T>(name: LiveLayerName, load: () => Promise<T>): () => Promise<T> {
+  return cachedLoader(load, CACHE_TTL_MS, {
+    maxStaleAgeMs: MAX_STALE_AGE_MS,
+    retryDelayMs: RETRY_DELAY_MS,
+    onStale: (err) => logApplication.error(`globe_${name}_using_stale_answer`, err),
+  });
 }
 
 const DEFAULT_SOURCES: LiveLayerSources = {
-  floods: cached(() => fetchFloodingLocations(DISASTER_MONITORING_DEMO_LOCATION.stateCode)),
-  shelters: cached(() =>
+  floods: sourceLoader("floods", () =>
+    fetchFloodingLocations(DISASTER_MONITORING_DEMO_LOCATION.stateCode),
+  ),
+  shelters: sourceLoader("shelters", () =>
     fetchNearbyShelters(
       DISASTER_MONITORING_DEMO_LOCATION.latitude,
       DISASTER_MONITORING_DEMO_LOCATION.longitude,

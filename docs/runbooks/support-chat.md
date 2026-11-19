@@ -128,10 +128,11 @@ They are read on every request, so a change plus a redeploy is enough, and remov
    check the Vercel logs show `support_assistant_answered`, and confirm a danger phrase still
    gets the emergency note and no call.
 
-**Tests:** `pnpm test` covers the pure rules. The browser run (a pretend Flow, ten checks per
-case: off by default, on, Flow down, slow, price reply, leaked tool call, "Boss", bad JSON, danger
-never sent, rate limit) was done for v126 and is not part of `pnpm test`; repeat it by hand
-after changing the route or window.
+**Tests:** `pnpm test` covers the pure rules. The browser run (a pretend Flow; off by default,
+on, Flow down, slow, price reply, leaked tool call, "Boss", bad JSON, danger never sent, rate
+limit) is `tools/e2e/specs/help-chat.cjs`: `cd tools/e2e && node run.cjs help-chat` after
+building the site (see `tools/e2e/README.md`). It also runs in CI (the `browser-checks` job).
+Repeat it after changing the route or window.
 
 ## Changing it
 

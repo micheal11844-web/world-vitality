@@ -8,6 +8,13 @@
  * - If a load fails but an older good answer exists, that older answer is
  *   returned instead of the error (a stale picture is better than none for
  *   data that changes every few minutes). `onStale` is told, so the app can log it.
+ *   `maxStaleAgeMs` caps how old that answer may be (default: any age); older
+ *   than that, the error is passed on so the page says the layer is unavailable
+ *   instead of showing something that may no longer be true.
+ * - `retryDelayMs` (default 0, off): a load that fails is tried once more after
+ *   that pause, which rides out a dropped connection or a momentary 5xx without
+ *   waiting for the next visitor. A load that is merely slow is not cut short or
+ *   repeated.
  */
 export function cachedLoader<T>(
   load: () => Promise<T>,
@@ -15,21 +22,37 @@ export function cachedLoader<T>(
   {
     now = () => Date.now(),
     onStale,
-  }: { now?: () => number; onStale?: (err: unknown) => void } = {},
+    maxStaleAgeMs = Number.POSITIVE_INFINITY,
+    retryDelayMs = 0,
+    sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+  }: {
+    now?: () => number;
+    onStale?: (err: unknown) => void;
+    maxStaleAgeMs?: number;
+    retryDelayMs?: number;
+    sleep?: (ms: number) => Promise<void>;
+  } = {},
 ): () => Promise<T> {
   let entry: { at: number; value: T } | null = null;
   let running: Promise<T> | null = null;
+  const attempt = (): Promise<T> =>
+    retryDelayMs > 0
+      ? load().catch(async () => {
+          await sleep(retryDelayMs);
+          return load();
+        })
+      : load();
   return () => {
     if (entry && now() - entry.at < ttlMs) return Promise.resolve(entry.value);
     if (running) return running;
-    running = load()
+    running = attempt()
       .then(
         (value) => {
           entry = { at: now(), value };
           return value;
         },
         (err: unknown) => {
-          if (entry) {
+          if (entry && now() - entry.at <= maxStaleAgeMs) {
             onStale?.(err);
             return entry.value;
           }

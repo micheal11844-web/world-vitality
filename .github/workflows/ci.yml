@@ -52,3 +52,43 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level=high
+
+  # Opens the built site in a real browser and checks what unit tests cannot: page layout, the 3D
+  # Globe's full view and events list, keyboard focus, and what the help chat sends (tools/e2e,
+  # see its README). Everything outside the site is answered from canned data, so it needs no
+  # secrets or network.
+  #
+  # `continue-on-error: true`, deliberately, for now: software-rendered WebGL on a shared runner
+  # has not yet run enough times to know it never flakes. The job stays visible in every CI run;
+  # flip `continue-on-error` to `false` once it has been green for a couple of weeks.
+  browser-checks:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      # No `version:` here on purpose (see the first job).
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the site
+        run: pnpm --filter @world-vitality/web run build
+      - name: Install the browser checks and Chromium
+        working-directory: tools/e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run the browser checks
+        working-directory: tools/e2e
+        run: node run.cjs
+      - name: Keep the screenshots and server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-check-output
+          path: tools/e2e/.out
+          retention-days: 7
+          if-no-files-found: ignore

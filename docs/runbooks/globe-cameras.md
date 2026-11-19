@@ -38,6 +38,20 @@ Keyboard and screen-reader users, and anyone on a device without WebGL, get the
 same dots as real buttons on the flat map (strongest 500 fires, and a thinned set
 of cameras). Escape closes the panel.
 
+**Full view (v129).** Once the 3D globe has drawn its first frame, the page takes the whole
+window: the header, menus, help character and the text above the map are removed, and three
+small buttons stay in a corner (Show menus / Full view, Full screen, Legend and status).
+Escape peels back one layer at a time: panel, legend card, full view. With no 3D (no WebGL)
+the normal page stays. The layout option is `AppShell`'s `immersive` prop.
+
+**Events as a list (v130).** The status block (the "Legend and status" card in full view)
+ends with a collapsed list of the events: every flood event (red alerts first) and the 15
+strongest heat detections, each a button that opens the same panel as the dot. This is the
+way in for a person who cannot pick a dot drawn on the 3D canvas. Closing the panel returns
+keyboard focus to the button that opened it. The order is `rankFloods` / `rankFires` in
+`packages/hazard-feeds/src/event-list.ts`; the text is `globe.list.*` in the five catalogs.
+Cameras are reached from a heat detection's panel, as before.
+
 ## Where the data comes from
 
 | Layer            | Source                                                                                                        | How it is read                                  |
@@ -205,7 +219,13 @@ they can help a person decide whether to call; neither proves a fire.
    - `globe_world_fires_loaded {detections}` — usually tens of thousands.
    - `globe_fires_failed` with "FIRMS response is not a detections table" — the key
      is wrong, rate-limited (5,000 requests per 10 minutes) or the service changed.
-   - `*_using_stale_*` — a refresh failed and the previous list was used.
+   - `*_using_stale_*` — a refresh failed and the previous list was used. This includes
+     `globe_floods_using_stale_answer` (US flood gauges, USGS) and
+     `globe_shelters_using_stale_answer` (FEMA shelters): each source is tried twice (500 ms
+     apart) and, if both fail, the last good answer is shown for up to 30 minutes; after that the
+     layer says it is unavailable and `globe_<name>_fetch_failed` is logged. FEMA's shelter
+     service drops answers now and then, so an occasional `_using_stale_` line is normal; a run
+     of `_fetch_failed` lines is not.
 3. In the browser, open a camera and confirm the picture appears. If the panel says
    "This picture could not be loaded", the agency may be refusing the request
    (see "Not verified" below) or the camera is offline.

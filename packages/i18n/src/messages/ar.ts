@@ -1287,6 +1287,12 @@ export const ar: Messages = {
   "globe.full.browserExit": "الخروج من ملء الشاشة",
   "globe.full.info": "المفتاح والحالة",
   "globe.full.controls": "عرض الكرة الأرضية",
+  "globe.list.summary": "قائمة الأحداث ({count})",
+  "globe.list.note": "اختر حدثًا لفتح تفاصيله. تظهر الكاميرات العامة في تفاصيل رصد الحرارة.",
+  "globe.list.floods": "أحداث الفيضانات",
+  "globe.list.fires": "عمليات رصد الحرارة بالأقمار الصناعية، الأقوى أولًا",
+  "globe.list.fire":
+    "بالقرب من {latitude}، {longitude}: {count, plural, zero {لا عمليات رصد} one {عملية رصد واحدة} two {عمليتا رصد} few {# عمليات رصد} many {# عملية رصد} other {# عملية رصد}}",
   "globe.empty.title": "لا توجد مواقع لعرضها",
   "globe.empty.body":
     "لا شيء يمكنك الوصول إليه في الزراعة أو التأمين أو الحكومة والمنظمات غير الحكومية له موقع بعد.",
