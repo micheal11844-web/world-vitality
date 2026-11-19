@@ -64,6 +64,18 @@ async function runVariant(browser, variant, ok) {
       (k) => Math.abs(c.bufW - c.cssW * k) <= 2 && Math.abs(c.bufH - c.cssH * k) <= 2,
     );
   const fillsWindow = (c) => c.cssW >= vp.width - 1 && c.cssH >= vp.height - 1;
+  // The page layout changes at once, but the 3D engine resizes its drawing buffer on its next
+  // frame, which is slow without a graphics card (a shared CI runner). So wait for the canvas to
+  // settle instead of reading it at a fixed moment; a canvas that never settles still fails.
+  const settledCanvas = async (ready, timeoutMs = 20000) => {
+    const deadline = Date.now() + timeoutMs;
+    let c = await canvasInfo();
+    while (!ready(c) && Date.now() < deadline) {
+      await page.waitForTimeout(250);
+      c = await canvasInfo();
+    }
+    return c;
+  };
 
   // ---- before the 3D view has drawn, the page is its normal self ----
   await page.goto(BASE + "/globe", { waitUntil: "commit" });
@@ -86,7 +98,7 @@ async function runVariant(browser, variant, ok) {
     "page title and status text above the map are gone",
     (await page.locator("h1").count()) === 0 && (await byId("globe-watch-status").count()) === 0,
   );
-  const c1 = await canvasInfo();
+  const c1 = await settledCanvas((c) => fillsWindow(c) && bufOk(c));
   check(
     `the globe fills the whole window (${c1.cssW}x${c1.cssH} of ${vp.width}x${vp.height})`,
     fillsWindow(c1),
@@ -245,7 +257,7 @@ async function runVariant(browser, variant, ok) {
   check("Escape with nothing open brings the menus back", (await mode()) === "false");
   check("header is back", await shown("header"));
   check("page title is back", (await page.locator("h1").count()) === 1);
-  const c2 = await canvasInfo();
+  const c2 = await settledCanvas((c) => c.cssH < vp.height - 40 && bufOk(c));
   check(
     `the globe shrank to fit the normal page (${c2.cssW}x${c2.cssH})`,
     c2.cssH < vp.height - 40,
@@ -277,7 +289,7 @@ async function runVariant(browser, variant, ok) {
   await toggle.click();
   await page.waitForTimeout(800);
   check("the Full view button re-enters full view", (await mode()) === "true");
-  const c3 = await canvasInfo();
+  const c3 = await settledCanvas((c) => fillsWindow(c) && bufOk(c));
   check(
     "and the globe fills the window again",
     fillsWindow(c3) && bufOk(c3),
