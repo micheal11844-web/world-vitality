@@ -86,6 +86,19 @@ export interface AppShellProps {
    * fixed app routes (`/search`, `/api/search/*`).
    */
   showSearch?: boolean;
+  /**
+   * Gives the page the whole screen: the header, the sidebar (or phone
+   * drawer), the AI panel, the bottom bar and the guide character are taken
+   * out of the page (`display: none`, so they are also out of the keyboard
+   * and screen-reader order, not just hidden behind something), and the page
+   * area loses its padding and its own scrolling. Default `false`. The page
+   * that asks for this (the Globe, once its 3D view has drawn) owns the way
+   * back: it must keep a visible control that sets this to `false` again.
+   *
+   * This is the page layout filling the window, not the browser's own
+   * full-screen mode, which a page can only enter in answer to a tap.
+   */
+  immersive?: boolean;
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "wv-sidebar-collapsed";
@@ -320,6 +333,7 @@ export function AppShell({
   guideCharacter,
   showAccountMenu = true,
   showSearch = true,
+  immersive = false,
 }: AppShellProps) {
   const ui = useUiStrings();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -498,7 +512,12 @@ export function AppShell({
   } as CSSProperties;
 
   return (
-    <div className="wv-shell-root" data-mounted={mounted ? "true" : "false"} style={rootStyle}>
+    <div
+      className="wv-shell-root"
+      data-mounted={mounted ? "true" : "false"}
+      data-immersive={immersive ? "true" : "false"}
+      style={rootStyle}
+    >
       <style dangerouslySetInnerHTML={{ __html: SHELL_CSS }} />
       <div data-app-shell-chrome {...inertWhen(modalOpen)}>
         <Header

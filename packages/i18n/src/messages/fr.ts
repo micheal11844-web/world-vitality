@@ -1352,6 +1352,12 @@ export const fr: Messages = {
   "globe.summary":
     "{count, plural, one {# lieu} other {# lieux}} dans tous les espaces de travail auxquels vous avez accès : champs agricoles, biens assurés et lieux surveillés. Le détail des dangers et des statuts se trouve dans chaque espace de travail ; ceci est une vue d’ensemble, pas un remplacement.",
   "globe.loading": "Chargement du globe…",
+  "globe.full.enter": "Vue plein écran",
+  "globe.full.exit": "Afficher les menus",
+  "globe.full.browserEnter": "Plein écran",
+  "globe.full.browserExit": "Quitter le plein écran",
+  "globe.full.info": "Légende et état",
+  "globe.full.controls": "Vue du globe",
   "globe.empty.title": "Aucun lieu à afficher",
   "globe.empty.body":
     "Rien de ce à quoi vous avez accès dans Agriculture, Assurance ou Gouvernement et ONG n’a encore de lieu.",

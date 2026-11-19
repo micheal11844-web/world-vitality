@@ -1319,6 +1319,12 @@ export const pt: Messages = {
   "globe.summary":
     "{count, plural, one {# local} other {# locais}} em todos os espaços de trabalho aos quais você tem acesso: campos agrícolas, imóveis segurados e locais monitorados. O detalhe de perigos e situação fica em cada espaço de trabalho; esta é uma visão geral, não uma substituição.",
   "globe.loading": "Carregando o globo…",
+  "globe.full.enter": "Vista completa",
+  "globe.full.exit": "Mostrar menus",
+  "globe.full.browserEnter": "Ecrã inteiro",
+  "globe.full.browserExit": "Sair do ecrã inteiro",
+  "globe.full.info": "Legenda e estado",
+  "globe.full.controls": "Vista do globo",
   "globe.empty.title": "Nenhum local para mostrar",
   "globe.empty.body":
     "Nada a que você tem acesso em Agricultura, Seguros ou Governo e ONGs tem um local ainda.",
