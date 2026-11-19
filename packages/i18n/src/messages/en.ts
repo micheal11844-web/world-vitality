@@ -1301,6 +1301,12 @@ export const en = {
   "globe.summary":
     "{count, plural, one {# location} other {# locations}} across every workspace you have access to — Agriculture fields, insured properties, and monitored locations. Individual hazard/status detail lives in each workspace; this is an overview, not a replacement.",
   "globe.loading": "Loading the globe…",
+  "globe.full.enter": "Full view",
+  "globe.full.exit": "Show menus",
+  "globe.full.browserEnter": "Full screen",
+  "globe.full.browserExit": "Leave full screen",
+  "globe.full.info": "Legend and status",
+  "globe.full.controls": "Globe view",
   "globe.empty.title": "No locations to show",
   "globe.empty.body":
     "Nothing you have access to across Agriculture, Insurance, or Government & NGOs has a location yet.",

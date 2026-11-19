@@ -52,6 +52,17 @@ export const SHELL_CSS = `
 }
 .wv-shell-main { padding: var(--wv-space-lg); }
 
+/* Immersive: a page that asks for the whole screen (the Globe, once it has drawn).
+   Everything around the page area is taken out, not just covered, so it also
+   leaves the keyboard and screen-reader order. These rules are more specific than
+   the phone rules below, so the page area keeps no padding there either. */
+.wv-shell-root[data-immersive="true"] [data-app-shell-chrome],
+.wv-shell-root[data-immersive="true"] .wv-shell-guide { display: none !important; }
+.wv-shell-root[data-immersive="true"] .wv-shell-main {
+  padding: 0;
+  overflow: hidden !important;
+}
+
 /* Compact-only controls: hidden unless the compact layout switches them on. */
 .wv-shell-menu-btn,
 .wv-shell-search-btn,

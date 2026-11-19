@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import dynamic from "next/dynamic";
 import { Text, AppShell } from "@world-vitality/ui-components";
 import {
@@ -12,6 +20,13 @@ import {
 import { useI18n } from "../../lib/i18n/i18n-provider";
 import { AppBrand } from "../app-brand";
 import { buildAppSidebar } from "../workspaces/workspace-nav";
+import {
+  canFullscreen,
+  enterFullscreen,
+  fullscreenElement,
+  leaveFullscreen,
+  onFullscreenChange,
+} from "./fullscreen";
 import { GlobeErrorBoundary } from "./globe-error-boundary";
 import { GlobePanel } from "./globe-panel";
 import { GlobePreview } from "./globe-preview";
@@ -108,6 +123,34 @@ function useLayer<T>(url: string, giveUpMs: number): LayerState<T> {
 /** At most this many fire areas and standalone cameras become buttons on the flat map. */
 const PREVIEW_MAX_FIRES = 500;
 
+/** The small buttons in the globe's corner: dark chips that read on any map colour, 44px tall to tap. */
+const CHIP_STYLE: CSSProperties = {
+  minHeight: "2.75rem",
+  padding: "0 var(--wv-space-md)",
+  borderRadius: "var(--wv-radius-md)",
+  border: "1px solid rgba(255, 255, 255, 0.4)",
+  background: "rgba(5, 11, 22, 0.82)",
+  color: "#fff",
+  fontFamily: "var(--wv-font-sans)",
+  fontSize: "0.875rem",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+
+/** The legend and status card, opened from the corner buttons. */
+const INFO_CARD_STYLE: CSSProperties = {
+  minHeight: 0,
+  overflowY: "auto",
+  boxSizing: "border-box",
+  width: "min(26rem, 100%)",
+  padding: "var(--wv-space-sm) var(--wv-space-md)",
+  borderRadius: "var(--wv-radius-md)",
+  border: "1px solid rgba(255, 255, 255, 0.25)",
+  background: "rgba(5, 11, 22, 0.92)",
+  color: "#fff",
+  fontFamily: "var(--wv-font-sans)",
+};
+
 /**
  * Client half of the "God's Eye" global view (BUILD_PLAN "STAGE —
  * GOD'S EYE GLOBE VIEW") — `AppShell` wrapper plus the 3D globe.
@@ -119,6 +162,16 @@ const PREVIEW_MAX_FIRES = 500;
  * whole page back, so each loads separately); then the 3D globe fades
  * in over the flat map once its first frame is drawn. On a device without
  * WebGL, or if the 3D engine fails to load, the flat map simply stays.
+ *
+ * **Once the 3D globe has drawn, the page fills the window** (`AppShell`'s
+ * `immersive` mode): the header, menu, bottom bar, help character and the page's
+ * own text are taken away so nothing sits between the person and the globe.
+ * Three small buttons stay in the corner: "Show menus" (back to the normal page),
+ * "Full screen" (the browser's own full-screen mode, which a browser only allows
+ * after a tap, so it is a button and never automatic; not offered where the
+ * browser has none, such as an iPhone) and "Legend and status" (the text that
+ * used to sit above the map, opened on request). This happens once per visit:
+ * someone who brings the menus back is not pushed out again.
  *
  * Split from `page.tsx` (a Server Component) because Cesium is
  * unconditionally browser-only; `page.tsx` reads and permission-filters
@@ -155,9 +208,32 @@ export function GlobeShell({
   const [globeDrawn, setGlobeDrawn] = useState(false);
   const [previewGone, setPreviewGone] = useState(false);
   const [selection, setSelection] = useState<GlobeSelection | null>(null);
+  // The page fills the window once the globe has drawn (see the comment above), once per visit.
+  const [fullView, setFullView] = useState(false);
+  const fullViewEntered = useRef(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [browserFull, setBrowserFull] = useState(false);
+  const [browserFullAllowed, setBrowserFullAllowed] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const infoId = useId();
 
   useEffect(() => {
     setWebgl(hasWebGL());
+    setBrowserFullAllowed(canFullscreen());
+  }, []);
+
+  useEffect(() => {
+    if (!globeDrawn || fullViewEntered.current) return;
+    fullViewEntered.current = true;
+    setFullView(true);
+  }, [globeDrawn]);
+
+  // Keep the button in step with the browser's full screen, which the person can also leave
+  // with the Escape key or the browser's own controls.
+  useEffect(() => {
+    const sync = () => setBrowserFull(fullscreenElement() !== null);
+    sync();
+    return onFullscreenChange(sync);
   }, []);
 
   // Opened from a satellite-heat alert: once the fire areas are in, open the one
@@ -297,6 +373,117 @@ export function GlobeShell({
 
   const use3d = webgl === true && !engineFailed;
   const showNo3d = webgl === false || engineFailed;
+  // Only with a working 3D globe: the flat map keeps the normal page around it.
+  const immersive = fullView && use3d;
+
+  // Opening something closes the legend card, so the two never stack over the globe.
+  useEffect(() => {
+    if (panelOpen) setInfoOpen(false);
+  }, [panelOpen]);
+
+  // Escape peels back one layer at a time: the details panel (which closes itself), then the
+  // legend card, then the full view. Read through a ref so the key listener is added once.
+  const layers = useRef({ panelOpen, infoOpen, immersive });
+  layers.current = { panelOpen, infoOpen, immersive };
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const now = layers.current;
+      if (now.panelOpen) return;
+      if (now.infoOpen) setInfoOpen(false);
+      else if (now.immersive) setFullView(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const toggleFullView = useCallback(() => {
+    // Bringing the menus back also leaves the browser's full screen, which would hide them.
+    if (fullView) void leaveFullscreen();
+    setFullView((v) => !v);
+    setInfoOpen(false);
+  }, [fullView]);
+  const toggleBrowserFull = useCallback(() => {
+    if (fullscreenElement()) {
+      void leaveFullscreen();
+      return;
+    }
+    // Called straight from the tap: a browser only allows full screen in answer to one.
+    setFullView(true);
+    if (rootRef.current) void enterFullscreen(rootRef.current);
+  }, []);
+
+  // The status lines and legend: above the map normally, in a card on request in the full view.
+  const statusLines = (
+    <>
+      {pins.length > 0 ? (
+        <Text variant="caption" style={{ display: "block", color: "var(--wv-text-secondary)" }}>
+          {t("globe.summary", { count: pins.length })}
+        </Text>
+      ) : (
+        <Text variant="caption" style={{ display: "block", color: "var(--wv-text-secondary)" }}>
+          {t("globe.empty.title")}. {t("globe.empty.body")}
+        </Text>
+      )}
+      <Text
+        variant="caption"
+        role="status"
+        style={{ display: "block", color: "var(--wv-text-secondary)" }}
+      >
+        {live.status === "loading"
+          ? t("globe.live.loading")
+          : live.status === "failed"
+            ? t("globe.live.failed")
+            : [
+                livePins.length > 0
+                  ? t("globe.live.count", { count: livePins.length })
+                  : t("globe.live.none"),
+                liveFailed > 0 ? t("globe.live.partial") : null,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+      </Text>
+      <Text
+        variant="caption"
+        role="status"
+        data-testid="globe-watch-status"
+        style={{ display: "block", color: "var(--wv-text-secondary)" }}
+      >
+        {watchText}
+      </Text>
+      <Text
+        variant="caption"
+        role="status"
+        data-testid="globe-floods-status"
+        style={{ display: "block", color: "var(--wv-text-secondary)" }}
+      >
+        {floodsText}
+      </Text>
+      {(fires.length > 0 || floods.length > 0 || cameras.length > 0) && (
+        <Text
+          variant="caption"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "var(--wv-space-md)",
+            color: "var(--wv-text-secondary)",
+          }}
+        >
+          <LegendDot color={FIRE_COLOR} label={t("globe.legend.fire")} />
+          {floods.length > 0 && <LegendDot color={FLOOD_COLOR} label={t("globe.legend.flood")} />}
+          <LegendDot color={CAMERA_COLOR} label={t("globe.legend.camera")} />
+          <a
+            href="/sources"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--wv-accent)", textDecoration: "underline" }}
+          >
+            {t("credits.title")}
+          </a>
+        </Text>
+      )}
+    </>
+  );
 
   return (
     <AppShell
@@ -305,98 +492,110 @@ export function GlobeShell({
       onToggleAiPanel={() => setAiPanelOpen((v) => !v)}
       sidebarSections={sidebar.sections}
       sidebarDefaultExpandedKeys={sidebar.defaultExpandedKeys}
+      immersive={immersive}
     >
       <div
+        ref={rootRef}
+        data-testid="globe-root"
+        data-immersive={immersive ? "true" : "false"}
         style={{
           display: "flex",
           flexDirection: "column",
           height: "100%",
           gap: "var(--wv-space-sm)",
+          // Behind the globe when the browser's own full screen shows only this element.
+          background: "var(--wv-bg)",
         }}
       >
-        <div>
-          <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
-            {t("globe.title")}
-          </Text>
-          {pins.length > 0 ? (
-            <Text variant="caption" style={{ display: "block", color: "var(--wv-text-secondary)" }}>
-              {t("globe.summary", { count: pins.length })}
+        {!immersive && (
+          <div>
+            <Text variant="pageTitle" as="h1" style={{ marginBottom: "var(--wv-space-xs)" }}>
+              {t("globe.title")}
             </Text>
-          ) : (
-            <Text variant="caption" style={{ display: "block", color: "var(--wv-text-secondary)" }}>
-              {t("globe.empty.title")}. {t("globe.empty.body")}
-            </Text>
-          )}
-          <Text
-            variant="caption"
-            role="status"
-            style={{ display: "block", color: "var(--wv-text-secondary)" }}
-          >
-            {live.status === "loading"
-              ? t("globe.live.loading")
-              : live.status === "failed"
-                ? t("globe.live.failed")
-                : [
-                    livePins.length > 0
-                      ? t("globe.live.count", { count: livePins.length })
-                      : t("globe.live.none"),
-                    liveFailed > 0 ? t("globe.live.partial") : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-          </Text>
-          <Text
-            variant="caption"
-            role="status"
-            data-testid="globe-watch-status"
-            style={{ display: "block", color: "var(--wv-text-secondary)" }}
-          >
-            {watchText}
-          </Text>
-          <Text
-            variant="caption"
-            role="status"
-            data-testid="globe-floods-status"
-            style={{ display: "block", color: "var(--wv-text-secondary)" }}
-          >
-            {floodsText}
-          </Text>
-          {(fires.length > 0 || floods.length > 0 || cameras.length > 0) && (
-            <Text
-              variant="caption"
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "var(--wv-space-md)",
-                color: "var(--wv-text-secondary)",
-              }}
-            >
-              <LegendDot color={FIRE_COLOR} label={t("globe.legend.fire")} />
-              {floods.length > 0 && (
-                <LegendDot color={FLOOD_COLOR} label={t("globe.legend.flood")} />
-              )}
-              <LegendDot color={CAMERA_COLOR} label={t("globe.legend.camera")} />
-              <a
-                href="/sources"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "var(--wv-accent)", textDecoration: "underline" }}
-              >
-                {t("credits.title")}
-              </a>
-            </Text>
-          )}
-        </div>
+            {statusLines}
+          </div>
+        )}
         <div
           style={{
             position: "relative",
             flex: 1,
             minHeight: 0,
-            borderRadius: "var(--wv-radius-md)",
+            borderRadius: immersive ? 0 : "var(--wv-radius-md)",
             overflow: "hidden",
             background: "#050b16",
           }}
         >
+          {use3d && globeDrawn && (
+            <div
+              style={{
+                position: "absolute",
+                top: "var(--wv-space-sm)",
+                insetInlineStart: "var(--wv-space-sm)",
+                zIndex: 6,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "var(--wv-space-xs)",
+                maxWidth: "calc(100% - 2 * var(--wv-space-sm))",
+                maxHeight: "calc(100% - 2 * var(--wv-space-sm))",
+              }}
+            >
+              <div
+                role="group"
+                aria-label={t("globe.full.controls")}
+                style={{ display: "flex", flexWrap: "wrap", gap: "var(--wv-space-xs)" }}
+              >
+                <button
+                  type="button"
+                  data-testid="globe-full-toggle"
+                  onClick={toggleFullView}
+                  style={CHIP_STYLE}
+                >
+                  {immersive ? t("globe.full.exit") : t("globe.full.enter")}
+                </button>
+                {browserFullAllowed && (
+                  <button
+                    type="button"
+                    data-testid="globe-browser-full"
+                    aria-pressed={browserFull}
+                    onClick={toggleBrowserFull}
+                    style={CHIP_STYLE}
+                  >
+                    {browserFull ? t("globe.full.browserExit") : t("globe.full.browserEnter")}
+                  </button>
+                )}
+                {immersive && (
+                  <button
+                    type="button"
+                    data-testid="globe-full-info"
+                    aria-expanded={infoOpen}
+                    aria-controls={infoId}
+                    onClick={() => setInfoOpen((v) => !v)}
+                    style={CHIP_STYLE}
+                  >
+                    {t("globe.full.info")}
+                  </button>
+                )}
+              </div>
+              {immersive && infoOpen && (
+                <div
+                  id={infoId}
+                  role="region"
+                  aria-label={t("globe.full.info")}
+                  data-testid="globe-full-info-card"
+                  style={{
+                    ...INFO_CARD_STYLE,
+                    // The text is written for the page's light or dark background; on this dark card it
+                    // takes light colours instead.
+                    ["--wv-text-secondary" as string]: "rgba(255, 255, 255, 0.88)",
+                    ["--wv-accent" as string]: "#8cc4ff",
+                  }}
+                >
+                  {statusLines}
+                </div>
+              )}
+            </div>
+          )}
           {use3d && (
             <GlobeErrorBoundary onError={() => setEngineFailed(true)}>
               <GlobeViewer
