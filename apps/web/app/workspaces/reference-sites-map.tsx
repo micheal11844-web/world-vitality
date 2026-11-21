@@ -316,7 +316,9 @@ export function ReferenceSitesMap({ mode, sites, failedSites = 0 }: ReferenceSit
         />
         {t(MODE_TOGGLE_KEY[mode])}
       </label>
-      <span style={{ ...chip, bottom: "var(--wv-space-sm)", left: "var(--wv-space-sm)" }}>
+      {/* Above MapLibre's credits bar (bottom-right), like the other maps' panels: on a phone the
+          credits start expanded and would cover the end of this label. */}
+      <span style={{ ...chip, bottom: "2.25rem", left: "var(--wv-space-sm)" }}>
         {t("map.ref.coverage", { plotted: plotted.length, total: sites.length + failedSites })}
       </span>
     </div>

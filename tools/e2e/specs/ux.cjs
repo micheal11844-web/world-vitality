@@ -332,6 +332,38 @@ const PHONE = devices["Pixel 7"];
     ok("touch: a tap beside a map marker reaches it", hits.marker);
     ok("touch: a tap well away from a marker does not", !hits.farMarker);
 
+    // The OpenStreetMap credit stays visible: a marker's panel, once open, sits above it.
+    const creditsUncovered = () =>
+      page.evaluate(() => {
+        const b = document.querySelector(".maplibregl-ctrl-attrib-button").getBoundingClientRect();
+        const top = document.elementsFromPoint(b.x + b.width / 2, b.y + b.height / 2)[0];
+        return Boolean(top.closest(".maplibregl-ctrl-attrib"));
+      });
+    ok("map: the credits are not covered before a marker is chosen", await creditsUncovered());
+    await page.locator(".maplibregl-marker").first().click();
+    await page.waitForFunction(
+      () => [...document.querySelectorAll("div")].some((d) => d.style.bottom === "2.25rem"),
+      null,
+      { timeout: 10000 },
+    );
+    ok(
+      "map: with a marker's panel open the credits are still not covered",
+      await creditsUncovered(),
+    );
+
+    // The "Sample reference sites" label does not sit under the credits on a phone.
+    await page.goto(BASE + "/workspaces/research/map", { waitUntil: "networkidle" });
+    await page.waitForSelector(".maplibregl-ctrl-attrib", { timeout: 20000 });
+    const overlap = await page.evaluate(() => {
+      const chip = [...document.querySelectorAll("span")].find((e) =>
+        e.textContent.trim().startsWith("Sample reference sites"),
+      );
+      const a = document.querySelector(".maplibregl-ctrl-attrib").getBoundingClientRect();
+      const c = chip.getBoundingClientRect();
+      return c.right > a.left && c.left < a.right && c.bottom > a.top && c.top < a.bottom;
+    });
+    ok("map: the coverage label does not overlap the credits", !overlap);
+
     await ctx.close();
   }
 
