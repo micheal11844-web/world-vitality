@@ -1510,3 +1510,9 @@ device; assistant on: what is sent, to whom, what is kept, in which regions, and
 sections 6 to 8 name Flow, Groq and Cloudflare, and `support.autoAssistant` says the same in five languages
 (`support.auto` was already true). Nothing is switched on by this release: it starts only when the owner sets
 `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` in Vercel (`docs/runbooks/support-chat.md`, step 4).
+
+**Update 2026-11-21 (Decision #038, later): the switch is on, and the chat notice no longer names the providers.** The owner
+set `FLOW_SUPPORT_ENABLED` and `FLOW_SUPPORT_URL` in Vercel and redeployed; the status call returned `enabled: true` and the
+owner confirmed it works (three `support_assistant_answered` log lines, no failures). At the owner's request (v136)
+`support.autoAssistant` now says the words go to "our AI assistant and the AI providers it uses" and points to the Privacy
+Policy, which still names Flow, Groq and Cloudflare Workers AI. Nothing else changed.

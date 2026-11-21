@@ -1225,7 +1225,7 @@ export const fr: Messages = {
   "support.auto":
     "Je suis un assistant automatique, pas une personne. Rien de ce que vous écrivez ici n’est enregistré ni envoyé ailleurs, sauf si vous choisissez de nous écrire par e-mail.",
   "support.autoAssistant":
-    "Je suis un assistant automatique, pas une personne. Ce que vous écrivez ici est envoyé à notre assistant d’IA, qui utilise Groq et Cloudflare pour rédiger la réponse ; n’indiquez donc ni mot de passe, ni numéro de carte, ni données personnelles. Les boutons de sujets restent sur votre appareil. La Politique de confidentialité (en anglais) précise ce qui est conservé.",
+    "Je suis un assistant automatique, pas une personne. Ce que vous écrivez ici est envoyé à notre assistant d’IA et aux fournisseurs d’IA qu’il utilise pour rédiger la réponse ; n’indiquez donc ni mot de passe, ni numéro de carte, ni données personnelles. Les boutons de sujets restent sur votre appareil. La Politique de confidentialité (en anglais) précise qui les traite et ce qui est conservé.",
   "support.thinking": "Orbi réfléchit…",
   "support.inputLabel": "Écrivez votre question",
   "support.send": "Envoyer",
