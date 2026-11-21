@@ -14,11 +14,12 @@ the reading direction, as before). The pill goes with it.
   data sources, privacy and terms, language, talk to a person) and Orbi shows that topic's written
   answer with a link to the right page. Same question, same answer, every time. It says it is an
   automatic helper, not a person.
-- **Nothing is sent or stored.** It runs in the browser: no network request carries what is typed
-  (checked in the browser test), nothing is saved, and the conversation is gone when the page is
-  left. The Privacy Policy section "The help chat" says exactly this; keep the two in step. This
-  stays true until the owner switches the outside assistant on (see below); the window's only
-  extra request while it is off is a status call that carries no text.
+- **Nothing is sent or stored while the outside assistant is off.** It runs in the browser: no
+  network request carries what is typed (checked in the browser test), nothing is saved, and the
+  conversation is gone when the page is left. The window's only extra request while it is off is a
+  status call that carries no text. The Privacy Policy section 4 ("The help chat") describes both
+  states (assistant off, assistant on) and names Flow, Groq and Cloudflare, so it stays true
+  whichever way the switch is; keep it, sections 6 to 8 and the two notices in step (below).
 - **Email a person** opens the visitor's own mail app addressed to `joelflowstack@gmail.com`
   with the chat copied into the body, for them to read and edit before sending. Subject and
   opening line are English (the business reads English); the chat text is in their language.
@@ -49,14 +50,15 @@ the reading direction, as before). The pill goes with it.
 Every translated page gets it automatically (the provider sits in each page's language
 boundary). A page without a language boundary (the admin area) keeps a plain Orbi.
 
-## The outside assistant (the owner's bot, Flow): built, **switched off** (v126)
+## The outside assistant (the owner's bot, Flow): built (v126); policy and notices ready (v135); **the owner's switch**
 
 The bot is **Flow**, a separate project of the owner's, run with another Claude. The link is
-built and tested but **dormant**: it does nothing until the owner sets two variables on the
-server, and he has not decided yet which AI providers a visitor's words may reach (see
-"Before switching it on"). What Flow's side must answer, and what was found there, is in
-`docs/handoff/flow-integration.md` (section 10) and in Flow's own `WORLD_VITALITY_HELP_CHAT.md`
-(draft pull request on the Flow repo).
+built and tested but **dormant**: it does nothing until the owner sets the variables below on the
+server. The provider decision is made (Groq and Cloudflare Workers AI only, Flow PR #4, merged
+2026-11-21) and the Privacy Policy and notices describe it (v135), so the only step left is the
+owner's switch (step 4 of "Before switching it on"). What Flow's side answered, and what was
+found there, is in `docs/handoff/flow-integration.md` (sections 10 to 13) and in Flow's own
+`WORLD_VITALITY_HELP_CHAT.md`.
 
 **How it works when on.** The window asks `GET /api/support/assistant` once, when first opened,
 sending no text; the server answers `{ "enabled": true|false }` from its own settings. Only if
@@ -103,30 +105,33 @@ They are read on every request, so a change plus a redeploy is enough, and remov
 
 **Before switching it on (in this order; the last step is the switch):**
 
-1. **Decided 2026-11-17 (the owner): option (a).** A visitor's words may reach only Groq and
-   Cloudflare Workers AI, whose own pages say prompts are not kept for long and not used for
-   training (Groq's page does not mention training either way). NVIDIA (trial terms: internal
-   testing only, may use content to improve its models), OpenRouter's free models and Hugging
-   Face are left out of this path. The change is on Flow's side: draft pull request
-   <https://github.com/Joel44118/flow-V3/pull/4> (adds `THIRD_PARTY_PROVIDERS`; if both are
-   down the caller gets an error, never a quiet fallback). **It also changes Echo** (the
-   Telegram bot answering strangers), which uses the same path. Not live until the owner (or the
-   Claude working on Flow) merges it; the help chat link must not be switched on before that.
-2. Flow's side answers the four questions in its note (region, what is stored and for how long,
-   which providers, whether anything about the caller is logged), and any change from step 1 is
-   made there, on a branch and pull request, not on Flow's main branch. **Partly done
-   2026-11-18:** what Flow's code stores and logs for a third-party call is read and written up
-   (Flow's note section 6a; `docs/handoff/flow-integration.md` section 13). Still open: the
-   Function Region, the Vercel plan (log retention) and which provider keys are set, which only
-   the owner can read in Flow's Vercel dashboard, and merging PR #4.
-3. Rewrite the Privacy Policy section "The help chat" (`apps/web/app/legal/legal-text.ts`) from
-   those answers, naming the providers, and bump `LEGAL_UPDATED`. Rewrite `support.auto` /
-   `support.autoAssistant` in five languages to match the policy, and update this runbook. These
-   go in the **same release** as the switch, never before.
-4. The owner sets `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` (and the key, if Flow
+1. **Done.** Decided 2026-11-17 (the owner): option (a). A visitor's words may reach only Groq
+   and Cloudflare Workers AI, whose own pages say prompts are not kept for long and not used for
+   training (Groq's page does not mention training either way; it may keep requests up to 30
+   days for abuse and reliability, stored in the United States). NVIDIA, OpenRouter's free models
+   and Hugging Face are left out of this path. The change is on Flow's side, pull request
+   <https://github.com/Joel44118/flow-V3/pull/4> (`THIRD_PARTY_PROVIDERS`; if both are down the
+   caller gets an error, never a quiet fallback), **merged 2026-11-21 by the owner**. It also
+   changes Echo (the Telegram bot answering strangers), which uses the same path.
+2. **Done.** Flow's side answered the four questions (Flow's note section 6a;
+   `docs/handoff/flow-integration.md` section 13), and the owner confirmed in Flow's Vercel
+   project on 2026-11-21: the plan is **Hobby** (Vercel keeps runtime logs for **1 hour** on
+   Hobby, per <https://vercel.com/docs/logs/runtime>, read 2026-11-21), the provider keys are
+   set, and the Function Region is **iad1** (Washington, D.C., United States; owner's screenshot of Flow's Settings > Functions, 2026-11-21).
+3. **Done in v135.** Privacy Policy section 4 "The help chat" (plus the Flow/Groq/Cloudflare line
+   in section 6, the transfers sentence in section 7 and the retention line in section 8) in
+   `apps/web/app/legal/legal-text.ts`, `LEGAL_UPDATED` bumped, and `support.autoAssistant` in
+   five languages. `support.auto` (assistant off) needed no change: it is still true. If the
+   plan, the region, the providers or what Flow stores change, change the policy text and
+   `support.autoAssistant` in the same release (and `LEGAL_UPDATED`).
+4. **The owner sets** `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` (and the key, if Flow
    enforces one) in Vercel and redeploys. Then ask the help chat a question in each language,
    check the Vercel logs show `support_assistant_answered`, and confirm a danger phrase still
-   gets the emergency note and no call.
+   gets the emergency note and no call. **One known gap on Flow's side, not closed:** if a
+   model writes a `<flow-think>` block, Flow's `cleanReply` stores it (last 100, in its database)
+   and it could quote the visitor's message. The policy discloses this; closing it (skip
+   `_logThought` for third-party calls) is a small change on Flow's side, and then the sentence
+   in policy section 4 ("One rare exception...") can be removed.
 
 **Tests:** `pnpm test` covers the pure rules. The browser run (a pretend Flow; off by default,
 on, Flow down, slow, price reply, leaked tool call, "Boss", bad JSON, danger never sent, rate

@@ -1501,3 +1501,12 @@ switched off until that is merged, Flow's four answers are in, and the Privacy P
 them. The landing page's small links (app downloads, data sources, Terms and Privacy) were crammed one under the
 other with the legal line centred while the rest was start-aligned; they now sit in their own block with room between
 lines and one left edge (`LegalLinks` has an `align` option; centred stays the default on the sign-in and billing pages).
+
+**Update 2026-11-21 (Decision #038): the policy and notice are written; the switch is the owner's.** Flow's pull
+request #4 (Groq and Cloudflare Workers AI only) was merged on 2026-11-21. The owner confirmed in Flow's Vercel
+project that the plan is Hobby (runtime logs are kept 1 hour), the provider keys are set, and the Function Region is
+iad1 (Washington, D.C., United States). Privacy Policy section 4 "The help chat" now describes both states (assistant off: nothing leaves the
+device; assistant on: what is sent, to whom, what is kept, in which regions, and the one rare gap on Flow's side),
+sections 6 to 8 name Flow, Groq and Cloudflare, and `support.autoAssistant` says the same in five languages
+(`support.auto` was already true). Nothing is switched on by this release: it starts only when the owner sets
+`FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` in Vercel (`docs/runbooks/support-chat.md`, step 4).

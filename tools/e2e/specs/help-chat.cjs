@@ -58,10 +58,11 @@ const flowMessages = () => logLines("MOCK flow messages:");
   const enabled = SC !== "off";
   ok(
     enabled
-      ? "notice says messages are sent to an AI service"
+      ? "notice says messages are sent to our AI assistant (Groq and Cloudflare)"
       : "notice is the original (nothing sent anywhere)",
     enabled
-      ? /sent to an AI service/.test(notice)
+      ? /sent to our AI assistant, which uses Groq and Cloudflare/.test(notice) &&
+          /Privacy Policy says what is kept/.test(notice)
       : /Nothing you type here is saved or sent anywhere/.test(notice),
     notice.slice(0, 300),
   );
@@ -280,6 +281,34 @@ const flowMessages = () => logLines("MOCK flow messages:");
       ).status() === 200,
     );
   }
+
+  // The Privacy Policy says what the chat does, in both states, and names who sees the words.
+  const policy = await ctx.newPage();
+  await policy.goto(BASE + "/privacy", { waitUntil: "domcontentloaded" });
+  const policyText = await policy.locator("main").innerText();
+  const section4 = policyText.slice(
+    policyText.indexOf("4. The help chat"),
+    policyText.indexOf("5. Why we use it"),
+  );
+  ok(
+    "privacy policy section 4 covers assistant off and on, naming Flow, Groq and Cloudflare",
+    /AI assistant is off, what you type stays on your device/.test(section4) &&
+      /sent from our server to Flow/.test(section4) &&
+      /Groq and Cloudflare Workers AI, and no others/.test(section4) &&
+      /never sent/.test(section4) &&
+      /Washington, D\.C\./.test(section4),
+    section4.slice(0, 200),
+  );
+  ok(
+    "privacy policy names the assistant's providers under 'Who else sees it' and 'Transfers'",
+    (policyText.match(/Groq/g) || []).length >= 3 &&
+      /Cloudflare, which does not state a country/.test(policyText),
+  );
+  ok(
+    "privacy policy shows the 21 November 2026 date",
+    /21 November 2026|November 21, 2026/.test(policyText),
+  );
+  await policy.close();
 
   ok("no page errors", errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: `${SHOTS}/help-chat-${SC}.png` });

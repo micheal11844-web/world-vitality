@@ -24,6 +24,8 @@ export interface LegalSection {
 
 const NAME = BUSINESS_NAME;
 const EMAIL = BUSINESS_EMAIL;
+/** Where Flow's server runs (Flow's Vercel project, Settings > Functions). */
+const FLOW_REGION = "Washington, D.C., in the United States (Vercel’s iad1 region)";
 
 export const TERMS_SECTIONS: LegalSection[] = [
   {
@@ -260,7 +262,23 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     heading: "4. The help chat",
     blocks: [
       {
-        p: `The help chat answers from the app’s own help topics. What you type stays on your device and is not stored by us. If you choose to email us from it, we receive what you send to ${EMAIL}.`,
+        p: "The help chat has built-in answers and, when we switch it on, an AI assistant. The topic buttons and the built-in answers run on your device: nothing you press or read there is sent anywhere. The notice at the top of the chat window always says which kind of chat you are in.",
+      },
+      {
+        p: "When the AI assistant is on and you type your own question:",
+      },
+      {
+        ul: [
+          "What you type (up to 500 characters) and the last six messages of the chat are sent from our server to Flow, our own assistant service, which passes them to an AI provider to write the reply. The providers are Groq and Cloudflare Workers AI, and no others.",
+          "We send nothing else: no cookie, no account, name or email address, no IP address, and not the page you are on. Flow and the AI providers see our server, not you.",
+          "Messages that suggest someone is in danger are never sent. The chat answers those itself with the emergency note.",
+          "We do not save what you type or the reply. Our logs record only that a call happened, how long it took and why it failed, never the words. Flow keeps no copy of the conversation by design: it is not added to Flow’s memory or action log, and its server logs hold technical flags rather than your words and are kept for a short time. One rare exception: if an AI model writes out its own working notes, Flow may keep the latest 100 of those notes, and a note could quote part of your question.",
+          `Flow runs on Vercel’s servers in ${FLOW_REGION}. By their own published terms (read on 2026-11-17), Groq does not keep requests by default but may keep them for up to 30 days to guard against abuse and failures, in the United States, and Cloudflare does not keep requests once they are answered and does not use them to train AI models. Their terms apply to them, not to us, and may change.`,
+          "Please do not type passwords, card numbers or personal details into the chat. The assistant is not a person, it can be wrong, and it cannot send help in an emergency.",
+        ],
+      },
+      {
+        p: `When the AI assistant is off, what you type stays on your device and is not stored by us. If you choose to email us from the chat, your own mail app opens with the chat copied in for you to read and edit; we receive only what you send to ${EMAIL}.`,
       },
     ],
   },
@@ -295,6 +313,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
           "Google, if you choose to sign in with Google.",
           "Our sign-in provider’s email service, which sends sign-in links and password resets.",
           "The data and map providers in section 3, who receive places and your IP address, not your identity.",
+          "When the help chat’s AI assistant is on: Flow (our assistant service) and the AI providers Groq and Cloudflare Workers AI, who receive only what you type in the chat (section 4), never your identity.",
           "Authorities or other parties where the law requires it.",
         ],
       },
@@ -305,7 +324,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     heading: "7. Transfers outside Nigeria",
     blocks: [
       {
-        p: "Our providers store and process information in Ireland and the United States, so your information leaves Nigeria. We choose established providers that commit to protecting it by contract, and we send them only what the service needs.",
+        p: `Our providers store and process information in Ireland and the United States, so your information leaves Nigeria. We choose established providers that commit to protecting it by contract, and we send them only what the service needs. When the help chat’s AI assistant is on, what you type there is processed by Flow in ${FLOW_REGION}, by Groq in the United States, and by Cloudflare, which does not state a country (section 4).`,
       },
     ],
   },
@@ -318,6 +337,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
           "Account information and what you saved: until you delete your account or remove it. Deleting your account in Settings removes your profile, memberships, notifications and comments straight away. If you own an organisation, what is saved in it is deleted too; if you are a member of someone else’s, what you added stays there without your name on it.",
           "Payment records tied to your account are deleted with it. Records that Paystack keeps follow Paystack’s terms and the law. Billing event records may remain without a link to your account.",
           "Sign-in attempt counters and server logs are kept only for a short time.",
+          "Help chat: we do not save what you type. What the assistant’s providers may keep is in section 4.",
           "Backups, where they exist, expire on their own schedule.",
         ],
       },

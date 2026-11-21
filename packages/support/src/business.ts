@@ -15,7 +15,7 @@ export const BUSINESS_COUNTRY = "Nigeria";
  * `docs/runbooks/legal-pages.md`) whenever the wording changes, so "Last
  * updated" on both pages is true.
  */
-export const LEGAL_UPDATED = "2026-11-15";
+export const LEGAL_UPDATED = "2026-11-21";
 
 /** A `mailto:` link to the business, optionally with a subject and a body. */
 export function businessMailto(subject?: string, body?: string): string {
