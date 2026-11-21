@@ -16,3 +16,22 @@
     min-height: 2.75rem;
   }
 }
+
+/*
+ * Form controls. A checkbox or radio is 13-18px wide, but its label is the real target (a tap on
+ * the words toggles it), so the label is what gets the height. `.wv-tap-field` is for a dropdown
+ * that has no built-in 44px minimum (the language picker). Two separate rules, so a browser that
+ * does not know `:has` still gets the second one.
+ */
+@media (pointer: coarse) {
+  label:has(input[type="checkbox"]),
+  label:has(input[type="radio"]) {
+    min-height: 2.75rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .wv-tap-field {
+    min-height: 2.75rem;
+  }
+}

@@ -219,8 +219,61 @@ const PHONE = devices["Pixel 7"];
     await tall(page.locator('main a[href="/terms"]'), "landing Terms link");
     await tall(page.locator('main a[href="/privacy"]'), "landing Privacy link");
     await tall(page.locator('main a[target="_blank"]'), "landing downloads link");
+    await tall(page.locator("main select"), "landing language picker");
     await page.goto(BASE + "/login", { waitUntil: "networkidle" });
     await tall(page.getByRole("button", { name: "Create an account" }), "login Create an account");
+    await tall(
+      page.locator("label", { has: page.locator('input[type="checkbox"]') }),
+      "login Remember me row",
+    );
+    await ctx.close();
+  }
+
+  // 5b) A page that scrolls but has nothing to focus is one Tab stop, so the arrow keys and Page
+  // Down work for a keyboard user; a page with a link in it gets no extra stop.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 600 } });
+    await ctx.addCookies([...signedIn(), lang("en")]);
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/workspaces/weather", { waitUntil: "networkidle" });
+    await page.waitForTimeout(300);
+    const scrolls = await page.evaluate(() => {
+      const m = document.querySelector("main");
+      return m.scrollHeight > m.clientHeight;
+    });
+    ok("keyboard scroll: the Weather page scrolls in a short window", scrolls);
+    ok(
+      "keyboard scroll: a page with a link in it adds no extra Tab stop",
+      (await page.locator("main").getAttribute("tabindex")) === null,
+    );
+    // Take every link, button and field out of the page (as an all-text page would be).
+    await page.evaluate(() => {
+      const m = document.querySelector("main");
+      m.querySelectorAll("a, button, input, select, textarea, summary, [tabindex]").forEach((e) =>
+        e.remove(),
+      );
+    });
+    await page.waitForFunction(
+      () => document.querySelector("main").getAttribute("tabindex") === "0",
+      null,
+      { timeout: 5000 },
+    );
+    ok("keyboard scroll: with nothing to focus, the page area becomes one Tab stop", true);
+    let reached = false;
+    for (let i = 0; i < 150 && !reached; i++) {
+      await page.keyboard.press("Tab");
+      reached = await page.evaluate(
+        () => document.activeElement === document.querySelector("main"),
+      );
+    }
+    ok("keyboard scroll: Tab reaches it", reached);
+    await page.keyboard.press("PageDown");
+    await page.waitForTimeout(400);
+    ok(
+      "keyboard scroll: Page Down scrolls it",
+      (await page.evaluate(() => document.querySelector("main").scrollTop)) > 0,
+    );
+    await page.screenshot({ path: `${SHOTS}/ux-main-focus.png` });
     await ctx.close();
   }
 
