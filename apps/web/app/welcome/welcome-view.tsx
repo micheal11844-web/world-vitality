@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Button,
   Card,
@@ -75,7 +75,14 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
 
   // Move focus to the new step's heading so keyboard and screen-reader
   // users land at the top of what changed.
+  // Not on the very first render: the page has just loaded and the browser already starts at
+  // its top, so moving focus there only drew a ring around the heading.
+  const firstRender = useRef(true);
   useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
     document.getElementById("welcome-heading")?.focus();
   }, [step]);
 
@@ -171,17 +178,35 @@ export function WelcomeView({ isRedo, initialPersonaId, initialPlace }: WelcomeV
               })}
             </Text>
             {step === "role" && (
-              <Text variant="pageTitle" as="h1" tabIndex={-1} id="welcome-heading">
+              <Text
+                variant="pageTitle"
+                as="h1"
+                tabIndex={-1}
+                id="welcome-heading"
+                style={{ outline: "none" }}
+              >
                 {t("welcome.role.title")}
               </Text>
             )}
             {step === "place" && (
-              <Text variant="pageTitle" as="h1" tabIndex={-1} id="welcome-heading">
+              <Text
+                variant="pageTitle"
+                as="h1"
+                tabIndex={-1}
+                id="welcome-heading"
+                style={{ outline: "none" }}
+              >
                 {t("welcome.place.title")}
               </Text>
             )}
             {step === "insight" && (
-              <Text variant="pageTitle" as="h1" tabIndex={-1} id="welcome-heading">
+              <Text
+                variant="pageTitle"
+                as="h1"
+                tabIndex={-1}
+                id="welcome-heading"
+                style={{ outline: "none" }}
+              >
                 {place
                   ? t("welcome.insight.title", { place: homePlaceLabel(place) })
                   : t("welcome.insight.titleFallback")}

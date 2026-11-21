@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import "@world-vitality/design-tokens/theme.css";
+import "./tap-targets.css";
 import { PwaSupport } from "../lib/pwa/pwa-support";
 
 export const metadata: Metadata = {

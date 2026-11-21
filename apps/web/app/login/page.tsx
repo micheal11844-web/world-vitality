@@ -375,7 +375,11 @@ function LoginForm() {
                 textAlign: "end",
               }}
             >
-              <Link href="/forgot-password" style={{ color: "var(--wv-text-secondary)" }}>
+              <Link
+                href="/forgot-password"
+                className="wv-tap"
+                style={{ color: "var(--wv-text-secondary)" }}
+              >
                 {t("auth.forgotLink")}
               </Link>
             </Text>
@@ -398,6 +402,7 @@ function LoginForm() {
               {t("auth.haveAccount")}{" "}
               <button
                 type="button"
+                className="wv-tap"
                 onClick={() => setPasswordSubMode("signin")}
                 style={{
                   background: "none",
@@ -405,7 +410,7 @@ function LoginForm() {
                   color: "var(--wv-accent)",
                   cursor: "pointer",
                   textDecoration: "underline",
-                  padding: 0,
+                  paddingInline: 0,
                 }}
               >
                 {t("auth.signInButton")}
@@ -416,6 +421,7 @@ function LoginForm() {
               {t("auth.newHere")}{" "}
               <button
                 type="button"
+                className="wv-tap"
                 onClick={() => setPasswordSubMode("signup")}
                 style={{
                   background: "none",
@@ -423,7 +429,7 @@ function LoginForm() {
                   color: "var(--wv-accent)",
                   cursor: "pointer",
                   textDecoration: "underline",
-                  padding: 0,
+                  paddingInline: 0,
                 }}
               >
                 {t("auth.createLink")}
@@ -464,18 +470,19 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
-      <div
+      <aside
         className="wv-auth-illustration-panel"
         style={{ flex: 1, display: "none", minWidth: 0, overflow: "hidden" }}
       >
         <AuthIllustration guideCharacter={null} />
-      </div>
+      </aside>
       {/* The form column scrolls. The card is centred with `margin: auto` rather than
           `align-items: center`: with the latter, a window shorter than the card pushes the
           top of the card above the scrollable area where nothing can reach it (the brand
           row and Orbi's head were cut off), whereas auto margins collapse to zero when
           there is no room and the whole card stays reachable by scrolling. */}
-      <div
+      {/* The form column is the page's main landmark (a screen reader can jump straight to it). */}
+      <main
         style={{
           flex: 1,
           display: "flex",
@@ -502,7 +509,7 @@ export default function LoginPage() {
             <LoginForm />
           </Suspense>
         </div>
-      </div>
+      </main>
       <style>{`
         @media (min-width: 768px) {
           .wv-auth-illustration-panel {

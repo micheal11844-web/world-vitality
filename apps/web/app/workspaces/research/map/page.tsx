@@ -1,6 +1,7 @@
 import { WorkspaceShell } from "../workspace-shell";
 import { getReferenceSiteData } from "../../../../lib/reference-sites";
 import { MapView } from "./MapView";
+import { pageTitle } from "../../../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -32,4 +33,8 @@ export default async function ResearchMapPage() {
       </div>
     </WorkspaceShell>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.map", "workspace.research.name");
 }

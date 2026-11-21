@@ -6,6 +6,7 @@ import { getWorkspaceMembership } from "../../../../lib/get-workspace-membership
 import { getOrganizationData } from "../../../../lib/organization-data";
 import { getTranslator } from "../../../../lib/i18n/server";
 import { MapView } from "./MapView";
+import { pageTitle } from "../../../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -91,4 +92,8 @@ export default async function GovernmentNgosMapPage() {
       )}
     </WorkspaceShell>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.map", "workspace.government-ngos.name");
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LocaleBoundary } from "../../../lib/i18n/locale-boundary";
+import { pageTitle } from "../../../lib/i18n/page-title";
 
 /**
  * Gives every page under this workspace its translator and sets `lang` / `dir`
@@ -8,4 +9,8 @@ import { LocaleBoundary } from "../../../lib/i18n/locale-boundary";
  */
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
   return <LocaleBoundary>{children}</LocaleBoundary>;
+}
+
+export async function generateMetadata() {
+  return pageTitle("workspace.weather.name");
 }

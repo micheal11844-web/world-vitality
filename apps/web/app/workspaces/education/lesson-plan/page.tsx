@@ -12,6 +12,7 @@ import { LessonPlanClient } from "./lesson-plan-client";
 import { getTranslator } from "../../../../lib/i18n/server";
 import { getWorkspaceRole } from "../../../../lib/get-workspace-role";
 import { resolveWorkspaceLocation, type WorkspaceLocation } from "../../../../lib/home-location";
+import { pageTitle } from "../../../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -106,4 +107,8 @@ export default async function EducationLessonPlanPage() {
       />
     </WorkspaceShell>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.lessonPlan", "workspace.education.name");
 }

@@ -5,6 +5,7 @@ import { WorkspaceShell } from "../workspace-shell";
 import { MapView, type HazardMarker } from "./MapView";
 import { logSecurity } from "../../../../lib/logger";
 import { getTranslator } from "../../../../lib/i18n/server";
+import { pageTitle } from "../../../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -129,4 +130,8 @@ export default async function DisasterMonitoringMapPage() {
       </div>
     </WorkspaceShell>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.map", "workspace.disaster-monitoring.name");
 }

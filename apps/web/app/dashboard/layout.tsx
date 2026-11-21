@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { requireSession } from "../../lib/require-session";
+import { pageTitle } from "../../lib/i18n/page-title";
 
 // Cookies are read on every request here, so this segment can never be
 // statically prerendered anyway — stated explicitly rather than left
@@ -19,4 +20,8 @@ export const dynamic = "force-dynamic";
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   await requireSession();
   return <LocaleBoundary>{children}</LocaleBoundary>;
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.home");
 }

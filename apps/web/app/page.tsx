@@ -39,7 +39,7 @@ export default async function LandingPage() {
         <div style={{ maxWidth: "32rem", textAlign: "start" }}>
           <Image
             src="/brand/world-vitality-mark.png"
-            alt="World Vitality"
+            alt="" // decorative: the heading right below says the name
             width={900}
             height={560}
             style={{ height: "2.5rem", width: "auto", marginBottom: "var(--wv-space-lg)" }}
@@ -79,6 +79,7 @@ export default async function LandingPage() {
             <AppDownloadsLink />
             <Link
               href="/sources"
+              className="wv-tap"
               style={{
                 color: "var(--wv-text-secondary)",
                 fontFamily: "var(--wv-font-sans)",

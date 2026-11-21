@@ -2,6 +2,7 @@ import { personaById } from "@world-vitality/identity-service";
 import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { getMyPreferences } from "../../lib/preferences";
 import { WorkspacesView } from "./workspaces-view";
+import { pageTitle } from "../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -26,4 +27,8 @@ export default async function WorkspacesPage() {
       <WorkspacesView recommendedKey={persona?.workspaceKey ?? null} />
     </LocaleBoundary>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.workspaces");
 }

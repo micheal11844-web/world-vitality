@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LocaleBoundary } from "../../../lib/i18n/locale-boundary";
+import { pageTitle } from "../../../lib/i18n/page-title";
 
 /**
  * Every Agriculture page (home, map, report) is translated, so the whole
@@ -10,4 +11,8 @@ import { LocaleBoundary } from "../../../lib/i18n/locale-boundary";
  */
 export default function AgricultureLayout({ children }: { children: ReactNode }) {
   return <LocaleBoundary>{children}</LocaleBoundary>;
+}
+
+export async function generateMetadata() {
+  return pageTitle("workspace.agriculture.name");
 }

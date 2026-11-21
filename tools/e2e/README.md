@@ -16,7 +16,7 @@ cd tools/e2e && npm ci && npx playwright install chromium
 # every time the app changes
 pnpm --filter @world-vitality/web build
 cd tools/e2e && node run.cjs              # everything (about 10 to 15 minutes)
-node run.cjs landing                      # or just some specs: landing, globe, help-chat
+node run.cjs landing                      # or just some specs: landing, ux, globe, help-chat
 ```
 
 Screenshots and the site's own output land in `tools/e2e/.out/` (git-ignored). The runner exits
@@ -24,11 +24,12 @@ non-zero when any check fails.
 
 ## What is in it
 
-| Spec                  | Checks                                                                                                                                                                                                         |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `specs/landing.cjs`   | The five languages, the picker, the native-app prompt, and the spacing of the small links (a gap, one row each, one start edge) at desktop and phone width, left-to-right and right-to-left.                   |
-| `specs/globe.cjs`     | `/globe` enters full view by itself once the 3D view has drawn; corner buttons; Escape peels one layer at a time; the events list by keyboard; focus returns; real Fullscreen API. Desktop and phone (Arabic). |
-| `specs/help-chat.cjs` | The help chat with the outside assistant off, on, and misbehaving (fail, slow, wrong price, tool-call leak, not JSON): what is sent, what is never sent, the rate limit, the built-in fallback.                |
+| Spec                  | Checks                                                                                                                                                                                                                                                                                                                                             |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `specs/landing.cjs`   | The five languages, the picker, the native-app prompt, and the spacing of the small links (a gap, one row each, one start edge) at desktop and phone width, left-to-right and right-to-left.                                                                                                                                                       |
+| `specs/ux.cjs`        | Tab titles (English and Spanish); the 404 page in five languages (right-to-left for Arabic) and the error page; Help as a header button on a phone and Orbi in the corner on a wide screen; 44 px touch targets; Explore's example places and the AI rail opening with the first result; the Disaster Monitoring Globe card; the sign-in landmark. |
+| `specs/globe.cjs`     | `/globe` enters full view by itself once the 3D view has drawn; corner buttons; Escape peels one layer at a time; the events list by keyboard; focus returns; real Fullscreen API. Desktop and phone (Arabic).                                                                                                                                     |
+| `specs/help-chat.cjs` | The help chat with the outside assistant off, on, and misbehaving (fail, slow, wrong price, tool-call leak, not JSON): what is sent, what is never sent, the rate limit, the built-in fallback.                                                                                                                                                    |
 
 `harness/` holds the stand-ins: `mock-supabase.cjs` (auth and a few tables, run as its own
 process) and `mock-fetch.cjs` (preloaded into the site's Node process with `--require`; answers

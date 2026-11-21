@@ -7,6 +7,13 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./error-texts": {
+      "types": "./dist/error-texts.d.ts",
+      "default": "./dist/error-texts.js"
+    }
   }
 }

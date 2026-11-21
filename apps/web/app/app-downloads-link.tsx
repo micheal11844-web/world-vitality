@@ -33,6 +33,7 @@ export function AppDownloadsLink() {
       {i18n ? i18n.t("landing.appsPrompt") : "Prefer an app?"}{" "}
       <a
         href={DOWNLOADS_URL}
+        className="wv-tap"
         target="_blank"
         rel="noopener noreferrer"
         style={{ color: "var(--wv-accent)", textDecoration: "underline" }}

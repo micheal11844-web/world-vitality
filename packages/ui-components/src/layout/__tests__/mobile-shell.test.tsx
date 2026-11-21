@@ -7,6 +7,7 @@ import { findMapHref, DEFAULT_MAP_HREF } from "../BottomNav.js";
 import { COMPACT_MAX_WIDTH, MEDIUM_MAX_WIDTH, SHELL_CSS } from "../shell-styles.js";
 import type { SidebarSection } from "../Sidebar.js";
 import { DEFAULT_UI_STRINGS, UiStringsProvider } from "../../i18n/ui-strings.js";
+import { GuideDockProvider, type GuideDockValue } from "../GuideDock.js";
 
 /**
  * jsdom doesn't evaluate media queries, so by default these tests render
@@ -647,6 +648,99 @@ test("until the script has run, the floating panel and its backdrop are hidden b
     /\[data-mounted="false"\][^{]*\.wv-shell-ai aside[^{]*\{[^}]*display:\s*none\s*!important/,
   );
   assert.match(rules, /\[data-mounted="false"\][^{]*\.wv-shell-scrim--ai/);
+});
+
+// ---- Help on a phone ----
+
+/** The shell inside the Help chat's dock — the provider sits *around* the shell, as in the web app. */
+function shellWithHelp(
+  dock: Partial<GuideDockValue> = {},
+  props: Partial<React.ComponentProps<typeof AppShell>> = {},
+) {
+  const value: GuideDockValue = {
+    label: "Help",
+    ariaLabel: "Open the help chat",
+    open: false,
+    onActivate: () => {},
+    ...dock,
+  };
+  return mount(
+    <GuideDockProvider value={value}>
+      <AppShell
+        brand={<span>World Vitality</span>}
+        sidebarSections={SECTIONS}
+        aiPanelOpen={false}
+        onToggleAiPanel={() => {}}
+        showGuide
+        {...props}
+      >
+        <p>Page content</p>
+      </AppShell>
+    </GuideDockProvider>,
+  );
+}
+
+test("on a phone Help is a button in the header and the floating character is gone", () => {
+  phone();
+  let opened = 0;
+  const { container } = shellWithHelp({ onActivate: () => (opened += 1) });
+  const help = screen.getByRole("button", { name: "Open the help chat" });
+  assert.ok(help.closest("header"), "the Help button sits in the header");
+  assert.equal(help.getAttribute("aria-haspopup"), "dialog");
+  assert.equal(help.getAttribute("aria-expanded"), "false");
+  fireEvent.click(help);
+  assert.equal(opened, 1);
+  // The corner character is hidden, not removed, so it is also out of the tab and reading order.
+  const corner = container.querySelector<HTMLElement>(".wv-shell-guide")!;
+  assert.ok(corner.classList.contains("wv-shell-guide--docked"));
+  assert.equal(window.getComputedStyle(corner).display, "none");
+  assert.equal(
+    screen.getAllByRole("button", { name: "Open the help chat" }).length,
+    1,
+    "only one Help button is reachable on a phone",
+  );
+});
+
+test("the header Help button reports an open chat", () => {
+  phone();
+  shellWithHelp({ open: true });
+  assert.equal(
+    screen.getByRole("button", { name: "Open the help chat" }).getAttribute("aria-expanded"),
+    "true",
+  );
+});
+
+test("on a wide screen the header Help button is out of reach and Orbi stays in the corner", () => {
+  const { container } = shellWithHelp();
+  // `display: none` by default, so it has no accessible name until a media query reveals it…
+  const headerButton = container.querySelector<HTMLElement>("header .wv-shell-help-btn")!;
+  assert.ok(headerButton);
+  assert.equal(window.getComputedStyle(headerButton).display, "none");
+  // …and the corner character is the one Help button a wide screen has.
+  const corner = container.querySelector<HTMLElement>(".wv-shell-guide")!;
+  assert.equal(window.getComputedStyle(corner).display, "block");
+  assert.ok(within(corner).getByRole("button", { name: "Open the help chat" }));
+});
+
+test("without a Help chat there is no Help button in the header", () => {
+  phone();
+  const { container } = shell({ showGuide: true });
+  assert.equal(container.querySelector(".wv-shell-help-btn"), null);
+  assert.equal(container.querySelector(".wv-shell-guide--docked"), null);
+});
+
+test("a page that supplies its own character keeps it, and gets no header button", () => {
+  phone();
+  const { container } = shellWithHelp({}, { guideCharacter: <span data-testid="mine">mine</span> });
+  assert.equal(container.querySelector(".wv-shell-help-btn"), null);
+  assert.equal(container.querySelector(".wv-shell-guide--docked"), null);
+  assert.ok(screen.getByTestId("mine"));
+});
+
+test("a shell that hides the guide gets no header Help button either", () => {
+  phone();
+  const { container } = shellWithHelp({}, { showGuide: false });
+  assert.equal(container.querySelector(".wv-shell-help-btn"), null);
 });
 
 test("findMapHref finds the open workspace's map even when workspaces sit inside a group", () => {

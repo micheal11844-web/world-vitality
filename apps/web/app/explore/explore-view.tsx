@@ -49,6 +49,23 @@ import { ExploreShell } from "./explore-shell";
  * network-dependent code path in this app (this sandbox has no
  * outbound access to power.larc.nasa.gov or geocoding-api.open-meteo.com).
  */
+/** Place names, as people write them in any language, offered as one-tap searches on a first visit. */
+const EXAMPLE_PLACES = ["Lagos", "Abuja", "Accra", "Nairobi", "London"] as const;
+
+const EXAMPLE_CHIP_STYLE = {
+  minHeight: "2.75rem",
+  padding: "0 var(--wv-space-md)",
+  borderRadius: "var(--wv-radius-full, 999px)",
+  border: "1px solid var(--wv-border)",
+  background: "var(--wv-surface, transparent)",
+  color: "var(--wv-text-primary)",
+  // The page's wrapper sets no font, so "inherit" would give the browser's serif; name the app's.
+  font: "inherit",
+  fontFamily: "var(--wv-font-sans)",
+  fontSize: "1rem",
+  cursor: "pointer",
+} as const;
+
 export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLocation | null }) {
   const { t, locale } = useI18n();
   // The engine's sentences are English; mark them so they are read (and laid out) as English.
@@ -69,15 +86,25 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
       .finally(() => setPending(false));
   }, [initialLocation]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function runSearch(place: string) {
     setPending(true);
     try {
-      const next = await exploreLocationAction(query);
+      const next = await exploreLocationAction(place);
       setResult(next);
     } finally {
       setPending(false);
     }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void runSearch(query);
+  }
+
+  // One tap on an example fills the box and searches it, so a first visit gets an answer without typing.
+  function tryExample(place: string) {
+    setQuery(place);
+    void runSearch(place);
   }
 
   return (
@@ -128,6 +155,35 @@ export function ExploreView({ initialLocation }: { initialLocation?: GeocodedLoc
           {pending ? t("explore.searching") : t("explore.submit")}
         </Button>
       </form>
+
+      {!result && !pending && (
+        <div
+          role="group"
+          aria-label={t("explore.examples")}
+          style={{
+            marginTop: "var(--wv-space-md)",
+            maxWidth: "28rem",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: "var(--wv-space-xs)",
+          }}
+        >
+          <Text variant="caption" style={{ color: "var(--wv-text-secondary)" }}>
+            {t("explore.examples")}
+          </Text>
+          {EXAMPLE_PLACES.map((place) => (
+            <button
+              key={place}
+              type="button"
+              onClick={() => tryExample(place)}
+              style={EXAMPLE_CHIP_STYLE}
+            >
+              {place}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div style={{ marginTop: "var(--wv-space-lg)", maxWidth: "28rem" }}>
         {!result && !pending && (

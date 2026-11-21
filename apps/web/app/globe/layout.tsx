@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { requireSession } from "../../lib/require-session";
+import { pageTitle } from "../../lib/i18n/page-title";
 
 // Same reasoning as dashboard/layout.tsx — this segment reads cookies
 // on every request, so it can never be statically prerendered.
@@ -24,4 +25,8 @@ export default async function GlobeLayout({ children }: { children: ReactNode })
   // The page's own text is translated; pin names are the owner's own data and
   // official source names, which are shown as written.
   return <LocaleBoundary>{children}</LocaleBoundary>;
+}
+
+export async function generateMetadata() {
+  return pageTitle("globe.title");
 }

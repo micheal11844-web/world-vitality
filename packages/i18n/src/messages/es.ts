@@ -934,6 +934,10 @@ export const es: Messages = {
   "dm.place": "Los Ángeles, CA",
   "dm.notSubstitute":
     "Esto no sustituye la orientación oficial: sigue siempre las instrucciones de las autoridades locales.",
+  "dm.globe.title": "¿Fuera de EE. UU.?",
+  "dm.globe.body":
+    "Esta página usa datos de agencias de EE. UU. (Servicio Meteorológico Nacional, USGS, FEMA) para el lugar de demostración de arriba. El globo muestra inundaciones y detecciones de calor en vivo, en todo el mundo.",
+  "dm.globe.link": "Abrir el globo",
   "dm.caveat.original": "Texto original de la fuente (en inglés):",
   "dm.alerts.subtitle":
     "{place} · Fuente: Servicio Meteorológico Nacional de EE. UU. (weather.gov) · Solo EE. UU. y sus territorios",
@@ -1315,6 +1319,7 @@ export const es: Messages = {
     "Busca cualquier lugar de la Tierra y obtén una imagen real y honesta de sus condiciones actuales, sin necesidad de cuenta.",
   "explore.placeLabel": "Nombre del lugar",
   "explore.placePlaceholder": "Prueba con una ciudad, un pueblo o una región…",
+  "explore.examples": "O prueba con uno de estos:",
   "explore.submit": "Explorar",
   "explore.searching": "Buscando…",
   "explore.empty.title": "Aún no has explorado ningún lugar",

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { requireSession } from "../../lib/require-session";
+import { pageTitle } from "../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -10,4 +11,8 @@ export const dynamic = "force-dynamic";
 export default async function SettingsLayout({ children }: { children: ReactNode }) {
   await requireSession();
   return <LocaleBoundary>{children}</LocaleBoundary>;
+}
+
+export async function generateMetadata() {
+  return pageTitle("settings.title");
 }

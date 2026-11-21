@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { ConfidenceBadge, StateDisplay, Text, AppShell } from "@world-vitality/ui-components";
 import type { InterpretationResult } from "@world-vitality/interpretation-engine";
 import { useI18n } from "../../lib/i18n/i18n-provider";
@@ -35,7 +35,14 @@ export interface ExploreShellProps {
  * workspace" from Public Explorer.
  */
 export function ExploreShell({ children, aiInterpretation }: ExploreShellProps) {
-  const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  // Closed on a first visit: with nothing searched yet the rail only said "Nothing to interpret",
+  // a second empty card beside the first. It opens by itself when the first insight arrives, and
+  // after that stays however the visitor leaves it.
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const hasInsight = aiInterpretation !== undefined;
+  useEffect(() => {
+    if (hasInsight) setAiPanelOpen(true);
+  }, [hasInsight]);
   const { t, locale } = useI18n();
   // Anonymous-capable: only the Workspaces group, no Home/Notifications/Settings.
   const sidebar = buildAppSidebar({ signedIn: false, t });

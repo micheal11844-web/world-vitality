@@ -2,6 +2,7 @@ import { WorkspaceShell } from "../workspace-shell";
 import { getReferenceSiteData } from "../../../../lib/reference-sites";
 import { MapView } from "./MapView";
 import { getWorkspaceRole } from "../../../../lib/get-workspace-role";
+import { pageTitle } from "../../../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -33,4 +34,8 @@ export default async function EducationMapPage() {
       </div>
     </WorkspaceShell>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.map", "workspace.education.name");
 }
