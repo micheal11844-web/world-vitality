@@ -121,7 +121,9 @@ They are read on every request, so a change plus a redeploy is enough, and remov
 3. **Done in v135.** Privacy Policy section 4 "The help chat" (plus the Flow/Groq/Cloudflare line
    in section 6, the transfers sentence in section 7 and the retention line in section 8) in
    `apps/web/app/legal/legal-text.ts`, `LEGAL_UPDATED` bumped, and `support.autoAssistant` in
-   five languages. `support.auto` (assistant off) needed no change: it is still true. If the
+   five languages (v136: the notice says the words go to "our AI assistant and the AI providers it uses"
+   and points to the policy; it deliberately does not name Groq or Cloudflare, the owner's choice of
+   2026-11-21, because the policy, which does name them, is where that belongs). `support.auto` (assistant off) needed no change: it is still true. If the
    plan, the region, the providers or what Flow stores change, change the policy text and
    `support.autoAssistant` in the same release (and `LEGAL_UPDATED`).
 4. **The owner sets** `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` (and the key, if Flow

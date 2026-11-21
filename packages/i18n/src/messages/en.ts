@@ -1181,7 +1181,7 @@ export const en = {
   "support.auto":
     "I’m an automatic helper, not a person. Nothing you type here is saved or sent anywhere unless you choose to email us.",
   "support.autoAssistant":
-    "I’m an automatic assistant, not a person. What you type here is sent to our AI assistant, which uses Groq and Cloudflare to write the reply, so please don’t include passwords, card numbers or personal details. The topic buttons stay on your device. The Privacy Policy says what is kept.",
+    "I’m an automatic assistant, not a person. What you type here is sent to our AI assistant and the AI providers it uses to write the reply, so please don’t include passwords, card numbers or personal details. The topic buttons stay on your device. The Privacy Policy says who handles it and what is kept.",
   "support.thinking": "Orbi is thinking…",
   "support.inputLabel": "Type your question",
   "support.send": "Send",

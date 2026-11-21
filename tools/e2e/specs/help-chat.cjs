@@ -58,11 +58,12 @@ const flowMessages = () => logLines("MOCK flow messages:");
   const enabled = SC !== "off";
   ok(
     enabled
-      ? "notice says messages are sent to our AI assistant (Groq and Cloudflare)"
+      ? "notice says messages go to our AI assistant and its AI providers, and points to the policy"
       : "notice is the original (nothing sent anywhere)",
     enabled
-      ? /sent to our AI assistant, which uses Groq and Cloudflare/.test(notice) &&
-          /Privacy Policy says what is kept/.test(notice)
+      ? /sent to our AI assistant and the AI providers it uses/.test(notice) &&
+          /Privacy Policy says who handles it and what is kept/.test(notice) &&
+          !/Groq|Cloudflare/.test(notice)
       : /Nothing you type here is saved or sent anywhere/.test(notice),
     notice.slice(0, 300),
   );
