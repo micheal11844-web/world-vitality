@@ -35,3 +35,34 @@
     min-height: 2.75rem;
   }
 }
+
+/*
+ * Small round marks. A pin on the Globe's flat map is 7-20px, a MapLibre marker 27x41px and the
+ * map's credits button 24px: drawn that size on purpose, but a fingertip needs about 44px. The
+ * mark keeps its look; an invisible 44px square around it also takes the tap. (The map's zoom
+ * and compass buttons have no such room, so they are simply made 44px.) MapLibre's own
+ * stylesheet loads after this one, so these selectors start at `.maplibregl-map` to win.
+ */
+@media (pointer: coarse) {
+  .wv-hit-44::after,
+  .maplibregl-map .maplibregl-marker::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2.75rem;
+    height: 2.75rem;
+    transform: translate(-50%, -50%);
+  }
+
+  .maplibregl-map .maplibregl-ctrl-attrib-button::after {
+    content: "";
+    position: absolute;
+    inset: -10px;
+  }
+
+  .maplibregl-map .maplibregl-ctrl-group button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
