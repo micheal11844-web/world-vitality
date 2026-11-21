@@ -3,7 +3,7 @@
 // landmarks that make pages navigable. Everything here is something a person notices on a phone.
 "use strict";
 const { chromium, devices } = require("playwright");
-const { BASE, SHOTS, signedIn } = require("../harness/browser.cjs");
+const { BASE, SHOTS, launch, signedIn } = require("../harness/browser.cjs");
 const { checker } = require("../harness/check.cjs");
 
 const PHONE = devices["Pixel 7"];
@@ -275,6 +275,159 @@ const PHONE = devices["Pixel 7"];
     );
     await page.screenshot({ path: `${SHOTS}/ux-main-focus.png` });
     await ctx.close();
+  }
+
+  // 5c) Small round marks and the map's buttons, on a touch screen: the header's brand link is
+  // 44px tall; the map's zoom buttons are 44px; a tap just outside a map marker, the map's credits
+  // button or a pin on the Globe's flat map still lands on it.
+  {
+    const ctx = await browser.newContext({ ...PHONE });
+    await ctx.addCookies([...signedIn(), lang("en")]);
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/workspaces/weather", { waitUntil: "networkidle" });
+    const brand = await page.locator('header a[href="/dashboard"]').first().boundingBox();
+    ok(
+      "touch: the header's World Vitality link is 44px tall",
+      brand.height >= 43.5,
+      JSON.stringify(brand),
+    );
+
+    await page.goto(BASE + "/workspaces/disaster-monitoring/map", { waitUntil: "networkidle" });
+    await page.waitForSelector(".maplibregl-marker", { timeout: 20000 });
+    const zoomIn = await page.locator(".maplibregl-ctrl-zoom-in").boundingBox();
+    ok(
+      "touch: the map's zoom button is 44 x 44",
+      zoomIn.width >= 43.5 && zoomIn.height >= 43.5,
+      JSON.stringify(zoomIn),
+    );
+    const zoomOut = await page.locator(".maplibregl-ctrl-zoom-out").boundingBox();
+    ok(
+      "touch: the map's zoom-out button is 44 x 44",
+      zoomOut.width >= 43.5 && zoomOut.height >= 43.5,
+      JSON.stringify(zoomOut),
+    );
+    const hits = await page.evaluate(() => {
+      const attrib = document
+        .querySelector(".maplibregl-ctrl-attrib-button")
+        .getBoundingClientRect();
+      const marker = document.querySelector(".maplibregl-marker").getBoundingClientRect();
+      const at = (x, y, cls) =>
+        document.elementsFromPoint(x, y).some((e) => e.classList.contains(cls));
+      return {
+        // 8px above the 24px credits button, and 20px to the side of the marker's centre.
+        attrib: at(attrib.x + attrib.width / 2, attrib.y - 8, "maplibregl-ctrl-attrib-button"),
+        marker: at(
+          marker.x + marker.width / 2 + 20,
+          marker.y + marker.height / 2,
+          "maplibregl-marker",
+        ),
+        farMarker: at(
+          marker.x + marker.width / 2 + 40,
+          marker.y + marker.height / 2,
+          "maplibregl-marker",
+        ),
+      };
+    });
+    ok("touch: a tap just above the map's credits button reaches it", hits.attrib);
+    ok("touch: a tap beside a map marker reaches it", hits.marker);
+    ok("touch: a tap well away from a marker does not", !hits.farMarker);
+
+    await ctx.close();
+  }
+
+  {
+    // The Globe's flat map: pins are 7-20px dots. It stays on screen when the 3D globe cannot run
+    // (no WebGL), which is also the only way to keep it still long enough to tap: otherwise the
+    // 3D globe replaces it within a second or two.
+    const noWebgl = await chromium.launch({
+      args: [
+        "--disable-gpu",
+        "--disable-webgl",
+        "--disable-3d-apis",
+        "--disable-software-rasterizer",
+      ],
+    });
+    const ctx = await noWebgl.newContext({ ...PHONE });
+    await ctx.addCookies([...signedIn(), lang("en")]);
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/globe", { waitUntil: "networkidle" });
+    await page.waitForSelector("button.wv-hit-44", { timeout: 20000 });
+    const target = await page.evaluate(() => {
+      const pins = [...document.querySelectorAll("button.wv-hit-44")].map((b) => {
+        const r = b.getBoundingClientRect();
+        return { label: b.getAttribute("aria-label"), x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      });
+      // One with no other pin within 60px, so the tap can only mean this one.
+      return pins.find((p) => pins.every((q) => q === p || Math.hypot(p.x - q.x, p.y - q.y) > 60));
+    });
+    ok("touch: the Globe's flat map has a pin to tap", Boolean(target));
+    if (target) {
+      const pressed = (label) =>
+        page.evaluate(
+          (l) =>
+            [...document.querySelectorAll("button.wv-hit-44")]
+              .find((b) => b.getAttribute("aria-label") === l)
+              ?.getAttribute("aria-pressed"),
+          label,
+        );
+      await page.touchscreen.tap(target.x + 40, target.y);
+      await page.waitForTimeout(300);
+      ok(
+        "touch: a tap 40px from a Globe pin does not open it",
+        (await pressed(target.label)) === "false",
+      );
+      await page.touchscreen.tap(target.x + 16, target.y);
+      await page.waitForTimeout(300);
+      ok("touch: a tap 16px from a Globe pin opens it", (await pressed(target.label)) === "true");
+    }
+    await ctx.close();
+    await noWebgl.close();
+  }
+
+  // 5d) The 3D globe on a touch screen: a tap a fingertip's width from a heat-detection dot still
+  // picks it, and a tap well away does not. The events list flies the camera straight down onto a
+  // dot, which puts it in the middle of the canvas; that is where the taps go.
+  {
+    const gl = await launch({ webgl: true });
+    const ctx = await gl.newContext({ ...PHONE, locale: "en-US" });
+    await ctx.addCookies([...signedIn(), lang("en")]);
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/globe", { waitUntil: "networkidle" });
+    await page.waitForSelector(".cesium-widget canvas", { timeout: 60000 });
+    await page.locator('[data-testid="globe-full-info"]').click();
+    const list = page.locator('[data-testid="globe-event-list"]');
+    await list.waitFor();
+    if ((await list.getAttribute("open")) === null) await list.locator("summary").click();
+    const panel = page.locator('[data-testid="globe-panel"]');
+    const close = () =>
+      panel
+        .getByRole("button", { name: /^Close$/ })
+        .first()
+        .click();
+    await list.locator('[data-testid="globe-list-fire"]').first().click();
+    await panel.waitFor({ timeout: 10000 });
+    await close();
+    const box = await page.locator(".cesium-widget canvas").boundingBox();
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    // The camera is still flying for a few seconds: tap beside the centre until the dot is there.
+    let picked = false;
+    for (let i = 0; i < 25 && !picked; i++) {
+      await page.waitForTimeout(1000);
+      await page.touchscreen.tap(cx + 18, cy);
+      await page.waitForTimeout(400);
+      picked = await panel.isVisible().catch(() => false);
+    }
+    ok("touch: a tap 18px from a 3D heat-detection dot picks it", picked);
+    if (picked) {
+      await close();
+      await page.waitForTimeout(500);
+      await page.touchscreen.tap(cx + 70, cy);
+      await page.waitForTimeout(800);
+      ok("touch: a tap 70px from the dot does not", !(await panel.isVisible().catch(() => false)));
+    }
+    await ctx.close();
+    await gl.close();
   }
 
   // 6) The sign-in page has one main landmark, and the logo is decoration (no doubled name).

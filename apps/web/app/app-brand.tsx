@@ -28,6 +28,8 @@ export function AppBrand() {
   return (
     <Link
       href="/dashboard"
+      // 44 px tall on a touch screen (apps/web/app/tap-targets.css).
+      className="wv-tap"
       style={{
         display: "flex",
         alignItems: "center",

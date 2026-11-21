@@ -75,6 +75,9 @@ export function GlobePreview({
       <button
         key={`${kind}:${id}`}
         type="button"
+        // A small drawn dot with a 44 px area around it that also takes the tap on a touch
+        // screen (apps/web/app/tap-targets.css).
+        className="wv-hit-44"
         title={label}
         aria-label={label}
         aria-pressed={selected}

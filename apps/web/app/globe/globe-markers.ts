@@ -23,6 +23,17 @@ export interface MarkerLayer {
 const CAMERA_SIZE = 7;
 /** How far from a marker (in pixels) a click still counts as hitting it. Small dots are hard to hit on a touch screen. */
 const PICK_SIZE_PX = 14;
+/** The same, for a finger: a fingertip covers about 44 px, so a tap near a dot is a tap on it. */
+const TOUCH_PICK_SIZE_PX = 44;
+
+/** Whether the main way of pointing is a finger (a touch screen) rather than a mouse. */
+function pointerIsCoarse(): boolean {
+  try {
+    return window.matchMedia("(pointer: coarse)").matches;
+  } catch {
+    return false;
+  }
+}
 const FIRE_FLY_HEIGHT_M = 2_000_000;
 /** A flood event is a point in the middle of a large area, so the view stays wider than for a fire. */
 const FLOOD_FLY_HEIGHT_M = 3_000_000;
@@ -123,21 +134,35 @@ export function addMarkerLayer(
 
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   handler.setInputAction((click: { position: CesiumTypes.Cartesian2 }) => {
-    // Look through everything under the click (place names, the person's own pins) for
-    // the first fire or camera dot: a name drawn over a dot must not swallow the click.
-    const picks = viewer.scene.drillPick(click.position, 12, PICK_SIZE_PX, PICK_SIZE_PX) as {
+    // Look through everything under the click (place names, the person's own pins) for a
+    // fire, flood or camera dot: a name drawn over a dot must not swallow the click. With a
+    // wide window (a finger) several dots can fall inside it, so the one nearest the tap wins,
+    // not whichever the picker lists first.
+    const size = pointerIsCoarse() ? TOUCH_PICK_SIZE_PX : PICK_SIZE_PX;
+    const picks = viewer.scene.drillPick(
+      click.position,
+      size > PICK_SIZE_PX ? 40 : 12,
+      size,
+      size,
+    ) as {
       id?: unknown;
     }[];
+    let best: { kind: "fire" | "flood" | "camera"; id: string; distance: number } | null = null;
     for (const picked of picks) {
       const id = picked?.id;
-      if (typeof id !== "string" || !entries.has(id)) continue;
+      if (typeof id !== "string") continue;
+      const entry = entries.get(id);
+      if (!entry) continue;
       const separator = id.indexOf(":");
       const kind = id.slice(0, separator);
-      if (kind === "fire" || kind === "flood" || kind === "camera") {
-        onSelect({ kind, id: id.slice(separator + 1) });
-        return;
+      if (kind !== "fire" && kind !== "flood" && kind !== "camera") continue;
+      const at = entry.point.computeScreenSpacePosition(viewer.scene);
+      const distance = at ? Cesium.Cartesian2.distance(at, click.position) : Infinity;
+      if (best === null || distance < best.distance) {
+        best = { kind, id: id.slice(separator + 1), distance };
       }
     }
+    if (best) onSelect({ kind: best.kind, id: best.id });
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
   let selectedKey: string | null = null;
