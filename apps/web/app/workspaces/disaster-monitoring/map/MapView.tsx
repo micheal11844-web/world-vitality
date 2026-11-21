@@ -231,7 +231,9 @@ export function MapView({ markers }: MapViewProps) {
         <div
           style={{
             position: "absolute",
-            bottom: "var(--wv-space-sm)",
+            // Above MapLibre's credits bar (bottom-right), as on the other maps: this panel spans
+            // the full width and would otherwise hide the OpenStreetMap credit while it is open.
+            bottom: "2.25rem",
             left: "var(--wv-space-sm)",
             right: "var(--wv-space-sm)",
             backgroundColor: "var(--wv-surface)",
