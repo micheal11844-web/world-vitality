@@ -16,6 +16,7 @@ import { BottomNav, findMapHref } from "./BottomNav.js";
 import { COMPACT_MAX_WIDTH, MEDIUM_MAX_WIDTH, SHELL_CSS } from "./shell-styles.js";
 import { useMediaQuery } from "./useMediaQuery.js";
 import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect.js";
+import { useKeyboardScrollable } from "./useKeyboardScrollable.js";
 import { GuideCharacter } from "../components/GuideCharacter.js";
 import { useGuideDock } from "./GuideDock.js";
 import { GlobalSearch } from "../search/GlobalSearch.js";
@@ -521,6 +522,8 @@ export function AppShell({
   const modalOpen = (compact && drawerOpen) || (overlay && aiPanelOpen);
   const rtl = ui.dir === "rtl";
   const guideDock = useGuideDock();
+  const mainRef = useRef<HTMLElement>(null);
+  const mainTabIndex = useKeyboardScrollable(mainRef);
   // Orbi is the Help button (and not a custom or plain character): on a phone that button moves
   // into the header, so the floating character stops covering the page.
   const dockedHelp = showGuide && !guideCharacter && guideDock !== null;
@@ -682,7 +685,11 @@ export function AppShell({
           </div>
         </div>
         <main
+          ref={mainRef}
           className="wv-shell-main"
+          // A text-only page has nothing for the keyboard to focus, so the region itself becomes
+          // one Tab stop (and only then); see the hook.
+          tabIndex={mainTabIndex}
           {...inertWhen(modalOpen)}
           style={{
             flex: 1,

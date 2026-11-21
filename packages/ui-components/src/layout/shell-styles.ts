@@ -51,6 +51,8 @@ export const SHELL_CSS = `
   --wv-shell-nav-h: calc(3.5rem + 1px); /* the bar's tabs plus its top border */
 }
 .wv-shell-main { padding: var(--wv-space-lg); }
+/* When the page is only text the region is one Tab stop (see useKeyboardScrollable); draw its ring inside, where the scroll area does not clip it. */
+.wv-shell-main:focus-visible { outline-offset: -3px; }
 
 /* Immersive: a page that asks for the whole screen (the Globe, once it has drawn).
    Everything around the page area is taken out, not just covered, so it also

@@ -73,6 +73,8 @@ export function LanguageSwitcher({ compact = false, id }: { compact?: boolean; i
       disabled={pending}
       aria-label={compact ? t("settings.language.title") : undefined}
       onChange={(e) => onChange(e.target.value)}
+      // 44px tall on a touch screen (apps/web/app/tap-targets.css).
+      className="wv-tap-field"
       style={selectStyle}
     >
       {LOCALES.map((l) => (
