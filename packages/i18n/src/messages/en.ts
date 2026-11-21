@@ -919,6 +919,10 @@ export const en = {
   "dm.place": "Los Angeles, CA",
   "dm.notSubstitute":
     "This is not a substitute for official guidance — always follow instructions from local authorities.",
+  "dm.globe.title": "Outside the U.S.?",
+  "dm.globe.body":
+    "This page uses U.S. agency data (National Weather Service, USGS, FEMA) for the demonstration place above. The Globe shows floods and heat detections live, worldwide.",
+  "dm.globe.link": "Open the Globe",
   "dm.caveat.original": "Original wording from the source (English):",
   "dm.alerts.subtitle":
     "{place} · Source: National Weather Service (weather.gov) · U.S. and territories only",
@@ -1286,6 +1290,7 @@ export const en = {
     "Search any place on Earth for a real, honest snapshot of its current conditions — no account needed.",
   "explore.placeLabel": "Place name",
   "explore.placePlaceholder": "Try a city, town, or region…",
+  "explore.examples": "Or try one of these:",
   "explore.submit": "Explore",
   "explore.searching": "Searching…",
   "explore.empty.title": "Nowhere explored yet",

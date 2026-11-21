@@ -9,6 +9,7 @@ import { CsvExportButton, type CsvRow } from "./csv-export-button";
 import { featureLockedFor } from "../../../../lib/plan-features";
 import { FeatureLockedNote } from "../../../plan-notice";
 import { getTranslator } from "../../../../lib/i18n/server";
+import { pageTitle } from "../../../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -190,4 +191,8 @@ export default async function GovernmentNgosReportPage() {
       </div>
     </WorkspaceShell>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.formalReport", "workspace.government-ngos.name");
 }

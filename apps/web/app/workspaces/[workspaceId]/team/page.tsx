@@ -9,6 +9,7 @@ import { getTranslator } from "../../../../lib/i18n/server";
 import { workspaceName } from "../../../../lib/i18n/labels";
 import { TeamShell } from "./team-shell";
 import { TeamClient, type ScopableResource } from "./team-client";
+import { pageTitle } from "../../../../lib/i18n/page-title";
 export const dynamic = "force-dynamic";
 
 /**
@@ -105,4 +106,8 @@ export default async function TeamPage({ params }: { params: Promise<{ workspace
       </div>
     </TeamShell>
   );
+}
+
+export async function generateMetadata() {
+  return pageTitle("nav.team");
 }

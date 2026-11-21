@@ -10,7 +10,7 @@ import {
   FIRE_DETECTION_CAVEAT,
   type FireDetection,
 } from "../../../lib/nasa-firms";
-import { Card, Text, StateDisplay } from "@world-vitality/ui-components";
+import { ButtonLink, Card, Text, StateDisplay } from "@world-vitality/ui-components";
 import { createTranslator, type MessageKey, type Translate } from "@world-vitality/i18n";
 import { getTranslator } from "../../../lib/i18n/server";
 import { WorkspaceShell } from "./workspace-shell";
@@ -221,6 +221,23 @@ export default async function DisasterMonitoringWorkspaceHome() {
       >
         {t("dm.notSubstitute")}
       </Text>
+
+      {/* The data below is U.S. agencies' and covers one demonstration place. A visitor anywhere
+          else is pointed at the worldwide view, instead of finding out by reading "U.S. only". */}
+      <Card style={{ marginBottom: "var(--wv-space-lg)" }}>
+        <Text variant="sectionTitle" as="h2" style={{ marginBottom: "var(--wv-space-xs)" }}>
+          {t("dm.globe.title")}
+        </Text>
+        <Text
+          variant="body"
+          style={{ color: "var(--wv-text-secondary)", marginBottom: "var(--wv-space-sm)" }}
+        >
+          {t("dm.globe.body")}
+        </Text>
+        <ButtonLink href="/globe" variant="primary">
+          {t("dm.globe.link")}
+        </ButtonLink>
+      </Card>
 
       {alertsFailed && (
         <Card>

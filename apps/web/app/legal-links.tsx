@@ -42,11 +42,11 @@ export function LegalLinks({
           <br />
         </>
       ) : null}
-      <Link href="/terms" style={linkStyle}>
+      <Link href="/terms" className="wv-tap" style={linkStyle}>
         {t("legal.terms.title", "Terms of Service")}
       </Link>
       {" · "}
-      <Link href="/privacy" style={linkStyle}>
+      <Link href="/privacy" className="wv-tap" style={linkStyle}>
         {t("legal.privacy.title", "Privacy Policy")}
       </Link>
     </p>

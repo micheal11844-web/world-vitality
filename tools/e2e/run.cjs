@@ -4,7 +4,7 @@
 // Chromium, and stops everything again. Nothing here touches the network, a real database or a key.
 //
 //   node run.cjs                     run everything
-//   node run.cjs landing globe       run only these specs (landing, globe, help-chat)
+//   node run.cjs landing globe       run only these specs (landing, ux, globe, help-chat)
 //
 // Needs: the site built (`cd apps/web && npx next build`) and Playwright's Chromium installed
 // (`npm ci && npx playwright install chromium` in this folder). See README.md.
@@ -31,6 +31,7 @@ const FLOW_ON = {
 /** In order. Runs with the same `env` share one site process. */
 const RUNS = [
   { name: "landing", spec: "landing", env: {} },
+  { name: "ux", spec: "ux", env: {} },
   { name: "globe", spec: "globe", env: {} },
   { name: "help-chat off", spec: "help-chat", scenario: "off", env: {} },
   { name: "help-chat on", spec: "help-chat", scenario: "on", env: FLOW_ON },
@@ -132,7 +133,7 @@ async function main() {
   const wanted = process.argv.slice(2);
   const selected = RUNS.filter((r) => wanted.length === 0 || wanted.includes(r.spec));
   if (selected.length === 0)
-    fail(`No spec matches ${wanted.join(", ")}. Specs: landing, globe, help-chat.`);
+    fail(`No spec matches ${wanted.join(", ")}. Specs: landing, ux, globe, help-chat.`);
   if (!fs.existsSync(path.join(WEB, ".next", "BUILD_ID"))) {
     fail("The site is not built yet. Build it first:  cd apps/web && npx next build");
   }

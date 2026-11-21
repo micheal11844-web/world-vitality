@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
+import { pageTitle } from "../../lib/i18n/page-title";
 
 /**
  * Public Explorer is translated, so its route sits in a `LocaleBoundary`: it
@@ -12,4 +13,8 @@ import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
  */
 export default function ExploreLayout({ children }: { children: ReactNode }) {
   return <LocaleBoundary>{children}</LocaleBoundary>;
+}
+
+export async function generateMetadata() {
+  return pageTitle("explore.title");
 }

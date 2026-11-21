@@ -320,6 +320,26 @@ function SearchIcon() {
   );
 }
 
+function HelpIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.25c-.75.4-1.1.9-1.1 1.75" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
 export function AppShell({
   brand,
   headerActions,
@@ -501,6 +521,9 @@ export function AppShell({
   const modalOpen = (compact && drawerOpen) || (overlay && aiPanelOpen);
   const rtl = ui.dir === "rtl";
   const guideDock = useGuideDock();
+  // Orbi is the Help button (and not a custom or plain character): on a phone that button moves
+  // into the header, so the floating character stops covering the page.
+  const dockedHelp = showGuide && !guideCharacter && guideDock !== null;
 
   const rootStyle = {
     display: "flex",
@@ -548,6 +571,21 @@ export function AppShell({
                   onClick={() => setSearchOpen((open) => !open)}
                 >
                   <SearchIcon />
+                </button>
+              )}
+              {dockedHelp && (
+                // The phone layout's Help button. The floating character would sit over the
+                // page's text there, so on a phone Help lives in the header instead (see
+                // `.wv-shell-guide--docked` in `shell-styles.ts`); elsewhere this stays hidden.
+                <button
+                  type="button"
+                  className="wv-shell-help-btn wv-shell-iconbtn"
+                  aria-label={guideDock.ariaLabel ?? guideDock.label}
+                  aria-haspopup="dialog"
+                  aria-expanded={guideDock.open}
+                  onClick={guideDock.onActivate}
+                >
+                  <HelpIcon />
                 </button>
               )}
               {showSearch && (
@@ -714,7 +752,7 @@ export function AppShell({
       )}
       {showGuide && (
         <div
-          className="wv-shell-guide"
+          className={dockedHelp ? "wv-shell-guide wv-shell-guide--docked" : "wv-shell-guide"}
           style={{
             position: "fixed",
             bottom: "var(--wv-space-md)",

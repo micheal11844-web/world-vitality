@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { billingEnabled } from "../../lib/billing";
 import { LocaleBoundary } from "../../lib/i18n/locale-boundary";
 import { requireSession } from "../../lib/require-session";
+import { pageTitle } from "../../lib/i18n/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -16,4 +17,8 @@ export default async function BillingLayout({ children }: { children: ReactNode 
   if (!billingEnabled()) notFound();
   await requireSession();
   return <LocaleBoundary>{children}</LocaleBoundary>;
+}
+
+export async function generateMetadata() {
+  return pageTitle("billing.title");
 }

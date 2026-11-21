@@ -38,7 +38,9 @@ export function AppBrand() {
     >
       <Image
         src="/brand/world-vitality-mark.png"
-        alt="World Vitality"
+        // Decorative: the name is written out right beside it, and a screen reader would
+        // otherwise say "World Vitality World Vitality".
+        alt=""
         width={900}
         height={560}
         style={{ height: "1.5rem", width: "auto", flexShrink: 0 }}

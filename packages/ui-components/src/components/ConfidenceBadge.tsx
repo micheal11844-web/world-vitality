@@ -76,7 +76,9 @@ export function ConfidenceBadge({
         <span>{display.label}</span>
       </span>
       {showDescription && (
-        <span style={{ color: "var(--wv-text-secondary)", fontSize: "0.75rem" }}>
+        // Primary text colour, not secondary: on the badge's tinted background the secondary grey
+        // measured 4.49:1, just under the 4.5:1 minimum. The smaller size keeps it in second place.
+        <span style={{ color: "var(--wv-text-primary)", fontSize: "0.75rem" }}>
           {display.description}
         </span>
       )}

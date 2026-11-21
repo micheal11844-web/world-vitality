@@ -1,0 +1,18 @@
+/*
+ * Small stand-alone links ("Forgot password?", "Create an account", Terms and Privacy, the
+ * downloads and Data sources links) are about 16px tall: easy to hit with a mouse, easy to miss
+ * with a thumb. On a touch screen (a coarse pointer) they get a 44px-tall box, the size the rest
+ * of the app uses, centred on the text; with a mouse nothing changes. Add the class to a link or
+ * a link-styled button that is not part of a sentence.
+ *
+ * A minimum height rather than padding, so the result is 44px whatever the font size or the
+ * language's line height, and it cannot be undone by an inline `padding: 0` (which beats any
+ * class): leave `padding-inline` to the element, but not `padding-block`.
+ */
+@media (pointer: coarse) {
+  .wv-tap {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+}

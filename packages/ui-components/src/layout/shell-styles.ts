@@ -66,6 +66,7 @@ export const SHELL_CSS = `
 /* Compact-only controls: hidden unless the compact layout switches them on. */
 .wv-shell-menu-btn,
 .wv-shell-search-btn,
+.wv-shell-help-btn,
 .wv-shell-drawer-head,
 .wv-shell-drawer-foot,
 .wv-shell-bottomnav,
@@ -201,7 +202,8 @@ export const SHELL_CSS = `
   .wv-shell-brand { min-width: 0; gap: var(--wv-space-xs) !important; }
   .wv-shell-actions { gap: var(--wv-space-xs) !important; }
   .wv-shell-menu-btn,
-  .wv-shell-search-btn { display: inline-flex; }
+  .wv-shell-search-btn,
+  .wv-shell-help-btn { display: inline-flex; }
   .wv-desktop-only { display: none !important; }
 
   /* Search: a row that drops under the header when the magnifier is tapped. */
@@ -310,6 +312,9 @@ export const SHELL_CSS = `
     bottom: calc(var(--wv-shell-nav-h) + env(safe-area-inset-bottom, 0px));
   }
 
+  /* When Orbi is the Help button, a phone gets that button in the header (the "?" next to the
+     magnifier) and the floating character goes: it sat over the page's text however it was placed. */
+  .wv-shell-guide--docked { display: none !important; }
   /* The guide character sits above the bar and a little smaller. */
   .wv-shell-guide {
     bottom: calc(var(--wv-shell-nav-h) + env(safe-area-inset-bottom, 0px) + var(--wv-space-sm)) !important;
