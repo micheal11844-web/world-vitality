@@ -180,3 +180,17 @@ Read-only, from Flow's code at `bb2e69c` plus PR #4; the full answers are in sec
   of `GROQ_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` are set, and then merging PR #4.
 
 The Privacy Policy rewrite waits on those answers; the help-chat link stays off.
+
+## 14. Update 2026-11-21: PR #4 merged, the owner's answers are in, the policy is written
+
+- **PR #4 (`third-party-provider-limit`) is merged** in Flow (2026-11-21, by the owner). Calls with `audience: "third_party"`
+  (this help chat, and Echo) now reach only Groq and Cloudflare Workers AI.
+- **The owner confirmed in Flow's Vercel project:** the plan is **Hobby** (Vercel keeps runtime logs for 1 hour on Hobby,
+  <https://vercel.com/docs/logs/runtime>), the provider keys are set, and the Function Region is **iad1** (Washington, D.C., United States).
+- **World Vitality's Privacy Policy section 4, sections 6 to 8 and `support.autoAssistant` (five languages) are rewritten
+  from sections 6a and 13 of Flow's note and the answers above.** They ship as v135 and say what Flow stores and does not.
+  The link stays off until the owner sets `FLOW_SUPPORT_ENABLED=true` and `FLOW_SUPPORT_URL` on World Vitality's Vercel.
+- **For Flow's side (your call, nothing assumed):** (1) the `<flow-think>` gap is still open (`cleanReply` stores a model's
+  `<flow-think>` text for third-party calls too; skipping `_logThought` when `thirdParty` is true would close it, and then
+  the policy's "One rare exception" sentence can be removed); (2) please tell the World Vitality side before changing the
+  plan, the Function Region, the providers or what a third-party call stores, because the Privacy Policy names them.

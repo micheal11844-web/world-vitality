@@ -1199,7 +1199,7 @@ export const pt: Messages = {
   "support.auto":
     "Sou um assistente automático, não uma pessoa. Nada do que você digitar aqui é salvo ou enviado a lugar nenhum, a menos que você escolha nos escrever por e-mail.",
   "support.autoAssistant":
-    "Sou um assistente automático, não uma pessoa. O que você digitar aqui é enviado a um serviço de IA para escrever a resposta; por isso, não inclua senhas, números de cartão nem dados pessoais. Os botões de assunto ficam no seu dispositivo.",
+    "Sou um assistente automático, não uma pessoa. O que você digitar aqui é enviado ao nosso assistente de IA, que usa Groq e Cloudflare para escrever a resposta; por isso, não inclua senhas, números de cartão nem dados pessoais. Os botões de assunto ficam no seu dispositivo. A Política de Privacidade (em inglês) explica o que é guardado.",
   "support.thinking": "Orbi está pensando…",
   "support.inputLabel": "Digite sua pergunta",
   "support.send": "Enviar",

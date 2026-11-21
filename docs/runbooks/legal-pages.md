@@ -38,6 +38,15 @@ English version is the one that applies and that they can email for help.
   servers see the IP; a five-character hash prefix to Have I Been Pwned for password checks.
 - **Notices** are in-app only (nothing is pushed, emailed or texted), which is why the
   policy says so.
+- **The help chat (v135)** has two states, and section 4 describes both: assistant off (nothing
+  leaves the device) and assistant on (what you type goes from our server to Flow, then to Groq or
+  Cloudflare Workers AI; no cookie, account, e-mail, IP or page is sent; danger phrases are never
+  sent; we log only that a call happened). Checked against `apps/web/app/api/support/assistant/route.ts`,
+  `packages/support/src/assistant.ts` (500 characters, last 6 turns) and Flow's note
+  (`WORLD_VITALITY_HELP_CHAT.md` sections 1b, 6a); the Function Region, plan and provider keys are the
+  owner's answers of 2026-11-21 (see `docs/runbooks/support-chat.md`). Flow runs in
+  **iad1** (Washington, D.C.), the same Vercel region as World Vitality's own functions above, and
+  its AI providers add Groq (United States) and Cloudflare (no country stated), so section 7 names them.
 - **Billing statements** (cancel keeps paid features until the period ends; failed payment
   has a grace period, then Basic, extras read-only, nothing deleted) come from
   `services/billing-service` (`summary.ts`, `entitlements.ts`).

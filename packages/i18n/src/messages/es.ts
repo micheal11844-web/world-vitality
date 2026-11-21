@@ -1208,7 +1208,7 @@ export const es: Messages = {
   "support.auto":
     "Soy un asistente automático, no una persona. Nada de lo que escribas aquí se guarda ni se envía a ningún sitio, salvo que decidas escribirnos por correo.",
   "support.autoAssistant":
-    "Soy un asistente automático, no una persona. Lo que escribas aquí se envía a un servicio de IA para redactar la respuesta, así que no incluyas contraseñas, números de tarjeta ni datos personales. Los botones de temas se quedan en tu dispositivo.",
+    "Soy un asistente automático, no una persona. Lo que escribas aquí se envía a nuestro asistente de IA, que usa Groq y Cloudflare para redactar la respuesta, así que no incluyas contraseñas, números de tarjeta ni datos personales. Los botones de temas se quedan en tu dispositivo. La Política de privacidad (en inglés) explica qué se conserva.",
   "support.thinking": "Orbi está pensando…",
   "support.inputLabel": "Escribe tu pregunta",
   "support.send": "Enviar",
