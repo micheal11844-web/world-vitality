@@ -37,6 +37,11 @@ repository's **Releases** page:
 | Linux                         | `World-Vitality-<version>.AppImage`  |
 | Android phone                 | `World-Vitality-<version>.apk`       |
 
+Sizes, measured on the GitHub builders for v137: Windows about **1.2 MB**, Mac
+about **3.9 MB** (Apple chip) and **4.1 MB** (Intel), Android about 3.2 MB, Linux
+about 120 MB (the Electron app, which carries its own browser engine). Before
+v137 the Windows installer was about 116 MB.
+
 Each release also has `SHA256SUMS.txt` so a download can be checked.
 
 **Making a release** (a few minutes, nothing to install). First, the versions
@@ -255,14 +260,44 @@ Developer account exists.
 
 ## What has and has not been tested
 
-| Part                                   | Status                                                                                                                                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Desktop app on Linux                   | Run for real in a virtual display: 23 window checks (opens the site, links, Google explanation, permissions, size memory, offline page) and 6 on the packaged AppImage, plus 7 unit tests. |
-| Windows and Mac installers             | **Built successfully on GitHub's machines. Never started by me.** Whether the window opens on a real Windows or Mac is untried.                                                            |
-| Android app                            | **Built and signed successfully on GitHub's builder. Never installed or started** (no phone or emulator here). The offline page, splash and icons in a real phone are unseen.              |
-| Phone app settings                     | 7 checks of the project files (https only, one permission, no backup, no keys in the repository, icons at every size, address in one place).                                               |
-| Login page and Settings in the apps    | Tested in a real browser and a real desktop window pretending to be the apps: Google hidden, note shown, "installed" shown.                                                                |
-| "Forgot password?" for Google accounts | Not tried against the real Supabase project.                                                                                                                                               |
+| Part                                   | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Desktop app on Linux                   | Run for real in a virtual display: 23 window checks (opens the site, links, Google explanation, permissions, size memory, offline page) and 6 on the packaged AppImage, plus 7 unit tests.                                                                                                                                                                                                                                                                                                                                                             |
+| Windows and Mac app: the rules         | 10 unit tests in `native/tauri/src-tauri/policy` (same cases as the Electron navigation tests, plus the check that the site still recognises the app's user agent). They run on every change.                                                                                                                                                                                                                                                                                                                                                          |
+| Windows and Mac app: compiles          | A Linux job compiles the whole app on every change; the Windows and Mac builds on GitHub's machines succeeded in the v137 rehearsal.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Windows and Mac app: starts            | **Started for real on GitHub's Windows machine (WebView2) and Mac (WebKit, Apple chip)**, pointed at a pretend site: it opens, reaches the site, sends `WorldVitalityDesktop/<version>`, refuses a `file:` address, WebGL and WebGL2 are available, a download the site makes lands in the Downloads folder, and a link to the site's own address opens in the same window. These run in the workflow on every build and block a release if they fail. Those machines are virtual: they say nothing about speed, how the Globe looks, or an Intel Mac. |
+| Windows and Mac app: not tried         | Opening the real site and signing in from the app, the Globe and maps on a real graphics card, printing a report, the Google explanation window, the "You're offline" page, a window dragged between screens, the installer's own screens, WebView2 being installed by the installer on a PC without it, an Intel Mac, and any real user on a real Windows PC or Mac. Use the checklist below.                                                                                                                                                         |
+| Android app                            | **Built and signed successfully on GitHub's builder. Never installed or started** (no phone or emulator here). The offline page, splash and icons in a real phone are unseen.                                                                                                                                                                                                                                                                                                                                                                          |
+| Phone app settings                     | 7 checks of the project files (https only, one permission, no backup, no keys in the repository, icons at every size, address in one place).                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Login page and Settings in the apps    | Tested in a real browser and a real desktop window pretending to be the apps: Google hidden, note shown, "installed" shown.                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| "Forgot password?" for Google accounts | Not tried against the real Supabase project.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 The first install on a real phone and a real Windows PC is the real test.
 Report what breaks and it will be fixed in the next version.
+
+## Checklist for the first install on a real Windows PC and Mac (Tauri app)
+
+Do this with the files from the first release (or a rehearsal build's artifacts).
+Anything that fails: write down what you did and what you saw.
+
+1. **Install.** Windows: run the installer, accept the "Windows protected your PC"
+   warning (More info, Run anyway). Mac: open the dmg, drag the app to
+   Applications, then right-click it, Open (Apple Silicon may also need System
+   Settings, Privacy and Security, Open Anyway). The installers are not signed or
+   notarised, so the warnings are expected.
+2. **Start.** The window opens at a normal size and shows World Vitality within a
+   few seconds. Close it, open again: it should come back at the same size and
+   place.
+3. **Sign in** with email and password. "Continue with Google" must not be there.
+   Open a workspace and Settings; Settings should say the app is installed.
+4. **The Globe** (`/globe`): it loads, turns and you can zoom. Open the **Explore** page too.
+5. **Links:** click "Data sources and credits", then a credit that goes to another
+   website. The other website should open in your normal browser, not in the app.
+6. **Download:** in the Insurance workspace, open a report and export it as CSV. A message should say it was
+   saved to Downloads, with Show in folder. Open the file.
+7. **Printing** (Government and NGOs report, Save as PDF): note whether it works on the Mac.
+8. **Offline:** turn the internet off, start the app. It should say "You're
+   offline" with Try again; turn the internet on, press Try again.
+9. **Second launch:** start the app twice. The first window comes forward; no
+   second window opens.
+10. **Windows only:** press Ctrl and + (and −) to zoom.
