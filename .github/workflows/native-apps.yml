@@ -207,8 +207,8 @@ jobs:
             # Mac: one installer per chip. Signed "ad hoc" (tauri.conf.json) so the app
             # can start on Apple Silicon once the person has chosen Open Anyway.
             # Not notarised.
-            build --target aarch64-apple-darwin --bundles dmg -- --locked
-            build --target x86_64-apple-darwin --bundles dmg -- --locked
+            build --target aarch64-apple-darwin --bundles app,dmg -- --locked
+            build --target x86_64-apple-darwin --bundles app,dmg -- --locked
           fi
       # Looks inside what was built, so the run's page shows what is in the
       # installers without anyone having to download them.
