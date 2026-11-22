@@ -41,3 +41,9 @@ pnpm-debug.log*
 
 # Vercel
 .vercel/
+
+# Desktop app built on Tauri (native/tauri): Rust build output and the files
+# Tauri generates next to it.
+native/tauri/src-tauri/target/
+native/tauri/src-tauri/gen/
+native/tauri/node_modules/

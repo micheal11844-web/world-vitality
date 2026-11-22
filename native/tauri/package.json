@@ -1,0 +1,14 @@
+{
+  "name": "world-vitality-desktop-tauri",
+  "version": "0.1.0",
+  "private": true,
+  "description": "World Vitality desktop app for Windows and Mac (Tauri). Not part of the website's pnpm workspace.",
+  "scripts": {
+    "icons": "tauri icon ../desktop/assets/icon.png --output src-tauri/icons",
+    "build": "tauri build",
+    "dev": "tauri dev"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
