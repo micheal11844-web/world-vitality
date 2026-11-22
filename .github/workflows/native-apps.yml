@@ -210,6 +210,39 @@ jobs:
             build --target aarch64-apple-darwin --bundles dmg -- --locked
             build --target x86_64-apple-darwin --bundles dmg -- --locked
           fi
+      # Looks inside what was built, so the run's page shows what is in the
+      # installers without anyone having to download them.
+      - name: What was built
+        run: |
+          out=native/tauri/src-tauri/target
+          {
+            echo "### What was built (${{ matrix.os }})"
+            echo
+            echo '```'
+            if [ "${{ matrix.os }}" = "windows-latest" ]; then
+              ls -la "${out}/release/world-vitality.exe"
+            else
+              for chip in aarch64-apple-darwin x86_64-apple-darwin; do
+                app="${out}/${chip}/release/bundle/macos/World Vitality.app"
+                echo "== ${chip}"
+                file "${app}/Contents/MacOS/world-vitality"
+                du -sk "${app}"
+                codesign -dv "${app}" 2>&1 | grep -E "Identifier|Signature|Format" || true
+                plutil -p "${app}/Contents/Info.plist" | grep -E "CFBundleIdentifier|CFBundleShortVersionString|LSMinimumSystemVersion"
+              done
+            fi
+            echo '```'
+          } 2>&1 | tee -a "${GITHUB_STEP_SUMMARY}"
+      # Starts the app once against a pretend site on the runner. See
+      # native/tauri/scripts/smoke-test.sh for what it checks.
+      - name: Start the app once (smoke test)
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            bash native/tauri/scripts/smoke-test.sh native/tauri/src-tauri/target/release/world-vitality.exe "${VERSION}"
+          else
+            # The runner is an Apple Silicon Mac, so only the Apple-chip build runs here.
+            bash native/tauri/scripts/smoke-test.sh "native/tauri/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/World Vitality.app/Contents/MacOS/world-vitality" "${VERSION}"
+          fi
       - name: Name the installers like the Electron ones
         run: |
           out=native/tauri/src-tauri/target
