@@ -1,0 +1,36 @@
+# World Vitality desktop app for Windows and macOS, built on Tauri 2.
+# Kept out of the pnpm workspace (like native/desktop and native/mobile) so the
+# website's install, build and deploy never touch it. `policy/` is a small
+# crate with the rules for where the window may go; it has no Tauri in it, so
+# `cargo test -p world-vitality-policy` runs anywhere.
+[package]
+name = "world-vitality"
+version = "0.1.0"
+description = "World Vitality desktop app"
+edition = "2021"
+rust-version = "1.82"
+publish = false
+
+[workspace]
+members = ["policy"]
+resolver = "2"
+
+[build-dependencies]
+tauri-build = "2"
+
+[dependencies]
+tauri = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-window-state = "2"
+world-vitality-policy = { path = "policy" }
+open = "5"
+
+# Smallest installer that still runs: size-optimised, one codegen unit, link-time
+# optimisation, no unwinding, no symbols.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

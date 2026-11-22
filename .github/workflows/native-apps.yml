@@ -5,8 +5,13 @@
 #
 #   git tag native-v0.1.0 && git push origin native-v0.1.0
 #
-# The tag number must match "version" in native/desktop/package.json and
-# native/mobile/package.json (the first job checks). "Run workflow" on the
+# Windows and Mac are built with Tauri (native/tauri: small installers that use
+# the web view already on the computer); Linux with Electron (native/desktop),
+# which bundles its own browser engine; Android with Capacitor (native/mobile).
+#
+# The tag number must match "version" in native/desktop/package.json,
+# native/mobile/package.json and the three version lines in native/tauri (the
+# first job checks). "Run workflow" on the
 # Actions page, or pushing a branch named native-build/<anything>, builds
 # everything and keeps the files as downloadable results of the run, without
 # publishing a release. "Run workflow" with "Publish" ticked builds and then
@@ -54,21 +59,48 @@ jobs:
         run: node --test native/desktop/test/navigation.test.cjs
       - name: Phone app tests
         run: node --test native/mobile/test/config.test.cjs
+      - name: Windows and Mac app rules (Rust)
+        working-directory: native/tauri/src-tauri
+        run: cargo test --locked -p world-vitality-policy
       - name: Work out the version
         id: version
         run: |
           desktop="$(node -p "require('./native/desktop/package.json').version")"
           mobile="$(node -p "require('./native/mobile/package.json').version")"
-          if [ "$desktop" != "$mobile" ]; then
-            echo "::error::Desktop ($desktop) and phone ($mobile) versions differ; make them the same."
-            exit 1
-          fi
+          tauri_npm="$(node -p "require('./native/tauri/package.json').version")"
+          tauri_conf="$(node -p "require('./native/tauri/src-tauri/tauri.conf.json').version")"
+          tauri_cargo="$(sed -n 's/^version = "\(.*\)"$/\1/p' native/tauri/src-tauri/Cargo.toml | head -n 1)"
+          for other in "$mobile" "$tauri_npm" "$tauri_conf" "$tauri_cargo"; do
+            if [ "$desktop" != "$other" ]; then
+              echo "::error::The apps' versions differ (Linux $desktop, phone $mobile, Windows and Mac $tauri_npm / $tauri_conf / $tauri_cargo); make them all the same. For the Windows and Mac app also run 'cargo update -w' in native/tauri/src-tauri so Cargo.lock follows."
+              exit 1
+            fi
+          done
           if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "native-v${desktop}" ]; then
             echo "::error::Tag ${GITHUB_REF_NAME} does not match the apps' version ${desktop}. Tag native-v${desktop}, or change the version first."
             exit 1
           fi
           echo "version=$desktop" >> "$GITHUB_OUTPUT"
 
+  # Does the Windows and Mac app compile? Checked on Linux, where it is quick and
+  # free of signing and installer steps; the code is the same on every system.
+  tauri-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries Tauri needs on Linux
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+      - name: Compile
+        working-directory: native/tauri/src-tauri
+        run: cargo check --locked --all-targets
+
+  # Linux stays on Electron. To go back to Electron for Windows and Mac too, add
+  # `- os: windows-latest, flag: --win` and `- os: macos-latest, flag: --mac`
+  # here and remove the desktop-tauri job (docs/runbooks/native-apps.md).
   desktop:
     needs: checks
     if: github.event_name != 'pull_request'
@@ -76,10 +108,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            flag: --win
-          - os: macos-latest
-            flag: --mac
           - os: ubuntu-latest
             flag: --linux
     runs-on: ${{ matrix.os }}
@@ -133,6 +161,109 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.os }}
+          if-no-files-found: error
+          path: release-files/*
+
+  desktop-tauri:
+    needs: [checks, tauri-check]
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: macos-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.checks.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: native/tauri/package-lock.json
+      - name: Add the Mac chip types
+        if: matrix.os == 'macos-latest'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - run: npm ci
+        working-directory: native/tauri
+      - name: Build the installers
+        working-directory: native/tauri
+        run: |
+          build() {
+            # Put the end of the output where it can be read without opening the log.
+            if ! npx tauri build "$@" 2>&1 | tee "${RUNNER_TEMP}/build.log"; then
+              echo "::error title=Installer build failed::$(tail -n 40 "${RUNNER_TEMP}/build.log" | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
+              exit 1
+            fi
+          }
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            build --bundles nsis -- --locked
+          else
+            # Mac: one installer per chip. Signed "ad hoc" (tauri.conf.json) so the app
+            # can start on Apple Silicon once the person has chosen Open Anyway.
+            # Not notarised.
+            build --target aarch64-apple-darwin --bundles app,dmg -- --locked
+            build --target x86_64-apple-darwin --bundles app,dmg -- --locked
+          fi
+      # Looks inside what was built, so the run's page shows what is in the
+      # installers without anyone having to download them.
+      - name: What was built
+        run: |
+          out=native/tauri/src-tauri/target
+          {
+            echo "### What was built (${{ matrix.os }})"
+            echo
+            echo '```'
+            if [ "${{ matrix.os }}" = "windows-latest" ]; then
+              ls -la "${out}/release/world-vitality.exe"
+            else
+              for chip in aarch64-apple-darwin x86_64-apple-darwin; do
+                app="${out}/${chip}/release/bundle/macos/World Vitality.app"
+                echo "== ${chip}"
+                file "${app}/Contents/MacOS/world-vitality"
+                du -sk "${app}"
+                codesign -dv "${app}" 2>&1 | grep -E "Identifier|Signature|Format" || true
+                plutil -p "${app}/Contents/Info.plist" | grep -E "CFBundleIdentifier|CFBundleShortVersionString|LSMinimumSystemVersion"
+              done
+            fi
+            echo '```'
+          } 2>&1 | tee -a "${GITHUB_STEP_SUMMARY}"
+      # Starts the app once against a pretend site on the runner. See
+      # native/tauri/scripts/smoke-test.sh for what it checks.
+      - name: Start the app once (smoke test)
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            bash native/tauri/scripts/smoke-test.sh native/tauri/src-tauri/target/release/world-vitality.exe "${VERSION}"
+          else
+            # The runner is an Apple Silicon Mac, so only the Apple-chip build runs here.
+            bash native/tauri/scripts/smoke-test.sh "native/tauri/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/World Vitality.app/Contents/MacOS/world-vitality" "${VERSION}"
+          fi
+      - name: Name the installers like the Electron ones
+        run: |
+          out=native/tauri/src-tauri/target
+          mkdir -p release-files
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp "$(ls "${out}"/release/bundle/nsis/*-setup.exe | head -n 1)" "release-files/World-Vitality-Setup-${VERSION}.exe"
+          else
+            cp "$(ls "${out}"/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -n 1)" "release-files/World-Vitality-${VERSION}-arm64.dmg"
+            cp "$(ls "${out}"/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -n 1)" "release-files/World-Vitality-${VERSION}-x64.dmg"
+          fi
+          ls -la release-files
+          {
+            echo "### Installer sizes (${{ matrix.os }})"
+            echo
+            for f in release-files/*; do
+              echo "- \`$(basename "$f")\`: $(( $(wc -c < "$f") / 1024 )) KB"
+            done
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-tauri-${{ matrix.os }}
           if-no-files-found: error
           path: release-files/*
 
@@ -212,7 +343,7 @@ jobs:
           path: native/mobile/*.apk
 
   release:
-    needs: [checks, desktop, android]
+    needs: [checks, desktop, desktop-tauri, android]
     if: startsWith(github.ref, 'refs/tags/native-v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
     runs-on: ubuntu-latest
     permissions:

@@ -1516,3 +1516,52 @@ set `FLOW_SUPPORT_ENABLED` and `FLOW_SUPPORT_URL` in Vercel and redeployed; the 
 owner confirmed it works (three `support_assistant_answered` log lines, no failures). At the owner's request (v136)
 `support.autoAssistant` now says the words go to "our AI assistant and the AI providers it uses" and points to the Privacy
 Policy, which still names Flow, Groq and Cloudflare Workers AI. Nothing else changed.
+
+## Decision #039 — Windows and Mac desktop app on Tauri; Linux stays on Electron
+
+**Date:** 2026-11-22. **Status:** accepted; built on the branch `tauri-desktop-app` (pull request #9), release v137. Not yet
+published: the first release is the owner's Publish button (tag pushes are refused for this session).
+
+**Context:** The owner found the Windows installer (about 116 MB) too big. The size is Electron's own copy of the
+browser engine: about 89 MB compressed by itself. Stripping unused languages from it saves about 1 MB, so tuning could
+not help. The app is only a locked-down window around the live site, so it does not need a browser of its own.
+
+**Decision:** Build the Windows and Mac apps with **Tauri 2** (`native/tauri`), which uses the web view already on the
+computer (WebView2 on Windows, WebKit on Mac). Linux stays on Electron (`native/desktop`) because Linux has no single
+built-in web view to rely on, and Android stays on Capacitor. The installers keep their file names, so the downloads
+site and the release process are unchanged.
+
+**Measured (GitHub's builders, v137 rehearsal):** Windows installer about **1.2 MB** (was about 116 MB); Mac about
+**3.9 MB** (Apple chip) and **4.1 MB** (Intel). The earlier estimate was 5 to 15 MB; the real numbers are smaller because
+the app is a window with no devtools or extra features, built for size.
+
+**Rules kept:** the same navigation rules as the Electron app, written as a small Rust crate with the same test cases
+(only the site stays in the window; `https:` and `mailto:` open in the person's browser; everything else is refused;
+Google sign-in is explained). The site gets no way to call into the app (no commands, no permissions). The app adds
+`WorldVitalityDesktop/<version>` to its browser identity (Tauri replaces the whole user agent, so it is written out per
+system) and a test reads the website's own pattern so the two cannot drift apart.
+
+**Checked for real:** the workflow starts the built app on GitHub's Windows machine and Mac against a pretend site and
+checks that it opens, reaches the site, names itself, refuses a `file:` address, has WebGL and WebGL2, saves a
+site-made download to the Downloads folder, and opens a link to the site's own address in the same window. These block a
+release if they fail. A Linux job compiles the app on every change.
+
+**What is different from the Electron app (documented in the runbook and `native/tauri/README.md`):** downloads save to
+the Downloads folder with a message instead of a Save As window; no custom menu bar (the Mac has Tauri's standard one);
+the offline page appears when the site cannot be reached at start, but if the connection drops while the app is open the
+web view's own error page appears; Windows needs Microsoft's WebView2 runtime (the installer downloads it if missing); the
+Mac web view may not offer system notifications.
+
+**Alternatives considered:** _shrink the Electron app_ (about 1 MB possible, not worth it); _tell Windows and Mac people to
+use the website or install it from the browser_ (the downloads page already offers this on iPhone; it avoids any download
+but is not an app in the Start menu or Dock, and it is still available as an addition); _Tauri on Linux too_ (the web view
+library differs by distribution, so an installer would either depend on what the person has or bundle it, losing the size
+advantage and adding risk).
+
+**Not yet known:** how it behaves on a real Windows PC and Mac (speed, the Globe on a real graphics card, printing a report
+on the Mac, the offline page, the installer screens, WebView2 on a PC without it, an Intel Mac). The checklist is at the end
+of `docs/runbooks/native-apps.md`.
+
+**Revisit when:** the owner's test finds something Electron did that Tauri cannot; a certificate for signing exists
+(the Tauri job needs the matching settings); a mid-session offline page is wanted on Windows and Mac. **Rollback:** re-add the
+Windows and Mac entries to the `desktop` job's matrix and delete the `desktop-tauri` job.

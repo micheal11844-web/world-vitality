@@ -30,6 +30,9 @@ export default tseslint.config(
       // The phone app's generated Android project (Gradle/Java) and its
       // build output — not JavaScript this repo authors.
       "native/mobile/android/**",
+      // The Windows and Mac app's Rust build output and generated files.
+      "native/tauri/src-tauri/target/**",
+      "native/tauri/src-tauri/gen/**",
     ],
   },
   {
@@ -79,6 +82,22 @@ export default tseslint.config(
       },
     },
     rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
+    // The Windows and Mac app's start page script runs in the page itself.
+    files: ["native/tauri/ui/boot.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: {
+        window: "readonly",
+        document: "readonly",
+        URLSearchParams: "readonly",
+        AbortController: "readonly",
+        fetch: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+      },
+    },
   },
   {
     // The desktop offline page's one small script runs in the page itself.
