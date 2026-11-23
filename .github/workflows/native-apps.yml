@@ -3,7 +3,7 @@
 # Releases page. How to use it, what is and is not signed, and what each app
 # can and cannot do: docs/runbooks/native-apps.md.
 #
-#   git tag native-v0.1.0 && git push origin native-v0.1.0
+#   git tag native-v0.2.0 && git push origin native-v0.2.0
 #
 # Windows and Mac are built with Tauri (native/tauri: small installers that use
 # the web view already on the computer); Linux with Electron (native/desktop),

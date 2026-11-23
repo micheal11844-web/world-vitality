@@ -1,6 +1,6 @@
 {
   "name": "world-vitality-desktop-tauri",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "World Vitality desktop app for Windows and Mac (Tauri). Not part of the website's pnpm workspace.",
   "scripts": {

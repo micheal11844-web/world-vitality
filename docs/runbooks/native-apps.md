@@ -57,9 +57,17 @@ the default in `native/mobile/android/app/build.gradle` (a test in
 - **The button (no terminal):** on GitHub open **Actions**, choose **Native
   apps**, **Run workflow**, tick **Publish the files as a release**, and run it.
   It builds all four, then creates the tag `native-v<version>` and the release.
-- **Or push a tag:** `git tag native-v0.1.0 && git push origin native-v0.1.0`.
+- **Or push a tag:** `git tag native-v<version> && git push origin native-v<version>`.
   (The assistant's session was refused permission to push tags, so the first
   release is done with the button.)
+
+**Always move to a new version for a new release.** If a release for that
+version already exists (for example `native-v0.1.0`), the workflow does not make
+a new one: it replaces the files inside the old release with the new ones (and
+leaves its notes as they were). The downloads website picks the newest release by
+publish date, so a new version also becomes the one people are offered.
+Version history: 0.1.0 (first, Electron everywhere, about 116 MB Windows
+installer), 0.2.0 (Windows and Mac on Tauri).
 
 Watch the run on the Actions tab. When all four builds finish, the release
 appears on the Releases page with the files. If any one build fails,
