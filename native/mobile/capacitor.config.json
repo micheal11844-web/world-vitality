@@ -12,6 +12,6 @@
   "android": {
     "allowMixedContent": false,
     "webContentsDebuggingEnabled": false,
-    "appendUserAgent": "WorldVitalityApp/0.1.0"
+    "appendUserAgent": "WorldVitalityApp/0.2.0"
   }
 }
